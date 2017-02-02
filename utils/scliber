@@ -1,0 +1,840 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Function for creating a parcellation library (.sclib)
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+
+readonly POSINT='^[0-9]+$'
+readonly INT='^-?[0-9]+$'
+readonly POSNUM='^[0-9]+([.][0-9]+)?$'
+readonly NUM='^-?[0-9]+([.][0-9]+)?$'
+readonly ALPHA='^[A-Z]+$'
+readonly RED='\033[0;31m'
+readonly CYA='\033[0;36m'
+readonly LGR='\033[0;37m'
+readonly RCL='\033[0m'
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+   echo ""; echo ""; echo ""
+   echo "Usage: `basename $0` <options>"
+   echo ""
+   echo "Compulsory arguments:"
+   echo ""
+   echo " -o : Output path"
+   echo "      The path to the file where the finalised library "
+   echo "      will be written."
+   echo ""
+   echo " -s : Space"
+   echo "      A path to an image that defines the coordinate system "
+   echo "      for the current library. To use voxelwise rather than "
+   echo "      mm coordinates, enable the optional -v flag."
+   echo ""
+   echo "Optional arguments:"
+   echo ""
+   echo " -l : Load library"
+   echo "      Use the specified spatial coordinate library (.sclib) "
+   echo "      as a starting point for the library to be created. "
+   echo "      Any coordinates in the basis libraries will be "
+   echo "      loaded into the new library."
+   echo ""
+   echo " -c : Add coordinates"
+   echo "      Include the specified coordinates in the library "
+   echo "      to be created. The RoI must be specified either as "
+   echo "      NAME#COOR#RADIUS (where COOR is the coordinates "
+   echo "      of the centre of the region of interest and RADIUS "
+   echo "      is the radius of the region of interest in mm) or "
+   echo "      as PATH#NAME#SPACE (where PATH is the path to the "
+   echo "      image containing the parcellation and SPACE is "
+   echo "      either nat, str, or std depending on whether the "
+   echo "      parcellation is in native analytic, native "
+   echo "      structural, or standard/template space, "
+   echo "      respectively)."
+   echo ""
+#   echo " -v : Voxel coordinates"
+#   echo "      Use the voxel coordinate system (with a corner "
+#   echo "      origin) for the reference image rather than the "
+#   echo "      image's mm coordinates."
+#   echo ""
+   echo " -t : Trace"
+   echo "      If this flag is set, then any commands called by the "
+   echo "      erodespare routine will be explicitly printed to the "
+   echo "      console or log."
+   echo ""
+   echo ""; echo ""; echo ""
+   exit
+}
+
+###################################################################
+# Define defaults
+###################################################################
+source ${XCPEDIR}/settings/global
+voxel=0
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "o:s:l:c:t" OPTION
+   do
+   case $OPTION in
+   o)
+      out=${OPTARG}
+      ;;
+   s)
+      space=${OPTARG}
+      [[ $(imtest $(echo ${space}|cut -d'#' -f2)) == 0 ]] && Usage
+      sdlm=$(echo ${subj}|sed s@','@' '@g)
+      ;;
+   l)
+      lib="${OPTARG}"
+      [[ $(echo ${lib}|rev|cut -d'.' -f1|rev) != sclib ]] && Usage
+      coor="${coor} "$(grep -i '^#' ${lib})
+      ;;
+   c)
+      if [[ $(grep -o ',' <<< ${OPTARG}|wc -l) != 2 ]] \
+         && [[ $(imtest $(echo ${OPTARG}|cut -d'#' -f2)) == 0 ]] 
+         then
+         Usage
+      fi
+      coor="${coor} #${OPTARG}"
+      ;;
+#   v)
+#      voxel=1
+#      ;;
+   t)
+      set -x
+      silence=""
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+   esac
+done
+[[ -z ${out} ]] && Usage
+[[ $(echo ${out}|rev|cut -d'.' -f1|rev) != sclib ]] && out=${out}.sclib
+[[ -z ${space} ]] && Usage
+
+
+
+
+
+xst1=0
+while [[ "$xst1" == "0" ]]
+do
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo ""; echo ""
+###################################################################
+# First, print all contents of the working version of the spatial
+# coordinates library.
+###################################################################
+if [[ -n ${coor} ]]
+   then
+   echo -e "${CYA}Working library${RCL}"
+   echo -e "${CYA}idx${RCL}"'\t'"${CYA}#${RCL}Name${CYA}#${RCL}xcoord,ycoord,zcoord${CYA}#${RCL}radius"
+   echo -e "${CYA}idx${RCL}"'\t'"${CYA}#${RCL}Name${CYA}#${RCL}pathToVolume${CYA}#${RCL}coordinateSpace"
+   idx=1
+   for c in $coor
+      do
+      c=$(eval echo -e $(echo ${c}|sed s@'#'@\${CYA}'#'\${RCL}@g))
+      echo -e "${CYA}${idx}${RCL}"'\t'"${c}"
+      idx=$(expr ${idx} + 1)
+   done
+   echo ""; echo ""
+   echo -e "${RED}______________________________________________________________${RCL}"
+   echo ""; echo ""
+fi
+
+
+echo "Select an option to edit or finalise the coordinates library."
+echo -e "After selecting an item, enter ${RED}?${RCL} for additional information."
+
+select option in \
+   "Add ROI from library" \
+   "Add ROI by coordinates" \
+   "Add spatial coordinates library" \
+   "Add spatial mask image" \
+   "Remove RoI(s)" \
+   "Abort" \
+   "Finalise library"
+   do
+   case $REPLY in
+   
+   ################################################################
+   # USER: Add ROI from library
+   ################################################################
+   1)
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the PATH to the coordinate library from which you"
+         echo "wish to add a region of interest."; echo ""
+         read -p "" -e -i ${XCPEDIR}/seeds buffer
+         ext=$(echo "$buffer"|rev|cut -d"." -f1|rev)
+         if [[ -e "$buffer" ]] \
+            && [[ "${ext}" == "sclib" ]]
+            then
+            curlibpath=$buffer
+            echo "Coordinates library selected:"
+            echo $curlibpath; echo ""
+            curlib=$(grep -i '^#' $curlibpath)
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo "The input must be a path to a coordinate library"
+            echo "(.sclib) file."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add ROI from library
+      #        ...verify space
+      #############################################################
+      curlibspace=$(grep -i "SPACE::" $curlibpath)
+      if [[ -z $(echo ${curlibspace}|grep -i ${space}) ]]
+         then
+         echo "WARNING: The requested library may not be in the same "
+         echo "coordinate space as the current library. Please determine "
+         echo "whether this is the case."
+         echo ""
+         echo "REQUESTED LIBRARY: ${curlibspace}"
+         echo "CURRENT LIBRARY: ${space}"
+         echo "Do you wish to proceed with adding a ROI from this "
+         echo "library?"
+         select option in \
+            "Do not add" \
+            "Proceed"
+            do
+            case $REPLY in
+            1)
+               break 2
+               ;;
+            2)
+               break
+               ;;
+            m)
+               break 2
+               ;;
+            *)
+               echo -e "${CYA}If the provided coordinates are not in the correct "
+               echo "coordinate space, then the resultant ROI will be "
+               echo "misaligned, and interpretation of the results will "
+               echo "be incorrect or impossible. Before proceeding, ensure "
+               echo -e "that library spaces match.${RCL}"
+            esac
+         done
+      fi
+      spacetype=$(echo $curlibspace|cut -d":" -f3)
+      [[ ${spacetype} == "VOXEL" ]] && spaceref=$(echo $curlibspace|cut -d":" -f7)
+      #############################################################
+      # USER: Add ROI from library
+      #        ...ROI name
+      #############################################################
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the NAME of the RoI that you wish to import"
+         echo "from the selected library."; echo ""
+         echo "Enter 'VIEW' to list all available RoIs."; echo ""
+         read -p "" -e -i roi buffer
+         buffer=$(echo ${buffer}|sed s@' '@'_'@g)
+         uniquetest=$(echo "$coor"|sed s@'#'"${buffer}"'#'@@g)
+         inlibtest=$(echo "$curlib"|sed s@'#'"${buffer}"'#'@@g)
+         if [[ "${uniquetest}" == "${coor}" ]] \
+            && [[ "${inlibtest}" != "${curlib}" ]]
+            then
+            buffer='#'"${buffer}"'#'
+            roi=$(grep -i ${buffer} ${curlibpath})
+            #######################################################
+            # Use FSL to translate from voxel space to image space
+            #######################################################
+            oldcoor=$(echo ${roi}|cut -d'#' -f3)
+            if [[ ${spacetype} == "VOXEL" ]] \
+               && [[ $(imtest ${oldcoor}) != 1 ]] \
+               && [[ ${voxel} != 1 ]]
+               then
+               newcoor=$(echo ${oldcoor}|sed s@','@' '@g)
+               if [[ $(imtest ${spaceref}) != 1 ]]
+                  then
+                  spaceref=$(grep -i ${spaceref} ${XCPEDIR}/settings/template_alias\
+                     |cut -d"," -f2)
+                  spaceref=$(eval echo $spaceref)
+               fi
+               newcoor=$(echo ${newcoor}|\
+                  img2stdcoord -img ${spaceref} -std ${spaceref})
+               newcoor=$(echo ${newcoor}|sed s@' '@','@g)
+               roi=$(echo ${roi}|sed s@'#'${oldcoor}'#'@'#'${newcoor}'#'@g)
+            fi
+            xst2=1
+         elif [[ "${buffer}" == "VIEW" ]]
+            then
+            echo "${curlib}"
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}You either entered a name that has already been reserved "
+            echo "for another RoI, or you selected a RoI that is not "
+            echo "included in the selected library. To list all RoIs in "
+            echo -e "the selected library, enter the string ${RED}VIEW${CYA}.${RCL}"
+            echo -e ""
+            echo "Invalid name specified."
+            echo ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      radius=$(echo "$roi"|cut -d"#" -f4)
+      #############################################################
+      # USER: Add ROI from library
+      #        ...ROI radius
+      #############################################################
+      if [[ -n "$radius" ]]
+         then
+         coor="$coor ${roi}"
+      else
+         xst2=0
+      fi
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the RADIUS in mm of the ROI to be added to "
+         echo "the library."
+         read -p "" -e -i 6 buffer
+         if [[ "$buffer" =~ $POSNUM ]]
+            then
+            roi="${roi}${buffer}"
+            coor="$coor ${roi}"
+            xst2=1
+         else
+            echo -e "${CYA}If a RoI is provided as an ordered Cartesian triple, "
+            echo "then the radius term will determine the number of "
+            echo "adjacent voxels to include in the RoI. The seed "
+            echo "module utilises an AFNI command that expands each "
+            echo "Cartesian triple into a sphere centered on the "
+            echo -e "specified locus.${RCL}"
+            echo ""
+            echo "The radius must be a positive numeric value."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      break
+      ;;
+   
+   ################################################################
+   # USER: Add ROI by coordinates
+   ################################################################
+   2)
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the COORDINATES in voxels of the RoI that you wish "
+         echo "to add as an ordered triple in template space. Enter "
+         echo -e "${RED}VIEW${RCL} to examine the coordinate space or VIEW "
+         echo "[template alias] to examine any template."
+         read -p "" -e -i 0,0,0 buffer
+         xcoor=$(echo "$buffer"|cut -d"," -f1)
+         ycoor=$(echo "$buffer"|cut -d"," -f2)
+         zcoor=$(echo "$buffer"|cut -d"," -f3)
+         ncoor=$(echo "$buffer"|grep -o ","|wc -l|xargs -n 1 expr 1 +)
+         if [[ "$buffer" == "VIEW" ]]
+            then
+            fslview ${space} &
+         elif [[ $(echo "$buffer"|cut -d" " -f1) == "VIEW" ]]
+            then
+            alias=$(echo "$buffer"|cut -d" " -f2)
+            template=$(eval echo $(grep -i "${alias}," ${XCPEDIR}/settings/template_alias\
+               |cut -d"," -f2))
+            if [[ -e ${template} ]]
+               then
+               fslview $template &
+            else
+               echo "No such template in:"
+               cat ${XCPEDIR}/settings/template_alias
+            fi
+         elif [[ "$xcoor" =~ $NUM ]] \
+            && [[ "$ycoor" =~ $NUM ]] \
+            && [[ "$zcoor" =~ $NUM ]] \
+            && [[ "$ncoor" == "3" ]]
+            then
+            coords=$buffer
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}The seed module can generate spherical RoIs centred on "
+            echo "neural loci. These loci should be specified as Cartesian "
+            echo "triples, indicating the RoI centre along"
+            echo "  x=(right-left axis)"
+            echo "  y=(anterior-posterior axis)"
+            echo "  z=(inferior-superior axis)"
+            echo "Unless otherwise requested, RoI coordinates should be provided "
+            echo "in image space rather than voxel space, with the origin defined "
+            echo "in the centre of the image (often near the interhemispheric "
+            echo -e "commissures).${RCL}"
+            echo ""
+            echo "The input must be either an ordered triple of numeric"
+            echo -e "values, the string ${RED}VIEW${RCL}, or the string VIEW followed"
+            echo "by a template alias."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add ROI by coordinates
+      #        ...ROI name
+      #############################################################
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Now, specify a NAME for the current RoI."
+         echo "RoIs should have unique names."
+         read -p "" -e -i roi buffer
+         buffer=$(echo ${buffer}|sed s@' '@'_'@g)
+         roi=#${buffer}#${coords}#
+         forbiddentest=$(echo "$buffer"|sed s@'#'@@g)
+         uniquetest=$(echo "$coor"|sed s@'#'"${buffer}"'#'@@g)
+         if [[ "${uniquetest}" == "${coor}" ]] \
+            && [[ "${forbiddentest}" == "${buffer}" ]]
+            then
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}You either entered a name that has already been reserved"
+            echo "for another RoI, or you included the reserved character"
+            echo -e "'#' in your proposed name.${RCL}"
+            echo ""
+            echo "Invalid name specified."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add ROI by coordinates
+      #        ...ROI radius
+      #############################################################
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the RADIUS in mm of the ROI:"
+         echo "${sd}"
+         read -p "" -e -i 6 buffer
+         if [[ "$buffer" =~ $POSNUM ]]
+            then
+            roi="${roi}${buffer}"
+            coor="$coor ${roi}"
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}If a RoI is provided as an ordered Cartesian triple, "
+            echo "then the radius term will determine what adjacent "
+            echo "voxels to include in the RoI. The seed module "
+            echo "utilises an AFNI command that expands each "
+            echo "Cartesian triple into a sphere centered on the "
+            echo -e "specified point.${RCL}"
+            echo ""
+            echo "The radius must be a positive numeric value."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      break
+      ;;
+      
+   ################################################################
+   # USER: Add coordinates library
+   ################################################################
+   3)
+      xst2=0
+      while [[ ${xst2} == 0 ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the PATH to the coordinates library that you wish to "
+         echo "load."
+         read -p "" -e -i ${XCPEDIR}/seeds buffer
+         ext=$(echo "$buffer"|rev|cut -d"." -f1|rev)
+         if [[ -e "$buffer" ]] \
+            && [[ "${ext}" == "sclib" ]]
+            then
+            curlibpath=$buffer
+            echo "Coordinates library selected:"
+            echo $curlibpath; echo ""
+            curlib=$(grep -i "^#" $curlibpath)
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo "The input must be a path to a spatial coordinates "
+            echo "library (.sclib) file."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add coordinates library
+      #        ...verify space
+      #############################################################
+      curlibspace=$(grep -i "SPACE::" $curlibpath)
+      if [[ -z $(echo ${curlibspace}|grep -i ${space}) ]]
+         then
+         echo "WARNING: The requested library may not be in the same "
+         echo "coordinate space as the current library. Please determine "
+         echo "whether this is the case."
+         echo ""
+         echo "REQUESTED LIBRARY: ${curlibspace}"
+         echo "CURRENT LIBRARY: ${space}"
+         echo "Do you wish to proceed with adding a RoI from this "
+         echo "library?"
+         select option in \
+            "Do not add" \
+            "Proceed"
+            do
+            case $REPLY in
+            1)
+               break 2
+               ;;
+            2)
+               break
+               ;;
+            m)
+               break 2
+               ;;
+            *)
+               echo -e "${CYA}If the provided coordinates are not in the correct "
+               echo "coordinate space, then the resultant RoI will be "
+               echo "misaligned, and interpretation of the results will "
+               echo "be incorrect or impossible. Before proceeding, ensure "
+               echo -e "that library spaces match.${RCL}"
+            esac
+         done
+      fi
+      spacetype=$(echo $curlibspace|cut -d":" -f3)
+      [[ ${spacetype} == "VOXEL" ]] && spaceref=$(echo $curlibspace|cut -d":" -f7)
+      [[ ${spacetype} == "VOXEL" ]] && echo "Translating to library space"
+      #############################################################
+      # USER: Add coordinates library
+      #        ...additional configuration
+      #############################################################
+      idx=1
+      for roi in $curlib
+         do
+         ##########################################################
+         # USER: Add coordinates library
+         #        ...use FSL to translate from voxel space to
+         #           image space
+         ##########################################################
+         oldcoor=$(echo ${roi}|cut -d'#' -f3)
+         if [[ ${spacetype} == "VOXEL" ]] \
+            && [[ $(imtest ${oldcoor}) != 1 ]] \
+            && [[ ${voxel} != 1 ]]
+            then
+            printf "${idx}... "
+            newcoor=$(echo ${oldcoor}|sed s@','@' '@g)
+            if [[ $(imtest ${spaceref}) != 1 ]]
+               then
+               spaceref=$(grep -i ${spaceref} ${XCPEDIR}/settings/template_alias\
+                  |cut -d"," -f2)
+               spaceref=$(eval echo $spaceref)
+            fi
+            newcoor=$(echo ${newcoor}|\
+               img2stdcoord -img ${spaceref} -std ${spaceref})
+            newcoor=$(echo ${newcoor}|sed s@' '@','@g)
+            roi=$(echo ${roi}|sed s@'#'${oldcoor}'#'@'#'${newcoor}'#'@g)
+            idx=$(expr ${idx} + 1)
+         fi
+         ##########################################################
+         # USER: Add coordinates library
+         #        ...ROI radius
+         ##########################################################
+         radius=$(echo "$roi"|cut -d"#" -f4)
+         if [[ ! -z "$radius" ]]
+            then
+            coor="$coor ${roi}"
+            xst2=1
+         else
+            xst2=0
+         fi
+         while [[ "$xst2" == "0" ]]
+            do
+            echo ""; echo ""
+            echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+            echo ""
+            echo "Specify the RADIUS in mm of the ROI:"
+            echo "${roi}"
+            read -p "" -e -i 6 buffer
+            if [[ "$buffer" =~ $POSNUM ]]
+               then
+               roi="${roi}${buffer}"
+               coor="$coor ${roi}"
+               xst2=1
+            else
+               echo -e "${CYA}If a RoI is provided as an ordered Cartesian triple, "
+               echo "then the radius term will determine the number of "
+               echo "adjacent voxels to include in the RoI. The seed "
+               echo "module utilises an AFNI command that expands each "
+               echo "Cartesian triple into a sphere centered on the "
+               echo -e "specified point.${RCL}"
+               echo ""
+               echo "The radius must be a positive numeric value."
+               echo -e ""
+               echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+            fi
+         done
+      done
+      echo ""
+      break
+      ;;
+      
+   ################################################################
+   # USER: Add ROI mask image
+   ################################################################
+   4)
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the PATH to the image file containing a mask"
+         echo "that represents the ROI you wish to add."; echo ""
+         echo "Enter VIEW followed by the full path to view the"
+         echo "image without adding it to the analysis."; echo ""
+         read -p "" -e -i ${XCPEDIR}/networks buffer
+         if [[ $(echo $buffer|cut -d" " -f1) == "VIEW" ]]
+            then
+            path=$(echo $buffer|cut -d" " -f2)
+            [[ $(imtest ${path}) == 1 ]] && fslview ${path} &
+         elif [[ $(imtest $buffer) == 1 ]]
+            then
+            roipath=$buffer
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}If the path provided points to a continuous- or "
+            echo "discrete-valued image, then the intensities will be "
+            echo -e "interpreted as voxelwise weights.${RCL}"
+            echo ""
+            echo "The input must be a path to a binary-valued image. "
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add ROI mask image
+      #        ...ROI name
+      #############################################################
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Now, specify a NAME for the current RoI."
+         echo "RoIs should have unique names."
+         read -p "" -e -i roi buffer
+         buffer=$(echo ${buffer}|sed s@' '@'_'@g)
+         roi=#${buffer}#${roipath}#
+         forbiddentest=$(echo "$buffer"|sed s@'#'@@g)
+         uniquetest=$(echo "$coor"|sed s@'#'"${buffer}"'#'@@g)
+         if [[ "${uniquetest}" == "${coor}" ]] \
+            && [[ "${forbiddentest}" == "${buffer}" ]]
+            then
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}You either entered a name that has already been reserved"
+            echo "for another RoI, or you included the reserved character"
+            echo -e "'#' in your proposed name.${RCL}"
+            echo ""
+            echo "Invalid name specified."
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add ROI mask image
+      #        ...coordinate space
+      #############################################################
+      echo ""; echo ""
+      echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+      echo ""
+      echo "Finally, determine what COORDINATE SPACE the target RoI "
+      echo "image is in."
+      select option in \
+         "Standard/template space" \
+         "Subject's native T1 space" \
+         "Subject's native BOLD space"
+         do
+         case $REPLY in
+         1)
+            roi=${roi}std
+            coor="$coor ${roi}"
+            break
+            ;;
+         2)
+            roi=${roi}str
+            coor="$coor ${roi}"
+            break
+            ;;
+         3)
+            roi=${roi}nat
+            coor="$coor ${roi}"
+            break
+            ;;
+         m)
+            break 2
+            ;;
+         *)
+            echo -e "${CYA}What coordinate space is the mask image"
+            echo "currently situated in? The XCP Engine must"
+            echo "know this in order to determine what transforms"
+            echo "are necessary to move the mask image and the"
+            echo "primary analyte image into the same space so that"
+            echo "coordinates in both are identical."
+            echo ""
+            echo "If the image was specifically generated for"
+            echo "this subject using its T1 image, then select"
+            echo "the 'native struct' option. If the image is"
+            echo "registered to the template, then select the"
+            echo -e "'standard' option.${RCL}"
+            echo -e ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+            ;;
+         esac
+      done
+      break
+      ;;
+      
+   ################################################################
+   # USER: Remove RoI(s)
+   ################################################################
+   5)
+      echo ""; echo ""
+      echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+      echo ""
+      echo "The following RoIs will be included in this analysis:"
+      for roi in $coor
+         do
+         roi=$(eval echo -e $(echo ${roi}|sed s@'#'@\${CYA}'#'\${RCL}@g))
+         echo -e "${CYA}${idx}${RCL}"'\t'"$roi"
+      done
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""
+         echo "Enter the name(s) of the RoI(s) that you wish to REMOVE."
+         echo ""
+         read -p "" -e -i roi buffer
+         for r in ${buffer}
+            do
+            remtest=$(echo "$coor"|sed -r s@"#${r}#"[^'#']*#[^' ']*'( |$)'@@g)
+            if [[ $remtest != $coor ]]
+               then
+               echo "Target RoI removed: ${r}"
+               coor=$remtest
+               xst2=1
+            elif [[ "${buffer}" == "m" ]]
+               then
+               break 2
+            else
+               echo -e "${CYA}Ensure that the case is correct and that you are"
+               echo "entering only the name of the RoI (not its coordinates"
+               echo "or radius). This is the field between the first two"
+               echo -e "octothorpe (#) delimiters.${RCL}"
+               echo ""
+               echo "No such RoI."
+               echo -e ""
+               echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+               echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+               echo ""
+            fi
+         done
+      done
+      break
+      ;;
+   
+   ################################################################
+   # Abort
+   ################################################################
+   6)
+      exit
+      ;;
+   
+   ################################################################
+   # Finalise library
+   ################################################################
+   7)
+      xst1=1
+      break
+      ;;
+   
+   esac
+
+done
+done
+
+
+
+###################################################################
+# write coordinate information to library file
+###################################################################
+
+echo ${subj} >> /tmp/cohort~TEMP~
+
+rm -f ${out}
+if [[ ${voxel} == 0 ]]
+   then
+   echo "SPACE::${space}" >> ${out}
+else
+   vox=$(fslval ${space} pixdim1),$(fslval ${space} pixdim2),$(fslval ${space} pixdim3)
+   vox=$(echo $vox|sed s@' '@@g)
+   echo "SPACE::VOXEL::${vox}::${space}" >> ${out}
+fi
+echo ":#ROIName#X,Y,Z#radius" >> ${out}
+for c in $coor
+   do
+   echo $(${XCPEDIR}/utils/genpath ${c} /tmp/cohort~TEMP~ 1 ${KEEPNUM}) \
+      >> ${out}
+done
+rm -f /tmps/cohort~TEMP~

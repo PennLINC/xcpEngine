@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# aroma_dim specifies the model order of the ICA decomposition
+aroma_dim[${cxt}]=auto
+# accepted values are positive integers or the string 'auto'
+###################################################################
+
+
+###################################################################
+# aroma_csf stores the path to a standard-space mask over
+# cerebrospinal fluid
+aroma_csf[${cxt}]=${XCPEDIR}/thirdparty/aroma/mask_csf.nii.gz
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# aroma_edge stores the path to a standard-space mask over
+# boundary voxels of the brain
+aroma_edge[${cxt}]=${XCPEDIR}/thirdparty/aroma/mask_edge.nii.gz
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# aroma_bg stores the path to a standard-space mask over
+# background (non-brain) voxels
+aroma_bg[${cxt}]=${XCPEDIR}/thirdparty/aroma/mask_bg.nii.gz
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# aroma_dtype specifies the type of denoising to use when removing
+# variance related to components classified as 'noise'
+aroma_dtype[${cxt}]=nonaggr
+# accepted values are [aggr|nonaggr]
+###################################################################
+
+
+###################################################################
+# aroma_dmdt stores the order of the detrending
+# polynomial to be applied to the BOLD timeseries;
+# order 0 indicates demeaning without detrending
+prestats_dmdt[${cxt}]=2
+# accepted values are nonnegative integers
+# or the string 'auto'
+###################################################################
+
+
+###################################################################
+# aroma_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+aroma_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# aroma_cleanup specifies whether to delete
+# files created in intermediate processing steps
+aroma_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

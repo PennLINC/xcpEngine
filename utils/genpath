@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+
+# Script to generalise paths
+
+# First input is specific path to be generalised
+spath=$1
+# Second input is path to subjects file
+subjfile=$2
+# Third input is index of example subject
+xsubjidx=$3
+# Fourth output suppresses wildcarding of numerics
+KEEPNUM=$4
+
+# Read in example subject information
+xsubj=$(sed -n "${xsubjidx}"p $subjfile)
+
+# Iterate through subject fields
+remfield=$xsubj
+gpath=$spath
+num_subj_fields=$(grep -o "," <<<"$xsubj"|wc -l)
+iter=$num_subj_fields
+while [ ! -z "$remfield" ]
+   do
+   curfield=$(echo $remfield|rev|cut -d"," -f1|rev)
+   remfield=$(echo $remfield|rev|sed s@^[^,]*@@|rev)
+   remfield=$(echo $remfield|rev|sed s@^,@@|rev)
+   [[ -n ${curfield} ]] && gpath=$(echo $gpath|sed s@${curfield}@'${subject['${iter}']}'@g)
+   iter=$(expr $iter - 1)
+done
+
+# Wildcard remaining numerics
+# if the global settings call for it
+if [ "X$KEEPNUM" != "X1" ]
+   then
+   #gpath=$(echo $gpath|sed -E s@'[0-9]+_[0-9]+'@*@g)
+   #gpath=$(echo $gpath|sed -E s@'_[0-9]+_'@*@g)
+   #gpath=$(echo $gpath|sed -E s@'_[0-9]+'@*@g)
+   gpath=$(echo $gpath|sed -E s@'[0-9]+_'@*@g)
+   gpath=$(echo $gpath|sed -E s@'[0-9][0-9]+/'@*/@g)
+fi
+
+echo "$gpath"

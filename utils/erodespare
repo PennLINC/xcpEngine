@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Function for eroding a mask while ensuring that some voxels
+# remain in the mask.
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+
+readonly SIGMA=2.35482004503
+readonly NUM='^-?[0-9]+([.][0-9]+)?$'
+readonly POSINT='^[0-9]+$'
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+   echo ""; echo ""; echo ""
+   echo "Usage: `basename $0` -i <input> -o <output> <options>"
+   echo ""
+   echo "Compulsory arguments:"
+   echo " -i : Input mask"
+   echo "      The 3D timeseries to which erosion is to be"
+   echo "      applied."
+   echo ""
+   echo " -o : Output path"
+   echo "      The path to the file where the eroded mask will be"
+   echo "      written."
+   echo ""
+   echo "Optional arguments:"
+   echo " -e : Erosion iterations [default 1]"
+   echo "      The maximum number of iterations of erosion to"
+   echo "      apply to the mask. If application of this many"
+   echo "      iterations of erosion results in a mask that is"
+   echo "      empty or fails to survive the minimum retention"
+   echo "      criterion, then progressively fewer iterations"
+   echo "      of erosion will be applied until the criterion is"
+   echo "      satisfied."
+   echo ""
+   echo " -r : Minimum retention criterion [default 1]"
+   echo "      The minimum number of voxels that must be retained"
+   echo "      in the eroded mask for the mask to be accepted. A"
+   echo "      value of 1 accepts any non-empty mask."
+   echo ""
+   echo " -t : Trace"
+   echo "      If this flag is set, then any commands called by the"
+   echo "      erodespare routine will be explicitly printed to the"
+   echo "      console or log."
+   echo ""
+   echo ""; echo ""; echo ""
+}
+
+###################################################################
+# Define defaults
+###################################################################
+erode=1
+minret=1
+silence=">/dev/null"
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "i:o:e:r:t" OPTION
+   do
+   case $OPTION in
+   i)
+      image=${OPTARG}
+      [[ $(imtest ${image}) != 1 ]] && Usage && exit
+      ;;
+   o)
+      out=${OPTARG}
+      ;;
+   e)
+      erode=${OPTARG}
+      [[ ${erode} =~ ${NUM} ]] || Usage || exit
+      #############################################################
+      # AFNI's 3dmask_tool (around which this script is a wrapper)
+      # assumes that negative values correspond to erosion and
+      # positive values to dilation.
+      #############################################################
+      erode=$(expr -1 \* ${erode})
+      ;;
+   r)
+      minret=${OPTARG}
+      [[ ${minret} =~ ${POSINT} ]] || Usage || exit
+      ;;
+   t)
+      set -x
+      silence=""
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z ${image} ]] && Usage && exit
+[[ -z ${out} ]] && Usage && exit
+
+
+
+
+
+###################################################################
+# Determine the extension of the input and the extension to use
+# for the output.
+#  * If the user-provided input omits the extension, store the
+#    path with its extension in imgpath. Then, obtain the
+#    extension by removing the user-specified input from the
+#    complete input path.
+#  * Determine the extension for the output by taking all
+#    characters following the first '.' in the input path.
+#  * Ensure that the output has an extension so that it is not
+#    automatically brickheaded.
+###################################################################
+imgpath=$(ls -d1 ${image}*)
+for i in ${imgpath}
+   do
+   [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
+done
+ext=$(echo ${imgpath}|sed s@"${image}"@@)
+ext_out=$(echo ${out}|cut -d"." -f1 --complement)
+[[ ${out} == ${ext_out} ]] \
+   && ext_out=$(echo ${imgpath}|cut -d"." -f1 --complement)
+out_noext=$(echo ${out}|cut -d"." -f1)
+[[ ${out} == ${out_noext} ]] && out=${out}.${ext_out}
+[[ ${ext_out} == "nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
+[[ ${ext_out} == "nii" ]] && export FSLOUTPUTTYPE=NIFTI
+[[ ${ext_out} == "hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
+[[ ${ext_out} == "img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
+[[ ${ext_out} == "hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
+[[ ${ext_out} == "img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
+
+while [[ "${erode}" -lt "0" ]]
+   do
+   rm -f ${out}
+   3dmask_tool -input ${imgpath} \
+      -prefix ${out} \
+      -dilate_input ${erode} \
+      -quiet
+   ################################################################
+   # If the erosion satisfies the minimum retention criterion,
+   # break out of the loop. Otherwise, decrement the erosion
+   # coefficient.
+   ################################################################
+   masksize=$(fslstats ${out} -V|cut -d" " -f1)
+   if [[ ${masksize} -ge ${minret} ]]
+      then
+      break
+   else
+      erode=$(expr ${erode} + 1)
+      echo " * Erosion resulted in an empty mask."
+      echo " * Decrementing coefficient to ${erode}"
+   fi
+done
+###################################################################
+# The output should be binary, but if it is not for some reason,
+# then binarise it.
+###################################################################
+fslmaths ${out} -thr 0.5 -bin ${out}

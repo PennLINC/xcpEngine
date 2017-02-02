@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# dti2xcp_rerun specifies the path to the output directory of
+# the diffusion pipeline, which is accepted as input by the
+# DTI2XCP module
+dti2xcp_dir[${cxt}]=${XCPEDIR}
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# dti2xcp_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+dti2xcp_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# dti2xcp_cleanup specifies whether to delete
+# files created in intermediate processing steps
+dti2xcp_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

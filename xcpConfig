@@ -1,0 +1,1145 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+###################################################################
+# Р Ћ 2015
+#
+# xcpConfig implements guided generation of a design file for the
+# XC Pipeline Engine.
+###################################################################
+
+
+###################################################################
+# Initialise global constants
+###################################################################
+readonly POSINT='^[0-9]+$'
+readonly INT='^-?[0-9]+$'
+readonly POSNUM='^[0-9]+([.][0-9]+)?$'
+readonly NUM='^-?[0-9]+([.][0-9]+)?$'
+readonly ALPHA='^[A-Z]+$'
+readonly RED='\033[0;31m'
+readonly CYA='\033[0;36m'
+readonly RCL='\033[0m'
+
+###################################################################
+# Introductory text: prompt user for a subject list or design file
+###################################################################
+source ${XCPEDIR}/settings/global
+echo ""; echo ""; echo ""
+echo -e "###################################################################"
+echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
+echo -e "#                                                                 #"
+echo -e "#  ${RED}☭${RCL}                   XCP ${RED}★${RCL} CONFIGURATION                     ${RED}☭${RCL}  #"
+echo -e "#                                                                 #"
+echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
+echo -e "###################################################################"
+echo ""; echo ""; echo ""
+echo "Hello. This script will assist you in creating a design "
+echo "file for processing your dataset. The design file generated "
+echo "by this script contains all the instructions necessary "
+echo "for the XCP Engine to run your pipeline."
+echo ""
+echo "Before beginning, you will need a file containing a list of "
+echo "subject identifiers. Each row should correspond to a subject "
+echo "and may contain multiple comma-separated identifiers for "
+echo "that subject. It may include numerical subject IDs and image "
+echo "paths, but in most cases should not include demographics or "
+echo "diagnostic information. Do you have this file ready?"
+echo ""
+
+select option in \
+   "'I have a list of subject identifiers ready (but not a design file).'" \
+   "'I need to prepare this file first.'" \
+   "'I already have a design file and a subject list.
+    I would like to begin from those settings instead of defaults.'"
+   do
+   case $REPLY in
+   1)
+      echo "Continuing..."; echo ""
+      path_subjid=1
+      break
+      ;;
+   2)
+      exit
+      ;;
+   3)
+      #############################################################
+      # Only one design file may be loaded here
+      #############################################################
+      echo ""; echo ""; echo ""
+      echo "Please provide the path to the design file that"
+      echo "you wish to load."
+      read -p "Path: " -i "${XCPEDIR}/designs/" -e old_design
+      #############################################################
+      # Read in the specified design file
+      #############################################################
+      source $old_design
+      design_text=$(cat $old_design)
+      #############################################################
+      # Maintain a list of all design file paths
+      #############################################################
+      design_list="$design_list $old_design"
+      #############################################################
+      # Parse example subject and re-source in order to specify
+      # any paths that have been generalised in the design file
+      #############################################################
+      remfield=$xsubj
+      iter=0
+      while [[ ! -z $remfield ]]
+         do
+         curfield=$(echo $remfield|cut -d"," -f1)
+         remfield=$(echo $remfield|sed s@^[^,]*@@)
+         remfield=$(echo $remfield|sed s@^,@@)
+         design_text=$(echo "$design_text"\
+            |sed s@'${subject\['"$iter"'\]}'@${curfield}@g)
+         iter=$(expr $iter + 1)
+      done
+      echo "$design_text" > $old_design~TEMP~
+      old_design=$old_design~TEMP~
+      source $old_design
+      #############################################################
+      # Run a cursory check to determine whether any new
+      # settings have been imported from the target design
+      #############################################################
+      if [[ -e "$old_design" ]] && [[ ! -z $design ]]
+         then
+         echo ""; echo "SUCCESS: settings from $old_design"
+         echo " have been loaded."
+      else
+         echo "The target file may not have loaded correctly"
+         echo " or does not exist."
+      fi
+      echo "Continuing..."; echo ""
+      break
+      ;;
+   *)
+      echo "Option not recognised."
+      echo "Please select '1', '2', or '3', or enter an empty"
+      echo "response to repeat the prompt."
+      ;;
+   esac
+done
+###################################################################
+# Config proper begins: Set the current step of config to 1, then
+# increment it each time that the user completes a step. This will
+# make it easier to add new steps in the future
+###################################################################
+step=1
+
+
+
+
+
+###################################################################
+# Configuration of the XCP Engine has two modes: one for functional
+# connectivity processing and one for processing anything else.
+#  * These modes, together with the final norm module, define the
+#    spine of the pipeline. Additional modules may be appended to
+#    this spine.
+#  * Connectivity processing includes confound regression in
+#    addition to basic prestats and coregistration; this
+#    incorporates a means of reducing the effects of subject
+#    movement on connectivity estimates.
+#  * Other pipelines perform only prestats and coregistration.
+#  * To do something else entirely, manual configuration is always
+#    an option.
+###################################################################
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "What type of analysis are you running?"
+select option in \
+   "Functional connectivity" \
+   "Perfusion / Arterial spin labelling (ASL)" \
+   "Task activation / GLM" \
+   "Diffusion to XCP" \
+   "Structural / anatomical" \
+   "B0" \
+   "Something else"
+   do
+   case $REPLY in
+   1)
+      type=FCON
+      process=dico,prestats,coreg,confound,regress,seed,reho,alff,roiquant,net,norm
+      break
+      ;;
+   2)
+      type=PERF
+      process=dico,prestats,coreg,asl,roiquant,norm
+      break
+      ;;
+   3)
+      type=TASK
+      process=dico,task,coreg,roiquant,norm
+      break
+      ;;
+   4)
+      type=DTI2
+      process=dti2xcp,coreg,roiquant,norm
+      break
+      ;;
+   5)
+      type=STRC
+      process=struct
+      break
+      ;;
+   6)
+      type=B0PR
+      process=b0map
+      break
+      ;;
+   7)
+      process=""
+      break
+      ;;
+   *)
+      echo -e "${CYA}"
+      echo ""
+      echo -e "If you are processing ${RED}functional connectivity${CYA}, ${RED}perfusion${CYA}, "
+      echo -e "${RED}task activation${CYA}, or ${RED}diffusion-to-XCP${CYA}, it is recommended "
+      echo "you have a complete run of structural processing available "
+      echo "for each subject."
+      echo ""
+      echo -e "At this time, for ${RED}perfusion${CYA} processing, you will need "
+      echo "Dr. Mark Elliott's perfusion quantification script."
+      echo ""
+      echo -e "At this time, for ${RED}diffusion${CYA} processing, you will need "
+      echo "a complete run of Dr. David Roalf's diffusion pipeline "
+      echo "for each subject."
+      echo ""
+      echo -e "For ${RED}task activation${CYA} processing, you will need a FEAT "
+      echo "(.fsf) design file."
+      echo ""
+      echo -e "${RED}Functional connectivity${CYA} as an analytical technique is "
+      echo "particularly susceptible to the undesirable influence "
+      echo "of artefacts caused by the movement of subjects in the "
+      echo "scanner (Satterthwaite et al., 2012). Movement might, "
+      echo "for instance, exaggerate proximal connections and "
+      echo "obscure distal connections. The XCP Engine enables "
+      echo "regression of nuisance variables related to motion for "
+      echo -e "functional connectivity processing."
+      echo -e "${RCL}"
+      ;;
+   esac
+done
+step=$(expr ${step} + 1)
+
+
+
+
+
+###################################################################
+# DEFINE: path_cohort
+# DEFINE: subjects_ct (number of subjects)
+# DEFINE TEMP: subjects (all subject identifiers)
+# DEFINE: prefix
+# DEFINE: img
+# DEFINE: ximg
+# DEFINE: struct
+# DEFINE: xstruct
+# DEFINE: xfm_warp
+# DEFINE: ixfm_warp
+#
+# Prompt the user for a path to a file containing comma-separated
+# subject identifier variables.
+# Use the subjects subdirectory as the starting path unless a
+# path is already specified; this should be the case only if the
+# user has already loaded a design file.
+###################################################################
+if [[ -z ${path_cohort} ]]
+   then path_cohort=${XCPEDIR}/subjects/
+fi
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+while [[ -z $subjects ]]
+   do
+   echo "${step}"; echo "";echo ""
+   echo "Next, provide the path to the file containing subject"
+   echo "identifiers. Each line should represent a separate subject,"
+   echo "and subject variables should be separated by commas."
+   echo ""
+   echo "(Ensure that no header is present.)"
+   echo "Recommended formats:"
+   echo "subject_ID,full_BOLD_path.nii.gz,ANTsCT_dir"
+   echo "subject_ID,scan_ID,run_ID,full_BOLD_path.nii.gz,ANTsCT_dir"
+   echo ""
+   read -p "Path: " -i "$path_cohort" -e path_cohort
+   ################################################################
+   # Load in all subject information; this will be used to select
+   # an exemplar subject
+   ################################################################
+   subjects=$(cat $path_cohort 2>/dev/null)
+   ################################################################
+   # Compute the number of subjects
+   ################################################################
+   subjects_ct=$(wc -l $path_cohort|cut -d" " -f1)
+   ################################################################
+   # Identify the BOLD image and ANTsCT directory
+   ################################################################
+   xsubj=$(echo $subjects|cut -d" " -f1)
+   xsubj_idx=1
+   xsubj_fields=$(echo $xsubj|sed s@','@' '@g)
+   for field in ${xsubj_fields}
+      do
+      idfield=1
+      if [[ $(imtest ${field}) == 1 ]] \
+         && [[ ${field} != ${ximg} ]]
+         then
+         nvol=$(fslnvols ${field})
+         [[ ${nvol} -gt 1 ]] && ximg="${ximg} ${field}" && idfield=0
+      fi
+      if [[ -d ${field} ]]
+         then
+         antstest=$(imtest ${field}/*CorticalThickness*)
+         [[ ${antstest} == 1 ]] && xants=${field} && idfield=0
+         dtitest=$(imtest ${field}/raw_merged_dti/*dti_merged.nii*)
+         [[ ${dtitest} == 1 ]] && xdti=${field} && idfield=0 \
+            && ximg=$(ls -d1 ${field}/raw_merged_dti/*dti_merged.nii*)
+      fi
+      if [[ -e ${field} ]]
+         then
+         idfield=0
+      fi
+      [[ $idfield == 1 ]] && identifiers="${identifiers} ${field}"
+   done
+   ################################################################
+   # If necessary, disambiguate among candidate analyte images.
+   ################################################################
+   [[ -n ${ximg} ]] \
+      && nimg=$(ls -l ${ximg}|wc -l) \
+      || nimg=0
+   if [[ ${nimg} -gt 1 ]]
+      then
+      xst=0
+      while [[ ${xst} == 0 ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "We have detected multiple candidate images in the "
+         echo "cohort file."
+         echo ""
+         echo "Which of the following is the primary image to be "
+         echo "analysed?"
+         for run in ${ximg}
+            do
+            echo ${run}
+         done
+         read -p "Path: " -i "img" -e buffer
+         if [[ $(imtest ${buffer}) == 1 ]] \
+            && [[ -n $(echo ${ximg}|grep -i ${buffer}) ]]
+            then
+            ximg=${buffer}
+            xst=1
+         fi
+      done
+   else
+      ximg=$(echo ${ximg}|sed s@' '@@g)
+   fi
+   ################################################################
+   # Define structural inputs for inclusion.
+   ################################################################
+   if [[ -n ${xants} ]]
+      then
+      xstruct=$(\ls ${xants}/*ExtractedBrain*)
+      xfm_warp=$(\ls ${xants}/*SubjectToTemplate*Warp*)
+      xfm_affine=$(\ls ${xants}/*SubjectToTemplate*Affine*)
+      ixfm_warp=$(\ls ${xants}/*TemplateToSubject*Warp*)
+      ixfm_affine=$(\ls ${xants}/*TemplateToSubject*Affine*)
+   fi
+   ################################################################
+   # Set prefix and output path based on remaining subject
+   # identifiers
+   ################################################################
+   prefix=$(echo ${identifiers}|sed s@' '@'_'@g)
+   outsub=$(echo ${identifiers}|sed s@' '@'/'@g)
+done
+step=$(expr ${step} + 1)
+
+
+
+
+
+###################################################################
+# DEFINE: analysis
+#
+# Prompt the user for a name to give the pipeline that is being
+# configured. This name will also be used to name the design file
+# that contains all pipeline specifications.
+###################################################################
+if [[ -z ${analysis} ]]
+   then analysis="generic_pipeline"
+elif [[ ${TIMESTAMP} == 1 ]]
+   then
+   analysis=$(echo ${analysis}| sed s@'_[0-9]*$'@@g)
+fi
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "Now, provide a name for the current analysis project."
+echo "This will also be the name of the design file."
+read -p "Name: " -i $analysis -e analysis
+###################################################################
+# Ensure that there are no whitespace characters in the user input.
+# Timestamp the analysis name if appropriate.
+# Set the output path.
+###################################################################
+analysis=$(echo $analysis|sed s/' '/'_'/g)
+[[ ${TIMESTAMP} == 1 ]] && analysis=${analysis}_$(date +%Y%m%d%H%M)
+outsub=${analysis}/${outsub}
+###################################################################
+# DEFINE: design
+#
+# Create the design file, and store the variables that have been
+# defined in the design file. Additionally, store the design file's
+# own path in the design file.
+###################################################################
+echo "Preparing design file..."
+design=${XCPEDIR}/designs/${analysis}.dsn
+###################################################################
+# If the user loaded in a design file and did not change the
+# pipeline name in the previous step, then the new design file will
+# have the same name as the old. It's also possible that the user
+# otherwise specifies the name of an old design as the name of the
+# new design. If this is the case, then move the old design file
+# to ensure that it is not overwritten.
+#
+# If the TIMESTAMP variable is set to 1, this should almost never
+# happen.
+###################################################################
+rand=$(date +%N)
+if [[ "${design}" == "${old_design}" ]]
+   then
+   mv ${old_design} ${design}_${rand}
+   old_design=${design}_${rand}
+   echo "A design file already exists at ${analysis}.dsn"
+   echo "It has been moved to ${design}_${rand}"
+   echo "in order to accommodate the new design."
+   echo "You may delete it after pipeline configuration is complete."
+elif [[ -e "${design}" ]]
+   then
+   mv $design ${design}_${rand}
+   echo "A design file already exists at ${analysis}.dsn"
+   echo "It has been moved to ${design}_${rand}"
+   echo "in order to accommodate the new design."
+   echo "You may delete it after pipeline configuration is complete."
+fi
+###################################################################
+# Write the design file.
+###################################################################
+echo "#!/usr/bin/env bash" >> $design
+echo "" >> $design
+echo "###################################################################" >> $design
+echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> $design
+echo "###################################################################" >> $design
+echo "" >> $design
+echo "" >> $design
+echo "###################################################################" >> $design
+echo "# This design file stores the values of all variables required to" >> $design
+echo "# execute a complete task-free functional connectivity pipeline." >> $design
+echo "# You may execute the analysis specified in this design file by" >> $design
+echo "# calling (in any bash terminal):" >> $design
+echo "#" >> $design
+echo "# xcpEngine ${design}" >> $design
+echo "#" >> $design
+echo "# Variables fall into five general categories:" >> $design
+echo "# * ANALYSIS VARIABLES are used at all stages of this analysis." >> $design
+echo "# * PIPELINE specifies the modules that comprise the analysis." >> $design
+echo "# * GLOBAL VARIABLES are used at all stages of all analyses." >> $design
+echo "# * MODULE VARIABLES are used during one stage of the analysis." >> $design
+echo "#                  These are typically array variables with array" >> $design
+echo "#                  indices equal to the index of the analysis" >> $design
+echo "#                  stage during which they are used." >> $design
+echo "# * OUTPUT VARIABLES may be used at all stages of the analysis." >> $design
+echo "#                  These are sometimes array variables with array" >> $design
+echo "#                  indices equal to the value of the primary" >> $design
+echo "#                  subject identifier. They will appear only in" >> $design
+echo "#                  localised design files." >> $design
+echo "###################################################################" >> $design
+echo "" >> $design
+echo "" >> $design
+echo "###################################################################" >> $design
+echo "# ANALYSIS VARIABLES" >> $design
+echo "###################################################################" >> $design
+echo "" >> $design
+echo "analysis=${analysis}" >> $design
+echo "design=${design}" >> $design
+echo "path_cohort=${path_cohort}" >> $design
+echo "subjects_ct=${subjects_ct}" >> $design
+echo "xsubj=${xsubj}" >> $design
+echo "xsubj_idx=${xsubj_idx}" >> $design
+echo "ximg=${ximg}" >> ${design}
+echo img=$(${XCPEDIR}/utils/genpath $ximg $path_cohort $xsubj_idx $KEEPNUM) >> $design
+echo "xants=${xants}" >> ${design}
+echo "xstruct=${xstruct}" >> ${design}
+echo struct=$(${XCPEDIR}/utils/genpath $xstruct $path_cohort $xsubj_idx $KEEPNUM) >> $design
+echo prefix=$(${XCPEDIR}/utils/genpath $prefix $path_cohort $xsubj_idx $KEEPNUM) >> $design
+echo xfm_warp=$(${XCPEDIR}/utils/genpath "${xfm_warp}" $path_cohort $xsubj_idx $KEEPNUM) >> $design
+echo ixfm_warp=$(${XCPEDIR}/utils/genpath "${ixfm_warp}" $path_cohort $xsubj_idx $KEEPNUM) >> $design
+echo xfm_affine=$(${XCPEDIR}/utils/genpath "${xfm_affine}" $path_cohort $xsubj_idx $KEEPNUM) >> $design
+echo ixfm_affine=$(${XCPEDIR}/utils/genpath "${ixfm_affine}" $path_cohort $xsubj_idx $KEEPNUM) >> $design
+step=$(expr ${step} + 1)
+
+
+
+
+
+###################################################################
+# Parse the exemplar subject's identifiers. Each successive
+# identifier is loaded into the next term of an indexed array
+# variable:
+# subject[0], then subject[1], then subject[2], and so on
+###################################################################
+remfield=$xsubj
+iter=0
+while [[ ! -z $remfield ]]
+   do
+   curfield=$(echo $remfield|cut -d"," -f1)
+   remfield=$(echo $remfield|sed s@^[^,]*@@)
+   remfield=$(echo $remfield|sed s@^,@@)
+   subject[${iter}]=$curfield
+   echo subject[${iter}]=$curfield
+   iter=$(expr $iter + 1)
+done
+#if [[ ! ${subject[0]} =~ ${POSINT} ]]
+#   then
+#   echo "XCP-ERROR: The first subject identifier must be an integer" 
+#   exit 1
+#fi
+num_subj_fields=$iter
+###################################################################
+# Now that the exemplar subject has been defined, any variables
+# from loaded design files that contain subject identifiers can
+# be evaluated. Reload those design files to evaluate subject
+# identifiers using exemplar subject information.
+###################################################################
+buffer=$design
+[[ -e $old_design ]] && source $old_design
+###################################################################
+# ... and refresh the new design file to prevent overwrite of
+# variables.
+###################################################################
+design=${buffer}
+source $design
+unset buffer
+
+
+
+
+
+###################################################################
+# DEFINE: out
+# DEFINE: versions
+# DEFINE: audit
+#
+# Define the output directory for the exemplar subject, and
+# generalise it.
+###################################################################
+[[ -z ${out_super} ]] && out_super=$(pwd)
+[[ -n ${out_super} ]] && out=${out_super}
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "Now, specify the directory where all analyses for all subjects"
+echo "will be written."
+###################################################################
+# Prompt the user to enter the output path and then to confirm
+# that it is correct.
+###################################################################
+xst=0
+while [[ "$xst" == "0" ]]
+   do
+   read -p "Output path: " -i "${out_super}" -e buffer
+   echo "The output superdirectory is:"
+   echo $buffer
+   echo "Subject output will be placed in directories like:"
+   echo ${buffer}/${outsub}
+   echo "Is this correct?"
+   select option in \
+      "Yes" \
+      "No" 
+      do
+      case $REPLY in
+      1)
+         out_super=${buffer}
+         echo "out_super=${buffer}" >> $design
+         echo out=$(${XCPEDIR}/utils/genpath ${buffer}/${outsub} $path_cohort $xsubj_idx $KEEPNUM) >> $design
+         xst=1
+         break
+         ;;
+      2)
+         out_super=$buffer
+         echo "Please enter the correct output path."
+         break
+         ;;
+      esac
+   done
+done
+step=$(expr ${step} + 1)
+###################################################################
+# Write the paths to version/dependency files and audit files in
+# the primary output superdirectory
+###################################################################
+#echo "versions=${buffer}/${analysis}/${analysis}_versionChk.txt" >> $design
+#echo "audit=${buffer}/${analysis}/${analysis}_audit.csv" >> $design
+
+
+
+
+
+###################################################################
+# DEFINE: out_group
+#
+# Define the output directory for any group-level processing or
+# analysis steps.
+###################################################################
+[[ -z ${out_group} ]] && out_group=${out_super}/${analysis}
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "Now, specify the directory where outputs from any group-level "
+echo "processing or analysis steps will be written."
+xst=0
+while [[ "$xst" == "0" ]]
+   do
+   read -p "Group output: " -i "${out_group}" -e buffer
+   echo "The group-level output directory is:"
+   echo $buffer
+   echo "Is this correct?"
+   select option in \
+      "Yes" \
+      "No" 
+      do
+      case $REPLY in
+      1)
+         echo "out_group=${buffer}" >> $design
+         xst=1
+         break
+         ;;
+      2)
+         out_group=$buffer
+         echo "Please enter the correct output path."
+         break
+         ;;
+      esac
+   done
+done
+step=$(expr ${step} + 1)
+
+
+
+
+
+###################################################################
+# DEFINE: space
+# DEFINE: template
+#
+# The XCP Engine performs all analyses in native space, only moving
+# processed images and derivatives to standard space at the
+# completion of analysis. This accelerates the pipeline and removes
+# the potential confound of interpolation steps.
+#
+# Here, the user is prompted to define the standard space.
+###################################################################
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "Next, it will be necessary to define registration settings."
+echo "Only settings for registration between T1 and template space"
+echo "need to be specified here; registration between T1 and BOLD"
+echo "space can be computed as part of the pipeline."
+echo ""
+###################################################################
+# First, specify the target template. Alternatively, if BOLD images
+# are already in standard space, permit the user to skip the
+# normalisation-related specifications.
+###################################################################
+echo "Now specify the TEMPLATE that represents standard space"
+echo "for all transforms."
+select option in \
+   "MNI152 2mm" \
+   "MNI152 1mm" \
+   "Other/custom (will prompt for path or alias)" \
+   "I will not be normalising to a template in my pipeline.
+    Skip this step."
+   do
+   case $REPLY in
+   1)
+      template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+      echo "Template image: ${template}"
+      space=native
+      break
+      ;;
+   2)
+      template=${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz
+      echo "Template image: ${template}"
+      space=native
+      break
+      ;;
+   3)
+      #############################################################
+      # Allow the user to input either a path or a template alias.
+      # Use the conversion table at settings/template_alias to
+      # obtain a path from the alias.
+      #############################################################
+      [[ -z ${template} ]] && template=$(pwd)
+      read -p "" -e -i ${template} buffer
+      alias2path=$(grep -i ${buffer} ${XCPEDIR}/settings/template_alias\
+         |cut -d"," -f2)
+      if [[ $(imtest $buffer) == "1" ]]
+         then
+         template=$buffer
+         echo "Custom template selected"
+         echo "Template image: ${template}"
+         space=native
+         break
+      elif [[ $(imtest $alias2path) == "1" ]]
+         then
+         template=$alias2path
+         echo "Custom template selected"
+         echo "Template image: ${template}"
+         space=native
+         break
+      else
+         echo "Specify a path to an image or a valid alias."
+      fi
+      ;;
+   4)
+      space=standard
+      echo "Normalisation will not be included in this pipeline"
+      echo "                       OR"
+      echo "All BOLD images are already in standard space."
+      echo "There is no need to define transforms."
+      break
+      ;;
+   esac
+done
+echo "space=${space}" >> $design
+echo "template=${template}" >> $design
+step=$(expr ${step} + 1)
+
+
+
+
+
+###################################################################
+# DEFINE: pipeline
+#
+# The quick config version of pipeline definition imposes some
+# structure upon module order:
+# prestats, coreg, (confound, regress) will by default come first
+# followed by modules that generate derivatives
+# and finally, norm
+#
+# In the penultimate stage of pipeline design, the pipeline itself
+# is assembled from the available modules. The first stage of
+# pipeline assembly thus necessitates obtaining all module names.
+# Module names are stored in a text file called modules.txt and
+# read from the modules subdirectory: any file or directory in that
+# subdirectory becomes available as a module.
+###################################################################
+rm -rf ${XCPEDIR}/settings/modules.txt
+touch ${XCPEDIR}/settings/modules.txt
+modules=$(ls ${XCPEDIR}/modules)
+for mod in $modules
+   do
+#   if [[ ${mod} != prestats ]] \
+#      && [[ ${mod} != dico ]] \
+#      && [[ ${mod} != coreg ]] \
+#      && [[ ${mod} != confound ]] \
+#      && [[ ${mod} != locreg ]] \
+#      && [[ ${mod} != regress ]] \
+#      && [[ ${mod} != mtdregrec ]] \
+#      && [[ ${mod} != norm ]]
+#      then
+      mod=$(echo $mod|rev|cut -d"/" -f1|rev)
+      echo $mod >> ${XCPEDIR}/settings/modules.txt
+#   fi
+done
+modules=$(cat ${XCPEDIR}/settings/modules.txt)
+###################################################################
+# If not beginning from a pipeline defined elsewhere, start from
+# the default pipeline for processing of the current sequence.
+###################################################################
+[[ -z ${pipeline} ]] && pipeline=${process}
+#preproc=$(echo ${preprocess}|sed s@','@' '@g)
+#for mod in $preproc
+#   do
+#   pipeline=$(echo ${pipeline}\
+#      |sed s@"^${mod}"@@g\
+#      |sed s@'^,'@@g)
+#done
+#pipeline=$(echo ${pipeline}\
+#   |sed s@'norm$'@@g\
+#   |sed s@',$'@@g)
+###################################################################
+# This step must be interactive; present users with all of their
+# available options.
+###################################################################
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "Now, it is time to assemble the pipeline."
+echo "The pipeline consists of a sequence of modules; the output"
+echo "of each module becomes the input to the next module."; echo ""
+echo -e "${CYA}____ name ____${RCL}"
+echo "Enter a module's name in order to add it to the end of the"
+echo "pipeline."
+echo "e.g., net"; echo ""
+echo -e "${CYA}____ info ____${RCL}"
+echo "Enter 'info' followed by a module's name for more information"
+echo "about that module."
+echo "e.g., info net"; echo ""
+echo -e "${CYA}____ int _____${RCL}"
+echo "To add a module to a specific point in the pipeline, enter"
+echo "a numeric value followed by the module's name. Enter 0 to place"
+echo "the module at the beginning of the pipeline, 1 to place it after"
+echo "the current first module, etc."
+echo "e.g., 3 net"; echo ""
+echo -e "${CYA}_____ rm _____${RCL}"
+echo "To remove a module, enter the string 'rm' followed by its index"
+echo "in the pipeline. Indexing begins with 0."
+echo "e.g. rm 2"; echo ""
+echo -e "${CYA}____ clr _____${RCL}"
+echo "To clear the entire pipeline, enter the string 'clr'."; echo ""
+echo -e "${CYA}___ submit ___${RCL}"
+echo "To finalise the pipeline, enter the string 'submit'."; echo ""
+###################################################################
+# Lock the user into this step until the user requests that the
+# pipeline is finalised. This sets the exit statement to 1.
+###################################################################
+xst=0
+while [[ "$xst" == "0" ]]
+###################################################################
+# If the user has previously entered any requests, echo those back
+# to ensure that they are desired.
+###################################################################
+do
+echo -e "${CYA}____________________________${RCL}"; echo ""
+echo "${uin} ${classresp} ${specresp}"
+###################################################################
+# Echo back the sequence of the pipeline following any user-
+# requested modifications.
+###################################################################
+echo "PIPELINE SEQUENCE:"
+echo "idx name"
+iter=0
+seqcut=$(echo $pipeline|sed 's@,@ @g')
+for mdl in ${seqcut}
+   do
+   echo -e "${CYA}${iter}${RCL}   ${mdl}"
+   iter=$(expr $iter + 1)
+done
+###################################################################
+# Present all available module options.
+###################################################################
+echo -e "${CYA}____________________________${RCL}"; echo "Module options:"
+select option in $modules
+   do
+   ################################################################
+   # User input is loaded into two variables:
+   # classresp and specresp, e.g. for 'info prestats'
+   # classresp holds the 'class of response', e.g. 'info'.
+   # specresp holds the 'specifier', e.g. 'prestats'.
+   # They are parsed together to determine what modifications must
+   # be made to the pipeline.
+   ################################################################
+   classresp=$(echo $REPLY|cut -d" " -f1)
+   specresp=$(echo $REPLY|cut -d" " -f2)
+   uin="User input was:"
+   ################################################################
+   # First, the most complicated case: the response class is an
+   # integer. This indicates that the response specifier should be
+   # a module name, and that the module specified should be added
+   # into the pipeline at the position defined by the response
+   # class.
+   ################################################################
+   if [[ $classresp =~ $POSINT ]]
+      then
+      #############################################################
+      # Verify that the requested module exists. If it does not,
+      # reject the user input and return to the pipeline menu.
+      #############################################################
+      check=""
+      check=$(grep -l $specresp ${XCPEDIR}/settings/modules.txt)
+      if [[ -z $check ]]
+         then
+         echo "$specresp is not a valid module."
+         break
+      fi
+      #############################################################
+      # Prepare to iterate through the working pipeline.
+      #############################################################
+      oldpipe=$pipeline
+      rem=$pipeline
+      pipeline=""
+      iter=0
+      #############################################################
+      # Now, iterate through all indices of the working pipeline.
+      # If the index matches the response class (requested index),
+      # then insert the response specifier (requested module) at
+      # that point.
+      #
+      # There are probably better ways to do this.
+      #############################################################
+      while [[ ! -z $rem ]]
+         do
+         ##########################################################
+         # If the current index matches the response class, stop
+         # and insert the requested module.
+         ##########################################################
+         if [[ "$iter" == "$classresp" ]]
+            then
+            if [[ ! -z $pipeline ]]
+               then
+               pipeline=${pipeline},${specresp}
+            else
+               pipeline=${specresp}
+            fi
+         fi
+         ##########################################################
+         # Increment the index. Reconstruct the pipeline sequence.
+         ##########################################################
+         iter=$(expr $iter + 1)
+         cur=$(echo $rem|cut -d"," -f1)
+         rem=$(echo $rem|sed s/$cur//)
+         rem=$(echo $rem|sed s/,//)
+         if [[ ! -z $pipeline ]]
+            then
+            pipeline=${pipeline},${cur}
+         else
+            pipeline=${cur}
+         fi
+      done
+      [[ -z ${pipeline} ]] && pipeline=${specresp}
+      [[ ${pipeline} == ${oldpipe} ]] \
+         && pipeline=${pipeline},${specresp}
+      #############################################################
+      # Return to the pipeline menu after the working pipeline has
+      # been updated.
+      #############################################################
+      break
+   fi
+   ################################################################
+   # The remaining cases of response classes:
+   ################################################################
+   case $classresp in
+   submit)
+      #############################################################
+      # Finalise the working version of the pipeline; set the exit
+      # statement equal to 1 to bypass the pipeline menu and
+      # proceed to the next phase.
+      #
+      # Append the normalisation module if the image is not in
+      # standard space.
+      #############################################################
+      #if [[ ${space} == standard ]]
+      #   then
+      #   pipeline=${preprocess},${pipeline}
+      #else
+      #   pipeline=${preprocess},${pipeline},norm
+      #fi
+      xst=1
+      break
+      ;;
+   clr)
+      #############################################################
+      # Remove all modules from the working pipeline and return to
+      # the pipeline menu.
+      #############################################################
+      pipeline=""
+      break
+      ;;
+   info)
+      #############################################################
+      # Return information about the requested module by calling
+      # its INI file.
+      #############################################################
+      check=$(grep -l $specresp ${XCPEDIR}/settings/modules.txt)
+      if [[ -z $check ]]
+         then
+         echo "$specresp is not a valid module."
+         break
+      fi
+      ${XCPEDIR}/modules/${specresp}/${specresp}.ini INFO
+      break
+      ;;
+   rm)
+      #############################################################
+      # Excise the module at the requested index from the pipeline.
+      #############################################################
+      idx=$(expr $specresp + 1)
+      pipeline=$(echo $pipeline|cut -d"," -f${idx} --complement)
+      break
+      ;;
+   *)
+      #############################################################
+      # This should only become active if a module is being added 
+      # to the end. First, verify that the module exists, and then
+      # append it to the working pipeline.
+      #############################################################
+      check=$(grep -l $classresp ${XCPEDIR}/settings/modules.txt)
+      if [[ ! -z $check ]]
+         then
+         if [[ ! -z $pipeline ]]
+            then
+            pipeline=${pipeline},${classresp}
+         else
+            pipeline=${classresp}
+         fi
+      else
+         echo "$classresp is not a valid module."
+      fi
+      break
+      ;;
+   esac
+done
+done
+pipeline=$(echo ${pipeline}|sed s@,[,]*@,@g)
+step=$(expr ${step} + 1)
+
+
+
+
+
+###################################################################
+# Write the finalised pipeline sequence to the design file.
+###################################################################
+echo -e "${CYA}____________________________${RCL}"
+echo "Finalised  pipeline sequence:"
+iter=0
+seqcut=$(echo $pipeline|sed 's@,@ @g')
+for mdl in ${seqcut}
+   do
+   echo -e "${CYA}${iter}${RCL}   ${mdl}"
+   iter=$(expr $iter + 1)
+done
+echo "" >> $design
+echo "###################################################################" >> $design
+echo "# PIPELINE" >> $design
+echo "###################################################################" >> $design
+echo "" >> $design
+echo "pipeline=$pipeline" >> $design
+###################################################################
+# Write globals to the design file.
+###################################################################
+globals=$(cat ${XCPEDIR}/settings/global)
+globals=$(echo "$globals"|sed s/^#.*$//g)
+globals=$(echo "$globals"|sed s/^pipeline.*$//g)
+globals=$(echo "$globals"|sed s/^startdir.*$//g)
+echo "" >> $design
+echo "###################################################################" >> $design
+echo "# GLOBAL VARIABLES" >> $design
+echo "###################################################################" >> $design
+echo "" >> $design
+for g in ${globals}
+   do
+   echo "$g" >> $design
+done
+
+
+
+
+
+###################################################################
+# DEFINE: all module-specific variables
+#
+# Call the INI file for each module that has been included in the
+# pipeline to configure that module and assign any variables
+# necessary for including it in the analysis.
+###################################################################
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "The final stage of design setup is to set up variables specific"
+echo "to the pipeline modules that you selected."; echo ""
+read -rsp $'Press any key to proceed with this process.\n' -n1 key
+###################################################################
+# Iterate through all modules. Set the module's context within
+# the pipeline and call its INI script.
+###################################################################
+cxt=1
+cur=""
+rem=$pipeline
+while [ ! -z $rem ]
+   do
+   cur=$(echo $rem|cut -d"," -f1)
+   rem=$(echo $rem|sed s/${cur}//)
+   rem=$(echo $rem|sed s/','//)
+   echo "Current module number: $cxt"
+   if [[ ! -z ${old_design} ]]
+      then
+      ${XCPEDIR}/modules/${cur}/${cur}.ini \
+         -d ${design}\
+         -c ${cxt}\
+         -o ${old_design}
+   else
+      ${XCPEDIR}/modules/${cur}/${cur}.ini \
+         -d ${design}\
+         -c ${cxt}
+   fi
+   cxt=$(expr $cxt + 1)
+done
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo ""; echo ""; echo ""
+echo -e "###################################################################"
+echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
+echo -e "#                                                                 #"
+echo -e "#  ${RED}☭${RCL}                 CONFIGURATION ${RED}★${RCL} COMPLETE                  ${RED}☭${RCL}  #"
+echo -e "#                                                                 #"
+echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
+echo -e "###################################################################"
+echo ""; echo ""; echo ""
+step=$(expr ${step} + 1)
+[[ $(echo ${old_design}|grep -i ~TEMP~) ]] && rm -f ${old_design}
+
+
+
+
+
+###################################################################
+# Present the option of executing the pipeline.
+###################################################################
+execute=0
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo "${step}"; echo "";echo ""
+echo "Would you like to execute the pipeline with your design now?"
+select option in \
+   "Yes, execute locally" \
+   "Yes, execute using a computing cluster" \
+   "No"
+   do
+   case $REPLY in
+   1)
+      echo "Preparing to execute..."
+      mode=s
+      execute=1
+      break
+      ;;
+   2)
+      echo "Preparing to execute..."
+      mode=c
+      execute=1
+      break
+      ;;
+   3)
+      echo "To execute the pipeline in the future, call:"
+      echo "${XCPEDIR}/xcpEngine -d ${design}"
+      break
+      ;;
+   *)
+      echo "Invalid option specified. Select 1 (Yes) or 2 (No)."
+   esac
+done
+
+if [ "$execute" == "1" ]
+   then
+   ${XCPEDIR}/xcpEngine -d $design -m $mode
+fi
+

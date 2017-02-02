@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# dico_exampleDicom specifies the path to an example DICOM to
+# be used in distortion correction
+dico_exampleDicom[${cxt}]=${XCPEDIR}
+# accepted values are paths to DICOMs
+###################################################################
+
+
+###################################################################
+# dico_magImage specifies the path to a B0-derived magnitude map
+# to be used in distortion correction
+dico_magImage[${cxt}]=${XCPEDIR}
+# accepted values are paths to DICOMs
+###################################################################
+
+
+###################################################################
+# dico_rpsImage specifies the path to a B0-derived RPS map to
+# be used in distortion correction
+dico_rpsImage[${cxt}]=${XCPEDIR}
+# accepted values are paths to DICOMs
+###################################################################
+
+
+###################################################################
+# dico_clip specifies the maximum signal intensity that can
+# be registered by the scanner
+dico_clip[${cxt}]=-1
+# negative or nonsense values indicate that this should not be
+# computed
+###################################################################
+
+
+###################################################################
+# dico_clip specifies the maximum signal intensity that can
+# be registered by the scanner
+dico_script[${cxt}]=${XCPEDIR}/thirdparty/
+# negative or nonsense values indicate that this should not be
+# computed
+###################################################################
+
+
+###################################################################
+# dico_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+dico_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# dico_cleanup specifies whether to delete
+# files created in intermediate processing steps
+dico_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

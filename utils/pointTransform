@@ -1,0 +1,312 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# This is a wrapper around antsApplyTransformToPoints that won't
+# require you to kill yourself over image orientations
+###################################################################
+
+###################################################################
+# Constants
+# "orientation" is the orientation enforced by ANTs/ITK
+###################################################################
+
+readonly SIGMA=2.35482004503
+readonly POSNUM='^[0-9]+([.][0-9]+)?$'
+readonly POSINT='^[0-9]+$'
+readonly ORIENTATION=RAI
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+   echo ""; echo ""; echo ""
+   echo "Usage: `basename $0` -i <input> <options>"
+   echo ""
+   echo "Compulsory arguments:"
+   echo " -i : Input"
+   echo "      This can either be a seed coordinate library (.sclib)"
+   echo "      file or a hash (#)-delimited list of comma-delimited"
+   echo "      coordinate sets, e.g. '1,3,-7#2,6,6'"
+   echo ""
+   echo " -s : Coordinate space image [default MNI 2mm]"
+   echo "      The path to an image file that defines the coordinate"
+   echo "      space in which input coordinates are initially"
+   echo "      situated."
+   echo ""
+   echo " -r : Coordinate space reference [default MNI 2mm]"
+   echo "      The path to an image file that defines the coordinate"
+   echo "      space into which coordinates are to be transformed."
+   echo ""
+   echo " -t : Paths to the INVERSES of the transforms to be applied"
+   echo "      to the input. You may either pass each as a separate"
+   echo "      flag, or pass them as a hash (#)-delimited list."
+   echo "      Transforms will be composed into a diffeomorphism in"
+   echo "      the order that they are passed."
+   echo ""
+   echo "Optional arguments:"
+   echo " -v : Output voxel coordinates"
+   echo "      If this flag is set, then the outputs of transforms"
+   echo "      will be in voxel space rather than mm space."
+   echo ""
+   echo " -l : Input voxel coordinates"
+   echo "      If this flag is set, then the input coordinates will"
+   echo "      be understood to be in voxel space."
+   echo ""
+   echo " -x : Trace"
+   echo "      If this flag is set, then any commands called by the"
+   echo "      `basename $0` routine will be explicitly printed to"
+   echo "      the console or log."
+   echo ""; echo ""; echo ""
+}
+
+###################################################################
+# Define defaults
+###################################################################
+template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain
+reference=${FSLDIR}/data/standard/MNI152_T1_2mm_brain
+VOXEL=0
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "i:s:t:r:vlx" OPTION
+   do
+   case $OPTION in
+   i)
+      coors=${OPTARG}
+      ;;
+   s)
+      template=${OPTARG}
+      [[ $(imtest ${template}) != 1 ]] && Usage && exit
+      ;;
+   t)
+      [[ -z ${transforms} ]] \
+         && transforms=${OPTARG} \
+         || transforms="${transforms}#${OPTARG}"
+      ;;
+   r)
+      reference=${OPTARG}
+      [[ $(imtest ${reference}) != 1 ]] && Usage && exit
+      ;;
+   v)
+      VOXEL=1
+      ;;
+   l)
+      VOXIN=1
+      ;;
+   x)
+      set -x
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z ${coors} ]] && Usage && exit
+[[ -z ${template} ]] && Usage && exit
+[[ -z ${reference} ]] && Usage && exit
+[[ -z ${transforms} ]] && Usage && exit
+
+
+
+
+
+###################################################################
+# Determine whether the input is a coordinates library or a
+# coordinates list.
+###################################################################
+sclib=0
+[[ -e ${coors} ]] && [[ ! -z $(cat ${coors}) ]] && sclib=1
+
+
+
+
+
+###################################################################
+# Parse the transform list. ANTs applies transforms in the reverse
+# order that they are passed.
+###################################################################
+transforms=$(echo $transforms|sed s@'#'@' '@g)
+for transform in ${transforms}
+   do
+   antsXFM="-t ${transform} ${antsXFM}"
+done
+
+
+
+
+
+###################################################################
+# Determine the orientation of the coordinate template.
+# ANTs strictly enforces RAI orientation.
+###################################################################
+xsg=1
+ysg=1
+zsg=1
+xorient=$(3dinfo ${template} 2>/dev/null|grep -i \(x\)|cut -d"=" -f2)
+xorient=$(echo ${xorient}|head -c 1)
+yorient=$(3dinfo ${template} 2>/dev/null|grep -i \(y\)|cut -d"=" -f2)
+yorient=$(echo ${yorient}|head -c 1)
+zorient=$(3dinfo ${template} 2>/dev/null|grep -i \(z\)|cut -d"=" -f2)
+zorient=$(echo ${zorient}|head -c 1)
+orient=${xorient}${yorient}${zorient}
+rxorient=${ORIENTATION:0:1}
+ryorient=${ORIENTATION:1:1}
+rzorient=${ORIENTATION:2:2}
+[[ ${xorient} != ${rxorient} ]] \
+   && xsg=-1
+[[ ${yorient} != ${ryorient} ]] \
+   && ysg=-1
+[[ ${zorient} != ${rzorient} ]] \
+   && zsg=-1
+
+
+
+
+
+###################################################################
+# Load the coordinates if they are in a library
+###################################################################
+if [[ ${sclib} == 1 ]]
+   then
+   sclibpath=${coors} \
+   coors=$(grep -i "^#" ${sclibpath}) \
+   space=$(grep -i "SPACE::" ${sclibpath}|cut -d":" -f3)
+else
+   coors=$(echo ${coors}|sed s@'#'@' '@g)
+fi
+coors=(${coors})
+
+
+
+
+
+###################################################################
+# Initialise an ANTs coordinate csv
+###################################################################
+rng=$(echo $RANDOM)$(date +%N)$(echo $RANDOM)
+ctemp=${rng}COORD~TEMP~
+rm -f ${ctemp}.csv
+echo x,y,z,t >> ${ctemp}.csv
+
+
+
+
+
+###################################################################
+# Iterate through all coordinates and write them into the to-be-
+# transformed csv
+###################################################################
+for ((i=0;i<${#coors[@]};i++))
+   do
+   coor=${coors[i]}
+   [[ ${sclib} == 1 ]] && coor=$(echo ${coor}|cut -d"#" -f3)
+   ################################################################
+   # Move out of voxel space
+   ################################################################
+   if [[ ${space} == VOXEL ]] || [[ ${VOXIN} == 1 ]]
+      then
+      coor=$(echo ${coor}|sed s@','@' '@g)
+      coor=$(echo ${coor}|\
+         img2stdcoord -img ${template} -std ${template})
+      coor=$(echo ${coor}|sed s@' '@','@g)
+   fi
+   xcoor=$(echo ${coor}|cut -d"," -f1)
+   ycoor=$(echo ${coor}|cut -d"," -f2)
+   zcoor=$(echo ${coor}|cut -d"," -f3)
+   ################################################################
+   # Reflect into the realm of RAI, if necessary
+   ################################################################
+   [[ ${xsg} == -1 ]] \
+      && xcoor=$(echo -1 \* $xcoor|bc)
+   [[ ${ysg} == -1 ]] \
+      && ycoor=$(echo -1 \* $ycoor|bc)
+   [[ ${zsg} == -1 ]] \
+      && zcoor=$(echo -1 \* $zcoor|bc)
+   ################################################################
+   # Write the coordinates into the csv
+   ################################################################
+   echo ${xcoor},${ycoor},${zcoor},0 >> ${ctemp}.csv
+done
+
+
+
+
+
+###################################################################
+# Transform all coordinates
+###################################################################
+${ANTSPATH}/antsApplyTransformsToPoints \
+   -d 3 \
+   -i ${ctemp}.csv \
+   ${antsXFM} \
+   -o ${ctemp}out.csv #\
+#   > /dev/null 2>&1
+
+
+
+
+
+###################################################################
+# Iterate through all coordinates and write them to stdout
+# in sclib format
+###################################################################
+coorsxfm=$(tail -n +2 ${ctemp}out.csv)
+coorsxfm=(${coorsxfm})
+if [[ ${VOXEL} == 1 ]]
+   then
+   xres=$(fslval ${reference} pixdim1)
+   yres=$(fslval ${reference} pixdim2)
+   zres=$(fslval ${reference} pixdim3)
+   space="VOXEL::${xres},${yres},${zres}::${reference}"
+else
+   space=${reference}
+fi
+echo "SPACE::${space}"
+for ((i=0;i<${#coorsxfm[@]};i++))
+   do
+   coor=${coors[i]}
+   coor_xfm=${coorsxfm[i]}
+   [[ ${sclib} == 1 ]] && name="#"$(echo ${coor}|cut -d"#" -f2)"#" # || name='##'
+   [[ ${sclib} == 1 ]] && rad="#"$(echo ${coor}|cut -d"#" -f4) # || rad='#'
+   xcoor=$(echo ${coor_xfm}|cut -d"," -f1)
+   ycoor=$(echo ${coor_xfm}|cut -d"," -f2)
+   zcoor=$(echo ${coor_xfm}|cut -d"," -f3)
+   ################################################################
+   # Return from the realm of RAI, if necessary
+   ################################################################
+   [[ ${xsg} == -1 ]] \
+      && xcoor=$(echo -1 \* $xcoor|bc)
+   [[ ${ysg} == -1 ]] \
+      && ycoor=$(echo -1 \* $ycoor|bc)
+   [[ ${zsg} == -1 ]] \
+      && zcoor=$(echo -1 \* $zcoor|bc)
+   coor=${xcoor},${ycoor},${zcoor}
+   ################################################################
+   # Convert the output to voxel space if requested
+   ################################################################
+   if [[ ${VOXEL} == 1 ]]
+      then
+      coor=$(echo ${coor}|sed s@','@' '@g)
+      coor=$(echo ${coor}|\
+            std2imgcoord -img ${reference} -std ${reference} -vox)
+      coor=$(echo ${coor}|sed s@' '@','@g)
+   fi
+   ################################################################
+   # Print the output
+   ################################################################
+   echo ${name}${coor}${rad}
+done
+
+
+
+
+rm -f ${ctemp}*.csv

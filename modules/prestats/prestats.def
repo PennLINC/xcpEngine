@@ -1,0 +1,239 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+###################################################################
+# prestats_dvols stores the number of initial volumes 
+# to discard from further analysis in order to account
+# for T1 equlibration effects at the beginning of the
+# scan
+prestats_dvols[${cxt}]=4
+# accepted values are 0 and positive integers
+###################################################################
+
+
+###################################################################
+# prestats_stime stores the method used to correct for
+# slice timing; this is dependent upon the sequence
+# used during acquisition
+prestats_stime[${cxt}]=none
+# accepted values are:
+# none
+# up
+# down
+# interleaved
+# custom (requires an additional input file)
+###################################################################
+
+
+###################################################################
+# prestats_sdir stores the direction of slice acquisition
+# for use in slice timing correction
+prestats_sdir[${cxt}]=Z
+# accepted values are:
+# X
+# Y
+# Z
+###################################################################
+
+
+###################################################################
+# prestats_sptf stores the type of spatial filter that
+# is used during the analysis
+prestats_sptf[${cxt}]=none
+# accepted values are:
+# gaussian
+# susan
+# uniform
+# none
+###################################################################
+
+
+###################################################################
+# prestats_smo stores the radius in mm of the
+# spatial smoothing kernel
+prestats_smo[${cxt}]=6
+# accepted values are nonnegative numeric
+# For no smoothing, enter 0
+###################################################################
+
+
+###################################################################
+# prestats_tmpf stores the type of temporal filter that
+# is used during the analysis; at this time, Gaussian
+# and Butterworth filters have been implemented
+prestats_tmpf[${cxt}]=none
+# accepted values are:
+# fft
+# gaussian
+# butterworth
+# chebyshev1
+# chebyshev2
+# elliptic
+# none
+###################################################################
+
+
+###################################################################
+# prestats_tmpf_order stores the order of the temporal
+# filter; this is not required for Gaussian or FFT filters
+prestats_tmpf_order[${cxt}]=1
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# prestats_tmpf_order stores the number of passes of the
+# temporal filter; 1 indicates a forward filter, while
+# 2 indicates a forward and reverse filter; this is not
+# required for Gaussian or FFT filters
+prestats_tmpf_pass[${cxt}]=2
+# accepted values are [1|2]
+###################################################################
+
+
+###################################################################
+# prestats_tmpf_ripple stores the pass band ripple for
+# the temporal filter; it is not required for Gaussian,
+# FFT, or Butterworth filters
+prestats_tmpf_ripple[${cxt}]=0.5
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# prestats_tmpf_ripple2 stores the stop band ripple for
+# the elliptic filter
+prestats_tmpf_ripple2[${cxt}]=20
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# prestats_tmpf_dvols stores the number of volumes to
+# discard from the timeseries limits after applying the
+# temporal filter; it is not required for Gaussian or
+# FFT filters
+prestats_tmpf_dvols[${cxt}]=15
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# prestats_hipass stores the frequency cutoff for the
+# high-pass temporal filter in Hertz
+prestats_hipass[$cxt]=0.01
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# prestats_lopass stores the frequency cutoff for the
+# low-pass temporal filter in Hertz
+prestats_lopass[${cxt}]=0.08
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# prestats_fit stores the fractional intensity threshold
+# for brain extraction
+prestats_fit[${cxt}]=0.3
+# accepted values are (0,1)
+###################################################################
+
+
+###################################################################
+# prestats_bbgthr stores the brain-background threshold
+# for brain extraction
+prestats_bbgthr[${cxt}]=0.1
+# accepted values are (0,1)
+###################################################################
+
+
+###################################################################
+# prestats_dmdt stores the order of the detrending
+# polynomial to be applied to the BOLD timeseries;
+# order 0 indicates demeaning without detrending
+prestats_dmdt[${cxt}]=2
+# accepted values are nonnegative integers
+# or the string 'auto'
+###################################################################
+
+
+###################################################################
+# prestats_censor specifies the minimum threshold of
+# framewise displacement required before a volume is
+# censored and specifies whether censoring should be
+# performed iteratively (at various steps during 
+# processing) or only after all processing is complete.
+# Enter none for no censoring.
+# This value will propagate to all future modules from
+# the first instance of prestats that includes MCO!
+prestats_censor[${cxt}]=none
+# accepted values are comma-separated pairs
+# The first element must be either "none," "iter",
+# or "final"
+# The second element must be positive numeric
+# Enter 0 and you will be sorry
+# (not required if the first value is none)
+# e.g., iter,0.2 for iterative censoring of volumes
+# with over 0.2mm framewise displacement
+###################################################################
+
+
+###################################################################
+# prestats_censor_cr specifies what variable determines whether
+# a frame should be censored.
+prestats_censor_cr[${cxt}]=fd
+# accepted values are
+# fd (framewise displacement)
+# rms (relative RMS motion)
+# TODO
+# dvars (NYI)
+###################################################################
+
+
+###################################################################
+# This value is not used in the pipeline. It is the
+# recommended FD for censoring read by the INI script.
+prestats_fd[${cxt}]=0.2
+###################################################################
+
+
+###################################################################
+# prestats_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+prestats_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# prestats_cleanup specifies whether to delete
+# files created in intermediate processing steps
+prestats_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# prestats_process stores a code for the order in which
+# pre-processing is run
+prestats_process[${cxt}]=DVOMPRSTMMCOBXTSPTDMTTMP
+# accepts a string consisting of three-letter substrings
+# concatenated together
+# accepted substring codes:
+# DVO: discard volumes
+# MPR: extract motion parameters
+# MCO: correct for subject motion
+# STM: slice timing correction
+# BXT: brain extraction
+# DMT: demean/detrend timeseries
+# DSP: despike timeseries
+# SPT: spatial filter
+# TMP: temporal filter
+###################################################################

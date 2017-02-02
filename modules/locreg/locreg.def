@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# locreg_gm specifies whether to model local grey
+# matter signal
+locreg_gm[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# locreg_gm_path specifies the path to a segmentation
+# including grey matter
+locreg_gm_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# locreg_gm_val stores the value of grey matter
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+locreg_gm_val[${cxt}]=2
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# locreg_gm_ero stores the iterations of erosion
+# to be applied to the grey matter mask
+locreg_gm_ero[${cxt}]=0
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_gm_rad stores the radius that defines the
+# local GM neighbourhood 
+locreg_gm_rad[${cxt}]=45
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_wm specifies whether to model local white
+# matter signal
+locreg_wm[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# locreg_wm_path specifies the path to a segmentation
+# including white matter
+locreg_wm_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# locreg_wm_val stores the value of white matter
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+locreg_wm_val[${cxt}]=3
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# locreg_wm_ero stores the iterations of erosion
+# to be applied to the white matter mask
+locreg_wm_ero[${cxt}]=0
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_wm_rad stores the radius that defines the
+# local WM neighbourhood 
+locreg_wm_rad[${cxt}]=45
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_csf specifies whether to model local cerebrospinal
+# fluid signal
+locreg_csf[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# locreg_csf_path specifies the path to a segmentation
+# including CSF
+locreg_csf_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# locreg_csf_val stores the value of CSF
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+locreg_csf_val[${cxt}]=1
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# locreg_csf_ero stores the iterations of erosion
+# to be applied to the CSF mask
+locreg_csf_ero[${cxt}]=0
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_csf_rad stores the radius that defines the
+# local CSF neighbourhood 
+locreg_csf_rad[${cxt}]=45
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_lms specifies whether to model the overall mean
+# local signal
+locreg_lms[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# locreg_lms_rad stores the radius that defines the
+# local neighbourhood 
+locreg_lms_rad[${cxt}]=45
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# locreg_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+locreg_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# locreg_cleanup specifies whether to delete
+# files created in intermediate processing steps
+locreg_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

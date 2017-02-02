@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+case $1 in
+
+ini)
+echo ""
+echo "Usage for pipeline module initialisation:"
+echo "<module_name>.ini -d <design> <options>"
+echo ""
+echo "Compulsory arguments:"
+echo " -d : Master design file for pipeline:"
+echo "      Use xcpConfig for guided creation of a design"
+echo "      file."
+echo ""
+echo "Optional arguments:"
+echo " -c : Context in pipeline:"
+echo "      Input should be a positive integer that denotes"
+echo "      the overall position of the module in the"
+echo "      analytic pipeline."
+echo " -o : Reference design:"
+echo "      Secondary design file. If this option is"
+echo "      specified, then variables defined for the same"
+echo "      module and the same context in the secondary"
+echo "      design file will override defaults."
+echo ""
+;;
+
+mod)
+echo ""
+echo "Usage for pipeline module:"
+echo "<module_name>.mod -d <design> <options>"
+echo ""
+echo "Compulsory arguments:"
+echo " -d : Localised design file for pipeline:"
+echo "      Use xcpConfig for guided creation of a design"
+echo "      file. Use xcpLocaliser to localise it to all"
+echo "      subjects. (Localisation is automatically "
+echo "      completed by the xcpEngine.)"
+echo ""
+echo "Optional arguments:"
+echo " -c : Context in pipeline:"
+echo "      Input should be a positive integer that denotes"
+echo "      the overall position of the module in the"
+echo "      analytic pipeline."
+echo " -t : Trace status:"
+echo "      Boolean value ( 0[default] or 1 ) that indicates"
+echo "      whether all commands called by the module should"
+echo "      be traced and explicitly replicated in a log"
+echo "      file. This log file can then be used to debug"
+echo "      output or can be converted to a standalone"
+echo "      pipeline."
+echo ""
+;;
+
+esac

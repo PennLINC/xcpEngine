@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# benchmark_confmat specifies the path to a matrix containing
+# subject identifiers and variables whose effects may be
+# confounded with motion effects
+benchmark_confmat[${cxt}]=none
+# accepted values are paths to files
+###################################################################
+
+
+###################################################################
+# benchmark_lib specifies the path to the list of networks for
+# which QC-RSFC should be computed
+#benchmark_lib[${cxt}]=${XCPEDIR}/seeds
+# accepted values are paths to .parc files
+###################################################################
+
+
+###################################################################
+# benchmark_sig specifies the means of correcting for multiple
+# comparisons in QC-RSFC correlations
+benchmark_sig[${cxt}]=fdr
+# accepted values are:
+# fdr
+# bonferroni
+# none
+###################################################################
+
+
+###################################################################
+# benchmark_mask specifies the path to a subject-level
+# structural segmentation
+benchmark_mask[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# benchmark_nsubj specifies the number of subjects for which
+# voxelwise timeseries plots should be prepared
+benchmark_nsubj[${cxt}]=1
+# accepted values are numeric
+###################################################################
+
+
+###################################################################
+# benchmark_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+benchmark_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# benchmark_cleanup specifies whether to delete
+# files created in intermediate processing steps
+benchmark_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

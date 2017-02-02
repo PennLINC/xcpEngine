@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# net_lib specifies the path to a library of networks
+#net_lib[${cxt}]=${XCPEDIR}/networks/
+# accepted values are paths to seed libraries
+# THIS SHOULD NOT BE UNCOMMENTED
+###################################################################
+
+
+###################################################################
+# net_name specifies the name of the set of networks being
+# analysed in this iteration of the network module
+net_name[${cxt}]=NULL
+# accepted values are (any)
+###################################################################
+
+
+###################################################################
+# net_metric specifies the metric to use to define the functional
+# connectivity between two nodes
+net_metric[${cxt}]=corrcoef
+# accepted values are:
+# corrcoef
+# TODO
+#  (in the distant future)
+# mutualinfo
+# meanmtd
+# wcoher
+###################################################################
+
+
+###################################################################
+# net_thr specifies any threshold to be applied to the edges of
+# the adjacency matrix prior to further analysis
+net_thr[${cxt}]=N
+# accepted values are numeric
+# N for no threshold
+# ABS for absolute value
+# Some network analyses may not work with negative edges; if one
+# of these is selected, thresholding of negatives will be forced
+###################################################################
+
+
+###################################################################
+# net_com specifies the community detection algorithm to apply to
+# the resultant adjacency matrix
+net_com[${cxt}]=genlouvain
+# accepted values are:
+# genlouvain (requires compiled genlouvain)
+# TODO
+# infomap
+# louvain
+# girvannewman (for dog's sake do not use this)
+# clauset
+# labelprop
+# eigenvec
+# maxmodularity
+# spinglass
+# randomwalk
+###################################################################
+
+
+###################################################################
+# net_gamma specifies the resolution parameter of the
+# Louvain-like modularity algorithm
+net_gamma[${cxt}]=1
+# accepted values are positive numeric
+###################################################################
+
+
+###################################################################
+# net_consensus specifies the number of iterations to perform
+# when creating each agreement matrix during the process of
+# computing a consensus community partition
+net_consensus[${cxt}]=1000
+# accepted values are positive integers
+###################################################################
+
+
+###################################################################
+# net_wb specifies whether the mean within- and between-network
+# connectivity should be computed
+net_wb[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# net_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+net_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# net_cleanup specifies whether to delete
+# files created in intermediate processing steps
+net_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

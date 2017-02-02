@@ -1,0 +1,499 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Function for creating a parcellation library (.parc)
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+
+readonly RED='\033[0;31m'
+readonly CYA='\033[0;36m'
+readonly RCL='\033[0m'
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+   echo ""; echo ""; echo ""
+   echo "Usage: `basename $0` <options>"
+   echo ""
+   echo "Compulsory arguments:"
+   echo ""
+   echo " -o : Output path"
+   echo "      The path to the file where the finalised library "
+   echo "      will be written."
+   echo ""
+   echo "Optional arguments:"
+   echo " -s : Subject"
+   echo "      The full identification of an example subject as "
+   echo "      appears in the cohort file. This input is mandatory "
+   echo "      if you wish to include parcellations in subject/"
+   echo "      native space in the new library."
+   echo ""
+   echo " -l : Load library"
+   echo "      Use the specified parcellation library (.parc) as a "
+   echo "      starting point for the library to be created. Any "
+   echo "      parcellations in the basis libraries will be "
+   echo "      loaded into the new library."
+   echo ""
+   echo " -p : Add parcellation"
+   echo "      Include the specified parcellation in the library "
+   echo "      to be created. The parcellation must be specified as "
+   echo "      NAME#PATH#SPACE , where PATH is the path to the image "
+   echo "      containing the parcellation and SPACE is either nat, "
+   echo "      str, or std depending on whether the parcellation is "
+   echo "      in native analytic, native structural, or standard/"
+   echo "      template space, respectively."
+   echo ""
+   echo " -t : Trace"
+   echo "      If this flag is set, then any commands called by the "
+   echo "      erodespare routine will be explicitly printed to the "
+   echo "      console or log."
+   echo ""
+   echo ""; echo ""; echo ""
+   exit
+}
+
+###################################################################
+# Define defaults
+###################################################################
+source ${XCPEDIR}/settings/global
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "o:s:l:p:t" OPTION
+   do
+   case $OPTION in
+   o)
+      out=${OPTARG}
+      ;;
+   s)
+      subj=${OPTARG}
+      sdlm=$(echo ${subj}|sed s@','@' '@g)
+      idx=0
+      for s in ${sdlm}
+         do
+         subject[${idx}]=${s}
+         idx=$(expr ${idx} + 1)
+      done
+      ;;
+   l)
+      lib="${OPTARG}"
+      [[ $(echo ${lib}|rev|cut -d'.' -f1|rev) != parc ]] && Usage
+      parc="${parc} "$(grep -i '^#' ${lib})
+      ;;
+   p)
+      [[ $(imtest $(echo ${OPTARG}|cut -d'#' -f2)) == 0 ]] && Usage
+      parc="${parc} #${OPTARG}"
+      ;;
+   t)
+      set -x
+      silence=""
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+   esac
+done
+[[ -z ${out} ]] && Usage
+[[ $(echo ${out}|rev|cut -d'.' -f1|rev) != parc ]] && out=${out}.parc
+
+
+
+
+
+xst1=0
+while [[ "$xst1" == "0" ]]
+do
+echo ""; echo ""
+echo -e "${RED}______________________________________________________________${RCL}"
+echo ""; echo ""
+###################################################################
+# First, print all contents of the working version of the
+# parcellations library.
+###################################################################
+if [[ -n ${parc} ]]
+   then
+   echo -e "${CYA}Working library${RCL}"
+   echo -e "${CYA}idx"'\t'"#${RCL}Name${CYA}#${RCL}pathToVolume${CYA}#${RCL}coordinateSpace"
+   idx=1
+   for p in $parc
+      do
+      p=$(eval echo -e $(echo ${p}|sed s@'#'@\${CYA}'#'\${RCL}@g))
+      echo -e "${CYA}${idx}${RCL}"'\t'"$p"
+      idx=$(expr ${idx} + 1)
+   done
+   echo ""; echo ""
+   echo -e "${RED}______________________________________________________________${RCL}"
+   echo ""; echo ""
+fi
+
+
+echo "Select an option to edit or finalise the parcellation library."
+echo -e "After selecting an item, enter ${RED}?${RCL} for additional information."
+
+select option in \
+   "Add parcellation" \
+   "Add parcellation library" \
+   "Remove parcellation(s)" \
+   "Add community partition" \
+   "Abort" \
+   "Finalise library"
+   do
+   case $REPLY in
+   
+   ################################################################
+   # USER: Add parcellation
+   ################################################################
+   1)
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the path to a SPATIAL MAP of regions of "
+         echo "interest corresponding to the parcellation that you "
+         echo "wish to add. This may be either an image or a spatial "
+         echo "coordinates library (.sclib) file."
+         echo ""
+         echo "If you are adding a subject-space parcellation, "
+         echo "specify the path corresponding to the ROI map for "
+         eval echo -e $(echo ${subj}|sed s@','@\${CYA}','\${RCL}@g)
+         read -p ""\
+            -e -i ${XCPEDIR}/networks/ buffer
+         ext=$(echo $buffer|rev|cut -d"." -f1|rev)
+         if [[ $(imtest $buffer) == "1" ]] \
+            || [[ "${ext}" == "sclib" ]]
+            then
+            netMap=$buffer
+            echo "ROIs map:"
+            echo "$netMap"
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}The spatial map determines where the regions of "
+            echo "interest in the provided map are located in anatomical "
+            echo "or standard space. Each intensity value (in an image)"
+            echo "or entry (in a coordinates library) should "
+            echo -e "correspond to a separate region of interest.${RCL}"
+            echo ""
+            echo "The input must be a path either to an image or "
+            echo "to a spatial coordinates library file."
+            echo ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MENU."
+         fi
+      done
+      #############################################################
+      # USER: Add parcellation
+      #        ...parcellation name
+      #############################################################
+      netName=$(echo $netMap|rev|cut -d"/" -f1|rev|cut -d"." -f1)
+      echo ""; echo ""
+      echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+      echo ""
+      echo "Specify the NAME of the ROI parcellation for which you just "
+      echo "specified a map."
+      read -p "" -e -i $netName buffer
+      [[ -z ${buffer} ]] && buffer=net$(date+%N)
+      buffer=$(echo $buffer|sed s@' '@'_'@g)
+      netName=$buffer
+      #############################################################
+      # USER: Add parcellation
+      #        ...parcellation space
+      #############################################################
+      echo ""; echo ""
+      echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+      echo ""
+      echo "Specify the coordinate space of the provided parcellation."
+      select option in \
+         "Subject's native structural space" \
+         "Subject's native analytic space" \
+         "Standard/template space"
+         do
+         case $REPLY in
+         1)
+            netSpace=str
+            break
+            ;;
+         2)
+            netSpace=nat
+            break
+            ;;
+         3)
+            netSpace=std
+            break
+            ;;
+         m)
+            break 2
+            ;;
+         *)
+            echo -e "${CYA}What coordinate space is the parcellation "
+            echo "currently situated in? The XCP Engine must "
+            echo "know this in order to determine what transforms "
+            echo "are necessary to move the ROI map and the "
+            echo "primary analytic image into the same space so that "
+            echo "coordinates in both are identical."
+            echo ""
+            echo "If the ROI map was specifically generated for "
+            echo "this subject using its structural image, then select "
+            echo "the 'native struct' option. If the network is "
+            echo "registered to the template, then select the "
+            echo -e "'standard' option.${RCL}"
+            echo ""; echo ""
+            echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+            ;;
+         esac
+      done
+      parc="$parc #${netName}#${netMap}#${netSpace}"
+      break
+      ;;
+   
+   ################################################################
+   # USER: Add parcellation library
+   ################################################################
+   2)
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Specify the PATH to the parcellation library "
+         echo "(.parc) that you wish to load."; echo ""
+         read -p "" -e -i ${XCPEDIR}/seeds/ buffer
+         ext=$(echo "$buffer"|cut -d"." -f1 --complement)
+         if [[ -e "$buffer" ]] \
+            && [[ "${ext}" == "parc" ]]
+            then
+            curlibpath=$buffer
+            echo "Parcellation library selected:"
+            echo $curlibpath; echo ""
+            curlib=$(grep -i "^#" $curlibpath)
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo "The input must be a path to a parcellation "
+            echo "library (.parc) file."
+            echo ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      parc="${parc} ${curlib}"
+      break
+      ;;
+      
+   ################################################################
+   # USER: Remove parcellation(s)
+   ################################################################
+   3)
+      xst2=0
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "The following parcellations will be included in this "
+         echo "library:"
+         idx=1
+         for p in $parc
+            do
+            p=$(eval echo -e $(echo ${p}|sed s@'#'@\${CYA}'#'\${RCL}@g))
+            echo -e "${CYA}${idx}${RCL}"'\t'"$p"
+            idx=$(expr ${idx} + 1)
+         done
+         echo ""
+         echo "Enter the NAME of the parcellation that you wish "
+         echo "to REMOVE."
+         echo ""
+         read -p "" -e -i roi buffer
+         buffer=$(echo $buffer|sed s@' '@'_'@g)
+         remtest=$(echo "$parc"|sed -r s@"#${buffer}#"[^'#']*#[^' ']*'( |$)'@@g)
+         if [[ $remtest != $parc ]]
+            then
+            echo "Target parcellation removed: ${buffer}"
+            parc=$remtest
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}Ensure that the case is correct and that you are "
+            echo "entering only the name of the parcellation (not its "
+            echo "path or space). This is the field between the first "
+            echo -e "two octothorpe (#) delimiters.${RCL}"
+            echo ""
+            echo "No such parcellation."
+            echo ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      break
+      ;;
+   
+   ################################################################
+   # Add community partition
+   ################################################################
+   4)
+      xst2=0
+      unset cparc
+      while [[ "$xst2" == "0" ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "The following parcellations will be included in this "
+         echo "library:"
+         idx=1
+         for p in $parc
+            do
+            p=$(eval echo -e $(echo ${p}|sed s@'#'@\${CYA}'#'\${RCL}@g))
+            echo -e "${CYA}${idx}${RCL}"'\t'"$p"
+            idx=$(expr ${idx} + 1)
+         done
+         echo ""
+         echo "Enter the NAME of the parcellation for which you wish "
+         echo "to add an A PRIORI COMMUNITY PARTITION."
+         echo ""
+         read -p "" -e -i roi buffer
+         buffer=$(echo $buffer|sed s@' '@'_'@g)
+         remtest=$(echo ${parc}|sed -r s@"#${buffer}#"[^'#']*#[^' ']*'( |$)'@@g)
+         if [[ $remtest != $parc ]]
+            then
+            echo "Parcellation selected: ${buffer}"
+            cparcname=${buffer}
+            cparc=$(echo ${parc}|sed s@' '@'\n'@g|grep -i '#'${cparcname})
+            cparcpath=$(echo ${cparc}|cut -d'#' -f3)
+            cparcpath=$(ls -d1 $(eval echo ${cparcpath}))
+            numfield=$(grep -o '#' <<< "${cparc}"|wc -l)
+            [[ ${numfield} -gt 3 ]] && cparc=$(echo $cparc|cut -d'#' -f1-4)
+            numnodes=$(fslstats ${cparcpath} -R|awk '{print $2}'|cut -d'.' -f1)
+            xst2=1
+         elif [[ "${buffer}" == "m" ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}"
+            echo "A community partition can specify how a provided "
+            echo "parcellation is separable into subnetworks or "
+            echo "communities (for instance, default mode network, "
+            echo "control networks, etc.). If the community "
+            echo "structure of a provided parcellation is known, "
+            echo "then it is suggested that the partition be "
+            echo "provided here. Otherwise, the community structure "
+            echo "can be detected using a mathematical heuristic "
+            echo "in the NET module."
+            echo ""
+            echo "Ensure that the case is correct and that you are "
+            echo "entering only the name of the parcellation (not its "
+            echo "path or space). This is the field between the first "
+            echo "two octothorpe (#) delimiters."
+            echo -e "${RCL}"
+            echo "No such parcellation."
+            echo "Please provide the name of the parcellation for "
+            echo "which you wish to add a community partition."
+            echo ""
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      #############################################################
+      # Add community partition
+      #     -> Path to community partition
+      #############################################################
+      xst2=0
+      while [[ "$xst2" == "0" ]] && [[ -n ${cparc} ]]
+         do
+         echo ""; echo ""
+         echo -e "${CYA}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -${RCL}"
+         echo ""
+         echo "Now, provide the path to a file that specifies "
+         echo "the COMMUNITY PARTITION for parcellation "
+         echo "${cparcname}"
+         echo ""
+         read -p "" -e -i community buffer
+         if [[ -e ${buffer} ]]
+            then
+            numasgt=$(cat ${buffer}|wc -l 2>/dev/null)
+            if [[ ${numasgt} -ne ${numnodes} ]]
+               then
+               echo -e "${RED}"
+               echo "The specified community assignment vector does "
+               echo -e "not include assignments for all nodes.${RCL}"
+            else
+               echo "Community partition added."
+               cparc=${cparc}'#'${buffer}
+               parc="${remtest} ${cparc}"
+               xst2=1
+            fi
+         elif [[ ${buffer} == m ]]
+            then
+            break 2
+         else
+            echo -e "${CYA}"
+            echo "The selected file should contain a column vector "
+            echo "of community assignments, one for each node of "
+            echo "the provided parcellation. The nth row of the "
+            echo "community assignment vector should correspond to "
+            echo "the node with intensity n in the parcellation. "
+            echo "If intensity values are missing from the provided "
+            echo "parcellation or if a node should not be included "
+            echo "in any community, then the row corresponding to "
+            echo "the missing value or independent node should "
+            echo "specify assignment to a singleton community or "
+            echo "else include a dummy assignment (0 or -1)."
+            echo ""
+            echo "The specified file must not contain a header."
+            echo -e "${RCL}"
+            echo -e "ENTER ${RED}m${RCL} TO RETURN TO THE MAIN MENU."
+         fi
+      done
+      break
+      ;;
+   
+   ################################################################
+   # Abort
+   ################################################################
+   5)
+      exit
+      ;;
+   
+   ################################################################
+   # Finalise library
+   ################################################################
+   6)
+      xst1=1
+      break
+      ;;
+   
+   esac
+
+done
+done
+
+
+
+###################################################################
+# write network information to library file
+###################################################################
+
+echo ${subj} >> /tmp/cohort~TEMP~
+
+rm -f ${out}
+echo "SPACE::NETWORK" >> ${out}
+echo ":#NAME#MAP#SPACE" >> ${out}
+for p in $parc
+   do
+   echo $(${XCPEDIR}/utils/genpath ${p} /tmp/cohort~TEMP~ 1 ${KEEPNUM}) \
+      >> ${out}
+done
+rm -f /tmps/cohort~TEMP~

@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# regress_despike specifies whether to despike the data prior to
+# filtering
+regress_despike[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# regress_tmpf stores the type of temporal filter that
+# is used during the analysis; at this time, Gaussian
+# and Butterworth filters have been implemented
+regress_tmpf[${cxt}]=fft
+# accepted values are:
+# fft
+# gaussian
+# butterworth
+# chebyshev1
+# chebyshev2
+# elliptic
+# none
+###################################################################
+
+
+###################################################################
+# regress_tmpf_order stores the order of the temporal
+# filter; this is not required for Gaussian or FFT filters
+regress_tmpf_order[${cxt}]=1
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# regress_tmpf_pass stores the number of passes of the
+# temporal filter; 1 indicates a forward filter, while
+# 2 indicates a forward and reverse filter; this is not
+# required for Gaussian or FFT filters
+regress_tmpf_pass[${cxt}]=2
+# accepted values are [1|2]
+###################################################################
+
+
+###################################################################
+# regress_tmpf_ripple stores the pass band ripple for
+# the temporal filter; it is not required for Gaussian,
+# FFT, or Butterworth filters
+regress_tmpf_ripple[${cxt}]=0.5
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# regress_tmpf_ripple2 stores the stop band ripple for
+# the elliptic filter
+regress_tmpf_ripple2[${cxt}]=20
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# regress_tmpf_dvols stores the number of volumes to
+# discard from the timeseries limits after applying the
+# temporal filter; it is not required for Gaussian or
+# FFT filters
+regress_tmpf_dvols[${cxt}]=15
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# regress_hipass stores the frequency cutoff for the
+# high-pass temporal filter in Hertz
+regress_hipass[$cxt]=0.01
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# regress_lopass stores the frequency cutoff for the
+# low-pass temporal filter in Hertz
+regress_lopass[${cxt}]=0.08
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# regress_smo stores the radii in mm of the
+# spatial smoothing kernel
+regress_smo[${cxt}]=6
+# accepted values are nonnegative numeric
+# For no smoothing, enter 0
+###################################################################
+
+
+###################################################################
+# regress_sptf stores the type of spatial filter that
+# is used during the analysis
+regress_sptf[${cxt}]=susan
+# accepted values are:
+# gaussian
+# susan
+# uniform
+# none
+###################################################################
+
+
+###################################################################
+# regress_usan specifies the 
+regress_usan[${cxt}]=default
+# accepted values are paths to images (in which case
+# the specified image is used) or anything else (in which
+# case the example functional image is used)
+###################################################################
+
+
+###################################################################
+# regress_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+regress_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# regress_cleanup specifies whether to delete
+# files created in intermediate processing steps
+regress_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# confound_rp specifies whether to include realignment
+# parameters in the confound matrix
+confound_rp[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_rms specifies whether to include root mean square
+# displacement in the confound matrix
+confound_rms[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_gm specifies whether to include grey
+# matter in the confound matrix
+confound_gm[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_gm_path specifies the path to a segmentation
+# including grey matter
+confound_gm_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# confound_gm_val stores the value of grey matter
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+confound_gm_val[${cxt}]=2
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# confound_gm_ero stores the iterations of erosion
+# to be applied to the grey matter mask prior to
+# extraction of a mean timeseries
+confound_gm_ero[${cxt}]=0
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# confound_wm specifies whether to include white
+# matter in the confound matrix
+confound_wm[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_wm_path specifies the path to a segmentation
+# including white matter
+confound_wm_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# confound_wm_val stores the value of white matter
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+confound_wm_val[${cxt}]=3
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# confound_wm_ero stores the iterations of erosion
+# to be applied to the white matter mask prior to
+# extraction of a mean timeseries
+confound_wm_ero[${cxt}]=0
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# confound_csf specifies whether to include cerebrospinal
+# fluid in the confound matrix
+confound_csf[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_csf_path specifies the path to a segmentation
+# including CSF
+confound_csf_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# confound_csf_val stores the value of CSF
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+confound_csf_val[${cxt}]=1
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# confound_csf_ero stores the iterations of erosion
+# to be applied to the CSF mask prior to
+# extraction of a mean timeseries
+confound_csf_ero[${cxt}]=0
+# accepted values are nonnegative numeric
+###################################################################
+
+
+###################################################################
+# confound_gsr specifies whether to include global
+# signal regression in the confound matrix
+confound_gsr[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_cc specifies the number of compcorr components
+# to include in the confound matrix
+confound_cc[${cxt}]=0
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# confound_past specifies the number of previous time
+# points to include in the confound matrix
+confound_past[${cxt}]=0
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# confound_dx specifies the maximum order of
+# derivative to include in the confound matrix
+confound_dx[${cxt}]=1
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# confound_sq specifies the maximum order of power
+# to include in the confound matrix (2 for squares)
+# powers are applied to derivatives as well
+confound_sq[${cxt}]=2
+# accepted values are nonnegative integers
+###################################################################
+
+
+###################################################################
+# confound_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+confound_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# confound_cleanup specifies whether to delete
+# files created in intermediate processing steps
+confound_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

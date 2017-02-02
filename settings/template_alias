@@ -1,0 +1,2 @@
+MNI152_2mm,${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+MNI152_1mm,${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz

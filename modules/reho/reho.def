@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# reho_roi specifies the path to the list of RoIs for ALFF
+#reho_roi[${cxt}]=${XCPEDIR}/seeds
+# accepted values are paths to .parc files
+###################################################################
+
+
+###################################################################
+# reho_nhood specifies the neighbourhood 
+reho_nhood[${cxt}]=vertices
+# accepted values are:
+# faces
+# edges
+# vertices
+# sphere,k where k is positive numeric
+###################################################################
+
+
+###################################################################
+# reho_roimean specifies whether the ReHo module should compute
+# the mean regional homogeneity within each RoI
+reho_roimean[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# reho_roikw specifies whether the ReHo module should compute
+# the regional homogeneity within each RoI as Kendall's W within
+# that RoI
+reho_roikw[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# reho_sptf stores the type of spatial filter that
+# is used during the analysis
+reho_sptf[${cxt}]=susan
+# accepted values are:
+# gaussian
+# susan
+# uniform
+# none
+###################################################################
+
+
+###################################################################
+# reho_smo stores the radius in mm of the
+# spatial smoothing kernel
+reho_smo[${cxt}]=6
+# accepted values are nonnegative numeric
+# For no smoothing, enter 0
+###################################################################
+
+
+###################################################################
+# reho_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+reho_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# reho_cleanup specifies whether to delete
+# files created in intermediate processing steps
+reho_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

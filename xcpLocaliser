@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+
+
+################################################################### 
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+################################################################### 
+
+
+################################################################### 
+# General module header
+################################################################### 
+
+if [[ $# -lt 2 ]]
+   then
+   ${XCPEDIR}/xcpModusage mod
+   exit 1
+fi
+
+################################################################### 
+# This module localises inputs to the XCP engine
+###################################################################
+
+echo ""; echo ""; echo ""
+echo "################################################################### "
+echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
+echo "#                                                                 #"
+echo "#  ☭               EXECUTING XCP ENGINE LOCALISER              ☭  #"
+echo "#                                                                 #"
+echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
+echo "###################################################################"
+echo ""; echo ""
+
+###################################################################
+# Read in:
+#  * path to main design file
+#  * current subject's identifier
+#  * whether to explicitly trace all commands
+# Trace status is, by default, set to 0 (no trace)
+###################################################################
+trace=0
+while getopts "d:s:t:" OPTION
+   do
+   case $OPTION in
+   d)
+      design=${OPTARG}
+      ;;
+   s)
+      subjidx=${OPTARG}
+      ;;
+   t)
+      trace=${OPTARG}
+      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
+         then
+         ${XCPEDIR}/xcpModusage mod
+         exit
+      fi
+      ;;
+   *)
+      echo "Option not recognised: ${OPTION} ${OPTARG}"
+      ${XCPEDIR}/xcpModusage mod
+      exit
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that the compulsory design and subject variables have
+# been defined
+###################################################################
+[[ -z ${design} ]] && ${XCPEDIR}/xcpModusage mod && exit
+[[ -z ${subjidx} ]] && ${XCPEDIR}/xcpModusage mod && exit
+###################################################################
+# Set trace status, if applicable
+# If trace is set to 1, then all commands called by the pipeline
+# will be echoed back in the log file.
+###################################################################
+[[ ${trace} == "1" ]] && set -x
+###################################################################
+# Initialise the module.
+###################################################################
+
+source $design
+subjrow=$(expr ${subjidx} - 9000)
+csubj=$(sed -n ${subjrow}p ${path_cohort})
+
+################################################################### 
+# Localise design file
+################################################################### 
+echo "Localising design file..."
+###################################################################
+# Parse subject
+###################################################################
+echo " * Parsing subject identifiers"
+remfield=$csubj
+iter=0
+while [[ ! -z ${remfield} ]]
+   do
+   curfield=$(echo ${remfield}|cut -d"," -f1)
+   remfield=$(echo ${remfield}|sed s@^[^,]*@@)
+   remfield=$(echo ${remfield}|sed s@^,@@)
+   subject[${iter}]=${curfield}
+   iter=$(expr ${iter} + 1)
+done
+num_subj_fields=${iter}
+subj=${subject[0]}
+source ${design}
+
+###################################################################
+# Create output directory
+###################################################################
+
+echo $out
+[[ ! -e ${out} ]] && \
+   echo " * Creating output directory" \
+   && mkdir -p $out
+
+###################################################################
+# Evaluate subject-specific variables
+###################################################################
+echo " * Evaluating subject variables"
+design_local=$(echo -e "$(eval "echo -e \"`<${design}`\"")")
+design_local=$(echo "$design_local"\
+   |sed s@img=@img\[$subjidx\]=@g)
+design_local=$(echo "$design_local"\
+   |sed s@struct=@struct\[$subjidx\]=@g)
+
+###################################################################
+# Write local design file
+###################################################################
+echo " * Writing design for current subject"
+design_local_path=${out}/${prefix}.dsn
+rm -f $design_local_path
+echo "${design_local}" >> ${design_local_path}
+echo "" >> ${design_local_path}
+echo "###################################################################" >> ${design_local_path}
+echo "# OUTPUT VARIABLES" >> ${design_local_path}
+echo "###################################################################" >> ${design_local_path}
+echo "" >> ${design_local_path}
+echo "# *** outputs from localiser[0] *** #" >> ${design_local_path}
+echo "" >> ${design_local_path}
+echo "subjidx=$subjidx" >> ${design_local_path}
+for (( iter=0; iter<$num_subj_fields; iter++ ))
+   do
+   echo "subject[${iter}]=${subject[${iter}]}" >> ${design_local_path}
+done
+echo "design_local=${design_local_path}" >> ${design_local_path}
+[[ -z ${space} ]] && echo "space=native" >> ${design_local_path}
+
+###################################################################
+# Write path to derivative image index
+###################################################################
+echo " * Writing path to derivative map index"
+source ${design_local_path}
+auxImgPath=${out}/${prefix}_derivsNative
+rm -rf $auxImgPath
+echo "auxImgs[${subjidx}]=${auxImgPath}" >> ${design_local_path}
+echo ""
+
+###################################################################
+# Write path to audit file, and write information
+# to the audit file
+###################################################################
+audit=${out}/${prefix}_logs/$(date +%Y%m%d%H%M)_${prefix}_audit
+echo audit=${audit} >> ${design_local_path}
+###################################################################
+# Prepare the audit header, which will contain information about the
+# processing status of the current subject
+###################################################################
+pfx=$(grep -i "prefix=" ${design}|cut -d"=" -f2)
+rm -f ${audit}
+nfields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
+audithdr=$(echo ${pfx}|sed s@'_'@','@g|sed s@'${'@@g|sed s@'}'@@g)
+audithdr=${audithdr},localiser,${pipeline}
+echo "${audithdr}" >> ${audit}
+naudits=$(echo $(grep -o "," <<< $audithdr|wc -l) + 1|bc)
+###################################################################
+# Write the contents of the audit file.
+###################################################################
+saudit=$(echo ${prefix}|sed s@'_'@','@g)
+nmods=$(echo $(grep -o "," <<< $pipeline|wc -l) + 2|bc)
+for ((i=0; i<${nmods}; i++))
+   do
+   saudit=${saudit},0
+done
+echo ${saudit} >> ${audit}
+
+###################################################################
+# Write path to index of quality variables
+###################################################################
+quality=${out}/${prefix}_quality.csv
+echo quality=${out}/${prefix}_quality.csv >> ${design_local_path}
+[[ -e ${quality} ]] && rm -rf ${quality}
+qvars=$(echo ${pfx}|sed s@'_'@','@g|sed s@'${'@@g|sed s@'}'@@g)
+qvals=$(echo ${prefix}|sed s@'_'@','@g)
+echo ${qvars} >> ${quality}
+echo ${qvals} >> ${quality}
+
+###################################################################
+# Ensure that all images are present
+###################################################################
+[[ $(imtest ${img[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate functional timeseries." && err=1
+[[ $(imtest ${struct[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate structural image." && err=1
+if [[ ${space} == native ]]
+   then
+   [[ $(imtest ${template}) != 1 ]] && echo "::XCP-ERROR: Unable to locate template." && err=1
+   [[ $(imtest ${xfm_warp}) != 1 ]] && echo "::XCP-ERROR: Unable to locate warp." && err=1
+   [[ $(imtest ${ixfm_warp}) != 1 ]] && echo "::XCP-ERROR: Unable to locate inverse warp." && err=1
+fi
+[[ ${err} == 1 ]] && exit 666
+
+###################################################################
+# Localise image
+###################################################################
+echo "Localising image..."
+ext=$(basename ${img[${subjidx}]}|cut -d"." -f1 --complement)
+img=${out}/${prefix}.${ext}
+rm -f ${img}
+ln -s ${img[${subjidx}]} ${img}
+
+###################################################################
+# Enter audit information for the current subject
+###################################################################
+prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
+modaudit=$(expr ${prefields} + ${cxt} + 1)
+subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
+replacement=$(echo ${subjaudit}\
+   |sed s@[^,]*@@${modaudit}\
+   |sed s@',,'@',1,'@)
+sed -i s@${subjaudit}@${replacement}@g ${audit}
+
+echo ""; echo ""; echo "Localiser complete"

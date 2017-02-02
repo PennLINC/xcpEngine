@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# only input should be context in pipeline
+cxt=$1 # do not edit this line
+
+
+# norm_prog specifies the program to be used
+# in normalisation
+norm_prog[${cxt}]=ants
+# accepted values are:
+# ants
+# dramms
+# fnirt
+
+
+# norm_warp stores the path to the diffeomorphic
+# warp from subject anatomical T1 to standard space
+norm_template[${cxt}]=MNI152_2mm
+# accepted values are paths to images
+
+
+# norm_warp stores the path to the diffeomorphic
+# warp from subject anatomical T1 to standard space
+norm_warp[${cxt}]=$(pwd)
+# accepted values are paths to images
+
+
+# norm_affine stores the path to the affine
+# registration of the subject T1 to standard space
+norm_affine[${cxt}]=$(pwd)
+# accepted values are paths to mat files
+
+
+# norm_rigid stores the path to the rigid registration
+# to realign the subject T1 with the template
+norm_rigid[${cxt}]=$(pwd)
+# accepted values are paths to mat files
+
+
+# norm_resample stores the path to a downsample or
+# upsample
+norm_resample[${cxt}]=$(pwd)
+# accepted values are paths to mat files
+
+
+# norm_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+norm_rerun[${cxt}]=N
+# accepted values are [Y|N]
+
+
+# norm_cleanup specifies whether to delete
+# files created in intermediate processing steps
+norm_cleanup[${cxt}]=Y
+# accepted values are [Y|N]

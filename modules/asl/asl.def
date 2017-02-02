@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+
+###################################################################
+# asl_roi specifies the path to the list of RoIs for CBF
+# quantification
+#asl_roi[${cxt}]=${XCPEDIR}/seeds
+# accepted values are paths to .parc files
+###################################################################
+
+
+###################################################################
+# asl_DicomExample specifies the path to an example DICOM to
+# be used in CBF quantification
+asl_xml[${cxt}]=${XCPEDIR}
+# accepted values are paths to DICOMs
+###################################################################
+
+
+###################################################################
+# asl_xmlPrepScript specifies the path to the script that obtains
+# an xml from data in a dicom header
+asl_xmlPrepScript[${cxt}]=${XCPEDIR}/thirdparty/
+# the script should be called dicom_dump.sh
+###################################################################
+
+
+###################################################################
+# asl_QuantScript specifies the path to the script that quantifies
+# cerebral blood flow on the basis of an ASL acquisition
+asl_QuantScript[${cxt}]=${XCPEDIR}/thirdparty/
+# the script should be called pcasl_quant_v7_afgr.sh or some
+# variant thereof
+###################################################################
+
+
+###################################################################
+# asl_gm_path specifies the path to a segmentation
+# including grey matter
+asl_gm_path[${cxt}]=$(pwd)
+# accepted values are paths to images
+###################################################################
+
+
+###################################################################
+# asl_gm_val stores the value of grey matter
+# in the segmentation; this is necessary only
+# if the segmentation includes multiple tissue
+# types
+asl_gm_val[${cxt}]=2
+# accepted values are nonnegative numeric or ALL
+###################################################################
+
+
+###################################################################
+# asl_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+asl_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+
+###################################################################
+# asl_cleanup specifies whether to delete
+# files created in intermediate processing steps
+asl_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################

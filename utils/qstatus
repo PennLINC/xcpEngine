@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# General module header
+###################################################################
+
+###################################################################
+# Input job ID string, separated by '-e ',
+# e.g., -e 435454 -e 435456 -e 453457
+# sleep time is currently hard coded; ideally, it will instead be
+# dependent on a module ping in the future
+###################################################################
+ids=$@
+sleeptime=30
+
+status=$(qstat|grep ${ids})
+remain=$(echo "${status}"|wc -l)
+time=$(date '+%H:%M:%S')
+day=$(date '+%d %h %Y')
+echo ""; echo ""; echo ""
+echo "..."
+echo "Waiting for ${remain} tasks"
+echo "at ${time} on ${day}"
+echo "..."
+echo ""; echo ""; echo ""
+
+while [[ -n ${status} ]]
+   do
+   sleep $sleeptime
+   status=$(qstat|grep ${ids})
+   remain=$(echo "${status}"|wc -l)
+   [[ -z ${status} ]] && remain=0
+   time=$(date '+%H:%M:%S')
+   day=$(date '+%d %h %Y')
+   echo ""; echo ""; echo ""
+   echo "..."
+   echo "Waiting for ${remain} tasks"
+   echo "at ${time} on ${day}"
+   echo "..."
+   echo ""; echo ""; echo ""
+done
