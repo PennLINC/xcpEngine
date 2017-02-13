@@ -397,6 +397,7 @@ echo "Processing image: $img"
 #  * ACT: ANTs CT pipeline
 #  * ABF: ANTs N4 bias field correction
 #  * AGD: ANTs Atropos GMD pipeline
+#  * ABE: ANTs Brain Extraction
 ###################################################################
 
 rem=${structural_process[${cxt}]}
@@ -430,13 +431,11 @@ while [[ "${#rem}" -gt "0" ]]
         # Define any inputs if non were provided | not present
         ###################################################################
         if [[ ! -f "${templateExtracted}" ]] \
-           || [[ ! -f "${templateNonExtracted}" ]]
-            then
+           || [[ ! -f "${templateNonExtracted}" ]] ; then 
             echo "No template - ANTsCT pipeline can not wrong"
             exit 16
         fi
-        if [[ "X${templateWeight}" == "X" ]]
-            then
+        if [[ "X${templateWeight}" == "X" ]] ; then
             templateWeight=".2"
         fi
         ###################################################################
@@ -463,13 +462,13 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         # Define any inputs if non were provided | not present
         ###################################################################
-        if [[ "X ${ N4_CONVERGENCE}" == "X"]]
+        if [[ "X ${ N4_CONVERGENCE}" == "X"]] ; then
             N4_CONVERGENCE="-c [50x50x50x50,0.0000001]"
         fi
-        if [[ "X${N4_SHRINK_FACTOR}" == "X" ]]
+        if [[ "X${N4_SHRINK_FACTOR}" == "X" ]] ; then 
             N4_SHRINK_FACTOR="-s 2"
         fi
-        if [[ "X${N4_BSPLINE_PARAMS}" == "X" ]]
+        if [[ "X${N4_BSPLINE_PARAMS}" == "X" ]] ; then 
             N4_BSPLINE_PARAMS="-b [200]"
         fi
         ###################################################################
@@ -515,9 +514,42 @@ while [[ "${#rem}" -gt "0" ]]
           fi
           echo "Done with $i iteration of atropos"
         done
-
-
-
+    ABE)
+        ###################################################################
+        ###################################################################
+        # * Run ANTs Brain Extraction
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "Running ANTs BE"
+        mkdir -p ${outdir}/antsBE/
+        ###################################################################
+        # Define any inputs if non were provided | not present
+        ###################################################################
+	if [[ "X${EXTRACTION_PRIOR}" == "X" ]] ; then 
+		EXTRACTION_PRIOR="-m ${templateMask}" ; 
+	fi
+	if [[ "X${KEEP_BE_IMAGES}" == "X" ]] ; then 
+		KEEP_BE_IMAGES="-k 0" ; 
+	fi 
+	if [[ "X${USE_BE_FLOAT}" == "X" ]] ; then 
+		USE_BE_FLOAT="-q 0"
+	fi
+	if [[ "X${USE_BE_RANDOM_SEED}" == "X" ]] ; then 
+		USE_BE_RANDOM_SEED="-u 0"
+	fi
+        ###################################################################
+        # Now run the ANTs BE Command
+        ###################################################################
+        beCMD="${ANTSPATH}/antsBrainExtraction.sh-d 3 -i ${img}${ext} -e ${templateExtracted} ${EXTRACTION_PRIOR} ${KEEP_BE_IMAGES} ${USE_BE_FLOAT} ${USE_BE_RANDOM_SEED} -o ${outdir}/antsBE/${prefix}_ -s ${ext}"
+        ${beCMD}
+        ###################################################################
+        # Now point 
+        ###################################################################
+        img=${outdir}/antsBE/${prefix}_BrainExtractionBrain
+        echo "done with ANTs Brain Extraction"
+        ;;	
     esac
 done
 ###################################################################
@@ -527,7 +559,7 @@ done
 echo ""; echo ""; echo ""
 echo "Writing outputs..."
 rm -f ${out}/${prefix}${ext}
-ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
+ln -s ${img}${ext} ${out}/${prefix}${ext}
 ###################################################################
 # OUTPUT: Brain Extraction Mask
 # Test whether the brain extraction mask was created.
@@ -619,19 +651,6 @@ if [[ $(imtest "${gmdProbability2[${cxt}]}") == "1" ]]
    echo "#gmdProbability2#${gmdProbability2[${cxt}]},#GMD,${cxt}" \
       >> ${auxImgs[${subjidx}]}
 fi
-###################################################################
-# OUTPUT: JLF Labels
-# Test whether the ANTs GMD image was created.
-# If it does exist then add it to the index of derivatives and 
-# to the localised design file
-###################################################################
-if [[ $(imtest "${jlfLabels[${cxt}]}") == "1" ]]
-   then
-   echo "jlfLabels[${subjidx}]=${jlfLabels[${cxt}]}"\
-      >> $design_local
-   echo "#jlfLabels#${jlfLabels[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
 ################################################################
 # OUTPUT: brain-extracted referenceVolume
 # Use the brain extracted image from the output of antsCT 
@@ -644,20 +663,6 @@ if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == "1" ]]
    echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" \
       >> ${auxImgs[${subjidx}]}
 fi
-################################################################
-# OUTPUT: referenceVolume
-# Test whether an example functional volume exists as an
-# image. If it does, add it to the index of derivatives and to
-# the localised design file. Again this is used to run the roiquant module
-################################################################
-if [[ $(imtest ${referenceVolume[${cxt}]}) == "1" ]]
-   then
-   echo "referenceVolume[${subjidx}]=${referenceVolume[${cxt}]}" \
-      >> $design_local
-   echo "#referenceVolume#${referenceVolume[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-
 ################################################################
 # OUTPUT: Transformations
 # Now export the transformations computed during the antsCT processing   
