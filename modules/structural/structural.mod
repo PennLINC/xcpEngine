@@ -100,21 +100,21 @@ echo "Output directory is $outdir"
 ###################################################################
 # Define paths to all potential outputs.
 #
-# For the stuructural module, potential outputs include:
+# For the structural module, potential outputs include:
 # Define paths to all potential outputs.
 #
-# For the prestats module, potential outputs include:
+# For the structural module, potential outputs include:
 #  * biasCorrected: N4 bias field corrected image
 #  * skullStrippedImage: output image from antsBrainExtraction.sh
 #  * brainExtractionMask: output image used for extraction from antsBrainExtraction.sh
 #  * brainNormalizedToTemplate: The skull stripped strucutal image in template space
 #  * antsCorticalMap: Output from antsCT
-#  * brainSegmentation[00%d]: Output from ANts CT 6 class segmentation
+#  * brainSegmentation[0%d]: Output from ANts CT 6 class segmentation
 #  * jlfLabels: output from ants JLF
-#  * atropos3classprob
-#  * atropos3dlcassseg
+#  * atropos3classprob[0%2d]: A soft segmentation from the output of Atropos
+#  * atropos3dlcassseg: A hard 3 class tissue class segmentation
 ###################################################################
-## ANTSCT OUTPUT ##
+## ANTsCT OUTPUT ##
 brainExtractionMask[${cxt}]=${outdir}/antsCT/${prefix}_BrainExtractionMask
 brainNormalizedToTemplate[${cxt}]=${outdir}/antsCT/${prefix}_BrainNormalizedToTemplate
 biasCorrected[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentation0N4
@@ -129,7 +129,7 @@ corticalThickness[${cxt}]=${outdir}/antsCT/${prefix}_CorticalThickness
 corticalThicknessNormalizedToTemplate[${cxt}]=${outdir}/antsCT/${prefix}_CorticalThicknessNormalizedToTemplate
 extractedBrain[${cxt}]=${outdir}/antsCT/${prefix}_ExtractedBrain0N4
 
-## ANTSCT Transofrmations ##
+## ANTsCT Transofrmations ##
 xfm_warp=${outdir}/antsCT/${prefix}_SubjectToTemplate1Warp.nii.gz
 ixfm_warp=${outdir}/antsCT/${prefix}_TemplateToSubject0Warp.nii.gz
 xfm_affine=${outdir}/antsCT/${prefix}_SubjectToTemplate0GenericAffine.mat
@@ -137,16 +137,12 @@ ixfm_affine=${outdir}/antsCT/${prefix}_TemplateToSubject1GenericAffine.mat
 
 ## ANTsGMD OUTPUT ##
 normalizedGmdInput[${cxt}]=${outdir}/atropos3class/${prefix}_ExtractedBrain0N4_Norm
-gmdProbSkeloton[${cxt}]=${outdir}/atropos3class/${prefix}_prob
-gmdProbability1[${cxt}]=${outdir}/atropos3class/${prefix}_prob01
-gmdProbability2[${cxt}]=${outdir}/atropos3class/${prefix}_prob02
-gmdProbability3[${cxt}]=${outdir}/atropos3class/${prefix}_prob03
-gmdSegmentation[${cxt}]=${outdir}/atropos3class/${prefix}_seg
-subjectToTempJacob[${cxt}]=${outdir}/atropos3class/${prefix}_SubjectToTemplateJacobian
-
-## ANTSJLF ##
-jlfLabels[${cxt}]=${outdir}/antsJLF/${prefix}_jlfLabels
-jlfIntensity[${cxt}]=${outdir}/antsJLF/${prefix}_jlfIntensity
+gmdProbSkeloton[${cxt}]=${outdir}/antsGMD/${prefix}_prob
+gmdProbability1[${cxt}]=${outdir}/antsGMD/${prefix}_prob01
+gmdProbability2[${cxt}]=${outdir}/antsGMD/${prefix}_prob02
+gmdProbability3[${cxt}]=${outdir}/antsGMD/${prefix}_prob03
+gmdSegmentation[${cxt}]=${outdir}/antsGMD/${prefix}_seg
+subjectToTempJacob[${cxt}]=${outdir}/antsGMD/${prefix}_SubjectToTemplateJacobian
 
 ## ROI quant Required Variables ##
 referenceVolume[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentation0N4
@@ -304,19 +300,6 @@ if [[ $(imtest ${jlfLabels[${cxt}]}${ext}) == "1" ]] \
      echo "#gmdProbability2#${gmdProbability2[${cxt}]},#GMD,${cxt}" \
         >> ${auxImgs[${subjidx}]}
   fi
-  ###################################################################
-  # OUTPUT: JLF Labels
-  # Test whether the ANTs GMD image was created.
-  # If it does exist then add it to the index of derivatives and 
-  # to the localised design file
-  ###################################################################
-  if [[ $(imtest "${jlfLabels[${cxt}]}") == "1" ]]
-     then
-     echo "jlfLabels[${subjidx}]=${jlfLabels[${cxt}]}"\
-        >> $design_local
-     echo "#jlfLabels#${jlfLabels[${cxt}]}" \
-        >> ${auxImgs[${subjidx}]}
-  fi
    ################################################################
    # OUTPUT: brain-extracted referenceVolume
    # Use the brain extracted image from the output of antsCT 
@@ -396,84 +379,147 @@ fi
 # END GENERAL MODULE HEADER
 ###################################################################
 ###################################################################
-echo "Processing image: $img$ext"
 
 ###################################################################
+# The variable 'buffer' stores the processing steps that are
+# already complete; it becomes the expected ending for the final
+# image name and is used to verify that prestats has completed
+# successfully.
 ###################################################################
-# * Run ANTsCT
-###################################################################
-###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Running ANTsCT"
-mkdir -p ${outdir}/antsCT/ 
-antsCMD="${ANTSPATH}antsCorticalThickness.sh -d 3 -a ${img}${ext} -e ${templateNonExtracted} -m ${templateMask} -f ${templateMaskDil} -p ${templatePriors} -w ${templateWeight} -t ${templateExtracted} -o ${outdir}/antsCT/${prefix}_"
-${antsCMD}
+buffer=""
+
+
+echo "Processing image: $img"
 
 ###################################################################
+# Parse the processing code to determine what analysis to run next.
+# Current options include:
+#  * ACT: ANTs CT pipeline
+#  * ABF: ANTs N4 bias field correction
+#  * AGD: ANTs Atropos GMD pipeline
 ###################################################################
-# * Produce GMD values
-###################################################################
-###################################################################
-###################################################################
-# GMD is computed from the native structural, biuas field corrected and
-# skull stripped image, It is run through atropos 3 times and the soft segmentation
-# is used to compute GMD values
-###################################################################
-###################################################################
-# First we have to normalize the input image
-###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Running atropos 3 class"
-mkdir -p ${outdir}/atropos3class/ 
-${ANTSPATH}ImageMath 3 ${normalizedGmdInput[${cxt}]}${ext} Normalize \
-          ${extractedBrain[${cxt}]}${ext}
 
-###################################################################
-# Now lets produce our soft segmentation images
-###################################################################
-for i in 1 2 3 ; do
-  if [ ${i} -eq 1 ] ; then
-    ${ANTSPATH}Atropos -d 3 -a ${normalizedGmdInput[${cxt}]}${ext} -i KMeans[3] \
-                 -c [ 5,0] -m [ 0,1x1x1] -x ${brainExtractionMask[${cxt}]}${ext} \
-                 -o [ ${gmdSegmentation[${cxt}]}${ext}, ${gmdProbSkeloton[${cxt}]}%02d${ext}]
-  else
-    ${ANTSPATH}Atropos -d 3 -a ${normalizedGmdInput[${cxt}]}${ext} \
-                 -i PriorProbabilitImages[ 3,${gmdProbSkeloton[${cxt}]}%02d${ext},0.0] \
-                 -k Gaussian -p Socrates[1] --use-partial-volume-likelihoods 0 \
-                 -c [ 12, 0.00001] \
-                 -x ${brainExtractionMask[${cxt}]}${ext} \
-                 -m [ 0,1x1x1] \
-                 -o [ ${gmdSegmentation[${cxt}]}${ext}, ${gmdProbSkeloton[${cxt}]}%02d${ext}] ; 
-  fi 
-  echo "Done with $i iteration of atropos" 
-done 
+rem=${structural_process[${cxt}]}
+while [[ "${#rem}" -gt "0" ]]
+  do
+  ################################################################
+  # * Extract the first three letters from the user-specified
+  #   processing command.
+  # * This three-letter code determines what analysis is run
+  #   next.
+  # * Remove them from the list of remaining analyses.
+  ################################################################
+  cur=${rem:0:3}
+  rem=${rem:3:${#rem}}
+  [[ ${cur} != SNR ]] && buffer=${buffer}_${cur}
+  case $cur in
 
 
 
-## Special procuedures must be taken in order to run antsJLF
-## This is because the version of JLF we are running uses a different 
-## ANTSPATH from the ANTsCT 
-###################################################################
-###################################################################
-# * Produce JLF segmentation
-###################################################################
-###################################################################
-###################################################################
-# Change Our ANTSPATH***
-###################################################################
-export ANTSPATH=/data/joy/BBL/applications/ANTsJLF_201603/bin/
+    ACT)
+        ###################################################################
+        ###################################################################
+        # * Run ANTsCT
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "Running ANTs N4 Bias Field Correction"
+        mkdir -p ${outdir}/antsCT/
+        ###################################################################
+        # Define any inputs if non were provided | not present
+        ###################################################################
+        if [[ ! -f "${templateExtracted}" ]] \
+           || [[ ! -f "${templateNonExtracted}" ]]
+            then
+            echo "No template - ANTsCT pipeline can not wrong"
+            exit 16
+        fi
+        if [[ "X${templateWeight}" == "X" ]]
+            then
+            templateWeight=".2"
+        fi
+        ###################################################################
+        # Now run the ANTsCT pipeline
+        ###################################################################
+        antsCMD="${ANTSPATH}antsCorticalThickness.sh -d 3 -a ${img}${ext} -e ${templateNonExtracted} -m ${templateMask} -f ${templateMaskDil} -p ${templatePriors} -w ${templateWeight} -t ${templateExtracted} -o ${outdir}/antsCT/${prefix}_"
+        ${antsCMD}
+        ###################################################################
+        # Now point img to the correct output
+        ###################################################################
+        img=${outdir}/antsCT/${prefix}_ExtractedBrain0N4
+        echo "done with ANTsCT pipeline"
+        ;;
+    ABF)
+        ###################################################################
+        ###################################################################
+        # * Run N4 Bias Field Correction
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "Running ANTs N4 Bias Field Correction"
+        mkdir -p ${outdir}/antsN4/
+        ###################################################################
+        # Define any inputs if non were provided | not present
+        ###################################################################
+        if [[ "X ${ N4_CONVERGENCE}" == "X"]]
+            N4_CONVERGENCE="-c [50x50x50x50,0.0000001]"
+        fi
+        if [[ "X${N4_SHRINK_FACTOR}" == "X" ]]
+            N4_SHRINK_FACTOR="-s 2"
+        fi
+        if [[ "X${N4_BSPLINE_PARAMS}" == "X" ]]
+            N4_BSPLINE_PARAMS="-b [200]"
+        fi
+        ###################################################################
+        # Now run the ANTs N4 Bias Field Correction Command
+        ###################################################################
+        n4CMD="${ANTSPATH}/N4BiasFieldCorrection -d 3 -i ${img}${ext} ${N4_CONVERGENCE} ${N4_SHRINK_FACTOR} ${N4_BSPLINE_PARAMS} -o ${outdir}/antsN4/${prefix}_N4Corrected"
+        ${n4CMD}
+        ###################################################################
+        # Now point img to the correct output
+        ###################################################################
+        img=${outdir}/antsN4/${prefix}_N4Corrected
+        echo "done with ANTs Bias Field Correction"
+        ;;
+    AGD)
+        ###################################################################
+        ###################################################################
+        # * Run ANTs Atropos GMD pipeline
+        # GMD is computed from the native structural, typically bias field corrected and
+        # skull stripped image, It is run through atropos 3 times and the soft segmentation
+        # is used to compute GMD values
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "Running ANTsGMD"
+        mkdir -p ${outdir}/antsGMD/
+        ###################################################################
+        # Now lets produce our soft segmentation images
+        ###################################################################
+        for i in 1 2 3 ; do
+            if [ ${i} -eq 1 ] ; then
+              ${ANTSPATH}Atropos -d 3 -a ${normalizedGmdInput[${cxt}]}${ext} -i KMeans[3] \
+              -c [ 5,0] -m [ 0,1x1x1] -x ${brainExtractionMask[${cxt}]}${ext} \
+              -o [ ${gmdSegmentation[${cxt}]}${ext}, ${gmdProbSkeloton[${cxt}]}%02d${ext}]
+          else
+              ${ANTSPATH}Atropos -d 3 -a ${normalizedGmdInput[${cxt}]}${ext} \
+              -i PriorProbabilitImages[ 3,${gmdProbSkeloton[${cxt}]}%02d${ext},0.0] \
+              -k Gaussian -p Socrates[1] --use-partial-volume-likelihoods 0 \
+              -c [ 12, 0.00001] \
+              -x ${brainExtractionMask[${cxt}]}${ext} \
+              -m [ 0,1x1x1] \
+              -o [ ${gmdSegmentation[${cxt}]}${ext}, ${gmdProbSkeloton[${cxt}]}%02d${ext}] ;
+          fi
+          echo "Done with $i iteration of atropos"
+        done
 
-###################################################################
-# Run JLF
-###################################################################
-mkdir -p ${outdir}/antsJLF/
-${XCPEDIR}/thirdparty/JLF/antsJLF_OASIS30CustomSubset.pl ${extractedBrain[${cxt}]}${ext} ${outdir}/antsJLF/${prefix}_jlf 1 0 Younger24
 
 
-
-
+    esac
+done
 ###################################################################
 # Write any remaining output paths to local design file so that
 # they may be used further along the pipeline.
