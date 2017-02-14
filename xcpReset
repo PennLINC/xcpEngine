@@ -4,71 +4,71 @@
 
 # Script resets global settings
 
-rm -rf settings/global
-touch settings/global
-echo "#!/usr/bin/env bash" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# XCPEDIR stores a path to the top-level directory containing all" >> settings/global
-echo "# of the ingredients necessary to configure and execute functional" >> settings/global
-echo "# connectivity pipelines using the XCP Engine." >> settings/global
-echo "XCPEDIR=$(pwd)" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# RPATH stores a path to the local installation of R. Dependencies" >> settings/global
-echo "# may include:" >> settings/global
-echo "#  * ANTsR" >> settings/global
-echo "#  * pracma" >> settings/global
-echo "#  * igraph" >> settings/global
-echo "#  * signal" >> settings/global
-echo "#  * optparse" >> settings/global
-echo "RPATH=$(which R)" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# FSLDIR stores a path to the local installation of FSL." >> settings/global
-echo "FSLDIR=$(echo $FSLDIR)" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# ANTSPATH stores a path to the local installation of ANTs." >> settings/global
-echo "ANTSPATH=$(echo $ANTSPATH)" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# When subject-specific paths are generalised by utils/genpath," >> settings/global
-echo "# the value of KEEPNUM determines whether leading numeric values" >> settings/global
-echo "# not matching subject identifiers are retained." >> settings/global
-echo "KEEPNUM=1" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# The default value of the starting directory is stored here." >> settings/global
-echo "# Editing this will change where the XCP configuration script" >> settings/global
-echo "# searches by default." >> settings/global
-echo "startdir=$(pwd)" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# Outputs of modules may be prepended with an integer indicating" >> settings/global
-echo "# their context in the pipeline. Set NUMOUT to 1 to enable this." >> settings/global
-echo "NUMOUT=0" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# Design files and analysis names will be timestamped to the" >> settings/global
-echo "# minute if TIMESTAMP is set to 1." >> settings/global
-echo "TIMESTAMP=1" >> settings/global
-echo "###################################################################" >> settings/global
-echo "" >> settings/global
-echo "###################################################################" >> settings/global
-echo "# The default pipeline is stored here. Edit this to change the" >> settings/global
-echo "# default pipeline." >> settings/global
-echo "pipeline=" >> settings/global
-echo "###################################################################" >> settings/global
-chmod 755 settings/global
+rm -rf ${XCPEDIR}/settings/global
+touch ${XCPEDIR}/settings/global
+echo "#!/usr/bin/env bash" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# XCPEDIR stores a path to the top-level directory containing all" >> ${XCPEDIR}/settings/global
+echo "# of the ingredients necessary to configure and execute functional" >> ${XCPEDIR}/settings/global
+echo "# connectivity pipelines using the XCP Engine." >> ${XCPEDIR}/settings/global
+echo "XCPEDIR=$(pwd)" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# RPATH stores a path to the local installation of R. Dependencies" >> ${XCPEDIR}/settings/global
+echo "# may include:" >> ${XCPEDIR}/settings/global
+echo "#  * ANTsR" >> ${XCPEDIR}/settings/global
+echo "#  * pracma" >> ${XCPEDIR}/settings/global
+echo "#  * igraph" >> ${XCPEDIR}/settings/global
+echo "#  * signal" >> ${XCPEDIR}/settings/global
+echo "#  * optparse" >> ${XCPEDIR}/settings/global
+echo "RPATH=$(which R)" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# FSLDIR stores a path to the local installation of FSL." >> ${XCPEDIR}/settings/global
+echo "FSLDIR=$(echo $FSLDIR)" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# ANTSPATH stores a path to the local installation of ANTs." >> ${XCPEDIR}/settings/global
+echo "ANTSPATH=$(echo $ANTSPATH)" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# When subject-specific paths are generalised by utils/genpath," >> ${XCPEDIR}/settings/global
+echo "# the value of KEEPNUM determines whether leading numeric values" >> ${XCPEDIR}/settings/global
+echo "# not matching subject identifiers are retained." >> ${XCPEDIR}/settings/global
+echo "KEEPNUM=1" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# The default value of the starting directory is stored here." >> ${XCPEDIR}/settings/global
+echo "# Editing this will change where the XCP configuration script" >> ${XCPEDIR}/settings/global
+echo "# searches by default." >> ${XCPEDIR}/settings/global
+echo "startdir=$(pwd)" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# Outputs of modules may be prepended with an integer indicating" >> ${XCPEDIR}/settings/global
+echo "# their context in the pipeline. Set NUMOUT to 1 to enable this." >> ${XCPEDIR}/settings/global
+echo "NUMOUT=0" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# Design files and analysis names will be timestamped to the" >> ${XCPEDIR}/settings/global
+echo "# minute if TIMESTAMP is set to 1." >> ${XCPEDIR}/settings/global
+echo "TIMESTAMP=1" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+echo "# The default pipeline is stored here. Edit this to change the" >> ${XCPEDIR}/settings/global
+echo "# default pipeline." >> ${XCPEDIR}/settings/global
+echo "pipeline=" >> ${XCPEDIR}/settings/global
+echo "###################################################################" >> ${XCPEDIR}/settings/global
+chmod 755 ${XCPEDIR}/settings/global
