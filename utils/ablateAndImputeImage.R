@@ -27,7 +27,7 @@ option_list = list(
               help="Path to the BOLD timeseries to be masked and interpolated"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path"),
-   make_option(c("-f", "--floor"), action="store", default=0, type='numeric',
+   make_option(c("-s", "--floor"), action="store", default=0, type='numeric',
               help="Floor value to set any values below to N/A
                   recommended [default 0]")
 )
@@ -46,7 +46,6 @@ if (is.na(opt$out)) {
 impath <- opt$img
 out <- opt$out
 floor <- opt$floor
-sink("/dev/null")
 
 ###################################################################
 # Declare any functions specific to this script
