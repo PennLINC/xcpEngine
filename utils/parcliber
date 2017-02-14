@@ -53,7 +53,7 @@ Usage(){
    echo ""
    echo " -t : Trace"
    echo "      If this flag is set, then any commands called by the "
-   echo "      erodespare routine will be explicitly printed to the "
+   echo "      parcliber routine will be explicitly printed to the "
    echo "      console or log."
    echo ""
    echo ""; echo ""; echo ""
