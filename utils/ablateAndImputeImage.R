@@ -196,6 +196,6 @@ newValues <- append(newValues, tmpVals)
 matrixToImpute[coordinates] <- newValues
 outputImage <- img
 matrixLogical <- rep('TRUE', dim(matrixToImpute)[1]*dim(matrixToImpute)[2]*dim(matrixToImpute)[3])
-matrixLogical <- array(matrixLogical, c(dim(matrixToImpute)[1],dim(matrixToImpute)[2],dim(matrixToImpute)[3]))
+matrixLogical <- as.logical(array(matrixLogical, c(dim(matrixToImpute)[1],dim(matrixToImpute)[2],dim(matrixToImpute)[3])))
 outputImage[matrixLogical] <- matrixToImpute
-antsImageWrite(dimValue, out)
+antsImageWrite(outputImage, out)
