@@ -29,12 +29,11 @@
 # As a courtesy, we ask that you include the following citations
 # in publications that make use of this program:
 # (motion paper 4)
-# Satterthwaite, T.D., Elliott, M.A., Gerraty, R.T., Ruparel, K.,
-#     Loughead, J., Calkins, M.E., Eickhoff, S.B., Hakonarson, H., 
-#     Gur, R.C., Gur, R.E., and Wolf, D.H. (2013). An improved 
-#     framework for confound regression and filtering for control 
-#     of motion artifact in the preprocessing of resting-state 
-#     functional connectivity data. Neuroimage 64, 240-256.
+# Ciric R, Wolf DH, Power JD, Roalf DR, Baum GL, Ruparel K,
+#    Shinohara RT, Elliott MA, Eickhoff SB, Davatzikos C, Gur RC,
+#    Gur RE, Bassett DS, Satterthwaite TD (in submission)
+#    Benchmarking confound regression strategies for the control
+#    of motion artifact in studies of functional connectivity.
 #
 # Dependencies:
 #  * FSL (available from FMRIB)
@@ -172,14 +171,13 @@ ${XCPEDIR}/utils/removeDuplicates.R \
 cohort=$(cat ${path_cohort} 2>/dev/null)
 [[ -z ${cohort} ]] && echo "   ::Empty cohort file" && echo "   ::Aborting" && echo "" && exit 1
 ###################################################################
-# Obtain the date.
+# Obtain a timestamp for the current deployment of the engine.
 ###################################################################
 #[[ ! -e ${out_super}/${analysis} ]] && mkdir -p ${out_super}/${analysis}
 xcpdate=$(date +%Y%m%d%H%M)
 out=$(grep 'out=' ${design})
 ###################################################################
-# Set the pipeline context to 0 and prepare to analyse the entire
-# pipeline.
+# Prepare to analyse the entire pipeline.
 ###################################################################
 analysis_remaining=${pipeline}
 modules=$(echo ${pipeline}|sed s@','@' '@g)
@@ -191,13 +189,11 @@ modules=$(echo ${pipeline}|sed s@','@' '@g)
 ###################################################################
 # Ensure that any module-specific prerequisites are installed.
 ###################################################################
-cxt=1
 modreqs="...Checking module-specific dependencies..."
 for module in ${modules}
    do
    reqpath=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.req 2>/dev/null)
    [[ -e ${reqpath} ]] && source ${reqpath}
-   cxt=$(expr ${cxt} + 1)
 done
 echo "${modreqs}"
 
@@ -457,15 +453,6 @@ done
 ###################################################################
 # Conclude the analysis.
 ###################################################################
-echo ""; echo ""; echo ""
-echo "################################################################### " >>  ${logfile}
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >>  ${logfile}
-echo "#                                                                 #" >>  ${logfile}
-echo "#  ☭                     ANALYSIS COMPLETE                     ☭  #" >>  ${logfile}
-echo "#                                                                 #" >>  ${logfile}
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >>  ${logfile}
-echo "###################################################################" >>  ${logfile}
-echo ""
 echo ""; echo ""; echo ""
 echo -e "################################################################### "
 echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
