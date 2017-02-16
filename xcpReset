@@ -4,6 +4,34 @@
 
 # Script resets global settings
 
+#    ✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡      #
+# Check for existence of all global variables
+exitFlag=0
+setVars=""
+if [ "x$XCPEDIR" == "x" ]; then setVars=`echo XCPEDIR`; exitFlag=2; fi
+if [ "x$FSLDIR" == "x" ]; then setVars=`echo ${setVars} FSLDIR`; exitFlag=2; fi
+if [ "x$ANTSPATH" == "x" ]; then setVars=`echo ${setVars} FSLDIR`; exitFlag=2;  fi
+if [ ${exitFlag} -gt 0 ] ; then 
+  dirVal=`dirname $0`
+  cd ${dirVal}
+  dirVal=`pwd`
+  echo "${setVars} are not in ${USER}'s bash_profile"
+  echo "please add them following the provided example:"
+  echo "export XCPEDIR=${dirVal}"
+  exit 2
+fi
+
+# Now do R
+which R >/dev/null 2>&1
+if [ $? -gt 0 ] ; then 
+  echo "R is not found in $USER's path"
+  echo "Please ensure R is installed and can be run from command line"
+  exit 2 ; 
+fi
+# Done checking for variables
+#    ✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡      #
+
+
 rm -rf ${XCPEDIR}/settings/global
 touch ${XCPEDIR}/settings/global
 echo "#!/usr/bin/env bash" >> ${XCPEDIR}/settings/global
