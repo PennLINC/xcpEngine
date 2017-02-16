@@ -198,9 +198,9 @@ echo ${qvals} >> ${quality}
 # Ensure that all images are present
 ###################################################################
 [[ $(imtest ${img[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate functional timeseries." && err=1
-[[ $(imtest ${struct[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate structural image." && err=1
 if [[ ${space} == native ]]
    then
+   [[ $(imtest ${struct[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate structural image." && err=1
    [[ $(imtest ${template}) != 1 ]] && echo "::XCP-ERROR: Unable to locate template." && err=1
    [[ $(imtest ${xfm_warp}) != 1 ]] && echo "::XCP-ERROR: Unable to locate warp." && err=1
    [[ $(imtest ${ixfm_warp}) != 1 ]] && echo "::XCP-ERROR: Unable to locate inverse warp." && err=1
