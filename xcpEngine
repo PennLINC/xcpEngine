@@ -294,7 +294,7 @@ for subject in ${cohort}
       ${module} -d ${design} -s ${subjidx} ${trace_prop}
       ;;
    c)
-      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} \
+      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
          ${module} -d ${design} -s ${subjidx} ${trace_prop})
       id=$(echo ${id}|cut -d' ' -f3)
       ids="${ids} -e ${id}"
@@ -396,7 +396,7 @@ for module in ${modules}
          ${modS} -d ${design_local} -c ${cxt} ${trace_prop}
          ;;
       c)
-         id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} \
+         id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
             ${modS} -d ${design_local} -c ${cxt} ${trace_prop})
          id=$(echo ${id}|cut -d' ' -f3)
          ids="${ids} -e ${id}"
@@ -432,7 +432,7 @@ for module in ${modules}
       ${modG} -d ${design_local} -c ${cxt} ${trace_prop}
       ;;
    c)
-      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} \
+      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
          ${modG} -d ${design_local} -c ${cxt} ${trace_prop})
       id=$(echo ${id}|cut -d' ' -f3)
       sleep 5
