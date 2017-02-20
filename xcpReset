@@ -10,7 +10,7 @@ exitFlag=0
 setVars=""
 if [ "x$XCPEDIR" == "x" ]; then setVars=`echo XCPEDIR`; exitFlag=2; fi
 if [ "x$FSLDIR" == "x" ]; then setVars=`echo ${setVars} FSLDIR`; exitFlag=2; fi
-if [ "x$ANTSPATH" == "x" ]; then setVars=`echo ${setVars} FSLDIR`; exitFlag=2;  fi
+if [ "x$ANTSPATH" == "x" ]; then setVars=`echo ${setVars} ANTSPATH`; exitFlag=2;  fi
 if [ ${exitFlag} -gt 0 ] ; then 
   dirVal=`dirname $0`
   cd ${dirVal}
