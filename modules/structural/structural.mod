@@ -110,43 +110,31 @@ echo "Output directory is $outdir"
 #  * brainNormalizedToTemplate: The skull stripped strucutal image in template space
 #  * antsCorticalMap: Output from antsCT
 #  * brainSegmentation[0%d]: Output from ANts CT 6 class segmentation
-#  * jlfLabels: output from ants JLF
-#  * atropos3classprob[0%2d]: A soft segmentation from the output of Atropos
-#  * atropos3dlcassseg: A hard 3 class tissue class segmentation
 ###################################################################
 ## ANTsCT OUTPUT ##
-brainExtractionMask[${cxt}]=${outdir}/antsCT/${prefix}_BrainExtractionMask
-brainNormalizedToTemplate[${cxt}]=${outdir}/antsCT/${prefix}_BrainNormalizedToTemplate
-biasCorrected[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentation0N4
-brainSegmentation[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentation
-brainSegmentationPosteriors1[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentationPosteriors1 
-brainSegmentationPosteriors2[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentationPosteriors2 
-brainSegmentationPosteriors3[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentationPosteriors3
-brainSegmentationPosteriors4[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentationPosteriors4
-brainSegmentationPosteriors5[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentationPosteriors5
-brainSegmentationPosteriors6[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentationPosteriors6
-corticalThickness[${cxt}]=${outdir}/antsCT/${prefix}_CorticalThickness
-corticalThicknessNormalizedToTemplate[${cxt}]=${outdir}/antsCT/${prefix}_CorticalThicknessNormalizedToTemplate
-extractedBrain[${cxt}]=${outdir}/antsCT/${prefix}_ExtractedBrain0N4
+brainExtractionMask[${cxt}]=${outdir}/${prefix}_BrainExtractionMask
+brainNormalizedToTemplate[${cxt}]=${outdir}/${prefix}_BrainNormalizedToTemplate
+biasCorrected[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
+brainSegmentation[${cxt}]=${outdir}/${prefix}_BrainSegmentation
+brainSegmentationPosteriors1[${cxt}]=${outdir}/${prefix}_BrainSegmentationPosteriors1 
+brainSegmentationPosteriors2[${cxt}]=${outdir}/${prefix}_BrainSegmentationPosteriors2 
+brainSegmentationPosteriors3[${cxt}]=${outdir}/${prefix}_BrainSegmentationPosteriors3
+brainSegmentationPosteriors4[${cxt}]=${outdir}/${prefix}_BrainSegmentationPosteriors4
+brainSegmentationPosteriors5[${cxt}]=${outdir}/${prefix}_BrainSegmentationPosteriors5
+brainSegmentationPosteriors6[${cxt}]=${outdir}/${prefix}_BrainSegmentationPosteriors6
+corticalThickness[${cxt}]=${outdir}/${prefix}_CorticalThickness
+corticalThicknessNormalizedToTemplate[${cxt}]=${outdir}/${prefix}_CorticalThicknessNormalizedToTemplate
+extractedBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
 ## ANTsCT Transofrmations ##
-xfm_warp=${outdir}/antsCT/${prefix}_SubjectToTemplate1Warp.nii.gz
-ixfm_warp=${outdir}/antsCT/${prefix}_TemplateToSubject0Warp.nii.gz
-xfm_affine=${outdir}/antsCT/${prefix}_SubjectToTemplate0GenericAffine.mat
-ixfm_affine=${outdir}/antsCT/${prefix}_TemplateToSubject1GenericAffine.mat
-
-## ANTsGMD OUTPUT ##
-normalizedGmdInput[${cxt}]=${outdir}/atropos3class/${prefix}_ExtractedBrain0N4_Norm
-gmdProbSkeloton[${cxt}]=${outdir}/antsGMD/${prefix}_prob
-gmdProbability1[${cxt}]=${outdir}/antsGMD/${prefix}_prob01
-gmdProbability2[${cxt}]=${outdir}/antsGMD/${prefix}_prob02
-gmdProbability3[${cxt}]=${outdir}/antsGMD/${prefix}_prob03
-gmdSegmentation[${cxt}]=${outdir}/antsGMD/${prefix}_seg
-subjectToTempJacob[${cxt}]=${outdir}/antsGMD/${prefix}_SubjectToTemplateJacobian
+xfm_warp=${outdir}/${prefix}_SubjectToTemplate1Warp
+ixfm_warp=${outdir}/${prefix}_TemplateToSubject0Warp
+xfm_affine=${outdir}/${prefix}_SubjectToTemplate0GenericAffine.mat
+ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 
 ## ROI quant Required Variables ##
-referenceVolume[${cxt}]=${outdir}/antsCT/${prefix}_BrainSegmentation0N4
-referenceVolumeBrain[${cxt}]=${outdir}/antsCT/${prefix}_ExtractedBrain0N4
+referenceVolume[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
+referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 ###################################################################
 # * Initialise a pointer to the image.
 # * Ensure that the pointer references an image, and not something
@@ -198,7 +186,7 @@ echo "" >> $design_local
 # If it is determined that the module should not be run, then any
 #  outputs must be written to the local design file.
 ###################################################################
-if [[ $(imtest ${jlfLabels[${cxt}]}${ext}) == "1" ]] \
+if [[ $(imtest ${extractedBrain[${cxt}]}${ext}) == "1" ]] \
   && [[ "${structural_rerun[${cxt}]}" == "N" ]]
   then
   echo "Structural has already run to completion."
@@ -285,19 +273,6 @@ if [[ $(imtest ${jlfLabels[${cxt}]}${ext}) == "1" ]] \
      echo "struct[${subjidx}]=${extractedBrain[${cxt}]}"\
         >> $design_local
      echo "#struct#${extractedBrain[${cxt}]}" \
-        >> ${auxImgs[${subjidx}]}
-  fi
-  ###################################################################
-  # OUTPUT: GMD Values
-  # Test whether the ANTs GMD image was created.
-  # If it does exist then add it to the index of derivatives and 
-  # to the localised design file
-  ###################################################################
-  if [[ $(imtest "${gmdProbability2[${cxt}]}") == "1" ]]
-     then
-     echo "gmdProbability2[${subjidx}]=${gmdProbability2[${cxt}]}"\
-        >> $design_local
-     echo "#gmdProbability2#${gmdProbability2[${cxt}]},#GMD,${cxt}" \
         >> ${auxImgs[${subjidx}]}
   fi
    ################################################################
@@ -396,7 +371,6 @@ echo "Processing image: $img"
 # Current options include:
 #  * ACT: ANTs CT pipeline
 #  * ABF: ANTs N4 bias field correction
-#  * AGD: ANTs Atropos GMD pipeline
 #  * ABE: ANTs Brain Extraction
 ###################################################################
 
@@ -441,12 +415,16 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         # Now run the ANTsCT pipeline
         ###################################################################
-        antsCMD="${ANTSPATH}antsCorticalThickness.sh -d 3 -a ${img}${ext} -e ${templateNonExtracted} -m ${templateMask} -f ${templateMaskDil} -p ${templatePriors} -w ${templateWeight} -t ${templateExtracted} -o ${outdir}/antsCT/${prefix}_"
+        antsCMD="${ANTSPATH}antsCorticalThickness.sh -d 3 -a ${img}${ext} \
+                 -e ${templateNonExtracted} -m ${templateMask} \
+                 -f ${templateMaskDil} -p ${templatePriors} \
+                 -w ${templateWeight} -t ${templateExtracted} \
+                 -o ${outdir}/${prefix}_"
         ${antsCMD}
         ###################################################################
         # Now point img to the correct output
         ###################################################################
-        img=${outdir}/antsCT/${prefix}_ExtractedBrain0N4
+        img=${outdir}/${prefix}_ExtractedBrain0N4
         echo "done with ANTsCT pipeline"
         ;;
     ABF)
@@ -474,46 +452,16 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         # Now run the ANTs N4 Bias Field Correction Command
         ###################################################################
-        n4CMD="${ANTSPATH}/N4BiasFieldCorrection -d 3 -i ${img}${ext} ${N4_CONVERGENCE} ${N4_SHRINK_FACTOR} ${N4_BSPLINE_PARAMS} -o ${outdir}/antsN4/${prefix}_N4Corrected"
+        n4CMD="${ANTSPATH}/N4BiasFieldCorrection -d 3 -i ${img}${ext} \
+               ${N4_CONVERGENCE} ${N4_SHRINK_FACTOR} ${N4_BSPLINE_PARAMS} \
+               -o ${outdir}/${prefix}_N4Corrected --verbose 1"
         ${n4CMD}
         ###################################################################
         # Now point img to the correct output
         ###################################################################
-        img=${outdir}/antsN4/${prefix}_N4Corrected
+        img=${outdir}/${prefix}_N4Corrected
         echo "done with ANTs Bias Field Correction"
         ;;
-    AGD)
-        ###################################################################
-        ###################################################################
-        # * Run ANTs Atropos GMD pipeline
-        # GMD is computed from the native structural, typically bias field corrected and
-        # skull stripped image, It is run through atropos 3 times and the soft segmentation
-        # is used to compute GMD values
-        ###################################################################
-        ###################################################################
-        echo ""; echo ""; echo ""
-        echo "Current processing step:"
-        echo "Running ANTsGMD"
-        mkdir -p ${outdir}/antsGMD/
-        ###################################################################
-        # Now lets produce our soft segmentation images
-        ###################################################################
-        for i in 1 2 3 ; do
-            if [ ${i} -eq 1 ] ; then
-              ${ANTSPATH}Atropos -d 3 -a ${normalizedGmdInput[${cxt}]}${ext} -i KMeans[3] \
-              -c [ 5,0] -m [ 0,1x1x1] -x ${brainExtractionMask[${cxt}]}${ext} \
-              -o [ ${gmdSegmentation[${cxt}]}${ext}, ${gmdProbSkeloton[${cxt}]}%02d${ext}]
-          else
-              ${ANTSPATH}Atropos -d 3 -a ${normalizedGmdInput[${cxt}]}${ext} \
-              -i PriorProbabilitImages[ 3,${gmdProbSkeloton[${cxt}]}%02d${ext},0.0] \
-              -k Gaussian -p Socrates[1] --use-partial-volume-likelihoods 0 \
-              -c [ 12, 0.00001] \
-              -x ${brainExtractionMask[${cxt}]}${ext} \
-              -m [ 0,1x1x1] \
-              -o [ ${gmdSegmentation[${cxt}]}${ext}, ${gmdProbSkeloton[${cxt}]}%02d${ext}] ;
-          fi
-          echo "Done with $i iteration of atropos"
-        done
     ABE)
         ###################################################################
         ###################################################################
@@ -523,7 +471,7 @@ while [[ "${#rem}" -gt "0" ]]
         echo ""; echo ""; echo ""
         echo "Current processing step:"
         echo "Running ANTs BE"
-        mkdir -p ${outdir}/antsBE/
+        mkdir -p ${outdir}/
         ###################################################################
         # Define any inputs if non were provided | not present
         ###################################################################
@@ -542,12 +490,15 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         # Now run the ANTs BE Command
         ###################################################################
-        beCMD="${ANTSPATH}/antsBrainExtraction.sh-d 3 -i ${img}${ext} -e ${templateExtracted} ${EXTRACTION_PRIOR} ${KEEP_BE_IMAGES} ${USE_BE_FLOAT} ${USE_BE_RANDOM_SEED} -o ${outdir}/antsBE/${prefix}_ -s ${ext}"
+        beCMD="${ANTSPATH}/antsBrainExtraction.sh-d 3 -i ${img}${ext} \
+              -e ${templateExtracted} ${EXTRACTION_PRIOR} ${KEEP_BE_IMAGES} \
+              ${USE_BE_FLOAT} ${USE_BE_RANDOM_SEED} \
+              -o ${outdir}/${prefix}_ -s ${ext} --verbose 1"
         ${beCMD}
         ###################################################################
         # Now point 
         ###################################################################
-        img=${outdir}/antsBE/${prefix}_BrainExtractionBrain
+        img=${outdir}/${prefix}_BrainExtractionBrain
         echo "done with ANTs Brain Extraction"
         ;;	
     esac
@@ -636,19 +587,6 @@ if [[ $(imtest "${extractedBrain[${cxt}]}") == "1" ]]
    echo "struct[${subjidx}]=${extractedBrain[${cxt}]}"\
       >> $design_local
    echo "#struct#${extractedBrain[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: GMD Values
-# Test whether the ANTs GMD image was created.
-# If it does exist then add it to the index of derivatives and 
-# to the localised design file
-###################################################################
-if [[ $(imtest "${gmdProbability2[${cxt}]}") == "1" ]]
-   then
-   echo "gmdProbability2[${subjidx}]=${gmdProbability2[${cxt}]}"\
-      >> $design_local
-   echo "#gmdProbability2#${gmdProbability2[${cxt}]},#GMD,${cxt}" \
       >> ${auxImgs[${subjidx}]}
 fi
 ################################################################
