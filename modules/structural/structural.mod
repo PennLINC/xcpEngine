@@ -159,6 +159,16 @@ ext=$(echo ${imgpath}|sed s@${img}@@g)
 [[ ${ext} == ".img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
 [[ ${ext} == ".hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
 [[ ${ext} == ".img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
+###################################################################
+# Now determine output suffix
+###################################################################
+[[ ${ext} == ".nii.gz" ]] && antsExt="nii.gz"
+[[ ${ext} == ".nii" ]] && antsExt="nii"
+[[ ${ext} == ".hdr" ]] && antsExt="img"
+[[ ${ext} == ".img" ]] && antsExt="img"
+[[ ${ext} == ".hdr.gz" ]] && antsExt="img.gz"
+[[ ${ext} == ".img.gz" ]] && antsExt="img.gz"
+
 img=${outdir}/${prefix}~TEMP~
 if [[ $(imtest ${img}) != "1" ]] \
    || [ "${structural_rerun[${cxt}]}" == "Y" ]
@@ -375,6 +385,7 @@ echo "Processing image: $img"
 ###################################################################
 
 rem=${structural_process[${cxt}]}
+i=0
 while [[ "${#rem}" -gt "0" ]]
   do
   ################################################################
@@ -386,11 +397,7 @@ while [[ "${#rem}" -gt "0" ]]
   ################################################################
   cur=${rem:0:3}
   rem=${rem:3:${#rem}}
-  [[ ${cur} != SNR ]] && buffer=${buffer}_${cur}
-  case $cur in
-
-
-
+  case $cur in  
     ACT)
         ###################################################################
         ###################################################################
@@ -399,8 +406,7 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         echo ""; echo ""; echo ""
         echo "Current processing step:"
-        echo "Running ANTs N4 Bias Field Correction"
-        mkdir -p ${outdir}/antsCT/
+        echo "Running ANTs Cortical Thickness Pipeline"
         ###################################################################
         # Define any inputs if non were provided | not present
         ###################################################################
@@ -419,12 +425,9 @@ while [[ "${#rem}" -gt "0" ]]
                  -e ${templateNonExtracted} -m ${templateMask} \
                  -f ${templateMaskDil} -p ${templatePriors} \
                  -w ${templateWeight} -t ${templateExtracted} \
-                 -o ${outdir}/${prefix}_"
+                 -o ${outdir}/${prefix}_ -s ${antsExt}"
         ${antsCMD}
-        ###################################################################
-        # Now point img to the correct output
-        ###################################################################
-        img=${outdir}/${prefix}_ExtractedBrain0N4
+	buffer=ACT
         echo "done with ANTsCT pipeline"
         ;;
     ABF)
@@ -435,32 +438,54 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         echo ""; echo ""; echo ""
         echo "Current processing step:"
-        echo "Running ANTs N4 Bias Field Correction"
-        mkdir -p ${outdir}/antsN4/
+        echo "Running ANTs N4 Bias Field Correction"        
         ###################################################################
         # Define any inputs if non were provided | not present
         ###################################################################
-        if [[ "X ${ N4_CONVERGENCE}" == "X"]] ; then
-            N4_CONVERGENCE="-c [50x50x50x50,0.0000001]"
+        if [[ "X${N4_CONVERGENCE}" == "X" ]] ; then
+            N4_CONVERGENCE="[50x50x50x50,0.0000001]" ;
         fi
+        echo ${N4_SHRINK_FACTOR}
         if [[ "X${N4_SHRINK_FACTOR}" == "X" ]] ; then 
-            N4_SHRINK_FACTOR="-s 2"
+            N4_SHRINK_FACTOR="2" ; 
         fi
         if [[ "X${N4_BSPLINE_PARAMS}" == "X" ]] ; then 
-            N4_BSPLINE_PARAMS="-b [200]"
+            N4_BSPLINE_PARAMS="[200]" ; 
         fi
+        ###################################################################
+        # Now find the latest structural image processed and ensure that
+	# is our input image in case bias field correction is not run first
+        ###################################################################
+	if [ ${i} -gt 0 ] ; then 
+	  # Find the latest structural image output
+	  if [ ${buffer} == "ACT" ] ; then 
+		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
+	  fi
+	  if [ ${buffer} == "ABE" ] ; then  
+		img=${outdir}/${prefix}_BrainExtractionBrain ; 
+	  fi 
+	  if [ ${buffer} == "ABF" ] ; then
+		t=`echo "${i} - 1" | bc`
+		img=${outdir}/${prefix}_N4Corrected${t} ; 
+          fi
+	fi	  
         ###################################################################
         # Now run the ANTs N4 Bias Field Correction Command
         ###################################################################
         n4CMD="${ANTSPATH}/N4BiasFieldCorrection -d 3 -i ${img}${ext} \
-               ${N4_CONVERGENCE} ${N4_SHRINK_FACTOR} ${N4_BSPLINE_PARAMS} \
-               -o ${outdir}/${prefix}_N4Corrected --verbose 1"
+               -c ${N4_CONVERGENCE} -s ${N4_SHRINK_FACTOR} -b ${N4_BSPLINE_PARAMS} \
+               -o ${outdir}/${prefix}_N4Corrected${i}${ext} --verbose 1"
         ${n4CMD}
-        ###################################################################
-        # Now point img to the correct output
-        ###################################################################
-        img=${outdir}/${prefix}_N4Corrected
+	buffer=ABF
         echo "done with ANTs Bias Field Correction"
+        ###################################################################
+        # Now make sure we preserve each bias field correction step
+	# while we keep the proper nomencalture for steps through other pipelines
+        ###################################################################
+	echo ${rem} | grep -e "ABE" -e "ACT" > /dev/null
+	if [ $? -eq 0 ] && [ ${i} -gt 0 ] ; then 
+          ln -f ${img}${ext} ${outdir}/${prefix}_N4Corrected0${ext} ; 
+        fi
         ;;
     ABE)
         ###################################################################
@@ -471,7 +496,6 @@ while [[ "${#rem}" -gt "0" ]]
         echo ""; echo ""; echo ""
         echo "Current processing step:"
         echo "Running ANTs BE"
-        mkdir -p ${outdir}/
         ###################################################################
         # Define any inputs if non were provided | not present
         ###################################################################
@@ -486,22 +510,20 @@ while [[ "${#rem}" -gt "0" ]]
 	fi
 	if [[ "X${USE_BE_RANDOM_SEED}" == "X" ]] ; then 
 		USE_BE_RANDOM_SEED="-u 0"
-	fi
+	fi	
         ###################################################################
         # Now run the ANTs BE Command
         ###################################################################
-        beCMD="${ANTSPATH}/antsBrainExtraction.sh-d 3 -i ${img}${ext} \
+        beCMD="${ANTSPATH}/antsBrainExtraction.sh -d 3 -a ${img}${ext} \
               -e ${templateExtracted} ${EXTRACTION_PRIOR} ${KEEP_BE_IMAGES} \
               ${USE_BE_FLOAT} ${USE_BE_RANDOM_SEED} \
-              -o ${outdir}/${prefix}_ -s ${ext} --verbose 1"
+              -o ${outdir}/${prefix}_ -s ${antsExt}"
         ${beCMD}
-        ###################################################################
-        # Now point 
-        ###################################################################
-        img=${outdir}/${prefix}_BrainExtractionBrain
+	buffer=ABE
         echo "done with ANTs Brain Extraction"
         ;;	
     esac
+    i=`echo "${i} + 1" | bc` 
 done
 ###################################################################
 # Write any remaining output paths to local design file so that
