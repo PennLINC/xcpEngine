@@ -28,8 +28,9 @@ option_list = list(
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path"),
    make_option(c("-s", "--floor"), action="store", default=0, type='numeric',
-              help="Floor value to set any values below to N/A
-                  recommended [default 0]")
+              help="Floor value to set any values below to N/A recommended =0"),
+   make_option(c("-r", "--radius"), action="store", default=5, type='numeric',
+              help="Radius to be drawn in voxel coordinates")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 if (is.na(opt$img)) {
@@ -46,6 +47,7 @@ if (is.na(opt$out)) {
 impath <- opt$img
 out <- opt$out
 floor <- opt$floor
+radius <- opt$radius
 
 ###################################################################
 # Declare any functions specific to this script
