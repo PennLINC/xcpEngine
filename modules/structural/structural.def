@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+###################################################################
+# Extractino prior is used to determine the cut off for the template brain's 
+# soft segmentation which creates a hard gementation for the brain of the template.
+EXTRACTION_PRIOR[${cxt}]=.2
+###################################################################
+
+###################################################################
+# N4_CONVERGENCE controls the parameter that determines when N4 bias 
+# field correction should stop running.
+N4_CONVERGENCE="[50x50x50x50,0.0000001]"
+###################################################################
+
+
