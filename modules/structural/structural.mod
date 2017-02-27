@@ -104,12 +104,15 @@ echo "Output directory is $outdir"
 # Define paths to all potential outputs.
 #
 # For the structural module, potential outputs include:
-#  * biasCorrected: N4 bias field corrected image
-#  * skullStrippedImage: output image from antsBrainExtraction.sh
-#  * brainExtractionMask: output image used for extraction from antsBrainExtraction.sh
-#  * brainNormalizedToTemplate: The skull stripped strucutal image in template space
-#  * antsCorticalMap: Output from antsCT
-#  * brainSegmentation[0%d]: Output from ANts CT 6 class segmentation
+#  * brainExtractionMask: Mask used to remove skull from image
+#  * brainNormalizedToTemplate: Brain in template space
+#  * biasCorrected: Bias field corrected image used for segmentation
+#  * brainExtractionMask: Mask used to remove skull from image
+#  * brainSegmentationPosterior[%02d]: Soft segmentation coresponding to zspecfific tissue class
+#  * corticalThickness: A voxel wise map of cortical thickness in subject space
+#  * corticalThicknessNormalizedToTemplaye: A voxel wise map of cortical thickness in template space
+#  * extractedBrain: A bias field corrected extracted subject space brain
+
 ###################################################################
 ## ANTsCT OUTPUT ##
 brainExtractionMask[${cxt}]=${outdir}/${prefix}_BrainExtractionMask
@@ -382,6 +385,7 @@ echo "Processing image: $img"
 #  * ACT: ANTs CT pipeline
 #  * ABF: ANTs N4 bias field correction
 #  * ABE: ANTs Brain Extraction
+#  * FBE: FSL Brain Extraction using BET
 ###################################################################
 
 rem=${structural_process[${cxt}]}
@@ -419,6 +423,26 @@ while [[ "${#rem}" -gt "0" ]]
             templateWeight=".2"
         fi
         ###################################################################
+        # Now find the latest structural image processed and ensure that
+	# is our input image
+        ###################################################################
+	if [ ${i} -gt 0 ] ; then 
+	  # Find the latest structural image output
+	  if [ ${buffer} == "ACT" ] ; then 
+		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
+	  fi
+	  if [ ${buffer} == "ABE" ] ; then  
+		img=${outdir}/${prefix}_BrainExtractionBrain ; 
+	  fi 
+	  if [ ${buffer} == "ABF" ] ; then
+		t=`echo "${i} - 1" | bc`
+		img=${outdir}/${prefix}_N4Corrected${t} ; 
+          fi
+	  if [ ${buffer} == "FBE" ] ; then 
+		img=${outdir}/${prefix}_BrainExtractionBrain ;
+          fi
+	fi 
+        ###################################################################
         # Now run the ANTsCT pipeline
         ###################################################################
         antsCMD="${ANTSPATH}antsCorticalThickness.sh -d 3 -a ${img}${ext} \
@@ -445,7 +469,6 @@ while [[ "${#rem}" -gt "0" ]]
         if [[ "X${N4_CONVERGENCE}" == "X" ]] ; then
             N4_CONVERGENCE="[50x50x50x50,0.0000001]" ;
         fi
-        echo ${N4_SHRINK_FACTOR}
         if [[ "X${N4_SHRINK_FACTOR}" == "X" ]] ; then 
             N4_SHRINK_FACTOR="2" ; 
         fi
@@ -454,7 +477,7 @@ while [[ "${#rem}" -gt "0" ]]
         fi
         ###################################################################
         # Now find the latest structural image processed and ensure that
-	# is our input image in case bias field correction is not run first
+	# is our input image
         ###################################################################
 	if [ ${i} -gt 0 ] ; then 
 	  # Find the latest structural image output
@@ -468,7 +491,10 @@ while [[ "${#rem}" -gt "0" ]]
 		t=`echo "${i} - 1" | bc`
 		img=${outdir}/${prefix}_N4Corrected${t} ; 
           fi
-	fi	  
+	  if [ ${buffer} == "FBE" ] ; then 
+		img=${outdir}/${prefix}_BrainExtractionBrain ;
+          fi
+	fi 	  
         ###################################################################
         # Now run the ANTs N4 Bias Field Correction Command
         ###################################################################
@@ -510,7 +536,27 @@ while [[ "${#rem}" -gt "0" ]]
 	fi
 	if [[ "X${USE_BE_RANDOM_SEED}" == "X" ]] ; then 
 		USE_BE_RANDOM_SEED="-u 0"
-	fi	
+	fi
+        ###################################################################
+        # Now find the latest structural image processed and ensure that
+	# is our input image
+        ###################################################################
+	if [ ${i} -gt 0 ] ; then 
+	  # Find the latest structural image output
+	  if [ ${buffer} == "ACT" ] ; then 
+		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
+	  fi
+	  if [ ${buffer} == "ABE" ] ; then  
+		img=${outdir}/${prefix}_BrainExtractionBrain ; 
+	  fi 
+	  if [ ${buffer} == "ABF" ] ; then
+		t=`echo "${i} - 1" | bc`
+		img=${outdir}/${prefix}_N4Corrected${t} ; 
+          fi
+	  if [ ${buffer} == "FBE" ] ; then 
+		img=${outdir}/${prefix}_BrainExtractionBrain ;
+          fi
+	fi 	
         ###################################################################
         # Now run the ANTs BE Command
         ###################################################################
@@ -521,6 +567,50 @@ while [[ "${#rem}" -gt "0" ]]
         ${beCMD}
 	buffer=ABE
         echo "done with ANTs Brain Extraction"
+        ;;
+    FBE)
+        ###################################################################
+        ###################################################################
+        # * Run FSL Brain Extraction
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "Running FSL BE"
+	echo "Fractional intensity threshold: ${structural_fit[${cxt}]}"
+        ###################################################################
+        # Now find the latest structural image processed and ensure that
+	# is our input image
+        ###################################################################
+	if [ ${i} -gt 0 ] ; then 
+	  # Find the latest structural image output
+	  if [ ${buffer} == "ACT" ] ; then 
+		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
+	  fi
+	  if [ ${buffer} == "ABE" ] ; then  
+		img=${outdir}/${prefix}_BrainExtractionBrain ; 
+	  fi 
+	  if [ ${buffer} == "ABF" ] ; then
+		t=`echo "${i} - 1" | bc`
+		img=${outdir}/${prefix}_N4Corrected${t} ; 
+          fi
+	  if [ ${buffer} == "FBE" ] ; then 
+		img=${outdir}/${prefix}_BrainExtractionBrain ;
+          fi
+	fi       
+        ###################################################################
+        # Now run the FSL BE Command
+        ###################################################################
+        beCMD="bet ${img}${ext} ${outdir}/${prefix} -f ${structural_fit[${cxt}]} -m"
+	${beCMD}
+        ###################################################################
+        # Now organize the files to meet ANTsCT nomenclature
+        ###################################################################
+	immv ${outdir}/${prefix} ${outdir}/${prefix}_BrainExtractionBrain	
+	immv ${outdir}/${prefix}_mask ${outdir}/${prefix}_BrainExtractionMask
+
+	buffer=FBE
+        echo "done with FSL Brain Extraction"
         ;;	
     esac
     i=`echo "${i} + 1" | bc` 
