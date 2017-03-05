@@ -185,6 +185,7 @@ select option in \
    5)
       type=STRC
       process=struct
+      space=struct
       break
       ;;
    6)
@@ -671,13 +672,13 @@ select option in \
    1)
       template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
       echo "Template image: ${template}"
-      space=native
+      [[ ${process} != "struct" ]] && space=native
       break
       ;;
    2)
       template=${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz
       echo "Template image: ${template}"
-      space=native
+      [[ ${process} != "struct" ]] && space=native
       break
       ;;
    3)
@@ -695,14 +696,14 @@ select option in \
          template=$buffer
          echo "Custom template selected"
          echo "Template image: ${template}"
-         space=native
+         [[ ${process} != "struct" ]] && space=native
          break
       elif [[ $(imtest $alias2path) == "1" ]]
          then
          template=$alias2path
          echo "Custom template selected"
          echo "Template image: ${template}"
-         space=native
+         [[ ${process} != "struct" ]] && space=native
          break
       else
          echo "Specify a path to an image or a valid alias."
