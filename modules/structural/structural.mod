@@ -412,17 +412,6 @@ while [[ "${#rem}" -gt "0" ]]
         echo "Current processing step:"
         echo "Running ANTs Cortical Thickness Pipeline"
         ###################################################################
-        # Define any inputs if non were provided | not present
-        ###################################################################
-        if [[ ! -f "${templateExtracted}" ]] \
-           || [[ ! -f "${templateNonExtracted}" ]] ; then 
-            echo "No template - ANTsCT pipeline can not wrong"
-            exit 16
-        fi
-        if [[ "X${templateWeight}" == "X" ]] ; then
-            templateWeight=".2"
-        fi
-        ###################################################################
         # Now find the latest structural image processed and ensure that
 	# is our input image
         ###################################################################
@@ -464,18 +453,6 @@ while [[ "${#rem}" -gt "0" ]]
         echo "Current processing step:"
         echo "Running ANTs N4 Bias Field Correction"        
         ###################################################################
-        # Define any inputs if non were provided | not present
-        ###################################################################
-        if [[ "X${N4_CONVERGENCE}" == "X" ]] ; then
-            N4_CONVERGENCE="[50x50x50x50,0.0000001]" ;
-        fi
-        if [[ "X${N4_SHRINK_FACTOR}" == "X" ]] ; then 
-            N4_SHRINK_FACTOR="2" ; 
-        fi
-        if [[ "X${N4_BSPLINE_PARAMS}" == "X" ]] ; then 
-            N4_BSPLINE_PARAMS="[200]" ; 
-        fi
-        ###################################################################
         # Now find the latest structural image processed and ensure that
 	# is our input image
         ###################################################################
@@ -499,7 +476,7 @@ while [[ "${#rem}" -gt "0" ]]
         # Now run the ANTs N4 Bias Field Correction Command
         ###################################################################
         n4CMD="${ANTSPATH}/N4BiasFieldCorrection -d 3 -i ${img}${ext} \
-               -c ${N4_CONVERGENCE} -s ${N4_SHRINK_FACTOR} -b ${N4_BSPLINE_PARAMS} \
+               -c ${N4_CONVERGENCE[${cxt}]} -s ${N4_SHRINK_FACTOR[${cxt}]} -b ${N4_BSPLINE_PARAMS[${cxt}]} \
                -o ${outdir}/${prefix}_N4Corrected${i}${ext} --verbose 1"
         ${n4CMD}
 	buffer=ABF
@@ -522,21 +499,6 @@ while [[ "${#rem}" -gt "0" ]]
         echo ""; echo ""; echo ""
         echo "Current processing step:"
         echo "Running ANTs BE"
-        ###################################################################
-        # Define any inputs if non were provided | not present
-        ###################################################################
-	if [[ "X${EXTRACTION_PRIOR}" == "X" ]] ; then 
-		EXTRACTION_PRIOR="-m ${templateMask}" ; 
-	fi
-	if [[ "X${KEEP_BE_IMAGES}" == "X" ]] ; then 
-		KEEP_BE_IMAGES="-k 0" ; 
-	fi 
-	if [[ "X${USE_BE_FLOAT}" == "X" ]] ; then 
-		USE_BE_FLOAT="-q 0"
-	fi
-	if [[ "X${USE_BE_RANDOM_SEED}" == "X" ]] ; then 
-		USE_BE_RANDOM_SEED="-u 0"
-	fi
         ###################################################################
         # Now find the latest structural image processed and ensure that
 	# is our input image
@@ -561,8 +523,8 @@ while [[ "${#rem}" -gt "0" ]]
         # Now run the ANTs BE Command
         ###################################################################
         beCMD="${ANTSPATH}/antsBrainExtraction.sh -d 3 -a ${img}${ext} \
-              -e ${templateExtracted} ${EXTRACTION_PRIOR} ${KEEP_BE_IMAGES} \
-              ${USE_BE_FLOAT} ${USE_BE_RANDOM_SEED} \
+              -e ${templateExtracted} ${EXTRACTION_PRIOR[${cxt}]} ${KEEP_BE_IMAGES[${cxt}]} \
+              ${USE_BE_FLOAT[${cxt}]} ${USE_BE_RANDOM_SEED[${cxt}]} \
               -o ${outdir}/${prefix}_ -s ${antsExt}"
         ${beCMD}
 	buffer=ABE
