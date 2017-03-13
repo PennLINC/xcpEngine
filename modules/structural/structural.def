@@ -15,7 +15,7 @@ EXTRACTION_PRIOR[${cxt}]=.2
 ###################################################################
 # N4_CONVERGENCE controls the parameter that determines when N4 bias 
 # field correction should stop running.
-N4_CONVERGENCE[${cxt}]="[50x50x50x50,0.0000001]"
+N4_CONVERGENCE[${cxt}]="[50x50x50x50,0.00001]"
 ###################################################################
 
 ###################################################################
