@@ -32,7 +32,7 @@ N4_SHRINK_FACTOR[${cxt}]="1"
 # this value defines the distance between the knots defining the B-spline mesh.
 # Higher field strengths tend to have lower values. Larger field strength scanners should
 # have lower values. 
-N4_SPINE_PARAMS[${cxt}]="200"
+N4_SPlINE_PARAMS[${cxt}]="200"
 # Accepted values are integers
 ###################################################################
 

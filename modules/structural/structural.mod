@@ -665,7 +665,7 @@ if [[ $(imtest "${extractedBrain[${cxt}]}") == "1" ]]
 fi
 ################################################################
 # OUTPUT: brain-extracted referenceVolume
-# Use the brain extracted image from the output of antsCT 
+# Use the brain extracted image  
 # as our reference volume. This is used in order to succesfully run roi quant
 ################################################################
 if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == "1" ]]
@@ -707,12 +707,9 @@ fi
 #  * Update the audit file and quality index.
 ###################################################################
 echo ""; echo ""; echo ""
-if [[ "${strucutral_cleanup[${cxt}]}" == "Y" ]]
-   then
-   echo ""; echo ""; echo ""
-   echo "Cleaning up..."
-   rm -rf ${outdir}/*~TEMP~*
-fi
+img=$(readlink -f ${img}${ext})
+immv ${img} ${extractedBrain[${cxt}]}
+ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
 rm -f ${quality}
 echo ${qvars} >> ${quality}
 echo ${qvals} >> ${quality}
