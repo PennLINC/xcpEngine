@@ -572,9 +572,7 @@ for par in $pars
             unset rs
             unset vols
             statname=vol_
-            ROIs=$(/home/rciric/xcpEngine/utils/unique.R \
-                     -i ${parPath})
-            ROIf=$(echo "${ROIs}"|tail -n1)
+            ROIf=$(fslstats ${parPath} -R|awk '{print $2}')
             numROI=$(echo "${ROIf} + 1"|bc)
             voxCt=$(fslstats ${parPath} -H ${numROI} 0 ${ROIf})
             #######################################################
