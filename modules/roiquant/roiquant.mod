@@ -527,6 +527,7 @@ for par in $pars
       # Perform the quantification.
       #############################################################
       mapStats=$(echo ${mapStats}|sed s@','@' '@g)
+      [[ ${roiquant_vol[${cxt}]} == Y ]] && mapStats="${mapStats} vol"
       [[ -z ${mapStats} ]] && mapStats=mean
       for mapStat in ${mapStats}
          do
