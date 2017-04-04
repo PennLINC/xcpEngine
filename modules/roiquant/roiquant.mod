@@ -354,6 +354,14 @@ for par in $pars
             -n MultiLabel
          ;;
       #############################################################
+      # If the map and the image are both in native structural
+      # space, then no transformations need be applied
+      #############################################################
+      str2structural)
+         rm -f ${parbase}${parName}${ext}
+         ln -s ${parPath} ${parbase}${parName}${ext}
+         ;;
+      #############################################################
       # If the map is in standard space and the image in native
       # space, then all inverse transforms must be applied
       #############################################################
@@ -365,6 +373,24 @@ for par in $pars
             -o ${parbase}${parName}${ext} \
             -r ${referenceVolume[${subjidx}]}${ext} \
             $icoreg \
+            $irigid \
+            $iaffine \
+            $iwarp \
+            $iresample \
+            -n MultiLabel
+         ;;
+      #############################################################
+      # If the map is in standard space and the image in native
+      # structural space, then all inverse ANTsCT transforms (but
+      # not the coregistration) must be applied
+      #############################################################
+      std2structural)
+         rm -f ${parbase}${parName}${ext}
+         ${ANTSPATH}/antsApplyTransforms \
+            -e 3 -d 3 \
+            -i ${parPath} \
+            -o ${parbase}${parName}${ext} \
+            -r ${referenceVolume[${subjidx}]}${ext} \
             $irigid \
             $iaffine \
             $iwarp \
@@ -504,7 +530,15 @@ for par in $pars
       [[ -z ${mapStats} ]] && mapStats=mean
       for mapStat in ${mapStats}
          do
+         ##########################################################
+         # Determine the statistic to be computed within each
+         # region of interest.
+         ##########################################################
          case ${mapStat} in
+         ##########################################################
+         # Kendall's W (regional homogeneity/ReHo) computed
+         # ROI-wise.
+         ##########################################################
          kw)
             statName=kw_
             [[ ${roiquant_rerun[${cxt}]} == Y ]] \
@@ -531,12 +565,45 @@ for par in $pars
             cat ${outbase}${ext}_ROI_reho.vals \
                >> ${parValBase}${statName}${mapName}.1D
             ;;
+         ##########################################################
+         # Compute the volume of each ROI.
+         ##########################################################
+         vol)
+            unset rs
+            unset vols
+            statname=vol_
+            ROIf=$(fslstats ${parPath} -R|awk '{print $2}')
+            numROI=$(echo "${ROIf} + 1"|bc)
+            voxCt=$(fslstats ${parPath} -H ${numROI} 0 ${ROIf})
+            #######################################################
+            # Compute a conversion factor between voxel count
+            # and volume, and reorganise the output information.
+            #######################################################
+            cf=$(echo "scale=100; \
+               $(fslval ${parPath} pixdim1) \
+               * $(fslval ${parPath} pixdim2) \
+               * $(fslval ${parPath} pixdim3)"\
+               |bc)
+            for r in $(seq $ROIi $ROIf)
+               do
+               rs="${rs}\tVol${r}"
+               cvol=$(echo "$voxCt"|sed ${i}'q;d')
+               cvol=$(echo "scale=100; ${cvol} * ${cf}"|bc)
+               vs="${vs}\t${cvol}"
+            done
+            printf "${rs}" >> ${parValBase}${mapName}.1D
+            echo "" >> ${parValBase}${mapName}.1D
+            printf "${vs}" >> ${parValBase}${mapName}.1D
+            ;;
+         ##########################################################
+         # Compute the mean value within each ROI.
+         ##########################################################
          *)
             unset statName
             [[ ${roiquant_rerun[${cxt}]} == Y ]] \
                && rm -f ${modout}/roi/${parName}/${prefix}_${parName}_val_${statName}${mapName}.1D
             [[ -e ${modout}/roi/${parName}/${prefix}_${parName}_val_${statName}${mapName}.1D ]] && continue
-            rm -f ${parValBase}${mapName}.1D
+            rm -f ${parValBase}${statName}${mapName}.1D
             #######################################################
             # Determine whether each node is sufficiently covered.
             # If over 50 percent is not covered, remove it from
