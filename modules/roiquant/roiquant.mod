@@ -585,9 +585,9 @@ for par in $pars
                * $(fslval ${parPath} pixdim2) \
                * $(fslval ${parPath} pixdim3)"\
                |bc)
-            for r in $(seq $ROIi $ROIf)
+            for r in $(seq 1 $ROIf)
                do
-               s=$(expr $r + 1)
+               s=$(expr $r + 1) # Increment to begin printing at 1 not 0
                rs="${rs}\tVol${r}"
                cvol=$(echo "$voxCt"|sed ${s}'q;d')
                cvol=$(echo "scale=100; ${cvol} * ${cf}"|bc)
