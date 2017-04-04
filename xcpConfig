@@ -185,7 +185,7 @@ select option in \
    5)
       type=STRC
       process=struct
-      space=struct
+      space=structural
       break
       ;;
    6)
