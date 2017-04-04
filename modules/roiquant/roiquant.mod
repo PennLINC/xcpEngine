@@ -571,8 +571,12 @@ for par in $pars
          ##########################################################
          vol)
             unset rs
-            unset vols
+            unset vs
             statname=vol_
+            [[ ${roiquant_rerun[${cxt}]} == Y ]] \
+               && rm -f ${modout}/roi/${parName}/${prefix}_${parName}_val_${statName}${mapName}.1D
+            [[ -e ${modout}/roi/${parName}/${prefix}_${parName}_val_${statName}${mapName}.1D ]] && continue
+            rm -f ${parValBase}${statName}${mapName}.1D
             ROIf=$(fslstats ${parPath} -R|awk '{print $2}')
             numROI=$(echo "${ROIf} + 1"|bc)
             voxCt=$(fslstats ${parPath} -H ${numROI} 0 ${ROIf})
