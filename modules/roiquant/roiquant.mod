@@ -587,14 +587,15 @@ for par in $pars
                |bc)
             for r in $(seq $ROIi $ROIf)
                do
+               s=$(expr $r + 1)
                rs="${rs}\tVol${r}"
-               cvol=$(echo "$voxCt"|sed ${i}'q;d')
+               cvol=$(echo "$voxCt"|sed ${s}'q;d')
                cvol=$(echo "scale=100; ${cvol} * ${cf}"|bc)
                vs="${vs}\t${cvol}"
             done
-            printf "${rs}" >> ${parValBase}${mapName}.1D
-            echo "" >> ${parValBase}${mapName}.1D
-            printf "${vs}" >> ${parValBase}${mapName}.1D
+            printf "${rs}" >> ${parValBase}${statName}${mapName}.1D
+            echo "" >> ${parValBase}${statName}${mapName}.1D
+            printf "${vs}" >> ${parValBase}${statName}${mapName}.1D
             ;;
          ##########################################################
          # Compute the mean value within each ROI.
