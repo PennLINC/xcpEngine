@@ -272,7 +272,7 @@ if [[ $(imtest ${extractedBrain[${cxt}]}${ext}) == "1" ]] \
      then
      echo "corticalThickness[${subjidx}]=${corticalThickness[${cxt}]}"\
         >> $design_local
-     echo "#corticalThickness#${corticalThickness[${cxt}]}#CT,${cxt}" \
+     echo "#corticalThickness#${corticalThickness[${cxt}]}#structural,${cxt}" \
         >> ${auxImgs[${subjidx}]}
   fi
   ###################################################################
@@ -647,7 +647,7 @@ if [[ $(imtest "${corticalThickness[${cxt}]}") == "1" ]]
    then
    echo "corticalThickness[${subjidx}]=${corticalThickness[${cxt}]}"\
       >> $design_local
-   echo "#corticalThickness#${corticalThickness[${cxt}]}#CT,${cxt}" \
+   echo "#corticalThickness#${corticalThickness[${cxt}]}#structural,${cxt}" \
       >> ${auxImgs[${subjidx}]}
 fi
 ###################################################################
