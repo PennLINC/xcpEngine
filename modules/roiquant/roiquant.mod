@@ -201,6 +201,7 @@ for deriv in ${auxImgs}
       fi
    fi
 done
+[[ ${roiquant_vol[${cxt}]} == Y ]] && voxelwise="${voxelwise} #volume##,,vol"
 ###################################################################
 # * Obtain transforms for moving parcellations into the target
 #   space.
@@ -527,7 +528,6 @@ for par in $pars
       # Perform the quantification.
       #############################################################
       mapStats=$(echo ${mapStats}|sed s@','@' '@g)
-      [[ ${roiquant_vol[${cxt}]} == Y ]] && mapStats="${mapStats} vol mean"
       [[ -z ${mapStats} ]] && mapStats=mean
       for mapStat in ${mapStats}
          do
@@ -572,7 +572,7 @@ for par in $pars
          vol)
             unset rs
             unset vs
-            statname=vol_
+            statName=vol_
             [[ ${roiquant_rerun[${cxt}]} == Y ]] \
                && rm -f ${modout}/roi/${parName}/${prefix}_${parName}_val_${statName}${mapName}.1D
             [[ -e ${modout}/roi/${parName}/${prefix}_${parName}_val_${statName}${mapName}.1D ]] && continue
@@ -589,6 +589,7 @@ for par in $pars
                * $(fslval ${parPath} pixdim2) \
                * $(fslval ${parPath} pixdim3)"\
                |bc)
+            set +x
             for r in $(seq 1 $ROIf)
                do
                s=$(expr $r + 1) # Increment to begin printing at 1 not 0
@@ -597,6 +598,7 @@ for par in $pars
                cvol=$(echo "scale=100; ${cvol} * ${cf}"|bc)
                vs="${vs}\t${cvol}"
             done
+            set -x
             printf "${rs}" >> ${parValBase}${statName}${mapName}.1D
             echo "" >> ${parValBase}${statName}${mapName}.1D
             printf "${vs}" >> ${parValBase}${statName}${mapName}.1D
