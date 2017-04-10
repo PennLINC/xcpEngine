@@ -138,6 +138,11 @@ ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 ## ROI quant Required Variables ##
 referenceVolume[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
 referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
+
+## Structural QA Output ##
+fgMask[${cxt}]=${output}/${prefix}_foreGroundMask
+threeClassSeg[${cxt}]=${output}/${prefix}_threeClassSeg
+struct_qa_csv[${cxt}]=${outdir}/${}
 ###################################################################
 # * Initialise a pointer to the image.
 # * Ensure that the pointer references an image, and not something
@@ -577,6 +582,35 @@ while [[ "${#rem}" -gt "0" ]]
     esac
     i=`echo "${i} + 1" | bc` 
 done
+#############################################################
+# Perform Quality Assessment 
+# This involves three steps
+#	1.) Calculate a foreground mask
+#	2.) Calculate a rough 3 class segmentation
+#	3.) Calculate QA metrics
+#############################################################
+###################################################################
+# Cretae a foreground mask using Atropos
+###################################################################
+fslmaths ${img} -add 1 -bin ${outdir}/${prefix}AllMask~TEMP~
+${ANTSPATH}Atropos -d 3 \
+  -a ${img}${ext} -i KMeans[2] -c[5,0] -m [0,1x1x1] \
+  -x ${outdir}/${prefix}AllMask~TEMP~ -o [${fgMask[${cxt}]}${ext}]
+
+###################################################################
+# Cretae a three class segmentation
+###################################################################
+${ANTSPATH}Atropos -d 3 \
+  -a ${img}${ext} -i KMeans[2] -c[5,0] -m [0,1x1x1] \
+  -x ${brainExtractionMask[${cxt}]} -o [${threeClassSeg[${cxt}]}]
+
+###################################################################
+# Calculate quality metrics
+###################################################################
+qualityMetrics=`${XCPEDIR}/utils/strucQA.R -i ${img}${ext} -m ${fgMask[${cxt}]}${ext} -s ${threeClassSeg[${cxt}]}`
+qualityMetrics=`echo ${qualityMetrics} | sed 's/ /,/g'`
+qvars=`echo "${qvars},FBER,SNR,CNR,CorticalContrast,EFC,GrayMatterKurtosis,GrayMatterSkewness,WhiteMatterKurtosis,WhiteMatterSkewness,BackgroundKurtosis,BackgroundSkewness"`
+qvals=`echo "${qvals},${qualityMetrics}"`
 ###################################################################
 # Write any remaining output paths to local design file so that
 # they may be used further along the pipeline.
