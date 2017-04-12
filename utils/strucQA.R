@@ -51,8 +51,8 @@ segimg <- antsImageRead(segmaskpath,3)
 ###################################################################
 # Now create all of our variables
 ###################################################################
-fgvals <- img[fgimg==2]
-bgvals <- img[fgimg==1]
+fgvals <- img[fgimg==1]
+bgvals <- img[fgimg==0]
 csfvals <- img[segimg==1]
 gmvals <- img[segimg==2]
 wmvals <- img[segimg==3]
