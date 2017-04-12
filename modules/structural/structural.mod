@@ -17,7 +17,6 @@ readonly PERSIST=0
 
 
 
-
 ###################################################################
 ###################################################################
 # BEGIN GENERAL MODULE HEADER
@@ -140,9 +139,8 @@ referenceVolume[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
 referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
 ## Structural QA Output ##
-fgMask[${cxt}]=${output}/${prefix}_foreGroundMask
-threeClassSeg[${cxt}]=${output}/${prefix}_threeClassSeg
-struct_qa_csv[${cxt}]=${outdir}/${}
+fgMask[${cxt}]=${outdir}/${prefix}_foreGroundMask
+threeClassSeg[${cxt}]=${outdir}/${prefix}_threeClassSeg
 ###################################################################
 # * Initialise a pointer to the image.
 # * Ensure that the pointer references an image, and not something
@@ -593,24 +591,33 @@ done
 # Cretae a foreground mask using Atropos
 ###################################################################
 fslmaths ${img} -add 1 -bin ${outdir}/${prefix}AllMask~TEMP~
-${ANTSPATH}Atropos -d 3 \
-  -a ${img}${ext} -i KMeans[2] -c[5,0] -m [0,1x1x1] \
-  -x ${outdir}/${prefix}AllMask~TEMP~ -o [${fgMask[${cxt}]}${ext}]
+call1="${ANTSPATH}Atropos -d 3 -a ${img[${subjidx}]} -i KMeans[2] -c [5,0.0001] -m [0,1x1x1] -x ${outdir}/${prefix}AllMask~TEMP~${ext} -o ${fgMask[${cxt}]}${ext}"
+${call1}
+fslmaths ${fgMask[${cxt}]}${ext} -sub 1 ${fgMask[${cxt}]}${ext}
+fslmaths ${fgMask[${cxt}]}${ext} -kernel box 3x3x3 -ero -dilD ${fgMask[${cxt}]}${ext}
+${ANTSPATH}/ImageMath 3 ${fgMask[${cxt}]}${ext} FillHoles ${fgMask[${cxt}]}${ext} 1.2
 
 ###################################################################
-# Cretae a three class segmentation
+# Create a three class segmentation
 ###################################################################
-${ANTSPATH}Atropos -d 3 \
-  -a ${img}${ext} -i KMeans[2] -c[5,0] -m [0,1x1x1] \
-  -x ${brainExtractionMask[${cxt}]} -o [${threeClassSeg[${cxt}]}]
+call2="${ANTSPATH}Atropos -d 3 -a ${img[${subjidx}]} -i KMeans[3] -c [5,0.0001] -m [0,1x1x1] -x ${brainExtractionMask[${cxt}]}${ext} -o ${threeClassSeg[${cxt}]}${ext}"
+${call2}
 
 ###################################################################
 # Calculate quality metrics
 ###################################################################
-qualityMetrics=`${XCPEDIR}/utils/strucQA.R -i ${img}${ext} -m ${fgMask[${cxt}]}${ext} -s ${threeClassSeg[${cxt}]}`
+qualityMetrics=`${XCPEDIR}/utils/strucQA.R -i ${img}${ext} -m ${fgMask[${cxt}]}${ext} -s ${threeClassSeg[${cxt}]}${ext}`
 qualityMetrics=`echo ${qualityMetrics} | sed 's/ /,/g'`
 qvars=`echo "${qvars},FBER,SNR,CNR,CorticalContrast,EFC,GrayMatterKurtosis,GrayMatterSkewness,WhiteMatterKurtosis,WhiteMatterSkewness,BackgroundKurtosis,BackgroundSkewness"`
 qvals=`echo "${qvals},${qualityMetrics}"`
+
+###################################################################
+# Calculate cross corellation 
+###################################################################
+qa_cc=$(fslcc -p 8 ${templateExtracted} ${brainNormalizedToTemplate[${cxt}]}\
+            |awk '{print $3}')
+qvars=`echo "${qvars},NormCrossCor"`
+qvals=`echo "${qvals},${qa_cc}"`
 ###################################################################
 # Write any remaining output paths to local design file so that
 # they may be used further along the pipeline.
