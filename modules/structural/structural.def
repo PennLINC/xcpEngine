@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+###################################################################
+# Extractino prior is used to determine the cut off for the template brain's 
+# soft segmentation which creates a hard gementation for the brain of the template.
+EXTRACTION_PRIOR[${cxt}]=.2
+#Accepted values are 0-1
+###################################################################
+
+###################################################################
+# N4_CONVERGENCE controls the parameter that determines when N4 bias 
+# field correction should stop running.
+N4_CONVERGENCE[${cxt}]="[50x50x50x50,0.00001]"
+###################################################################
+
+###################################################################
+# N4_SHRINK_FACTOR provides a value to downsample the input image by.
+# Larger values will provide faster bias field correction at the cost
+# less specific bias field estimation.
+N4_SHRINK_FACTOR[${cxt}]="1"
+# Accepted values are integers
+###################################################################
+
+###################################################################
+# N4_SPLINE_PARAMS identifies the spline value in the 
+# B-spline least-squares fitting procedure. More specifically 
+# this value defines the distance between the knots defining the B-spline mesh.
+# Higher field strengths tend to have lower values. Larger field strength scanners should
+# have lower values. 
+N4_SPLINE_PARAMS[${cxt}]="200"
+# Accepted values are integers
+###################################################################
+
+###################################################################
+# structural_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+structural_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+###################################################################
+# structural_cleanup specifies whether to delete
+# files created in intermediate processing steps
+structural_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+###################################################################
+# structural_process stores a code for the order in which
+# pre-processing is run
+structural_process[${cxt}]=ACT
+# accepts a string consisting of three-letter substrings
+# concatenated together
+# accepted substring codes:
+# ACT: ANTs cortical thickness pipeline
+# ABF: ANTs bias field correction
+# ABE: ANTs brain extraction 
+# FBE: FSL's bet brain extraction
+###################################################################
