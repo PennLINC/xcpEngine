@@ -138,6 +138,10 @@ ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 referenceVolume[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
 referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
+## JLF Output ##
+labelImage[${cxt}]=${outdir}/${prefix}_Labels
+intensityImage[${cxt}]=${outdir}/${prefix}_Intensity
+
 ## Structural QA Output ##
 fgMask[${cxt}]=${outdir}/${prefix}_foreGroundMask
 threeClassSeg[${cxt}]=${outdir}/${prefix}_threeClassSeg
@@ -494,6 +498,50 @@ while [[ "${#rem}" -gt "0" ]]
           ln -f ${img}${ext} ${outdir}/${prefix}_N4Corrected0${ext} ; 
         fi
         ;;
+    JLF)
+        ###################################################################
+        ###################################################################
+        # * Run ANTs JLF w/ OASIS label set
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "ANTs Joint Label Fusion"        
+        ###################################################################
+        # Now find the latest structural image processed and ensure that
+	# is our input image
+        ###################################################################
+	if [ ${i} -gt 0 ] ; then 
+	  # Find the latest structural image output
+	  if [ ${buffer} == "ACT" ] ; then 
+		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
+	  fi
+	  if [ ${buffer} == "ABE" ] ; then  
+		img=${outdir}/${prefix}_BrainExtractionBrain ; 
+	  fi 
+	  if [ ${buffer} == "ABF" ] ; then
+		t=`echo "${i} - 1" | bc`
+		img=${outdir}/${prefix}_N4Corrected${t} ; 
+          fi
+	  if [ ${buffer} == "FBE" ] ; then 
+		img=${outdir}/${prefix}_BrainExtractionBrain ;
+          fi
+	fi 	  
+        ###################################################################
+        # Now prepare everything to run the JLF command
+	# special teps must be taken to prepare the ANTSPATH
+        ###################################################################
+	antsOrig=$ANTSPATH
+	export ANTSPATH=${newAntsPath[${cxt}]}
+        ###################################################################
+        # Now create and declare the call to run the JLF pipeline
+        ###################################################################	
+	jlfCMD="$XCPEDIR/thirdparty/executeANTSJointLabelFusionCHEAD.pl ${img}${ext} ${outdir}/jlf/${prefix}_ ${jlfExtract[${cxt}]} ${keepJLFWarps[${cxt}]} ${jlfCohort[${cxt}]}"
+	${jlfCMD}
+	buffer=JLF
+	export ANTSPATH=${antsOrig}
+	echo "Finished ANTs JLF"
+        ;;
     ABE)
         ###################################################################
         ###################################################################
@@ -574,7 +622,6 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
 	immv ${outdir}/${prefix} ${outdir}/${prefix}_BrainExtractionBrain	
 	immv ${outdir}/${prefix}_mask ${outdir}/${prefix}_BrainExtractionMask
-
 	buffer=FBE
         echo "done with FSL Brain Extraction"
         ;;	
