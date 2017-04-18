@@ -464,7 +464,7 @@ for seed in $seeds
       sdPath=${outbase}maps/${sdName}${ext}
       ;;
    mask)
-      sdCoor=$(eval echo eval ${sdCoor})
+      sdCoor=$(eval echo ${sdCoor})
       [[ ! -d ${outbase}maps ]] && mkdir -p ${outbase}maps
       #############################################################
       # sdRad here stores the space of the seed mask, one of
