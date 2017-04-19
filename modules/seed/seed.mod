@@ -227,7 +227,7 @@ else
          ##########################################################
 	      if [[ $(imtest ${referenceVolumeBrain[${subjidx}]}) == 1 ]]
             then
-            usan="-u ${referenceVolume[${subjidx}]}"
+            usan="-u ${referenceVolumeBrain[${subjidx}]}"
          else
             ${sca_sptf[${cxt}]}=uniform
             echo "sca_sptf[${cxt}]=${sca_sptf[${cxt}]}" \
