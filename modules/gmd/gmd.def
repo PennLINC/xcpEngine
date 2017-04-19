@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+###################################################################
+# structural_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+gmdMask[${cxt}]=""
+# accepted values are [Y|N]
+###################################################################
+
+###################################################################
+# structural_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+gmd_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
+
+###################################################################
+# structural_cleanup specifies whether to delete
+# files created in intermediate processing steps
+gmd_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
