@@ -536,7 +536,7 @@ while [[ "${#rem}" -gt "0" ]]
         ###################################################################
         # Now create and declare the call to run the JLF pipeline
         ###################################################################	
-	jlfCMD="$XCPEDIR/thirdparty/executeANTSJointLabelFusionCHEAD.pl ${img}${ext} ${outdir}/jlf/${prefix}_ ${jlfExtract[${cxt}]} ${keepJLFWarps[${cxt}]} ${jlfCohort[${cxt}]}"
+	jlfCMD="$XCPEDIR/thirdparty/jlf/executeANTSJointLabelFusionCHEAD.pl ${img}${ext} ${outdir}/jlf/${prefix}_ ${jlfExtract[${cxt}]} ${keepJLFWarps[${cxt}]} ${jlfCohort[${cxt}]}"
 	${jlfCMD}
 	buffer=JLF
 	export ANTSPATH=${antsOrig}
