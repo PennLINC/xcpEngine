@@ -902,7 +902,7 @@ if [[ "${regress_sptf[${cxt}]}" == susan ]] \
       then
       usan="-u ${referenceVolumeBrain[${subjidx}]}"
    else
-      ${regress_sptf[${cxt}]}=uniform
+      regress_sptf[${cxt}]=uniform
       echo "regress_sptf[${cxt}]=${regress_sptf[${cxt}]}" \
          >> ${design_local}
    fi
