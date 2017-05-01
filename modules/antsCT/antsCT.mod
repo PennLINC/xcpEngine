@@ -138,10 +138,6 @@ ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 referenceVolume[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
 referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
-## JLF Output ##
-labelImage[${cxt}]=${outdir}/${prefix}_Labels
-intensityImage[${cxt}]=${outdir}/${prefix}_Intensity
-
 ## Structural QA Output ##
 fgMask[${cxt}]=${outdir}/${prefix}_foreGroundMask
 threeClassSeg[${cxt}]=${outdir}/${prefix}_threeClassSeg
@@ -498,50 +494,6 @@ while [[ "${#rem}" -gt "0" ]]
           ln -f ${img}${ext} ${outdir}/${prefix}_N4Corrected0${ext} ; 
         fi
         ;;
-    JLF)
-        ###################################################################
-        ###################################################################
-        # * Run ANTs JLF w/ OASIS label set
-        ###################################################################
-        ###################################################################
-        echo ""; echo ""; echo ""
-        echo "Current processing step:"
-        echo "ANTs Joint Label Fusion"        
-        ###################################################################
-        # Now find the latest structural image processed and ensure that
-	# is our input image
-        ###################################################################
-	if [ ${i} -gt 0 ] ; then 
-	  # Find the latest structural image output
-	  if [ ${buffer} == "ACT" ] ; then 
-		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
-	  fi
-	  if [ ${buffer} == "ABE" ] ; then  
-		img=${outdir}/${prefix}_BrainExtractionBrain ; 
-	  fi 
-	  if [ ${buffer} == "ABF" ] ; then
-		t=`echo "${i} - 1" | bc`
-		img=${outdir}/${prefix}_N4Corrected${t} ; 
-          fi
-	  if [ ${buffer} == "FBE" ] ; then 
-		img=${outdir}/${prefix}_BrainExtractionBrain ;
-          fi
-	fi 	  
-        ###################################################################
-        # Now prepare everything to run the JLF command
-	# special teps must be taken to prepare the ANTSPATH
-        ###################################################################
-	antsOrig=$ANTSPATH
-	export ANTSPATH=${newAntsPath[${cxt}]}
-        ###################################################################
-        # Now create and declare the call to run the JLF pipeline
-        ###################################################################	
-	jlfCMD="$XCPEDIR/thirdparty/jlf/executeANTSJointLabelFusionCHEAD.pl ${img}${ext} ${outdir}/jlf/${prefix}_ ${jlfExtract[${cxt}]} ${keepJLFWarps[${cxt}]} ${jlfCohort[${cxt}]}"
-	${jlfCMD}
-	buffer=JLF
-	export ANTSPATH=${antsOrig}
-	echo "Finished ANTs JLF"
-        ;;
     ABE)
         ###################################################################
         ###################################################################
@@ -628,37 +580,6 @@ while [[ "${#rem}" -gt "0" ]]
     esac
     i=`echo "${i} + 1" | bc` 
 done
-#############################################################
-# Perform Quality Assessment 
-# This involves three steps
-#	1.) Calculate a foreground mask
-#	2.) Calculate a rough 3 class segmentation
-#	3.) Calculate QA metrics
-#############################################################
-###################################################################
-# Cretae a foreground mask using Atropos
-###################################################################
-fslmaths ${img} -add 1 -bin ${outdir}/${prefix}AllMask~TEMP~
-call1="${ANTSPATH}Atropos -d 3 -a ${img[${subjidx}]} -i KMeans[2] -c [5,0.0001] -m [0,1x1x1] -x ${outdir}/${prefix}AllMask~TEMP~${ext} -o ${fgMask[${cxt}]}${ext}"
-${call1}
-fslmaths ${fgMask[${cxt}]}${ext} -sub 1 ${fgMask[${cxt}]}${ext}
-fslmaths ${fgMask[${cxt}]}${ext} -kernel box 3x3x3 -ero -dilD ${fgMask[${cxt}]}${ext}
-${ANTSPATH}/ImageMath 3 ${fgMask[${cxt}]}${ext} FillHoles ${fgMask[${cxt}]}${ext} 1.2
-
-###################################################################
-# Create a three class segmentation
-###################################################################
-call2="${ANTSPATH}Atropos -d 3 -a ${img[${subjidx}]} -i KMeans[3] -c [5,0.0001] -m [0,1x1x1] -x ${brainExtractionMask[${cxt}]}${ext} -o ${threeClassSeg[${cxt}]}${ext}"
-${call2}
-
-###################################################################
-# Calculate quality metrics
-###################################################################
-qualityMetrics=`${XCPEDIR}/utils/strucQA.R -i ${img}${ext} -m ${fgMask[${cxt}]}${ext} -s ${threeClassSeg[${cxt}]}${ext}`
-qualityMetrics=`echo ${qualityMetrics} | sed 's/ /,/g'`
-qvars=`echo "${qvars},FBER,SNR,CNR,CorticalContrast,EFC,GrayMatterKurtosis,GrayMatterSkewness,WhiteMatterKurtosis,WhiteMatterSkewness,BackgroundKurtosis,BackgroundSkewness"`
-qvals=`echo "${qvals},${qualityMetrics}"`
-
 ###################################################################
 # Calculate cross corellation 
 ###################################################################
@@ -797,7 +718,6 @@ fi
 ###################################################################
 echo ""; echo ""; echo ""
 img=$(readlink -f ${img}${ext})
-immv ${img} ${extractedBrain[${cxt}]}
 ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
 rm -f ${quality}
 echo ${qvars} >> ${quality}

@@ -37,37 +37,6 @@ N4_SPLINE_PARAMS[${cxt}]="200"
 ###################################################################
 
 ###################################################################
-# keepJLFWarps is a flag which indiciates if the computed warps should be 
-# removed after JLF terminates
-keepJLFWarps[${cxt}]=0
-# Accepted values are 0 | 1
-###################################################################
-
-###################################################################
-# If the ANTs build that will be used to run the JLF pipeline
-# is unique it can be specified here
-# This will be set as the global ANTSPATH variable only for the JLF 
-# pipeline.
-newAntsPath[${cxt}]=$ANTSPATH
-###################################################################
-
-###################################################################
-# jlfCohort indicates the subjset of labeled images to use 
-# This should be a string 
-jlfCohort[${cxt}]="Younger24"
-# Accepted values are the following strings:
-# YoungAdult22 | Older18 | SexBalanced20 | Subset24 | Younger24 | All
-###################################################################
-
-###################################################################
-# jlfExtract determines if the input image should be brain extracted 
-# or if the input volume is already brain extracted
-# A 1 indictaes brain extraction will be performed
-jlfExtract[${cxt}]=0
-# Accepted values are 0 | 1
-###################################################################
-
-###################################################################
 # structural_rerun specifies whether to perform analyses
 # that the algorithm detects have already been run
 structural_rerun[${cxt}]=N
@@ -92,5 +61,4 @@ structural_process[${cxt}]=ACT
 # ABF: ANTs bias field correction
 # ABE: ANTs brain extraction 
 # FBE: FSL's bet brain extraction
-# JLF: ANTs joint label fusion pipeline
 ###################################################################
