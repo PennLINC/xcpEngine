@@ -768,7 +768,13 @@ elif [[ $(imtest "${img}_residuals") != "1" ]] \
       -prefix ${img}_residuals${ext} \
       2>/dev/null
 fi
-[[ $(imtest ${img}_residuals) == 1 ]] && img=${img}_residuals
+if [[ $(imtest ${img}_residuals) == 1 ]]
+   then
+   img=${img}_residuals
+else
+   echo "::XCP-ERROR: The confound regression procedure failed."
+   exit 666
+fi
 echo "Processing step complete: motion residuals"
 
 
@@ -896,7 +902,7 @@ if [[ "${regress_sptf[${cxt}]}" == susan ]] \
       then
       usan="-u ${referenceVolumeBrain[${subjidx}]}"
    else
-      ${regress_sptf[${cxt}]}=uniform
+      regress_sptf[${cxt}]=uniform
       echo "regress_sptf[${cxt}]=${regress_sptf[${cxt}]}" \
          >> ${design_local}
    fi
