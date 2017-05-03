@@ -300,6 +300,13 @@ done
 fslmaths ${outdir}/${prefix}_segmentationImage${ext} -thr 2 -uthr 2 -bin -mul ${outdir}/${prefix}_priorImage002 ${gmSegIntersect[${cxt}]}
 
 ###################################################################
+# Calculate mean GMD in GM compartment
+###################################################################
+qa_mean=$(fslstats ${gmSegIntersect[${cxt}]} -M)
+qvars=`echo "${qvars},MeanGMD"`
+qvals=`echo "${qvals},${qa_mean}"`
+
+###################################################################
 # Write any remaining output paths to local design file so that
 # they may be used further along the pipeline.
 ###################################################################
@@ -386,3 +393,5 @@ replacement=$(echo ${subjaudit}\
    |sed s@',,'@',1,'@ \
    |sed s@',$'@',1'@g)
 sed -i s@${subjaudit}@${replacement}@g ${audit}
+
+echo "Module complete"
