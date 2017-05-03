@@ -1,0 +1,20 @@
+::NETWORK ANALYSIS : SUBJECT //SUBJECT//
+::Numerous network analyses are included as options for the XCP Engine processing stream.
+::Each analysed network is stored here as a hash-delimited list of associated analytic outputs.
+::Potential outputs include:
+::AL, the allegiance matrix (NYI)
+::AM, the adjacency matrix
+::AS, an index of activity states for this subject (NYI)
+::CM, a list of community assignments for each node of the network (NYI)
+::CS, an index of connectivity states for this subject (NYI)
+::DC, dynamic community indices for each node at each time point (NYI)
+::EG, timeseries of each of the network's edges (NYI)
+::MC, the meta-adjacency/metaconnectivity matrix (NYI)
+::MP, a definition of the network's map
+::NM, the network name
+::PJ, Pajek file representing the network
+::SP, the space in which the network map is situated
+::TN, time-by-time nodewise similarity matrix (NYI)
+::TR, trajectory of the subject through connectome space (NYI)
+::TS, mean timeseries of each of the network's nodes
+::TT, time-by-time edgewise similarity matrix (NYI)
