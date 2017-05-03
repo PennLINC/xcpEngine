@@ -1,0 +1,71 @@
+  YoungAdult22 - Age range of 18-34
+
+  Sex         Age     
+  F:14   Min.   :18.00
+  M: 8   1st Qu.:20.00
+         Median :22.00
+         Mean   :23.45
+         3rd Qu.:25.75
+         Max.   :34.00
+
+
+  Older18 - Age range of 23-90
+
+  Sex         Age     
+  F:12   Min.   :23.00
+  M: 6   1st Qu.:26.50
+         Median :32.00
+         Mean   :43.67
+         3rd Qu.:59.25
+         Max.   :90.00
+
+
+  SexBalanced20 - All male subjects (ages 20-68) plus 10 of the female subjects.
+
+  Sex         Age       
+  F:10   Min.   :20.00  
+  M:10   1st Qu.:22.00  
+         Median :25.00  
+         Mean   :32.45  
+         3rd Qu.:31.00  
+         Max.   :75.00
+
+  sexBalanced20\$Sex: F
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  20.00   21.50   25.50   32.30   29.75   75.00 
+  ------------------------------------------------------------ 
+  sexBalanced20\$Sex: M
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  20.00   22.00   24.00   32.60   32.75   68.00 
+   
+
+  Subset24 - A subset for general use, fairly wide age range, slightly more balanced on sex.
+
+  Sex         Age
+  F:14   Min.   :20.0
+  M:10   1st Qu.:22.0
+         Median :25.5
+         Mean   :32.5
+         3rd Qu.:35.0
+         Max.   :75.0
+
+
+  Younger24 - Maintains the same 2:1 female:male ratio of the original, but biased towards younger subjects
+
+  Sex         Age
+  F:16   Min.   :18.00
+  M: 8   1st Qu.:20.00
+         Median :22.50
+         Mean   :24.96
+         3rd Qu.:28.25
+         Max.   :45.00
+
+ All - Everyone
+
+  Sex         Age       
+  F:20   Min.   :18.00  
+  M:10   1st Qu.:20.25  
+         Median :25.00  
+         Mean   :34.33  
+         3rd Qu.:37.00  
+         Max.   :90.00  
