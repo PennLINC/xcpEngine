@@ -72,7 +72,7 @@ echo ""; echo ""; echo ""
 echo "###################################################################"
 echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
 echo "#                                                                 #"
-echo "#  ☭              EXECUTING Strucutral MODULE                  ☭  #"
+echo "#  ☭              EXECUTING antsCT MODULE                  ☭  #"
 echo "#                                                                 #"
 echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
 echo "###################################################################"
@@ -93,7 +93,7 @@ fi
 # Create a directory for intermediate outputs.
 ###################################################################
 [[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}structural
+outdir=${out}/${prep}antsCT
 [[ ! -e ${outdir} ]] && mkdir -p ${outdir}
 echo "Output directory is $outdir"
 ###################################################################
@@ -137,10 +137,6 @@ ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 ## ROI quant Required Variables ##
 referenceVolume[${cxt}]=${outdir}/${prefix}_BrainSegmentation0N4
 referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
-
-## Structural QA Output ##
-fgMask[${cxt}]=${outdir}/${prefix}_foreGroundMask
-threeClassSeg[${cxt}]=${outdir}/${prefix}_threeClassSeg
 ###################################################################
 # * Initialise a pointer to the image.
 # * Ensure that the pointer references an image, and not something
@@ -193,7 +189,7 @@ qvals=$(tail -n1 ${quality} 2>/dev/null)
 # module appear beneath the correct header.
 ###################################################################
 echo "" >> $design_local
-echo "# *** outputs from structural[${cxt}] *** #" >> $design_local
+echo "# *** outputs from antsCT[${cxt}] *** #" >> $design_local
 echo "" >> $design_local
 ###################################################################
 # Verify that the module should be run:
