@@ -19,68 +19,193 @@
 ###################################################################
 dc_FAIL=0
 echo ""; echo "...Checking general dependencies..."
-[[ -z $(afni -ver 2>/dev/null) ]] \
-   && echo "   ::Dependencies check failed: AFNI" \
-   && echo "   ::Please install AFNI and ensure that it has been added to your path" \
-   && dc_FAIL=1 \
-   || ver_AFNI=" * "$(afni -ver 2>/dev/null|head -n1) \
-   && echo "${ver_AFNI}"
-[[ -z $(command -v antsApplyTransforms 2>/dev/null) ]] \
-   && echo "   ::Dependencies check failed: ANTs" \
-   && echo "   ::Please install ANTs and ensure that it has been added to your path" \
-   && dc_FAIL=1 \
-   || ver_ANTS=" * Version ANTs "$(grep -i _GIT_VERSION_HASH $ANTSPATH/../ANTS-build/ProjectSourceVersionVars.cmake 2>/dev/null|cut -d'"' -f2) \
-   && echo "${ver_ANTS}"
-[[ -z $(command -v fslmaths 2>/dev/null) ]] \
-   && echo "   ::Dependencies check failed: FSL" \
-   && echo "   ::Please install FSL and ensure that it has been added to your path" \
-   && dc_FAIL=1 \
-   || ver_FSL=" * Version FSL "$(command -v fsl 2>/dev/null|rev|cut -d"/" -f3|rev) \
-   && echo "${ver_FSL}"
-[[ -z $(command -v c3d_affine_tool 2>/dev/null) ]] \
-   && echo "   ::Dependencies check failed: ITK" \
-   && echo "   ::Please install ITK and ensure that it has been added to your path" \
-   && dc_FAIL=1 \
-   || ver_ITK=" * Version ITK "$(itksnap --help 2>/dev/null|head -n2|tail -n1|rev|cut -d"/" -f 2|rev) \
-   && echo "${ver_ITK}"
-[[ -z $(R --version 2>/dev/null) ]] \
-   && echo "   ::Dependencies check failed: R" \
-   && echo "   ::Please install R and ensure that it has been added to your path" \
-   && dc_FAIL=1 \
-   || ver_R=" * "$(R --version|grep -i "R version") \
-   && echo "${ver_R}"
-[[ -z $(Rscript --version 2>&1 >/dev/null) ]] \
-   && echo "   ::Dependencies check failed: Rscript" \
-   && echo "   ::Please install Rscript and ensure that it has been added to your path" \
-   && dc_FAIL=1 \
-   || ver_RSCRIPT=" * "$(Rscript --version 2>&1 >/dev/null) \
-   && echo "${ver_RSCRIPT}"
-[[ ${mode} == c ]] \
-   && [[ -z $(command -v qsub 2>/dev/null) ]] \
-   && echo "   ::Dependencies check failed: grid engine" \
-   && echo "   ::Please install a grid engine or use serial execution" \
-   && dc_FAIL=1
-RpackageChk=$(${XCPEDIR}/settings/checkRpackageDependencies.R)
-echo "$RpackageChk"
+
+###################################################################
+# AFNI
+###################################################################
+ver_AFNI=$(${AFNI_PATH}/afni -ver 2>/dev/null|head -n1)
+if [[ -z ${ver_AFNI} ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: AFNI
+   ::Please install AFNI and ensure that it has been added to your path
+   "
+   dc_FAIL=1
+else
+   ver_AFNI=" * ${ver_AFNI}"
+   echo "${ver_AFNI}"
+fi
+
+###################################################################
+# ANTs
+###################################################################
+ver_ANTS=$(grep -i _GIT_VERSION_HASH ${ANTSPATH}/../ANTS-build/ProjectSourceVersionVars.cmake 2>/dev/null|cut -d'"' -f2)
+if [[ -z ${ver_ANTS} ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: ANTs
+   ::Please install ANTs and ensure that it has been added to your path
+   "
+   dc_FAIL=1
+else
+   ver_ANTS=" * Version ANTs "${ver_ANTS}
+   echo "${ver_ANTS}"
+fi
+
+###################################################################
+# FSL
+###################################################################
+ver_FSL=$(command -v ${FSLDIR}/bin/fsl 2>/dev/null|rev|cut -d"/" -f3|rev)
+if [[ -z ${ver_FSL} ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: FSL
+   ::Please install FSL and ensure that it has been added to your path
+   "
+   dc_FAIL=1
+else 
+   ver_FSL=" * Version FSL ${ver_FSL}"
+   echo "${ver_FSL}"
+fi
+
+###################################################################
+# C3D
+###################################################################
+ver_C3D=$(${C3D_PATH}/c3d -version 2>/dev/null|awk '{print $2}')
+if [[ -z ${ver_C3D} ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: Convert3D
+   ::Please install C3D and ensure that it has been added to your path
+   "
+   dc_FAIL=1
+else
+   ver_C3D=" * Version C3D ${ver_C3D}"
+   echo "${ver_C3D}"
+fi
+
+###################################################################
+# R
+###################################################################
+ver_R=$(R --version 2>/dev/null|grep -i "R version")
+if [[ -z ${ver_R} ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: R
+   ::Please install R and ensure that it has been added to your path
+   "
+   dc_FAIL=1
+else
+   ver_R=" * ${ver_R}"
+   echo "${ver_R}"
+fi
+
+###################################################################
+# Rscript
+###################################################################
+ver_RSCRIPT=$(Rscript --version 2>&1 >/dev/null)
+if [[ -z ${ver_RSCRIPT} ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: Rscript
+   ::Please install Rscript and ensure that it has been added to your path
+   "
+   dc_FAIL=1
+else
+   ver_RSCRIPT=" * ${ver_RSCRIPT}"
+   echo "${ver_RSCRIPT}"
+fi
+
+###################################################################
+# SGE
+###################################################################
+if [[ ${mode} == c ]] && [[ -z $(command -v qsub 2>/dev/null) ]]
+   then
+   echo \
+   "
+   ::Dependencies check failed: grid engine
+   ::Please install a grid engine or use serial execution
+   "
+   dc_FAIL=1
+fi
+
+###################################################################
+# R packages
+###################################################################
+RpackageChk=$(${XCPEDIR}/core/checkRpackageDependencies.R)
+echo "${RpackageChk}"
 [[ ! -z $(echo ${RpackageChk}|grep -i failed) ]] \
    && dc_FAIL=1
+
 [[ ${dc_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 1
 echo " * All general dependencies are present."
+
+
+
+
+
 ###################################################################
 # Ensure environment variables are defined
 ###################################################################
 echo "...Checking environment..."
-[[ -z ${FSLDIR} ]] \
-   && echo "   ::Environment check failed: FSLDIR not set" \
-   && echo "   ::Please add FSLDIR to your environment" \
-   && ec_FAIL=1
-[[ -z ${ANTSPATH} ]] \
-   && echo "   ::Environment check failed: ANTSPATH not set" \
-   && echo "   ::Please add ANTSPATH to your environment" \
-   && ec_FAIL=1
-[[ -z ${XCPEDIR} ]] \
-   && echo "   ::Environment check failed: XCPEDIR not set" \
-   && echo "   ::Please add XCPEDIR to your environment" \
-   && ec_FAIL=1
-[[ ${ec_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 1
+
+###################################################################
+# FSL
+###################################################################
+if [[ -z ${FSLDIR} ]]
+   then
+   echo \
+   "
+   ::Environment check failed: FSLDIR not set
+   ::Please add FSLDIR to your environment
+   "
+   ec_FAIL=1
+fi
+
+###################################################################
+# ANTs
+###################################################################
+if [[ -z ${ANTSPATH} ]]
+   then
+   echo \
+   "
+   ::Environment check failed: ANTSPATH not set
+   ::Please add ANTSPATH to your environment
+   "
+   ec_FAIL=1
+fi
+
+###################################################################
+# C3D
+###################################################################
+if [[ -z ${C3D_PATH} ]]
+   then
+   echo \
+   "
+   ::Environment check failed: C3D_PATH not set
+   ::Please add C3D_PATH to your environment
+   "
+   ec_FAIL=1
+fi
+
+###################################################################
+# XCP
+###################################################################
+if [[ -z ${XCPEDIR} ]]
+   then
+   echo \
+   "
+   ::Environment check failed: XCPEDIR not set
+   ::Please add XCPEDIR to your environment
+   "
+   ec_FAIL=1
+fi
+
+[[ ${ec_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 2
 echo " * All environmental variables are defined."
