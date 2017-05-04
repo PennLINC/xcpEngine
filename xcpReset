@@ -15,7 +15,7 @@
 exitFlag=0
 envVars="XCPEDIR FSLDIR AFNI_PATH C3D_PATH ANTSPATH"
 for v in ${envVars}
-do
+   do
    if [[ -z ${!v} ]]
       then
       setVars="${setVars} ${v}"
