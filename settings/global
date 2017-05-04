@@ -8,7 +8,7 @@
 # XCPEDIR stores a path to the top-level directory containing all
 # of the ingredients necessary to configure and execute functional
 # connectivity pipelines using the XCP Engine.
-XCPEDIR=/data/joy/BBL/applications/xcpEngine
+XCPEDIR=/home/rciric/xcpAccelerator/xcpEngine
 ###################################################################
 
 ###################################################################
@@ -16,10 +16,9 @@ XCPEDIR=/data/joy/BBL/applications/xcpEngine
 # may include:
 #  * ANTsR
 #  * pracma
-#  * igraph
 #  * signal
 #  * optparse
-RPATH=/share/apps/R/R-3.1.1/bin/R
+RPATH=/share/apps/R/R-3.2.3/bin/R
 ###################################################################
 
 ###################################################################
@@ -29,7 +28,17 @@ FSLDIR=/share/apps/fsl/5.0.8
 
 ###################################################################
 # ANTSPATH stores a path to the local installation of ANTs.
-ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin/
+ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin
+###################################################################
+
+###################################################################
+# AFNI_PATH stores a path to the local installation of AFNI.
+AFNI_PATH=/share/apps/afni/linux_xorg7_64_2014_06_16
+###################################################################
+
+###################################################################
+# C3D_PATH stores a path to the local installation of C3D.
+C3D_PATH=/share/apps/c3d/c3d-1.0.0-Linux-x86_64/bin
 ###################################################################
 
 ###################################################################
@@ -43,7 +52,7 @@ KEEPNUM=1
 # The default value of the starting directory is stored here.
 # Editing this will change where the XCP configuration script
 # searches by default.
-startdir=/data/joy/BBL/applications/xcpEngine
+startdir=/home/rciric/xcpAccelerator/xcpEngine
 ###################################################################
 
 ###################################################################
@@ -63,3 +72,4 @@ TIMESTAMP=1
 # default pipeline.
 pipeline=
 ###################################################################
+
