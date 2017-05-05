@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Validate a design file that is input to the XCP Engine.
+###################################################################
+indesign=$1
+
+
+
+
+
+###################################################################
+# Ensure that the compulsory argument "path to design file" has
+# been defined.
+###################################################################
+if [[ ! -e ${indesign} ]]
+   then
+   echo \
+   "
+   ::Missing design file
+   ::Aborting
+   "
+   Usage
+   exit 1
+fi
+###################################################################
+# Load the design file.
+###################################################################
+echo \
+"...Constructing a pipeline based on user specifications...
+ * ${indesign}"
+source ${indesign} 2>/dev/null
+###################################################################
+# Verify that the design variable specified in the design file
+# points to the design file. If it does not, then overwrite it.
+###################################################################
+if [[ ${indesign} != ${design} ]]
+   then
+   echo "   ::Correcting inconsistencies in design file."
+   sed -i -e s@'^design=.*$'@'design='${indesign}@ ${indesign}
+   source ${indesign} 2>/dev/null
+fi

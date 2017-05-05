@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Validate a cohort file that is input to the XCP Engine.
+###################################################################
+path_cohort=$1
+
+
+
+
+
+###################################################################
+# Verify that the analytic cohort is reasonably defined.
+###################################################################
+if [[ -z ${path_cohort} ]]
+   then
+   echo \
+   "
+   ::Missing cohort file
+   ::Aborting
+   "
+   Usage
+   exit 2.1
+fi
+###################################################################
+# Remove any duplications from the cohort file.
+###################################################################
+ogen=$(grep '^out=' ${indesign})
+${XCPEDIR}/utils/removeDuplicates.R \
+   -c ${path_cohort} \
+   -o ${ogen}
+unset ogen
+###################################################################
+# Obtain the subject list.
+###################################################################
+cohort=$(cat ${path_cohort} 2>/dev/null)
+if [[ -z ${cohort} ]]
+   then
+   echo \
+   "
+   ::Empty cohort file
+   ::Aborting
+   "
+   Usage
+   exit 2.2
+fi
