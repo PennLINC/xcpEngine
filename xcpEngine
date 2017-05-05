@@ -246,16 +246,19 @@ unset ids
 ###################################################################
 # Run the XCP Localiser first.
 ###################################################################
-echo ""; echo ""; echo ""
-echo -e "###################################################################"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "                  CURRENTLY PROCESSING MODULE:                     "
-echo -e "                         ${RED}★${RCL} LOCALISER ${RED}★${RCL}                             "
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "###################################################################"
-echo ""
+echo -e \
+"
+
+
+###################################################################
+#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
+#                                                                 #
+                  CURRENTLY PROCESSING MODULE:                     
+                         ${RED}★${RCL} LOCALISER ${RED}★${RCL}                             
+#                                                                 #
+#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
+###################################################################
+"
 module=${XCPEDIR}/xcpLocaliser
 for subject in ${cohort}
    do
@@ -263,17 +266,7 @@ for subject in ${cohort}
    # Parse subject identifiers, then re-parse the design to
    # evaluate subject-specific variables.
    ################################################################
-   subjid=$subject
-   remfield=$subject
-   iter=0
-   while [[ ! -z ${remfield} ]]
-      do
-      curfield=$(echo ${remfield}|cut -d"," -f1)
-      remfield=$(echo ${remfield}|sed s@^[^,]*@@)
-      remfield=$(echo ${remfield}|sed s@^,@@)
-      subject[${iter}]=${curfield}
-      iter=$(expr ${iter} + 1)
-   done
+   source ${XCPEDIR}/core/parseSubject ${subject}
    source ${design}
    [[ ! -d ${out}/${prefix}_logs/ ]] && mkdir -p ${out}/${prefix}_logs
    ################################################################
@@ -283,41 +276,50 @@ for subject in ${cohort}
    # requested this be done at the subject level.
    ################################################################
    versions=${out}/${prefix}_logs/${xcpdate}_${prefix}_versions
-   [[ ! -e ${versions} ]] \
-      && ver_XCP=" * Version XCP Engine "$(cat ${XCPEDIR}/core/version) \
-      && echo "▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤" >> ${versions} \
-      && echo "▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥" >> ${versions} \
-      && echo "" >> ${versions} \
-      && echo "ANALYSIS: ${analysis}" >> ${versions} \
-      && echo "${ver_AFNI}" >> ${versions} \
-      && echo "${ver_ANTS}" >> ${versions} \
-      && echo "${ver_FSL}" >> ${versions} \
-      && echo "${ver_ITK}" >> ${versions} \
-      && echo "${ver_R}" >> ${versions} \
-      && echo "${ver_RSCRIPT}" >> ${versions} \
-      && echo "${RpackageChk}" >> ${versions} \
-      && echo "${ver_XCP}" >> ${versions} \
-      && echo " * FSLDIR=${FSLDIR}" >> ${versions} \
-      && echo " * ANTSPATH=${ANTSPATH}" >> ${versions} \
-      && echo " * XCPEDIR=${XCPEDIR}" >> ${versions} \
-      && echo "${modreqs}" >> ${versions}
+   if [[ ! -e ${versions} ]]
+      then
+      ver_XCP=" * Version XCP Engine "$(cat ${XCPEDIR}/core/version)
+      echo \
+      "
+      ▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤
+      ▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥
+      
+      ANALYSIS: ${analysis}
+      ${ver_AFNI}
+      ${ver_ANTS}
+      ${ver_FSL}
+      ${ver_ITK}
+      ${ver_R}
+      ${ver_RSCRIPT}
+      ${RpackageChk}
+      ${ver_XCP}
+       * FSLDIR=${FSLDIR}
+       * ANTSPATH=${ANTSPATH}
+       * XCPEDIR=${XCPEDIR}
+      ${modreqs}
+      " \
+      >> ${versions}
+   fi
    ################################################################
    # Initialise the subject's processing log.
    ################################################################
    logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}_log
    mkdir -p ${out}
-   echo "" >> ${logfile}
-   echo "" >> ${logfile}
-   echo "###################################################################" >> ${logfile}
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> ${logfile}
-   echo "#                                                                 #" >> ${logfile}
-   echo "#  ☭                         PIPELINE                          ☭  #" >> ${logfile}
-   echo "#                                                                 #" >> ${logfile}
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> ${logfile}
-   echo "###################################################################" >> ${logfile}
-   echo "" >> ${logfile}
-   echo "" >> ${logfile}
-   echo " * Executing in cluster mode." >> ${logfile}
+   echo \
+"
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+#                                                                 #
+#  ☭                         PIPELINE                          ☭  #
+#                                                                 #
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+ * Executing in cluster mode.
+   " \
+   >> ${logfile}
    ################################################################
    # Run the localiser.
    ################################################################
@@ -385,16 +387,7 @@ for module in ${modules}
       # evaluate subject-specific variables.
       #############################################################
       subjid=$subject
-      remfield=$subject
-      iter=0
-      while [[ ! -z ${remfield} ]]
-         do
-         curfield=$(echo ${remfield}|cut -d"," -f1)
-         remfield=$(echo ${remfield}|sed s@^[^,]*@@)
-         remfield=$(echo ${remfield}|sed s@^,@@)
-         subject[${iter}]=${curfield}
-         iter=$(expr ${iter} + 1)
-      done
+      source ${XCPEDIR}/core/parseSubject ${subject}
       source ${design}
       logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}_log
       #############################################################

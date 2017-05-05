@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Parse a subject's identifiers and paths.
+###################################################################
+remfield=$1
+iter=0
+while [[ ! -z ${remfield} ]]
+   do
+   curfield=$(echo ${remfield}|cut -d"," -f1)
+   remfield=$(echo ${remfield}|sed s@^[^,]*@@)
+   remfield=$(echo ${remfield}|sed s@^,@@)
+   subject[${iter}]=${curfield}
+   iter=$(expr ${iter} + 1)
+done
