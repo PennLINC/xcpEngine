@@ -148,52 +148,17 @@ modules=$(echo ${pipeline}|sed s@','@' '@g)
 
 ###################################################################
 # Verify that all dependencies are installed.
-# Obtain version information for all general dependencies.
+# Obtain version information for all general and specific
+# dependencies.
 ###################################################################
 source ${XCPEDIR}/core/checkDependenciesXCP
-mkdir -p ${out_group}
-###################################################################
-# Next, ensure that any module-specific prerequisites are
-# installed.
-###################################################################
-modreqs="...Checking module-specific dependencies..."
-for module in ${modules}
-   do
-   reqpath=${XCPEDIR}/modules/${module}/${module}.req
-   if [[ -e ${reqpath} ]]
-      then
-      source ${reqpath}
-   fi
-done
-echo "${modreqs}"
+mkdir -p ${out_group}/dependencies
 ###################################################################
 # Write version information to the version tracking file.
 ###################################################################
-versions=${out}/${prefix}_logs/${xcpdate}_${prefix}_versions
-if [[ ! -e ${versions} ]]
-   then
-   ver_XCP=" * Version XCP Engine "$(cat ${XCPEDIR}/core/version)
-   echo \
-      "
-      ▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤
-      ▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥
-      
-      ANALYSIS: ${analysis}
-      ${ver_AFNI}
-      ${ver_ANTS}
-      ${ver_FSL}
-      ${ver_ITK}
-      ${ver_R}
-      ${ver_RSCRIPT}
-      ${RpackageChk}
-      ${ver_XCP}
-       * FSLDIR=${FSLDIR}
-       * ANTSPATH=${ANTSPATH}
-       * XCPEDIR=${XCPEDIR}
-      ${modreqs}
-      " \
-   >> ${versions}
-fi
+envCheck=$(cat ${XCPEDIR}/core/envCheck)
+versions=${out_group}/dependencies/${analysis}_${xcpdate}_versions
+eval "echo -e \"${envCheck}\"" >> ${versions}
 
 
 
@@ -254,9 +219,9 @@ logHead='
 # Run the XCP Localiser first.
 ###################################################################
 subjidx=9001
-unset ids
 module=LOCALISER
-echo "$(eval "echo -e \"${modHead}\"")"
+unset ids
+eval "echo -e \"${modHead}\""
 for subject in ${cohort}
    do
    ################################################################
@@ -265,7 +230,7 @@ for subject in ${cohort}
    ################################################################
    source ${XCPEDIR}/core/parseSubject ${subject}
    source ${design}
-   [[ ! -d ${out}/${prefix}_logs/ ]] && mkdir -p ${out}/${prefix}_logs
+   mkdir -p ${out}/${prefix}_logs
    ################################################################
    # Run the localiser.
    ################################################################
@@ -321,7 +286,7 @@ fi
 cxt=1
 for module in ${modules}
    do
-   echo "$(eval "echo -e \"${modHead}\"")"
+   eval "echo -e \"${modHead}\""
    ################################################################
    # Obtain paths to the subject- and group-level scripts for
    # the current module, if each exists.
