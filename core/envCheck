@@ -1,0 +1,18 @@
+      
+      ▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤
+      ▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥
+      
+      ANALYSIS: ${analysis}
+      ${ver_AFNI}
+      ${ver_ANTS}
+      ${ver_FSL}
+      ${ver_C3D}
+      ${ver_R}
+      ${ver_RSCRIPT}
+      ${RpackageChk}
+      ${ver_XCP}
+       * FSLDIR=${FSLDIR}
+       * ANTSPATH=${ANTSPATH}
+       * XCPEDIR=${XCPEDIR}
+      ${modreqs}
+      

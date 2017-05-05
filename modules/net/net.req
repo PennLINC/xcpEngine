@@ -59,6 +59,8 @@ fi
 if [[ ${reqerr} == 1 ]]
    then
    modreqs="${modreqs}
+   
+   Aborting.
    ::Dependencies check failed: MATLAB (net.mod)
    ::Please ensure that MATLAB is in your "'$PATH'" or toggle
    ::community detection off by deleting net_gamma[${cxt}]."

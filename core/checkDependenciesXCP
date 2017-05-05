@@ -89,6 +89,13 @@ else
 fi
 
 ###################################################################
+# XCP
+###################################################################
+ver_XCP=" * Version XCP Engine  "$(cat ${XCPEDIR}/core/version \
+   2>/dev/null)
+echo "${ver_XCP}"
+
+###################################################################
 # R
 ###################################################################
 ver_R=$(R --version 2>/dev/null|grep -i "R version")
@@ -209,3 +216,26 @@ fi
 
 [[ ${ec_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 2
 echo " * All environmental variables are defined."
+
+
+
+
+
+###################################################################
+# Finally, ensure that any module-specific prerequisites are
+# installed. (This will probably be executed only from within
+# the XCP Engine.)
+###################################################################
+modreqs="...Checking module-specific dependencies..."
+for module in ${modules}
+   do
+   reqpath=${XCPEDIR}/modules/${module}/${module}.req
+   if [[ -e ${reqpath} ]]
+      then
+      source ${reqpath}
+   fi
+done
+echo \
+"
+${modreqs}
+"
