@@ -29,7 +29,7 @@ option_list = list(
    make_option(c("-c", "--cohort"), action="store", default=NA, type='character',
               help="Path to the initial cohort file, which may contain 
                   duplicated entries."),
-   make_option(c("-o", "--oidx"), action="store", default=NA, type='character',
+   make_option(c("-o", "--opath"), action="store", default=NA, type='character',
               help="General form of the output path for a subject.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
@@ -40,13 +40,33 @@ if (is.na(opt$cohort)) {
    quit()
 }
 
-oidx <- opt$oidx
-oidx <- as.numeric(unlist(strsplit(oidx,split=',')))
+opath <- opt$opath
 cohortpath <- opt$cohort
-cohort <- read.csv(cohortpath,header=F)
+
+
+###################################################################
+# Identify the columns in the cohort file that are used to
+# produce the output path. These are the columns in which
+# duplications are not permissible.
+###################################################################
+testing <- TRUE
+sidx <- 0
+oidx <- c()
+while (testing) {
+   testexp <- paste('subject\\[',sidx,'\\]',sep='')
+   match <- gregexpr(testexp,opath)
+   if (match[[1]][1] != -1) {
+      oidx <- c(oidx,sidx)
+      sidx <- sidx + 1
+   } else {
+      testing <- FALSE
+   }
+}
+oidx <- oidx + 1
 
 ###################################################################
 # Remove any duplicate entries.
 ###################################################################
+cohort <- read.csv(cohortpath,header=F)
 cohort <- cohort[!duplicated(cohort[,oidx]),]
 write.csv(cohort,cohortpath,header=F,row.names=F,quote=F)

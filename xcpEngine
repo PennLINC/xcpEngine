@@ -47,35 +47,38 @@
 #  * Other packages may be required for implementation of specific
 #    strategies, e.g. for denoising.
 ###################################################################
+source ${XCPEDIR}/core/constants
 
 Usage(){
-   echo ""; echo ""; echo ""
-   echo "Usage: `basename $0` -d <design> <options>"
-   echo ""
-   echo "Compulsory arguments:"
-   echo " -d : Primary design file for pipeline:"
-   echo "      Use xcpConfig for guided creation of a design"
-   echo "      file."
-   echo ""
-   echo "Optional arguments:"
-   echo " -m : Execution mode"
-   echo "      Input can either be 'c' (for execution on a computing"
-   echo "      cluster) or 's' (for serial execution on a single"
-   echo "      machine)[default]"
-   echo " -t : Trace:"
-   echo "      If the XCP Engine is called with the -t argument,"
-   echo "      then all commands called by the XCP Engine will"
-   echo "      be traced and explicitly replicated in a log"
-   echo "      file. This log file can then be used to debug"
-   echo "      output or can be converted to a standalone"
-   echo "      pipeline."
-   echo ""; echo ""; echo ""
+cat << endstream
+
+
+   Usage: `basename $0` -d <design> <options>
+
+   Compulsory arguments:
+    -d : Primary design file for pipeline:
+         Use xcpConfig for guided creation of a design
+         file.
+
+   Optional arguments:
+    -m : Execution mode
+         Input can either be 'c' (for execution on a computing
+         cluster) or 's' (for serial execution on a single
+         machine)[default]
+    -t : Trace:
+         If the XCP Engine is called with the -t argument,
+         then all commands called by the XCP Engine will
+         be traced and explicitly replicated in a log
+         file. This log file can then be used to debug
+         output or can be converted to a standalone
+         pipeline.
+
+
+endstream
 }
 ###################################################################
-# Set constants and defaults (serial/local run)
+# Set defaults (serial/local run)
 ###################################################################
-readonly RED='\033[0;31m'
-readonly RCL='\033[0m'
 mode=s
 ###################################################################
 # Parse arguments
@@ -84,7 +87,7 @@ while getopts "d:m:t" OPTION
    do
    case $OPTION in
    d)
-      design=${OPTARG}
+      indesign=${OPTARG}
       ;;
    m)
       mode=${OPTARG}
@@ -100,13 +103,33 @@ while getopts "d:m:t" OPTION
    esac
 done
 shift $((OPTIND-1))
+
+
+
+
+
 ###################################################################
 # Ensure that the compulsory argument "path to design file" has
 # been defined.
 ###################################################################
-[[ ! -e ${design} ]] && Usage && exit
-indesign=${design}
-source $design 2>/dev/null
+[[ ! -e ${indesign} ]] && Usage && exit 1
+###################################################################
+# Load the design file.
+###################################################################
+echo \
+"...Constructing a pipeline based on user specifications...
+ * ${indesign}"
+source ${indesign} 2>/dev/null
+###################################################################
+# Verify that the design variable specified in the design file
+# points to the design file. If it does not, then overwrite it.
+###################################################################
+if [[ ${indesign} != ${design} ]]
+   then
+   echo "   ::Correcting inconsistencies in design file."
+   sed -i -e s@'^design=.*$'@'design='${indesign}@ ${indesign}
+   source ${indesign} 2>/dev/null
+fi
 
 
 
@@ -116,7 +139,7 @@ source $design 2>/dev/null
 # Verify that all dependencies are installed.
 # Obtain version information for all dependencies.
 ###################################################################
-source ${XCPEDIR}/settings/checkDependenciesXCP
+source ${XCPEDIR}/core/checkDependenciesXCP
 
 
 
@@ -125,57 +148,66 @@ source ${XCPEDIR}/settings/checkDependenciesXCP
 ###################################################################
 # Launch the pipeline.
 ###################################################################
-echo ""; echo ""; echo ""
-echo -e "###################################################################"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭${RCL}                      XCP ${RED}★ ★ ★${RCL} ENGINE                     ${RED}☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "###################################################################"
-echo ""; echo ""; echo ""
+echo  -e \
+"
+
+
 ###################################################################
-# Load the design file.
+#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
+#                                                                 #
+#  ${RED}☭${RCL}                      XCP ${RED}★ ★ ★${RCL} ENGINE                     ${RED}☭${RCL}  #
+#                                                                 #
+#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
 ###################################################################
-echo "...Constructing a pipeline based on user specifications..."
-echo " * ${design}"
-source $design 2>/dev/null
-###################################################################
-# Verify that the design variable specified in the design file
-# points to the design file. If it does not, then overwrite it.
-###################################################################
-if cmp --silent ${indesign} ${design}
-   then
-   design=$design
-else
-   echo "   ::Correcting inconsistencies in design file."
-   sed -i -e s@'^design=.*$'@'design='${indesign}@ ${indesign}
-   source $indesign 2>/dev/null
-fi
+
+
+"
+
+
+
+
+
 ###################################################################
 # Verify that the analytic cohort is reasonably defined.
 ###################################################################
-[[ -z ${path_cohort} ]] && echo "   ::Missing cohort file" && echo "   ::Aborting" && echo "" && exit 1
+if [[ -z ${path_cohort} ]]
+   then
+   echo \
+   "
+   ::Missing cohort file
+   ::Aborting
+   "
+   exit 2.1
+fi
 ###################################################################
 # Remove any duplications from the cohort file.
 ###################################################################
-oidx=$(cat ${design}|grep '^out='|sed s@'\$'@'\n'@g|grep subject|cut -d'[' -f2|cut -d']' -f1)
-for i in $oidx; do o=${o},$(expr ${i} + 1); done
-oidx=$(echo $o|sed s@'^,'@@g)
+ogen=$(grep '^out=' ${indesign})
 ${XCPEDIR}/utils/removeDuplicates.R \
    -c ${path_cohort} \
-   -o ${oidx}
+   -o ${ogen}
 ###################################################################
 # Obtain the subject list.
 ###################################################################
 cohort=$(cat ${path_cohort} 2>/dev/null)
-[[ -z ${cohort} ]] && echo "   ::Empty cohort file" && echo "   ::Aborting" && echo "" && exit 1
+if [[ -z ${cohort} ]]
+   then
+   echo \
+   "
+   ::Empty cohort file
+   ::Aborting
+   "
+   exit 2.2
+fi
+
+
+
+
+
 ###################################################################
 # Obtain a timestamp for the current deployment of the engine.
 ###################################################################
-#[[ ! -e ${out_super}/${analysis} ]] && mkdir -p ${out_super}/${analysis}
 xcpdate=$(date +%Y%m%d%H%M)
-out=$(grep 'out=' ${design})
 ###################################################################
 # Prepare to analyse the entire pipeline.
 ###################################################################
@@ -252,7 +284,7 @@ for subject in ${cohort}
    ################################################################
    versions=${out}/${prefix}_logs/${xcpdate}_${prefix}_versions
    [[ ! -e ${versions} ]] \
-      && ver_XCP=" * Version XCP Engine "$(cat ${XCPEDIR}/settings/version) \
+      && ver_XCP=" * Version XCP Engine "$(cat ${XCPEDIR}/core/version) \
       && echo "▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤" >> ${versions} \
       && echo "▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥" >> ${versions} \
       && echo "" >> ${versions} \
