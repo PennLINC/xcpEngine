@@ -13,7 +13,13 @@
 # Check for existence of all global variables
 ###################################################################
 exitFlag=0
-envVars="XCPEDIR FSLDIR AFNI_PATH C3D_PATH ANTSPATH"
+envVars="
+         XCPEDIR
+         FSLDIR
+         AFNI_PATH
+         C3D_PATH
+         ANTSPATH
+        "
 for v in ${envVars}
    do
    if [[ -z ${!v} ]]
