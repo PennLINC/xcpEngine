@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Read the subject's log file to identify whether the subject
+# should be skipped or flagged.
+###################################################################
+logfile=$1
+subjid=$2
+
+
+unset errortest qatest
+if [[ -e ${logfile} ]]
+   then
+   errortest=$(grep -i XCP-ERROR ${logfile})
+   qatest=$(grep -i QA-EXCLUDE ${logfile})
+fi
+
+if [[ ! -z ${errortest} ]] || [[ ! -z ${qatest} ]]
+   then
+   echo -e \
+   "
+   Skipping analysis for:
+   * ${subjid}
+   for the following reasons.
+   ${errortest}
+   ${qatest}
+   "
+   exit 1
+fi

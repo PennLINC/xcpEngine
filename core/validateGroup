@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Determine whether any processing must be completed before
+# group-level module execution.
+###################################################################
+
+if [[ ! -e ${out_group}/log ]]
+   then
+   mkdir -p ${out_group}/log
+fi
+
+if [[ ! -e ${out_group}/${analysis}.dsn ]]
+   then
+   cp ${design} ${out_group}/${analysis}.dsn
+fi
