@@ -91,7 +91,7 @@ fi
 ###################################################################
 # XCP
 ###################################################################
-ver_XCP=" * Version XCP Engine  "$(cat ${XCPEDIR}/core/version \
+ver_XCP=" * Version XCP Engine  "$(cat ${XCPEDIR}/core/VERSION \
    2>/dev/null)
 echo "${ver_XCP}"
 
