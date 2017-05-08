@@ -8,6 +8,7 @@
 # Parse a subject's identifiers and paths.
 ###################################################################
 subject=( $(echo $subject|sed s@','@' '@g) )
+[[ -f ${indesign} ]] && source ${indesign}
 
 #remfield=$1
 #iter=0
