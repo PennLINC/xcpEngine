@@ -89,6 +89,29 @@ ___________________________________________________________________
 
 endstream
 }
+
+ClusterSubmit(){
+   case ${level} in
+   subject)
+      logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}LOG
+      ;;
+   group)
+      logfile=${out_group}/log/${analysis}_${xcpdate}_log
+      ;;
+   esac
+   [[ ! -e ${logfile} ]] \
+      && eval "echo -e \"${logHead}\"" >> ${logfile}
+   id=$(qsub \
+      -V \
+      -S /bin/bash \
+      -cwd \
+      -j y \
+      -o ${logfile} \
+      ${cspec} \
+      $@)
+   id=$(echo ${id}|tr -dc '0-9')
+   ids="${ids} -e ${id}"
+}
 ###################################################################
 # Set defaults (serial/local run)
 ###################################################################
@@ -156,7 +179,7 @@ mkdir -p ${out_group}/dependencies
 ###################################################################
 # Write version information to the version tracking file.
 ###################################################################
-envCheck=$(cat ${XCPEDIR}/core/envCheck)
+envCheck=$(cat ${XCPEDIR}/core/ENVCHECK)
 versions=${out_group}/dependencies/${analysis}_${xcpdate}_versions
 eval "echo -e \"${envCheck}\"" >> ${versions}
 
@@ -171,45 +194,12 @@ eval "echo -e \"${envCheck}\"" >> ${versions}
 #
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
-echo  -e \
-"
-
-
-###################################################################
-#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
-#                                                                 #
-#  ${RED}☭${RCL}                      XCP ${RED}★ ★ ★${RCL} ENGINE                     ${RED}☭${RCL}  #
-#                                                                 #
-#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
-###################################################################
-
-
-"
-modHead='
-
-
-###################################################################
-#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
-#                                                                 #
-                  CURRENTLY PROCESSING MODULE:                     
-                         ${RED}★${RCL} ${module} ${RED}★${RCL}                             
-#                                                                 #
-#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
-###################################################################
-'
-logHead='
-
-###################################################################
-#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
-#                                                                 #
-#  ☭                         PIPELINE                          ☭  #
-#                                                                 #
-#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
-###################################################################
-
-
- * Executing in cluster mode.
-'
+pipeStart=$(cat ${XCPEDIR}/core/HEADER_PIPELINE)
+pipeEnd=$(cat ${XCPEDIR}/core/FOOTER_PIPELINE)
+modHead=$(cat ${XCPEDIR}/core/HEADER_MODULE_SUBMIT)
+logHead=$(cat ${XCPEDIR}/core/HEADER_LOG)
+idxOffset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+eval "echo -e \"${pipeStart}\""
 
 
 
@@ -218,7 +208,7 @@ logHead='
 ###################################################################
 # Run the XCP Localiser first.
 ###################################################################
-subjidx=9001
+subjidx=$(( 1 + ${idxOffset} ))
 module=LOCALISER
 unset ids
 eval "echo -e \"${modHead}\""
@@ -229,46 +219,31 @@ for subject in ${cohort}
    # evaluate subject-specific variables.
    ################################################################
    source ${XCPEDIR}/core/parseSubject ${subject}
-   source ${design}
-   mkdir -p ${out}/${prefix}_logs
    ################################################################
    # Run the localiser.
    ################################################################
+   modCmd="
+   ${XCPEDIR}/xcpLocaliser
+      -d ${design}
+      -s ${subjidx}
+      ${trace_prop}
+      "
    case ${mode} in
    s)
-      ${XCPEDIR}/xcpLocaliser \
-         -d ${design} \
-         -s ${subjidx} \
-         ${trace_prop}
+      ${modCmd}
       ;;
    c)
       #############################################################
-      # Initialise the subject's processing log.
+      # Initialise the subject's processing log before submitting.
       #############################################################
-      logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}_log
-      echo "${logHead}" >> ${logfile}
-      #############################################################
-      # Submit.
-      #############################################################
-      id=$(qsub \
-            -V \
-            -S /bin/bash \
-            -cwd \
-            -j y \
-            -o ${logfile} \
-            ${cspec} \
-         ${XCPEDIR}/xcpLocaliser \
-            -d ${design} \
-            -s ${subjidx} \
-            ${trace_prop})
-      id=$(echo ${id}|cut -d' ' -f3)
-      ids="${ids} -e ${id}"
+      mkdir -p ${out}/${prefix}_logs
+      ClusterSubmit ${modCmd}
       ;;
    esac
    (( subjidx++ ))
 done
 ###################################################################
-# Wait for the localiser to run to completion.
+# Wait for the localiser to run to completion. (cluster mode)
 ###################################################################
 if [[ ${mode} == c ]]
    then
@@ -286,11 +261,11 @@ fi
 cxt=1
 for module in ${modules}
    do
-   eval "echo -e \"${modHead}\""
    ################################################################
    # Obtain paths to the subject- and group-level scripts for
    # the current module, if each exists.
    ################################################################
+   eval "echo -e \"${modHead}\""
    modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod 2>/dev/null)
    modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod 2>/dev/null)
    ################################################################
@@ -300,66 +275,48 @@ for module in ${modules}
    # iterate through all subjects and run it.
    ################################################################
    if [[ -n ${modS} ]]
-   then
-   unset ids
-   subjidx=9001
-   for subject in ${cohort}
-      do
-      #############################################################
-      # Parse subject identifiers, then re-parse the design to
-      # evaluate subject-specific variables.
-      #############################################################
-      subjid=$subject
-      source ${XCPEDIR}/core/parseSubject ${subject}
-      source ${design}
-      logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}_log
-      #############################################################
-      # Before running the subject, verify that it has not yielded
-      # erroneous output or been labelled for exclusion for quality
-      # reasons.
-      #############################################################
-      errortest=""
-      [[ -e ${logfile} ]] && errortest=$(grep -i XCP-ERROR ${logfile})
-      qatest=""
-      [[ -e ${logfile} ]] && qatest=$(grep -i QA-EXCLUDE ${logfile})
-      if [[ ! -z ${errortest} ]] || [[ ! -z ${qatest} ]]
-         then
-         echo " Skipping analysis for:"
-         echo " * ${subjid}"
-         echo " for the following reasons."
-         echo "${errortest}"
-         echo "${qatest}"
-         continue
-      fi
-      #############################################################
-      # Parse the subject-specific design file.
-      #############################################################
-      design_local=${out}/${prefix}.dsn
-      source ${design_local}
-      #############################################################
-      # Execute the current module.
-      #############################################################
-      case ${mode} in
-      s)
-         ${modS} -d ${design_local} -c ${cxt} ${trace_prop}
-         ;;
-      c)
-         id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
-            ${modS} -d ${design_local} -c ${cxt} ${trace_prop})
-         id=$(echo ${id}|cut -d' ' -f3)
-         ids="${ids} -e ${id}"
-         ;;
-      esac
-      (( subjidx++ ))
-   done
-   ################################################################
-   # Wait for all subject-level routines to run to completion.
-   ################################################################
-   if [[ ${mode} == c ]]
       then
-      sleep 5
-      ${XCPEDIR}/utils/qstatus ${ids}
-   fi
+      unset ids
+      for subject in ${cohort}
+         do
+         ##########################################################
+         # Parse subject identifiers, then re-parse the design to
+         # evaluate subject-specific variables.
+         ##########################################################
+         source ${XCPEDIR}/core/parseSubject ${subject}
+         ##########################################################
+         # Before running the subject, verify that it has not
+         # yielded erroneous output or been labelled for exclusion
+         # for quality reasons.
+         ##########################################################
+         ${XCPEDIR}/core/validateSubject ${logfile} ${subject}
+         (( $? == 1 )) && continue
+         ##########################################################
+         # Execute the current module.
+         ##########################################################
+         modCmd="
+         ${modS}
+            -d ${out}/${prefix}.dsn
+            -c ${cxt}
+            ${trace_prop}
+            "
+         case ${mode} in
+         s)
+            ${modCmd}
+            ;;
+         c)
+            ClusterSubmit ${modCmd}
+            ;;
+         esac
+      done
+      #############################################################
+      # Wait for all subject-level routines to run to completion.
+      #############################################################
+      if [[ ${mode} == c ]]
+         then
+         sleep 5
+         ${XCPEDIR}/utils/qstatus ${ids}
+      fi
    fi
    ################################################################
    # GROUP-LEVEL PROCESSING
@@ -368,25 +325,24 @@ for module in ${modules}
    # execute it.
    ################################################################
    if [[ -n ${modG} ]]
-   then
-   [[ ${glog} != 1 ]] && rm -f ${out_group}/log/${analysis}_log
-   [[ ! -e ${out_group}/log ]] && mkdir -p ${out_group}/log && glog=1
-   [[ ! -e ${out_group}/${analysis}.dsn ]] \
-      && cp ${design} ${out_group}/${analysis}.dsn
-   logfile=${out_group}/log/${analysis}_log
-   design_local=${out_group}/${analysis}.dsn
-   case ${mode} in
-   s)
-      ${modG} -d ${design_local} -c ${cxt} ${trace_prop}
-      ;;
-   c)
-      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
-         ${modG} -d ${design_local} -c ${cxt} ${trace_prop})
-      id=$(echo ${id}|cut -d' ' -f3)
-      sleep 5
-      ${XCPEDIR}/utils/qstatus -e ${id}
-      ;;
-   esac
+      then
+      ${XCPEDIR}/core/validateGroup
+      modCmd="
+      ${modG} 
+         -d ${out_group}/${analysis}.dsn
+         -c ${cxt}
+         ${trace_prop}
+         "
+      case ${mode} in
+      s)
+         ${modCmd}
+         ;;
+      c)
+         ClusterSubmit ${modCmd}
+         sleep 5
+         ${XCPEDIR}/utils/qstatus -e ${id}
+         ;;
+      esac
    fi
    ################################################################
    # Advance the pipeline to the next context.
@@ -401,15 +357,4 @@ done
 ###################################################################
 # Conclude the analysis.
 ###################################################################
-echo  -e \
-"
-
-
-###################################################################
-#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
-#                                                                 #
-#  ${RED}☭${RCL}                     ANALYSIS COMPLETE                     ${RED}☭${RCL}  #
-#                                                                 #
-#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #
-###################################################################
-"
+eval "echo -e \"${pipeEnd}\""
