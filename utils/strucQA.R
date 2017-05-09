@@ -22,23 +22,49 @@ suppressMessages(require(pracma))
 ###################################################################
 option_list = list(
    make_option(c("-i", "--img"), action="store", default=NA, type='character',
-              help="Path to the structural image"),
-   make_option(c("-m", "--mask"), action="store", default=NA, type='character',
-              help="Path to the foreground mask to be used, inverse will be used as the BG mask."),
-   make_option(c("-s", "--seg"), action="store", default=NA, type='character',
-              help="Path to the three class segmentation mask")
+              help="Path to the raw structural image"),
+   make_option(c("-c", "--cortical"), action="store", default=NA, type='character',
+              help="Path to the cortical binary mask."),
+   make_option(c("-w", "--whitemask"), action="store", default=NA, type='character',
+              help="Path to the white matter binary mask."),
+   make_option(c("-g", "--graymask"), action="store", default=NA, type='character',
+              help="Path to the gray matter binary mask."),
+   make_option(c("-f", "--foreground"), action="store", default=NA, type='character',
+              help="Path to the foreground binary mask.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$img)) {
-   cat('User did not specify an input timeseries.\n')
+   cat('User did not specify an input structural image.\n')
+   cat('Use strucQA.R -h for an expanded usage menu.\n')
+   quit()
+}
+if (is.na(opt$whitemask)) {
+   cat('User did not specify an input white matter binary mask.\n')
+   cat('Use strucQA.R -h for an expanded usage menu.\n')
+   quit()
+}
+if (is.na(opt$graymask)) {
+   cat('User did not specify an input gray matter binary mask.\n')
+   cat('Use strucQA.R -h for an expanded usage menu.\n')
+   quit()
+}
+if (is.na(opt$foreground)) {
+   cat('User did not specify an input foreground binary mask.\n')
    cat('Use strucQA.R -h for an expanded usage menu.\n')
    quit()
 }
 
+
 imgpath <- opt$img
-fgmaskpath <- opt$mask
-segmaskpath <- opt$seg
+gmpath <- opt$graymask
+wmpath <- opt$whitemask
+fgmaskpath <- opt$foreground
+if(!is.na(opt$cortical)) {
+  copath <- optcortical
+  cimg <- antsImageRead(copath,3)
+}
+
 
 ###################################################################
 # Load all of our images
@@ -46,16 +72,20 @@ segmaskpath <- opt$seg
 suppressMessages(require(ANTsR))
 img <- antsImageRead(imgpath,3)
 fgimg <- antsImageRead(fgmaskpath,3)
-segimg <- antsImageRead(segmaskpath,3)
+gimg <- antsImageRead(gmpath,3)
+wimg <- antsImageRead(wmpath,3)
+
 
 ###################################################################
 # Now create all of our variables
 ###################################################################
 fgvals <- img[fgimg==1]
 bgvals <- img[fgimg==0]
-csfvals <- img[segimg==1]
-gmvals <- img[segimg==2]
-wmvals <- img[segimg==3]
+gmvals <- img[gimg==1]
+wmvals <- img[wimg==1]
+if(!is.na(opt$cortical)){
+  cvals <- img[cimg==1]
+}
 
 ###################################################################
 # Now calculate FBER
@@ -75,8 +105,9 @@ CNR <- abs(mean(gmvals) - mean(wmvals)) / sd(bgvals)
 ###################################################################
 # Now calculate Cortical Contrasts
 ###################################################################
-CORTCON <- (mean(wmvals) - mean(gmvals)) / ((mean(gmvals) + mean(wmvals)) / 2)
-
+if(!is.na(opt$cortical)){
+  CORTCON <- (mean(wmvals) - mean(gmvals)) / ((mean(gmvals) + mean(wmvals)) / 2)
+}
 ###################################################################
 # Now calculate QI1
 ###################################################################
