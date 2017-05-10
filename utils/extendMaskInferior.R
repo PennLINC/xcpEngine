@@ -5,10 +5,9 @@
 ###################################################################
 
 ###################################################################
-# Utility function that can be used to remove negative voxels and 
-# impute the now removed voxels based on local patterns. 
-# This functionality will be explored in R but due to CPU processing times
-# may be moved into c++ 
+# Utility function that will be used to draw a plane from the back of the neck
+# through the nose of a subject, given the corresponding MNI points
+# trnasformed into subject space.
 ###################################################################
 
 ###################################################################
@@ -25,6 +24,8 @@ option_list = list(
               help="Path to the input mask to have inferior extension performed to"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path"),
+   make_option(c("-c", "--csv"), action="store", default=NA, type='character',
+              help="Input coordinate CSV"),
    make_option(c("-s", "--allMask"), action="store", default=0, type='character',
               help="Binary mask encompassing entire inut image dimensions")
 )
@@ -43,59 +44,80 @@ if (is.na(opt$out)) {
 impath <- opt$img
 out <- opt$out
 allMask <- opt$allMask
+inputCsv <- opt$csv
 
 ###################################################################
 # Declare any functions specific to this script
 ###################################################################
-multi.which <- function(A){
-    if ( is.vector(A) ) return(which(A))
-    d <- dim(A)
-    T <- which(as.logical(A)) - 1
-    nd <- length(d)
-    t( sapply(T, function(t){
-        I <- integer(nd)
-        I[1] <- t %% d[1]
-        sapply(2:nd, function(j){
-            I[j] <<- (t %/% prod(d[1:(j-1)])) %% d[j]
-        })
-        I
-    }) + 1 )
+mm2vox <- function(inputVoxel, inputImagePath){
+    # This function will wrap around the FSL std2imgcoord
+    # function and return a voxel coordinate
+    systemCall <- paste("echo ", inputVoxel[1], " ", inputVoxel[2], " ", inputVoxel[3], " | std2imgcoord -img ", inputImagePath, " -std ", inputImagePath, " -vox", sep='')
+    output <- system(systemCall, intern=T)
+    output <- gsub(x=output, pattern='  ', replacement=',')
+    output <- unlist(strsplit(output, ','))
+    output <- as.numeric(output)
+    # Now make sure all of our points are within the image
+    tmp <- antsImageRead(inputImagePath, 3)
+    newOutput <- NULL
+    for(z in seq(1,3)){
+      tmpVal <- output[z]
+      tmpRange <- dim(tmp)[z]
+      if(tmpVal > tmpRange){
+        tmpVal <- tmpRange
+      } else if(tmpVal < 0){
+        tmpVal <- 0
+      }
+      newOutput <- c(newOutput, tmpVal)
+    }
+    return(newOutput)
 }
 
 ###################################################################
 # 1. Load in the image and create our matrix to work with
 ###################################################################
 suppressMessages(require(ANTsR))
+suppressMessages(require(pracma))
 img <- antsImageRead(impath, 3)
 logmask <- antsImageRead(allMask, 3)
 
 ###################################################################
-# 2. Now create our matrix to work with
+# 2. Load in the registered points
+###################################################################
+pointVals <- read.csv(inputCsv, header=T)
+
+###################################################################
+# 3. Now create our matrix to work with
 ###################################################################
 mat <- img[logmask==1]
 dim(mat) <- dim(img)
 
 ###################################################################
-# 3. Now all of our 1 voxels
-# this is where the script should be sped up 
-# as this multi.which command is very slow
+# 4. Now find the formula for our plane
 ###################################################################
-halfZ <- floor(dim(mat)[3]/2)
-onValues <- multi.which(mat[,,1:halfZ])
+u <- mm2vox(pointVals[1,1:3], impath) - mm2vox(pointVals[3,1:3], impath)
+v <- mm2vox(pointVals[2,1:3], impath) - mm2vox(pointVals[3,1:3], impath)
+n <- cross(u,v)
+n1 <- n / max(abs(n))
+constant <- v %*% n1
 
 ###################################################################
-# 4. Now extend the image mask in the inferior direction
+# 5. Now draw our plane, and turn anything below our Z value to a 1
 ###################################################################
 newMat <- mat
-for(i in unique(onValues[,2])){
-  lowZ <- min(onValues[which(onValues[,2]==i),3])+5
-  for(i in newMat[,i,1:lowZ]){
-  
-  }  
+for(yVox in 1:dim(mat)[2]){
+    for(xVox in 1:dim(mat)[1]){
+    zVox <-  (constant - (n1[1] * xVox + n1[2] * yVox)) / n1[3]
+    zVox <- floor(zVox)
+    if(zVox < 0){
+      zVox <- 0
+    }
+    newMat[xVox, yVox, 1:zVox] <- 1
+    }
 }
 
 ###################################################################
-# 5. Now write the new image
+# 6. Now write the new image
 ###################################################################
 img[logmask==1] <- newMat
 antsImageWrite(image=img, filename=out)

@@ -264,72 +264,57 @@ fi
 # If none provided then run segmentation using either FAST or Atropos
 ###################################################################
 allValsCheck=0
-if [[ "${strucQA_gm[${cxt}]}" == "Y" ]] \
-   || [[ ${strucQA_gm[${cxt}]} =~ ${POSINT} ]] \
-   || [[ ${strucQA_gm[${cxt}]} =~ ${POSNUM} ]]
+if [[ "${strucQA_gm[${cxt}]}" == "Y" ]]
    then
   ################################################################
   # Generate a binary mask if necessary.
   # This mask will be based on a user-specified input value
   # and a user-specified image in the subject's structural space.
   ################################################################
-  if [[ $(imtest "$gmMask") != "1" ]] \
-    then
-    ${XCPEDIR}/utils/val2mask.R \
-     -i ${strucQA_seg[${cxt}]}${ext} \
-     -v ${confound_gm_val[${cxt}]} \
-     -o ${gmMask}${ext}
-    allValsCheck=`echo ${allValsCheck} + 1 | bc`
-  fi
+  ${XCPEDIR}/utils/val2mask.R \
+    -i ${strucQA_seg[${cxt}]}${ext} \
+    -v ${strucQA_gm_val[${cxt}]} \
+    -o ${gmMask}${ext}
+  allValsCheck=`echo ${allValsCheck} + 1 | bc`
 fi
-if [[ "${strucQA_wm[${cxt}]}" == "Y" ]] \
-   || [[ ${strucQA_wm[${cxt}]} =~ ${POSINT} ]] \
-   || [[ ${strucQA_wm[${cxt}]} =~ ${POSNUM} ]]
+if [[ "${strucQA_wm[${cxt}]}" == "Y" ]]
    then
   ################################################################
   # Generate a binary mask if necessary.
   # This mask will be based on a user-specified input value
   # and a user-specified image in the subject's structural space.
   ################################################################
-  if [[ $(imtest "$wmMask") != "1" ]] \
-    then
-    ${XCPEDIR}/utils/val2mask.R \
-     -i ${strucQA_seg[${cxt}]}${ext} \
-     -v ${strucQA_wm_val[${cxt}]} \
-     -o ${wmMask}${ext}
-      allValsCheck=`echo ${allValsCheck} + 1 | bc`
-  fi
+  ${XCPEDIR}/utils/val2mask.R \
+    -i ${strucQA_seg[${cxt}]}${ext} \
+    -v ${strucQA_wm_val[${cxt}]} \
+    -o ${wmMask}${ext}
+  allValsCheck=`echo ${allValsCheck} + 1 | bc`
 fi
-if [[ "${strucQA_csf[${cxt}]}" == "Y" ]] \
-   || [[ ${strucQA_csf[${cxt}]} =~ ${POSINT} ]] \
-   || [[ ${strucQA_csf[${cxt}]} =~ ${POSNUM} ]]
+if [[ "${strucQA_csf[${cxt}]}" == "Y" ]]
    then
   ################################################################
   # Generate a binary mask if necessary.
   # This mask will be based on a user-specified input value
   # and a user-specified image in the subject's structural space.
   ################################################################
-  if [[ $(imtest "$csfMask") != "1" ]] \
-    then
-    ${XCPEDIR}/utils/val2mask.R \
-     -i ${strucQA_seg[${cxt}]}${ext} \
-     -v ${strucQA_csf_val[${cxt}]} \
-     -o ${csfMask}${ext}
-    allValsCheck=`echo ${allValsCheck} + 1 | bc`
-  fi
+  ${XCPEDIR}/utils/val2mask.R \
+    -i ${strucQA_seg[${cxt}]}${ext} \
+    -v ${strucQA_csf_val[${cxt}]} \
+    -o ${csfMask}${ext}
+  allValsCheck=`echo ${allValsCheck} + 1 | bc`
 fi
 ###################################################################
 # See if we have 3 segmentation masks
 # If we don't have three run FAST | Atropos to create a quick seg
 ###################################################################
 if [[ ${allValsCheck} -lt 3 ]] \
-    || [[ ! -z ${strucQASeg} ]]    
+    || [[ ! -z ${strucQASeg[${cxt}]} ]]
   then
-    if [[ ${strucQASeg} == "FAST" ]] 
+    if [[ ${strucQASeg[${cxt}]} == "FAST" ]] 
       then
       $FSLDIR/bin/fast -o ${outdir}/${prefix}_ ${img}${ext}
     fi
-    if [[ ${strucQASeg} == "ATROPOS" ]] 
+if [[ ${strucQASeg[${cxt}]} == "ATROPOS" ]]
       then
       if [[ -z ${brainExtractionMask[${subjidx}]} ]]
         then
@@ -349,7 +334,7 @@ fi
 # in order to perform this
 ###################################################################
 ${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
-  -r [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz] --float 1 -m MI [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
+  -r [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
   -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 -m CC[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,4] -c [100x100x70x20,1e-9,15] -t SyN[0.1,3,0] -f 6x4x2x1 -s 3x2x1x0
 
 ###################################################################
