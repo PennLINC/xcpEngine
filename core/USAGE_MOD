@@ -1,0 +1,26 @@
+
+___________________________________________________________________
+
+Usage for pipeline module:
+<module_name>.mod -d <design> <options>
+
+Compulsory arguments:
+ -d : Localised design file for pipeline:
+      Use xcpConfig for guided creation of a design
+      file. Use xcpLocaliser to localise it to all
+      subjects. (Localisation is automatically 
+      completed by the xcpEngine.)
+
+Optional arguments:
+ -c : Context in pipeline:
+      Input should be a positive integer that denotes
+      the overall position of the module in the
+      analytic pipeline.
+ -t : Trace status:
+      Boolean value ( 0[default] or 1 ) that indicates
+      whether all commands called by the module should
+      be traced and explicitly replicated in a log
+      file. This log file can then be used to debug
+      output or can be converted to a standalone
+      pipeline.
+
