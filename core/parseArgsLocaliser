@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# GENERAL MODULE HEADER
+###################################################################
+eval "echo -e \"$(<${modHead})\""
+source ${XCPEDIR}/core/constants
+mod_out=${XCPEDIR}/core/DESIGN_MODULE_OUTPUT
+
+###################################################################
+# Read in:
+#  * path to main design file
+#  * current subject's identifier
+#  * whether to explicitly trace all commands
+# Trace status is, by default, set to 0 (no trace)
+###################################################################
+trace=0
+idxOffset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+if (( $# < 2 ))
+   then
+   usageFlag=1
+fi
+while getopts "d:s:t:" OPTION
+   do
+   case $OPTION in
+   d)
+      design=${OPTARG}
+      ;;
+   s)
+      subjidx=${OPTARG}
+      ;;
+   t)
+      trace=${OPTARG}
+      if (( ${trace} != 0)) && (( ${trace} != 1 ))
+         then
+         usageFlag=1
+      fi
+      ;;
+   *)
+      echo "Option not recognised: ${OPTION} ${OPTARG}"
+      usageFlag=1
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that the compulsory design and subject variables have
+# been defined
+###################################################################
+[[ -z ${design} ]] && usageFlag=1
+[[ -z ${subjidx} ]] && usageFlag=1
+###################################################################
+# Set trace status, if applicable
+# If trace is set to 1, then all commands called by the pipeline
+# will be echoed back in the log file.
+###################################################################
+[[ ${trace} == "1" ]] && set -x
+###################################################################
+# Usage and exit
+###################################################################
+if (( ${usageFlag} == 1 ))
+   then
+   cat ${XCPEDIR}/core/USAGE_LOCALISER
+   exit 1
+fi
+###################################################################
+# Initialise the module.
+###################################################################
+source $design
+subjrow=$(( ${subjidx} - ${idxOffset} ))
+csubj=$(sed ${subjrow}'q;d' ${path_cohort})

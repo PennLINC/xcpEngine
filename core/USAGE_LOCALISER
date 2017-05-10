@@ -1,0 +1,26 @@
+
+___________________________________________________________________
+
+Usage for pipeline localiser:
+<module_name>.mod -d <design> <options>
+
+Compulsory arguments:
+ -d : Design file for pipeline:
+      Includes all specifications for processing
+      routines to be run as part of the current
+      pipeline. Use xcpConfig for guided creation of
+      a design file.
+
+Optional arguments:
+ -s : Subject index:
+      Input should be a positive integer that denotes
+      the internal index of the subject data that are
+      to be localised.
+ -t : Trace status:
+      Boolean value ( 0[default] or 1 ) that indicates
+      whether all commands called by the module should
+      be traced and explicitly replicated in a log
+      file. This log file can then be used to debug
+      output or can be converted to a standalone
+      pipeline.
+
