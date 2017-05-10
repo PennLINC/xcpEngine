@@ -61,7 +61,7 @@ XCPENGINE
 ###################################################################
 source ${XCPEDIR}/core/constants
 
-Usage(){
+usage(){
 cat << endstream
 ___________________________________________________________________
 
@@ -90,17 +90,17 @@ ___________________________________________________________________
 endstream
 }
 
-ClusterSubmit(){
+cluster_submit(){
    case ${level} in
    subject)
-      logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}LOG
+      logfile=${out}/${prefix}_logs/${analysis}_${xcp_date}_${prefix}LOG
       ;;
    group)
-      logfile=${out_group}/log/${analysis}_${xcpdate}_log
+      logfile=${out_group}/log/${analysis}_${xcp_date}_log
       ;;
    esac
    [[ ! -e ${logfile} ]] \
-      && eval "echo -e \"${logHead}\"" >> ${logfile}
+      && eval "echo -e \"${log_head}\"" >> ${logfile}
    id=$(qsub \
       -V \
       -S /bin/bash \
@@ -134,7 +134,7 @@ while getopts "d:m:t" OPTION
       ;;
    *)
       echo "Option not recognised: ${OPTARG}"
-      Usage
+      usage
       exit
    esac
 done
@@ -158,7 +158,7 @@ source ${XCPEDIR}/core/validateCohort ${path_cohort}
 ###################################################################
 # Obtain a timestamp for the current deployment of the engine.
 ###################################################################
-xcpdate=$(date +%Y%m%d%H%M)
+xcp_date=$(date +%Y%m%d%H%M)
 ###################################################################
 # Prepare to analyse the entire pipeline.
 ###################################################################
@@ -179,9 +179,9 @@ mkdir -p ${out_group}/dependencies
 ###################################################################
 # Write version information to the version tracking file.
 ###################################################################
-envCheck=$(cat ${XCPEDIR}/core/ENVCHECK)
-versions=${out_group}/dependencies/${analysis}_${xcpdate}_versions
-eval "echo -e \"${envCheck}\"" >> ${versions}
+env_check=$(cat ${XCPEDIR}/core/ENVCHECK)
+versions=${out_group}/dependencies/${analysis}_${xcp_date}_versions
+eval "echo -e \"${env_check}\"" >> ${versions}
 
 
 
@@ -194,12 +194,12 @@ eval "echo -e \"${envCheck}\"" >> ${versions}
 #
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
-pipeStart=$(cat ${XCPEDIR}/core/HEADER_PIPELINE)
-pipeEnd=$(cat ${XCPEDIR}/core/FOOTER_PIPELINE)
-modHead=$(cat ${XCPEDIR}/core/HEADER_MODULE_SUBMIT)
-logHead=$(cat ${XCPEDIR}/core/HEADER_LOG)
-idxOffset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
-eval "echo -e \"${pipeStart}\""
+pipe_start=$(cat ${XCPEDIR}/core/CONSOLE_HEADER)
+pipe_end=$(cat ${XCPEDIR}/core/CONSOLE_FOOTER)
+mod_head=$(cat ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT)
+log_head=$(cat ${XCPEDIR}/core/LOG_HEADER)
+idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+eval "echo -e \"${pipe_start}\""
 
 
 
@@ -208,10 +208,10 @@ eval "echo -e \"${pipeStart}\""
 ###################################################################
 # Run the XCP Localiser first.
 ###################################################################
-subjidx=$(( 1 + ${idxOffset} ))
+subjidx=$(( 1 + ${idx_offset} ))
 module=LOCALISER
 unset ids
-eval "echo -e \"${modHead}\""
+eval "echo -e \"${mod_head}\""
 for subject in ${cohort}
    do
    ################################################################
@@ -222,7 +222,7 @@ for subject in ${cohort}
    ################################################################
    # Run the localiser.
    ################################################################
-   modCmd="
+   mod_cmd="
    ${XCPEDIR}/xcpLocaliser
       -d ${design}
       -s ${subjidx}
@@ -230,14 +230,14 @@ for subject in ${cohort}
       "
    case ${mode} in
    s)
-      ${modCmd}
+      ${mod_cmd}
       ;;
    c)
       #############################################################
       # Initialise the subject's processing log before submitting.
       #############################################################
       mkdir -p ${out}/${prefix}_logs
-      ClusterSubmit ${modCmd}
+      cluster_submit ${mod_cmd}
       ;;
    esac
    (( subjidx++ ))
@@ -265,7 +265,7 @@ for module in ${modules}
    # Obtain paths to the subject- and group-level scripts for
    # the current module, if each exists.
    ################################################################
-   eval "echo -e \"${modHead}\""
+   eval "echo -e \"${mod_head}\""
    modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod 2>/dev/null)
    modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod 2>/dev/null)
    ################################################################
@@ -294,7 +294,7 @@ for module in ${modules}
          ##########################################################
          # Execute the current module.
          ##########################################################
-         modCmd="
+         mod_cmd="
          ${modS}
             -d ${out}/${prefix}.dsn
             -c ${cxt}
@@ -302,10 +302,10 @@ for module in ${modules}
             "
          case ${mode} in
          s)
-            ${modCmd}
+            ${mod_cmd}
             ;;
          c)
-            ClusterSubmit ${modCmd}
+            cluster_submit ${mod_cmd}
             ;;
          esac
       done
@@ -327,7 +327,7 @@ for module in ${modules}
    if [[ -n ${modG} ]]
       then
       ${XCPEDIR}/core/validateGroup
-      modCmd="
+      mod_cmd="
       ${modG} 
          -d ${out_group}/${analysis}.dsn
          -c ${cxt}
@@ -335,10 +335,10 @@ for module in ${modules}
          "
       case ${mode} in
       s)
-         ${modCmd}
+         ${mod_cmd}
          ;;
       c)
-         ClusterSubmit ${modCmd}
+         cluster_submit ${mod_cmd}
          sleep 5
          ${XCPEDIR}/utils/qstatus -e ${id}
          ;;
@@ -357,4 +357,4 @@ done
 ###################################################################
 # Conclude the analysis.
 ###################################################################
-eval "echo -e \"${pipeEnd}\""
+eval "echo -e \"${pipe_end}\""
