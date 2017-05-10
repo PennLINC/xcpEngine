@@ -8,8 +8,10 @@
 # Parse a subject's identifiers and paths.
 ###################################################################
 subject=( $(echo $subject|sed s@','@' '@g) )
-[[ -f ${indesign} ]] && source ${indesign}
+[[ -f ${design} ]] && source ${design}
 
+
+# OBSOLETE CODE BELOW.
 #remfield=$1
 #iter=0
 #while [[ ! -z ${remfield} ]]
