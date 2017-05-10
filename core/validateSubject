@@ -15,19 +15,19 @@ subjid=$2
 unset errortest qatest
 if [[ -e ${logfile} ]]
    then
-   errortest=$(grep -i XCP-ERROR ${logfile})
-   qatest=$(grep -i QA-EXCLUDE ${logfile})
+   error_test=$(grep -i XCP-ERROR ${logfile})
+   qa_test=$(grep -i QA-EXCLUDE ${logfile})
 fi
 
-if [[ ! -z ${errortest} ]] || [[ ! -z ${qatest} ]]
+if [[ ! -z ${error_test} ]] || [[ ! -z ${qa_test} ]]
    then
    echo -e \
    "
    Skipping analysis for:
    * ${subjid}
    for the following reasons.
-   ${errortest}
-   ${qatest}
+   ${error_test}
+   ${qa_test}
    "
    exit 1
 fi
