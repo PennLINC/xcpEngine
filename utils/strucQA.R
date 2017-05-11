@@ -76,7 +76,7 @@ if(!is.na(fgmaskpath)){
 }
 if(!is.na(corticalpath)){
   cimg <- antsImageRead(corticalpath,3)
-  cimg <- img[cimg==1]
+  cvals <- img[cimg==1]
   cCheck <- 1
 }
 
@@ -133,8 +133,8 @@ if((gCheck > 0) & (fgCheck > 0) & (wCheck > 0)){
 ###################################################################
 # Now calculate Cortical Contrasts
 ###################################################################
-if(cCheck > 1){
-  CORTCON <- (mean(wmvals) - mean(gmvals)) / ((mean(gmvals) + mean(wmvals)) / 2)
+if(cCheck > 0){
+  CORTCON <- (mean(wmvals) - mean(cvals)) / ((mean(cvals) + mean(wmvals)) / 2)
   outputVals <- cbind(outputVals, CORTCON)
 }
 ###################################################################

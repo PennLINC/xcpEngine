@@ -272,7 +272,7 @@ if [[ "${strucQA_gm[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQA_seg[${cxt}]}${ext} \
+    -i ${strucQASeg[${cxt}]}${ext} \
     -v ${strucQA_gm_val[${cxt}]} \
     -o ${gmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -285,7 +285,7 @@ if [[ "${strucQA_wm[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQA_seg[${cxt}]}${ext} \
+    -i ${strucQASeg[${cxt}]}${ext} \
     -v ${strucQA_wm_val[${cxt}]} \
     -o ${wmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -298,7 +298,7 @@ if [[ "${strucQA_csf[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQA_seg[${cxt}]}${ext} \
+    -i ${strucQASeg[${cxt}]}${ext} \
     -v ${strucQA_csf_val[${cxt}]} \
     -o ${csfMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -311,7 +311,7 @@ if [[ "${strucQA_cort[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQA_seg[${cxt}]}${ext} \
+    -i ${strucQASeg[${cxt}]}${ext} \
     -v ${strucQA_cort_val[${cxt}]} \
     -o ${cortMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -373,9 +373,9 @@ fi
 # we need to make sure we have a transformation from MNI to our subject 
 # in order to perform this
 ###################################################################
-${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
+echo "${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
   -r [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
-  -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 --verbose 1
+  -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 --verbose 1"
 
 ###################################################################
 # Now apply the transformation to the MNI points
@@ -407,10 +407,10 @@ rm -f ${foreGround[${cxt}]}5${ext} ${foreGround[${cxt}]}4${ext} ${foreGround[${c
 ###################################################################
 # Now calculate the quality metrics 
 ###################################################################
-if [ -f ${cortMask[${cxt}]} ] 
+if [ -f ${cortMask[${cxt}]}${ext} ] 
   then
   ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
-    -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext} -c ${cortMask}${ext}
+    -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext} -c ${cortMask[${cxt}]}${ext}
 else 
     ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
     -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext}
