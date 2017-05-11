@@ -29,6 +29,8 @@ option_list = list(
               help="Path to the white matter binary mask."),
    make_option(c("-g", "--graymask"), action="store", default=NA, type='character',
               help="Path to the gray matter binary mask."),
+   make_option(c("-o", "--output"), action="store", default=NA, type='character',
+              help="Output CSV."),
    make_option(c("-f", "--foreground"), action="store", default=NA, type='character',
               help="Path to the foreground binary mask.")
 )
@@ -39,89 +41,47 @@ if (is.na(opt$img)) {
    cat('Use strucQA.R -h for an expanded usage menu.\n')
    quit()
 }
-if (is.na(opt$whitemask)) {
-   cat('User did not specify an input white matter binary mask.\n')
-   cat('Use strucQA.R -h for an expanded usage menu.\n')
-   quit()
-}
-if (is.na(opt$graymask)) {
-   cat('User did not specify an input gray matter binary mask.\n')
-   cat('Use strucQA.R -h for an expanded usage menu.\n')
-   quit()
-}
-if (is.na(opt$foreground)) {
-   cat('User did not specify an input foreground binary mask.\n')
-   cat('Use strucQA.R -h for an expanded usage menu.\n')
-   quit()
-}
-
 
 imgpath <- opt$img
 gmpath <- opt$graymask
 wmpath <- opt$whitemask
 fgmaskpath <- opt$foreground
-if(!is.na(opt$cortical)) {
-  copath <- optcortical
-  cimg <- antsImageRead(copath,3)
-}
-
+corticalpath <- opt$cortical
+outPath <- opt$output
 
 ###################################################################
-# Load all of our images
+# Load all of our provided images
 ###################################################################
+gCheck <- 0
+wCheck <- 0
+fgCheck <- 0
+cCheck <- 0
 suppressMessages(require(ANTsR))
 img <- antsImageRead(imgpath,3)
-fgimg <- antsImageRead(fgmaskpath,3)
-gimg <- antsImageRead(gmpath,3)
-wimg <- antsImageRead(wmpath,3)
-
-
-###################################################################
-# Now create all of our variables
-###################################################################
-fgvals <- img[fgimg==1]
-bgvals <- img[fgimg==0]
-gmvals <- img[gimg==1]
-wmvals <- img[wimg==1]
-if(!is.na(opt$cortical)){
-  cvals <- img[cimg==1]
+if(!is.na(gmpath)){
+  gimg <- antsImageRead(gmpath,3)
+  gmvals <- img[gimg==1] 
+  gCheck <- 1 
+}
+if(!is.na(wmpath)){
+  wimg <- antsImageRead(wmpath,3)
+  wmvals <- img[wimg==1]  
+  wCheck <- 1
+}
+if(!is.na(fgmaskpath)){
+  fgimg <- antsImageRead(fgmaskpath,3)
+  fgvals <- img[fgimg==1]
+  bgvals <- img[fgimg==0] 
+  fgCheck <- 1 
+}
+if(!is.na(corticalpath)){
+  cimg <- antsImageRead(corticalpath,3)
+  cimg <- img[cimg==1]
+  cCheck <- 1
 }
 
 ###################################################################
-# Now calculate FBER
-###################################################################
-FBER <- (sum(fgvals^2) / sum(bgvals^2))
-
-###################################################################
-# Now calculate SNR
-###################################################################
-SNR <- mean(gmvals) / sd(bgvals)
-
-###################################################################
-# Now calculate CNR
-###################################################################
-CNR <- abs(mean(gmvals) - mean(wmvals)) / sd(bgvals)
-
-###################################################################
-# Now calculate Cortical Contrasts
-###################################################################
-if(!is.na(opt$cortical)){
-  CORTCON <- (mean(wmvals) - mean(gmvals)) / ((mean(gmvals) + mean(wmvals)) / 2)
-}
-###################################################################
-# Now calculate QI1
-###################################################################
-all.vals <- append(fgvals, bgvals)
-allLength <- length(all.vals)
-# Calcaulate efc max
-efc.max <- allLength * (1 / sqrt(allLength)) * (log(1/sqrt(allLength)))
-# calculate total image entropy
-b.max <- sqrt(sum(all.vals^2))
-# Now calculate EFC
-EFC <- (1.0 / efc.max) * sum((all.vals / b.max) * log((all.vals / b.max)), na.rm=T)
-
-###################################################################
-# Now calculate Kurtosis & Skewness values
+# Declare any functions
 ###################################################################
 skewness <- function(x) {
     n <- length(x)
@@ -143,15 +103,73 @@ kurtosis <- function (x, na.rm = FALSE) {
         sapply(x, kurtosis, na.rm = na.rm)
     else kurtosis(as.vector(x), na.rm = na.rm)
 }
-GMKURT <- kurtosis(gmvals)
-GMSKEW <- skewness(gmvals)
-WMKURT <- kurtosis(wmvals)
-WMSKEW <- skewness(wmvals)
-BGKURT <- kurtosis(bgvals)
-BGSKEW <- skewness(bgvals)
+
+###################################################################
+# Produce our output variable
+###################################################################
+outputVals <- NULL
+
+###################################################################
+# Now calculate FBER
+###################################################################
+if((gCheck > 0) & (wCheck > 0)){
+  FBER <- (sum(fgvals^2) / sum(bgvals^2))
+  outputVals <- cbind(outputVals, FBER)
+}
+###################################################################
+# Now calculate SNR
+###################################################################
+if((gCheck > 0) & (fgCheck > 0)){
+  SNR <- mean(gmvals) / sd(bgvals)
+  outputVals <- cbind(outputVals, SNR)
+}
+###################################################################
+# Now calculate CNR
+###################################################################
+if((gCheck > 0) & (fgCheck > 0) & (wCheck > 0)){
+  CNR <- abs(mean(gmvals) - mean(wmvals)) / sd(bgvals)
+  outputVals <- cbind(outputVals, CNR)
+}
+###################################################################
+# Now calculate Cortical Contrasts
+###################################################################
+if(cCheck > 1){
+  CORTCON <- (mean(wmvals) - mean(gmvals)) / ((mean(gmvals) + mean(wmvals)) / 2)
+  outputVals <- cbind(outputVals, CORTCON)
+}
+###################################################################
+# Now calculate QI1
+###################################################################
+if(fgCheck > 0){
+  all.vals <- append(fgvals, bgvals)
+  allLength <- length(all.vals)
+  # Calcaulate efc max
+  efc.max <- allLength * (1 / sqrt(allLength)) * (log(1/sqrt(allLength)))
+  # calculate total image entropy
+  b.max <- sqrt(sum(all.vals^2))
+  # Now calculate EFC
+  EFC <- (1.0 / efc.max) * sum((all.vals / b.max) * log((all.vals / b.max)), na.rm=T)
+  outputVals <- cbind(outputVals, EFC)
+}
+###################################################################
+# Now calculate Kurtosis & Skewness values
+###################################################################
+if(gCheck > 0){
+  GMKURT <- kurtosis(gmvals)
+  GMSKEW <- skewness(gmvals)
+  outputVals <- cbind(outputVals, GMKURT, GMSKEW)
+}
+if(wCheck > 0){
+  WMKURT <- kurtosis(wmvals)
+  WMSKEW <- skewness(wmvals)
+  outputVals <- cbind(outputVals, WMKURT, WMSKEW)
+}
+if(fgCheck > 0){
+  BGKURT <- kurtosis(bgvals)
+  BGSKEW <- skewness(bgvals)
+  outputVals <- cbind(outputVals, BGKURT, BGSKEW)
+}
 ###################################################################
 # Now write output values
 ###################################################################
-output <- NULL
-output <- rbind(FBER, SNR, CNR, CORTCON, EFC, GMKURT, GMSKEW, WMKURT, WMSKEW, BGKURT, BGSKEW)
-write(paste(output, sep=','), stdout())
+write.csv(outputVals, file=outPath, quote=F, row.names=F)
