@@ -110,7 +110,6 @@ echo "Output directory is $outdir"
 #  * csfMask: A binary mask containing all of the CSF for the input image
 #  Optional outputs:
 #  * affineTransform: A coarse transformation calculated from the MNI template to subject
-#  * diffeoTransform: A diffeomorphic registration calculated from the MNI template to the subject
 #  * segmentation: A coarse three class segmentation
 ###################################################################
 foreGround[${cxt}]=${outdir}/${prefix}_foreGround
@@ -120,7 +119,6 @@ wmMask[${cxt}]=${outdir}/${prefix}_wmMask
 csfMask[${cxt}]=${outdir}/${prefix}_csfMask
 ## Optional output ##
 affineFiles[${cxt}]=${outdir}/${prefix}_0GenericAffine.mat
-diffeoTransform[${cxt}]=${outdir}/${prefix}_1Warp
 segmentation[${cxt}]=${outdir}/${prefix}_seg
 ###################################################################
 # * Initialise a pointer to the image.
@@ -335,26 +333,35 @@ fi
 ###################################################################
 ${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
   -r [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
-  -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 -m CC[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,4] -c [100x100x70x20,1e-9,15] -t SyN[0.1,3,0] -f 6x4x2x1 -s 3x2x1x0
+  -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 --verbose 1
 
 ###################################################################
 # Now apply the transformation to the MNI points
 ###################################################################
 ${ANTSPATH}/antsApplyTransformsToPoints -d 3 -i ${XCPEDIR}/thirdparty/strucQA/mni1mmCoords/mniCoords.csv \
-  -o ${coordsCSV[${cxt}]} -t ${affineFiles[${cxt}]} -t ${diffeoTransform[${cxt}]}
+  -o ${coordsCSV[${cxt}]} -t ${affineFiles[${cxt}]}
   
 ###################################################################
 # Now apply this transformation to the MNI mask
 ###################################################################  
-${ANTSPATH}/antsApplyTransforms -d 3 -e ${XCPEDIR}/thirdparty/strucQA/mniMask/mniForeGroundMask.nii.gz -o ${foreGround[${cxt}]} \
-  -r ${img[${subjidx}]} -n MultiLabel -t ${affineFiles[${cxt}]} -t ${diffeoTransform[${cxt}]}
+${ANTSPATH}/antsApplyTransforms -d 3 -i ${XCPEDIR}/thirdparty/strucQA/mniMask/mniForeGroundMask.nii.gz -o ${foreGround[${cxt}]}${ext} \
+  -r ${img[${subjidx}]} -n MultiLabel -t ${affineFiles[${cxt}]}
   
 ###################################################################
 # Now mask out the neck and nose from the background
 ###################################################################   
 fslmaths ${foreGround[${cxt}]} -add 1 -bin ${outdir}/${prefix}_allMask~TEMP~
-${XCPEDIR}/utils/extendMaskInferior.R -i {foreGround[${cxt}]} -o {foreGround[${cxt}]} -c ${coordsCSV[${cxt}]} -s ${outdir}/${prefix}_allMask~TEMP~
+${XCPEDIR}/utils/extendMaskInferior.R -i ${foreGround[${cxt}]}${ext} -o ${foreGround[${cxt}]}2${ext} -c ${coordsCSV[${cxt}]} -s ${outdir}/${prefix}_allMask~TEMP~
 
 ###################################################################
-# Now compute all of our quality metrics 
-################################################################### 
+# Ensure that the sinuses are in the background 
+###################################################################
+$FSLDIR/bin/fslmaths ${foreGround[${cxt}]}${ext} -mul ${foreGround[${cxt}]}2${ext} -sub 1 -abs ${foreGround[${cxt}]}3${ext}
+$ANTSPATH/ImageMath 3 ${foreGround[${cxt}]}4${ext} GetLargestComponent ${foreGround[${cxt}]}3${ext}
+$FSLDIR/bin/fslmaths ${foreGround[${cxt}]}3${ext} -sub ${foreGround[${cxt}]}4${ext} ${foreGround[${cxt}]}5${ext}
+$FSLDIR/bin/fslmaths ${foreGround[${cxt}]}2${ext} -sub ${foreGround[${cxt}]}5${ext} ${foreGround[${cxt}]}${ext}
+rm -f ${foreGround[${cxt}]}5${ext} ${foreGround[${cxt}]}4${ext} ${foreGround[${cxt}]}3${ext} ${foreGround[${cxt}]}2${ext}
+
+###################################################################
+# Now calculate the quality metrics 
+###################################################################
