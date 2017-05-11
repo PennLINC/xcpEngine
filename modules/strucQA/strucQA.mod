@@ -109,6 +109,7 @@ echo "Output directory is $outdir"
 #  * wmMask: A binary mask containing all of the WM for the input image
 #  * csfMask: A binary mask containing all of the CSF for the input image
 #  Optional outputs:
+#  * cortMask: A binary mask containing all of the Cortical voxels for the input image
 #  * affineTransform: A coarse transformation calculated from the MNI template to subject
 #  * segmentation: A coarse three class segmentation
 ###################################################################
@@ -118,6 +119,7 @@ gmMask[${cxt}]=${outdir}/${prefix}_gmMask
 wmMask[${cxt}]=${outdir}/${prefix}_wmMask
 csfMask[${cxt}]=${outdir}/${prefix}_csfMask
 ## Optional output ##
+cortMask[${cxt}]=${outdir}/${prefix}_cortMask
 affineFiles[${cxt}]=${outdir}/${prefix}_0GenericAffine.mat
 segmentation[${cxt}]=${outdir}/${prefix}_seg
 ###################################################################
@@ -272,7 +274,7 @@ if [[ "${strucQA_gm[${cxt}]}" == "Y" ]]
   ${XCPEDIR}/utils/val2mask.R \
     -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_gm_val[${cxt}]} \
-    -o ${gmMask}${ext}
+    -o ${gmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
 fi
 if [[ "${strucQA_wm[${cxt}]}" == "Y" ]]
@@ -285,7 +287,7 @@ if [[ "${strucQA_wm[${cxt}]}" == "Y" ]]
   ${XCPEDIR}/utils/val2mask.R \
     -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_wm_val[${cxt}]} \
-    -o ${wmMask}${ext}
+    -o ${wmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
 fi
 if [[ "${strucQA_csf[${cxt}]}" == "Y" ]]
@@ -298,7 +300,20 @@ if [[ "${strucQA_csf[${cxt}]}" == "Y" ]]
   ${XCPEDIR}/utils/val2mask.R \
     -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_csf_val[${cxt}]} \
-    -o ${csfMask}${ext}
+    -o ${csfMask[${cxt}]}${ext}
+  allValsCheck=`echo ${allValsCheck} + 1 | bc`
+fi
+if [[ "${strucQA_cort[${cxt}]}" == "Y" ]]
+   then
+  ################################################################
+  # Generate a binary mask if necessary.
+  # This mask will be based on a user-specified input value
+  # and a user-specified image in the subject's structural space.
+  ################################################################
+  ${XCPEDIR}/utils/val2mask.R \
+    -i ${strucQA_seg[${cxt}]}${ext} \
+    -v ${strucQA_cort_val[${cxt}]} \
+    -o ${cortMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
 fi
 ###################################################################
@@ -310,9 +325,21 @@ if [[ ${allValsCheck} -lt 3 ]] \
   then
     if [[ ${strucQASeg[${cxt}]} == "FAST" ]] 
       then
-      $FSLDIR/bin/fast -o ${outdir}/${prefix}_ ${img}${ext}
-    fi
-if [[ ${strucQASeg[${cxt}]} == "ATROPOS" ]]
+      $FSLDIR/bin/fast -g -o ${outdir}/${prefix}_ ${img}${ext}
+      if [ ! -f ${csfMask[${cxt}]}${ext} ] 
+        then
+        mv ${outdir}/${prefix}_seg_0.nii.gz ${csfMask[${cxt}]}${ext}
+      fi
+      if [ ! -f ${gmMask[${cxt}]}${ext} ]
+        then
+        mv ${outdir}/${prefix}_seg_1.nii.gz ${gmMask[${cxt}]}${ext}
+      fi
+      if [ ! -f ${wmMask[${cxt}]}${ext} ] 
+        then  
+        mv ${outdir}/${prefix}_seg_2.nii.gz ${wmMask[${cxt}]}${ext}
+      fi  
+   fi
+    if [[ ${strucQASeg[${cxt}]} == "ATROPOS" ]]
       then
       if [[ -z ${brainExtractionMask[${subjidx}]} ]]
         then
@@ -323,6 +350,21 @@ if [[ ${strucQASeg[${cxt}]} == "ATROPOS" ]]
       ${ANTSPATH}/Atropos -d 3 -a ${img}${ext} -i KMeans[3] \
         -c [ 5,0] -m [ 0,1x1x1] -x ${brainExtractionMask[${subjidx}]} \
         -o [ ${outdir}/${prefix}_seg${ext} ]
+      if [ ! -f ${csfMask[${cxt}]}${ext} ] 
+        then
+        ${XCPEDIR}/utils/val2mask.R -i ${outdir}/${prefix}_seg${ext} \
+          -v 1 -o ${csfMask[${cxt}]}${ext}
+      fi
+      if [ ! -f ${gmMask[${cxt}]}${ext} ]
+        then
+        ${XCPEDIR}/utils/val2mask.R -i ${outdir}/${prefix}_seg${ext} \
+          -v 2 -o ${gmMask[${cxt}]}${ext}
+      fi
+      if [ ! -f ${wmMask[${cxt}]}${ext} ]
+        then
+        ${XCPEDIR}/utils/val2mask.R -i ${outdir}/${prefix}_seg${ext} \
+          -v 3 -o ${wmMask[${cxt}]}${ext}
+      fi
     fi
 fi
 
@@ -365,3 +407,103 @@ rm -f ${foreGround[${cxt}]}5${ext} ${foreGround[${cxt}]}4${ext} ${foreGround[${c
 ###################################################################
 # Now calculate the quality metrics 
 ###################################################################
+if [ -f ${cortMask[${cxt}]} ] 
+  then
+  ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
+    -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext} -c ${cortMask}${ext}
+else 
+    ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
+    -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext}
+fi
+###################################################################
+# Now append quality metrics to global quality variables
+###################################################################
+qualityHeader=`head ${outdir}/${prefix}_qualityMetrics.csv -n 1`
+qualityValues=`tail ${outdir}/${prefix}_qualityMetrics.csv -n 1`
+qvars=`echo "${qvars},${qualityHeader}"`
+qvals=`echo "${qvals},${qualityValues}"`
+###################################################################
+# Write any remaining output paths to local design file so that
+# they may be used further along the pipeline.
+###################################################################
+echo ""; echo ""; echo ""
+echo "Writing outputs..."
+rm -f ${out}/${prefix}${ext}
+ln -s ${img}${ext} ${out}/${prefix}${ext}
+###################################################################
+# OUTPUT: Foreground Image
+# Test whether the foreground image was created.
+# If it does exist then add it to the index of derivatives and
+# to the localised design file
+###################################################################
+if [[ $(imtest "${foreGround[${cxt}]}") == "1" ]]
+  then
+ echo "foreGround[${subjidx}]=${foreGround[${cxt}]}" \
+  >> $design_local 
+ echo "#foreGround#${foreGround[${cxt}]}" \
+  >> ${auxImgs[${subjidx}]}
+fi
+###################################################################
+# OUTPUT: Gray matter mask
+# Test whether the gray matter mask image was created.
+# If it does exist then add it to the index of derivatives and
+# to the localised design file
+###################################################################
+if [[ $(imtest "${gmMask[${cxt}]}") == "1" ]]
+  then
+  echo "gmMask[${subjidx}]=${gmMask[${cxt}]}" \
+    >> $design_local
+  echo "#gmMask#${gmMask[${cxt}]}" \
+    >> ${auxImgs[${subjidx}]}
+fi
+###################################################################
+# OUTPUT: White matter mask
+# Test whether the white matter mask image was created.
+# If it does exist then add it to the index of derivatives and
+# to the localised design file
+###################################################################
+if [[ $(imtest "${wmMask[${cxt}]}") == "1" ]]
+  then
+  echo "wmMask[${subjidx}]=${wmMask[${cxt}]}" \
+    >> $design_local
+  echo "#wmMask#${csfMask[${cxt}]}" \
+    >> ${auxImgs[${subjidx}]}
+fi
+###################################################################
+# OUTPUT: CSF matter mask
+# Test whether the white matter mask image was created.
+# If it does exist then add it to the index of derivatives and
+# to the localised design file ###################################################################
+if [[ $(imtest "${csfMask[${cxt}]}") == "1" ]]
+  then
+  echo "csfMask[${subjidx}]=${csfMask[${cxt}]}" \
+    >> $design_local
+  echo "#csfMask#${csfMask[${cxt}]}" \
+    >> ${auxImgs[${subjidx}]}
+fi
+###################################################################
+# OUTPUT: Segmentation image
+# Test whether the three class segmentation image was created.
+# If it does exist then add it to the index of derivatives and
+# to the localised design file
+###################################################################
+if [[ $(imtest "${segmentation[${cxt}]}") == "1" ]]
+  then
+  echo "segmentation[${subjidx}]=${segmentation[${cxt}]}" \
+    >> $design_local
+  echo "#segmentation#${segmentation[${cxt}]}" \
+    >> ${auxImgs[${subjidx}]}
+fi
+rm -f ${quality}
+echo ${qvars} >> ${quality}
+echo ${qvals} >> ${quality}
+prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
+modaudit=$(expr ${prefields} + ${cxt} + 1)
+subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
+replacement=$(echo ${subjaudit}\
+   |sed s@[^,]*@@${modaudit}\
+   |sed s@',,'@',1,'@ \
+   |sed s@',$'@',1'@g)
+sed -i s@${subjaudit}@${replacement}@g ${audit}
+echo "Module complete"
+exit 0 
