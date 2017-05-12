@@ -434,7 +434,7 @@ while [[ "${#rem}" -gt "0" ]]
         # Now run the ANTsCT pipeline
         ###################################################################
         templateExtracted="${template}"
-        antsCMD="${ANTSPATH}antsCorticalThickness.sh -d 3 -a ${img}${ext} \
+        antsCMD="${ANTSPATH}/antsCorticalThickness.sh -d 3 -a ${img}${ext} \
                  -e ${templateNonExtracted} -m ${templateMask} \
                  -f ${templateMaskDil} -p ${templatePriors} \
                  -w ${EXTRACTION_PRIOR[${cxt}]} -t ${templateExtracted} \
