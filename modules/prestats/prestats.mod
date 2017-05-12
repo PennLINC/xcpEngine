@@ -1105,9 +1105,16 @@ while [[ "${#rem}" -gt "0" ]]
 	         # necessary for coregistration of functional and
 	         # structural acquisitions.
 	         #######################################################
+	         if [[ $(imtest ${referenceVolume[${subjidx}]}) == 1 ]]
+	         then
+	         bet ${referenceVolume[${subjidx}]} \
+	            ${referenceVolumeBrain[${cxt}]} \
+	            -f ${prestats_fit[${cxt}]}
+	         else
 	         bet ${referenceVolume[${cxt}]} \
 	            ${referenceVolumeBrain[${cxt}]} \
 	            -f ${prestats_fit[${cxt}]}
+	         fi
 	         #######################################################
 	         # Use the preliminary mask to extract brain tissue.
 	         #######################################################
