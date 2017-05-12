@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+###################################################################
+# only input should be context in pipeline
+###################################################################
+cxt=$1 # do not edit this line
+
+###################################################################
+# strucQA_gm is a check to see if a GM mask will be provided 
+strucQA_gm[${cxt}]=N
+# Accepted values are Y|N
+###################################################################
+
+###################################################################
+# strucQA_gm_val is a value for the gm value for a segmentation 
+# of the anatomical image
+strucQA_gm_val[${cxt}]="2,4"
+# Accepted values are integers seperated by commas i.e. 1,2
+###################################################################
+
+###################################################################
+# strucQA_wm is a check to see if a WM mask will be provided 
+strucQA_wm[${cxt}]=N
+# Accepted values are Y|N
+###################################################################
+
+###################################################################
+# strucQA_wm_val is a value for the wm value for a segmentation 
+# of the anatomical image 
+strucQA_wm_val[${cxt}]="3"
+# Accepted values are integers seperated by commas i.e. 1,2
+###################################################################
+
+###################################################################
+# strucQA_wm is a check to see if a WM mask will be provided 
+strucQA_csf[${cxt}]=N
+# Accepted values are Y|N
+###################################################################
+
+###################################################################
+# strucQA_csf_val is a value for the csf value for a segmentation 
+# of the anatomical image 
+strucQA_csf_val[${cxt}]="1"
+# Accepted values are integers seperated by commas i.e. 1,2
+###################################################################
+
+###################################################################
+# strucQA_cort is a check to see if a cortex mask will be provided 
+strucQA_cort[${cxt}]=N
+# Accepted values are Y|N
+###################################################################
+
+###################################################################
+# strucQA_cort_val is a value for the cortex value for a segmentation 
+# of the anatomical image 
+strucQA_cort_val[${cxt}]="4"
+# Accepted values are integers seperated by commas i.e. 1,2
+###################################################################
+
+###################################################################
+# strucQA_seg is the value of the N class segmentation 
+# to be provided for the input to calculate segmentation
+# dependent quality metrics in
+strucQA_seg[${cxt}]="Atropos"
+# Accepted values are paths to images or a segmentation technique
+# current segmentation techniques available are FAST | Atropos
+###################################################################
+
+###################################################################
+# structural_cleanup specifies whether to delete
+# files created in intermediate processing steps
+strucQA_cleanup[${cxt}]=Y
+# accepted values are [Y|N]
+###################################################################
+
+###################################################################
+# structural_rerun specifies whether to perform analyses
+# that the algorithm detects have already been run
+strucQA_rerun[${cxt}]=N
+# accepted values are [Y|N]
+###################################################################
