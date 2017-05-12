@@ -14,7 +14,7 @@ strucQA_gm[${cxt}]=N
 ###################################################################
 # strucQA_gm_val is a value for the gm value for a segmentation 
 # of the anatomical image
-strucQA_gm_val[${cxt}]=""
+strucQA_gm_val[${cxt}]="2,4"
 # Accepted values are integers seperated by commas i.e. 1,2
 ###################################################################
 
@@ -27,7 +27,7 @@ strucQA_wm[${cxt}]=N
 ###################################################################
 # strucQA_wm_val is a value for the wm value for a segmentation 
 # of the anatomical image 
-strucQA_wm_val[${cxt}]=""
+strucQA_wm_val[${cxt}]="3"
 # Accepted values are integers seperated by commas i.e. 1,2
 ###################################################################
 
@@ -40,7 +40,7 @@ strucQA_csf[${cxt}]=N
 ###################################################################
 # strucQA_csf_val is a value for the csf value for a segmentation 
 # of the anatomical image 
-strucQA_csf_val[${cxt}]=""
+strucQA_csf_val[${cxt}]="1"
 # Accepted values are integers seperated by commas i.e. 1,2
 ###################################################################
 
@@ -53,7 +53,7 @@ strucQA_cort[${cxt}]=N
 ###################################################################
 # strucQA_cort_val is a value for the cortex value for a segmentation 
 # of the anatomical image 
-strucQA_cort_val[${cxt}]=""
+strucQA_cort_val[${cxt}]="4"
 # Accepted values are integers seperated by commas i.e. 1,2
 ###################################################################
 
