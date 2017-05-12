@@ -1,230 +1,137 @@
 #!/usr/bin/env bash
 
 
-################################################################### 
+###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
-################################################################### 
+###################################################################
 
-
-################################################################### 
-# General module header
-################################################################### 
-
-if [[ $# -lt 2 ]]
-   then
-   ${XCPEDIR}/xcpModusage mod
-   exit 1
-fi
-
-################################################################### 
+###################################################################
+# SPECIFIC MODULE HEADER
 # This module localises inputs to the XCP engine
 ###################################################################
-
-echo ""; echo ""; echo ""
-echo "################################################################### "
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭               EXECUTING XCP ENGINE LOCALISER              ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""; echo ""
+mod_name='XCP ENGINE LOCALISER'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+cxt=0
 
 ###################################################################
-# Read in:
-#  * path to main design file
-#  * current subject's identifier
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
+# GENERAL MODULE HEADER
 ###################################################################
-trace=0
-while getopts "d:s:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design=${OPTARG}
-      ;;
-   s)
-      subjidx=${OPTARG}
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTION} ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
-###################################################################
-# Ensure that the compulsory design and subject variables have
-# been defined
-###################################################################
-[[ -z ${design} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ -z ${subjidx} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-
-source $design
-subjrow=$(expr ${subjidx} - 9000)
-csubj=$(sed -n ${subjrow}p ${path_cohort})
+source ${XCPEDIR}/core/parseArgsLocaliser
 
 ################################################################### 
 # Localise design file
 ################################################################### 
 echo "Localising design file..."
+
 ###################################################################
 # Parse subject
 ###################################################################
 echo " * Parsing subject identifiers"
-remfield=$csubj
-iter=0
-while [[ ! -z ${remfield} ]]
-   do
-   curfield=$(echo ${remfield}|cut -d"," -f1)
-   remfield=$(echo ${remfield}|sed s@^[^,]*@@)
-   remfield=$(echo ${remfield}|sed s@^,@@)
-   subject[${iter}]=${curfield}
-   iter=$(expr ${iter} + 1)
-done
-num_subj_fields=${iter}
-subj=${subject[0]}
-source ${design}
-
+   source ${XCPEDIR}/core/parseSubject ${subject}
+   
 ###################################################################
 # Create output directory
 ###################################################################
-
-echo $out
-[[ ! -e ${out} ]] && \
-   echo " * Creating output directory" \
-   && mkdir -p $out
+echo " * Creating output directory"
+   mkdir -p $out
 
 ###################################################################
 # Evaluate subject-specific variables
 ###################################################################
 echo " * Evaluating subject variables"
-design_local=$(echo -e "$(eval "echo -e \"`<${design}`\"")")
-design_local=$(echo "$design_local"\
-   |sed s@img=@img\[$subjidx\]=@g)
-design_local=$(echo "$design_local"\
-   |sed s@struct=@struct\[$subjidx\]=@g)
-
+   design_local=$(eval "echo -e \"`<${design}`\""\
+      |sed s@img=@img\[${subjidx}\]=@g\
+      |sed s@struct=@struct\[${subjidx}\]=@g)
+      
 ###################################################################
 # Write local design file
 ###################################################################
 echo " * Writing design for current subject"
-design_local_path=${out}/${prefix}.dsn
-rm -f $design_local_path
-echo "${design_local}" >> ${design_local_path}
-echo "" >> ${design_local_path}
-echo "###################################################################" >> ${design_local_path}
-echo "# OUTPUT VARIABLES" >> ${design_local_path}
-echo "###################################################################" >> ${design_local_path}
-echo "" >> ${design_local_path}
-echo "# *** outputs from localiser[0] *** #" >> ${design_local_path}
-echo "" >> ${design_local_path}
-echo "subjidx=$subjidx" >> ${design_local_path}
-for (( iter=0; iter<$num_subj_fields; iter++ ))
-   do
-   echo "subject[${iter}]=${subject[${iter}]}" >> ${design_local_path}
-done
-echo "design_local=${design_local_path}" >> ${design_local_path}
-[[ -z ${space} ]] && echo "space=native" >> ${design_local_path}
+   design_local_path=${out}/${prefix}.dsn
+   rm -f $design_local_path
+   echo "${design_local}"                       >> ${design_local_path}
+   cat ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT    >> ${design_local_path}
+   eval "echo -e \"${mod_out}\""                >> ${design_local_path}
+   echo "subjidx=$subjidx"                      >> ${design_local_path}
+   echo "design_local=${design_local_path}"     >> ${design_local_path}
 
 ###################################################################
 # Write path to derivative image index
 ###################################################################
 echo " * Writing path to derivative map index"
-source ${design_local_path}
-auxImgPath=${out}/${prefix}_derivsNative
-rm -rf $auxImgPath
-echo "auxImgs[${subjidx}]=${auxImgPath}" >> ${design_local_path}
-echo ""
+   aux_img_path=${out}/${prefix}_derivsNative
+   rm -f $aux_img_path
+   echo "aux_imgs[${subjidx}]=${aux_img_path}"  >> ${design_local_path}
 
 ###################################################################
 # Write path to audit file, and write information
 # to the audit file
 ###################################################################
-audit=${out}/${prefix}_logs/$(date +%Y%m%d%H%M)_${prefix}_audit
-echo audit=${audit} >> ${design_local_path}
-###################################################################
-# Prepare the audit header, which will contain information about the
-# processing status of the current subject
-###################################################################
-pfx=$(grep -i "prefix=" ${design}|cut -d"=" -f2)
-rm -f ${audit}
-nfields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-audithdr=$(echo ${pfx}|sed s@'_'@','@g|sed s@'${'@@g|sed s@'}'@@g)
-audithdr=${audithdr},localiser,${pipeline}
-echo "${audithdr}" >> ${audit}
-naudits=$(echo $(grep -o "," <<< $audithdr|wc -l) + 1|bc)
-###################################################################
-# Write the contents of the audit file.
-###################################################################
-saudit=$(echo ${prefix}|sed s@'_'@','@g)
-nmods=$(echo $(grep -o "," <<< $pipeline|wc -l) + 2|bc)
-for ((i=0; i<${nmods}; i++))
-   do
-   saudit=${saudit},0
-done
-echo ${saudit} >> ${audit}
+echo " * Priming analytic audit"
+   audit=${out}/${prefix}_logs/${prefix}_audit
+   rm -f ${audit}
+   echo "audit=${audit}"                        >> ${design_local_path}
+   
+   ################################################################
+   # Prepare the audit header, which will contain information
+   # about the processing status of the current subject
+   ################################################################
+   source ${XCPEDIR}/core/getIdentifiers
+   id_vals=$(echo ${id_val[@]}|sed s@' '@','@g)
+   id_vars=$(echo ${id_var[@]}|sed s@' '@','@g)
+   audit_var=${id_vars},localiser,${pipeline}
+   
+   ################################################################
+   # Write the contents of the audit file.
+   ################################################################
+   num_mods=$(( $(${XCPEDIR}/core/numInstances ',' ${pipeline}) + 2 ))
+   audit_val=${id_vals}$(printf ',0%.0s' $(seq 1 ${num_mods}))
+   echo "${audit_var}"                          >> ${audit}
+   echo "${audit_val}"                          >> ${audit}
 
 ###################################################################
 # Write path to index of quality variables
 ###################################################################
-quality=${out}/${prefix}_quality.csv
-echo quality=${out}/${prefix}_quality.csv >> ${design_local_path}
-[[ -e ${quality} ]] && rm -rf ${quality}
-qvars=$(echo ${pfx}|sed s@'_'@','@g|sed s@'${'@@g|sed s@'}'@@g)
-qvals=$(echo ${prefix}|sed s@'_'@','@g)
-echo ${qvars} >> ${quality}
-echo ${qvals} >> ${quality}
+echo " * Priming quality assessment"
+   quality=${out}/${prefix}_quality.csv
+   rm -f ${quality}
+   echo "quality=${quality}"                    >> ${design_local_path}
+   echo "${id_vars}"                            >> ${quality}
+   echo "${id_vals}"                            >> ${quality}
 
 ###################################################################
 # Ensure that all images are present
 ###################################################################
-[[ $(imtest ${img[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate functional timeseries." && err=1
-if [[ ${space} == native ]]
-   then
-   [[ $(imtest ${struct[${subjidx}]}) != 1 ]] && echo "::XCP-ERROR: Unable to locate structural image." && err=1
-   [[ $(imtest ${template}) != 1 ]] && echo "::XCP-ERROR: Unable to locate template." && err=1
-   [[ $(imtest ${xfm_warp}) != 1 ]] && echo "::XCP-ERROR: Unable to locate warp." && err=1
-   [[ $(imtest ${ixfm_warp}) != 1 ]] && echo "::XCP-ERROR: Unable to locate inverse warp." && err=1
-fi
-[[ ${err} == 1 ]] && exit 666
+source ${XCPEDIR}/core/imgChk
 
 ###################################################################
-# Localise image
+# Localise the image.
+# * If necessary, convert it to NIFTI_GZ format.
+# * If necessary, convert it to RPI orientation.
 ###################################################################
-echo "Localising image..."
-ext=$(basename ${img[${subjidx}]}|cut -d"." -f1 --complement)
-img=${out}/${prefix}.${ext}
-rm -f ${img}
-ln -s ${img[${subjidx}]} ${img}
+echo "
+Localising image..."
+   img=${out}/${prefix}.nii.gz
+   rm -f ${img}
+   if [[ ${img[${subjidx}]} != *".nii.gz" ]]
+      then
+      fslchfiletype NIFTI_GZ ${img[${subjidx}]} ${img}
+   else
+      ln -s ${img[${subjidx}]} ${img}
+   fi
 
 ###################################################################
 # Enter audit information for the current subject
 ###################################################################
-prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-modaudit=$(expr ${prefields} + ${cxt} + 1)
+echo "
+Updating audit..."
+modaudit=$(( ${#id_var[@]} + ${cxt} + 1 ))
 subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
 replacement=$(echo ${subjaudit}\
    |sed s@[^,]*@@${modaudit}\
    |sed s@',,'@',1,'@)
 sed -i s@${subjaudit}@${replacement}@g ${audit}
 
-echo ""; echo ""; echo "Localiser complete"
+echo "
+
+Localiser complete"
