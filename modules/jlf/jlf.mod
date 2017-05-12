@@ -249,7 +249,7 @@ jlfCMD="${ANTSPATH}/antsJointLabelFusion.sh \
   -j 2 \
   -k ${keepJLFWarps[${cxt}]} \
   -t ${img}.nii.gz \
-  -o ${outdir}/jlf/${prefix}_ \
+  -o ${outdir}t/${prefix}_ \
   -c 0 \
   ${jlfReg}"
 ${jlfCMD}
