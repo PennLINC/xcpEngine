@@ -113,7 +113,9 @@ outputVals <- NULL
 # Now calculate FBER
 ###################################################################
 if((gCheck > 0) & (wCheck > 0)){
-  FBER <- (sum(fgvals^2) / sum(bgvals^2))
+  meanFG <- (sum(fgvals^2)) / sum(fgvals)
+  meanBG <- (sum(bgvals^2)) / (length(bgvals) -  sum(bgvals))
+  FBER <- meanFG / meanBG
   outputVals <- cbind(outputVals, FBER)
 }
 ###################################################################
