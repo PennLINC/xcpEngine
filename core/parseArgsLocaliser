@@ -10,7 +10,8 @@
 ###################################################################
 source ${XCPEDIR}/core/constants
 export FSLOUTPUTTYPE=NIFTI_GZ
-mod_out=${XCPEDIR}/core/DESIGN_MODULE_OUTPUT
+mod_out=$(cat ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT)
+usage_flag=0
 
 ###################################################################
 # Read in:
@@ -73,4 +74,4 @@ fi
 ###################################################################
 source $design
 subjrow=$(( ${subjidx} - ${idx_offset} ))
-csubj=$(sed ${subjrow}'q;d' ${path_cohort})
+subject=$(sed ${subjrow}'q;d' ${path_cohort})
