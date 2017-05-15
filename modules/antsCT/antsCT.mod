@@ -440,6 +440,7 @@ while [[ "${#rem}" -gt "0" ]]
                  -w ${EXTRACTION_PRIOR[${cxt}]} -t ${templateExtracted} \
                  -o ${outdir}/${prefix}_ -s ${antsExt}"
         ${antsCMD}
+        ln ${img[${subjidx}]} ${outdir}/${prefix}_RawInputImage.nii.gz
 	buffer=ACT
         echo "done with ANTsCT pipeline"
         ;;
