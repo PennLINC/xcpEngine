@@ -16,14 +16,14 @@ rm -f ${img}
 # Test #1:
 # Is the image formatted as a gzipped NIfTI?
 ###################################################################
-[[ ${img[${subjidx}]} != *".nii.gz" ]]
+[[ ${img[${subjidx}]} == *".nii.gz" ]]
 flag_imtype=$?
 
 ###################################################################
 # Test #2:
 # Is the image in RPI orientation?
 ###################################################################
-[[ $($AFNI_PATH/@GetAfniOrient ${img[${subjidx}]}) != RPI ]]
+[[ $($AFNI_PATH/@GetAfniOrient ${img[${subjidx}]}) == RPI ]]
 flag_orient=$?
 
 ###################################################################
