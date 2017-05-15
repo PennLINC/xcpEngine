@@ -228,6 +228,7 @@ for subject in ${cohort}
       -s ${subjidx}
       ${trace_prop}
       "
+   mkdir -p ${out}/${prefix}_logs
    case ${mode} in
    s)
       ${mod_cmd}
@@ -236,7 +237,6 @@ for subject in ${cohort}
       #############################################################
       # Initialise the subject's processing log before submitting.
       #############################################################
-      mkdir -p ${out}/${prefix}_logs
       cluster_submit ${mod_cmd}
       ;;
    esac

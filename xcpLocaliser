@@ -32,7 +32,8 @@ echo " * Parsing subject identifiers"
 ###################################################################
 # Create output directory
 ###################################################################
-echo " * Creating output directory"
+echo " * Creating output directory
+   ( ${out} )"
    mkdir -p $out
 
 ###################################################################
@@ -54,6 +55,7 @@ echo " * Writing design for current subject"
    eval "echo -e \"${mod_out}\""                >> ${design_local_path}
    echo "subjidx=$subjidx"                      >> ${design_local_path}
    echo "design_local=${design_local_path}"     >> ${design_local_path}
+   source ${design_local_path}
 
 ###################################################################
 # Write path to derivative image index
