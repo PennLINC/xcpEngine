@@ -272,7 +272,7 @@ if [[ "${strucQA_gm[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_gm_val[${cxt}]} \
     -o ${gmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -285,7 +285,7 @@ if [[ "${strucQA_wm[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_wm_val[${cxt}]} \
     -o ${wmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -298,7 +298,7 @@ if [[ "${strucQA_csf[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_csf_val[${cxt}]} \
     -o ${csfMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -311,7 +311,7 @@ if [[ "${strucQA_cort[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_cort_val[${cxt}]} \
     -o ${cortMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
