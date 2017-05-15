@@ -111,26 +111,14 @@ source ${XCPEDIR}/core/imgChk
 ###################################################################
 echo "
 Localising image..."
-   img=${out}/${prefix}.nii.gz
-   rm -f ${img}
-   if [[ ${img[${subjidx}]} != *".nii.gz" ]]
-      then
-      fslchfiletype NIFTI_GZ ${img[${subjidx}]} ${img}
-   else
-      ln -s ${img[${subjidx}]} ${img}
-   fi
+source ${XCPEDIR}/core/imgLocalise
 
 ###################################################################
 # Enter audit information for the current subject
 ###################################################################
 echo "
 Updating audit..."
-modaudit=$(( ${#id_var[@]} + ${cxt} + 1 ))
-subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-replacement=$(echo ${subjaudit}\
-   |sed s@[^,]*@@${modaudit}\
-   |sed s@',,'@',1,'@)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
+source ${XCPEDIR}/core/auditComplete
 
 echo "
 
