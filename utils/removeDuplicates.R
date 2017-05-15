@@ -69,4 +69,4 @@ oidx <- oidx + 1
 ###################################################################
 cohort <- read.csv(cohortpath,header=F)
 cohort <- cohort[!duplicated(cohort[,oidx]),]
-write.csv(cohort,cohortpath,header=F,row.names=F,quote=F)
+write.table(cohort,cohortpath,col.names=F,row.names=F,quote=F,sep=',')
