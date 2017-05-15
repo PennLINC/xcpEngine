@@ -9,6 +9,7 @@
 # Ensure that all image inputs are present
 ###################################################################
 
+err=0
 is_image(){
    (( $(${FSLDIR}/bin/imtest ${1}) == 1 ))
 }
