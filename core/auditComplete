@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Update the audit file to reflect successful completion of the
+# module.
+###################################################################
+
+modaudit=$(( ${#id_var[@]} + ${cxt} + 1 ))
+subjaudit=$(tail -n1 ${audit})
+replacement=$(echo ${subjaudit}\
+   |sed s@[^,]*@@${modaudit}\
+   |sed s@',,'@',1,'@)
+sed -i s@${subjaudit}@${replacement}@g ${audit}
