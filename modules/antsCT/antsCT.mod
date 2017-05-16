@@ -715,6 +715,7 @@ fi
 ###################################################################
 echo ""; echo ""; echo ""
 img=$(readlink -f ${img}${ext})
+rm -f ${out}/${prefix}${ext}
 ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
 rm -f ${quality}
 echo ${qvars} >> ${quality}
