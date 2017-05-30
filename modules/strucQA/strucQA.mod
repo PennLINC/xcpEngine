@@ -82,14 +82,6 @@ echo ""
 ###################################################################
 source ${design_local}
 ###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-###################################################################
 # Create a directory for intermediate outputs.
 ###################################################################
 [[ ${NUMOUT} == 1 ]] && prep=${cxt}_
@@ -272,7 +264,7 @@ if [[ "${strucQA_gm[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_gm_val[${cxt}]} \
     -o ${gmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -285,7 +277,7 @@ if [[ "${strucQA_wm[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_wm_val[${cxt}]} \
     -o ${wmMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -298,7 +290,7 @@ if [[ "${strucQA_csf[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_csf_val[${cxt}]} \
     -o ${csfMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -311,7 +303,7 @@ if [[ "${strucQA_cort[${cxt}]}" == "Y" ]]
   # and a user-specified image in the subject's structural space.
   ################################################################
   ${XCPEDIR}/utils/val2mask.R \
-    -i ${strucQASeg[${cxt}]}${ext} \
+    -i ${strucQA_seg[${cxt}]}${ext} \
     -v ${strucQA_cort_val[${cxt}]} \
     -o ${cortMask[${cxt}]}${ext}
   allValsCheck=`echo ${allValsCheck} + 1 | bc`
@@ -325,7 +317,7 @@ if [[ ${allValsCheck} -lt 3 ]] \
   then
     if [[ ${strucQASeg[${cxt}]} == "FAST" ]] 
       then
-      $FSLDIR/bin/fast -g -o ${outdir}/${prefix}_ ${img}${ext}
+      $FSLDIR/bin/fast -g -o ${outdir}/${prefix}_ ${struct[${subjidx}]}${ext}
       if [ ! -f ${csfMask[${cxt}]}${ext} ] 
         then
         mv ${outdir}/${prefix}_seg_0.nii.gz ${csfMask[${cxt}]}${ext}
@@ -343,11 +335,11 @@ if [[ ${allValsCheck} -lt 3 ]] \
       then
       if [[ -z ${brainExtractionMask[${subjidx}]} ]]
         then
-        ${FSLDIR}/bin/bet ${img[${subjidx}]} ${outdir}/${prefix}_BEmask~TEMP~.nii.gz
+        ${FSLDIR}/bin/bet ${img[${subjidx}]}${ext} ${outdir}/${prefix}_BEmask~TEMP~.nii.gz
         ${FSLDIR}/bin/fslmaths ${outdir}/${prefix}_BEmask~TEMP~.nii.gz -bin ${outdir}/${prefix}_BEmask~TEMP~.nii.gz
         brainExtractionMask[${subjidx}]=${outdir}/${prefix}_BEmask~TEMP~.nii.gz
       fi
-      ${ANTSPATH}/Atropos -d 3 -a ${img}${ext} -i KMeans[3] \
+      ${ANTSPATH}/Atropos -d 3 -a ${img[${subjidx}]}${ext} -i KMeans[3] \
         -c [ 5,0] -m [ 0,1x1x1] -x ${brainExtractionMask[${subjidx}]} \
         -o [ ${outdir}/${prefix}_seg${ext} ]
       if [ ! -f ${csfMask[${cxt}]}${ext} ] 
@@ -374,7 +366,7 @@ fi
 # in order to perform this
 ###################################################################
 ${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
-  -r [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
+  -r [${img[${subjidx}]},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img[${subjidx}]},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
   -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 --verbose 1
 
 ###################################################################
@@ -410,10 +402,10 @@ rm -f ${foreGround[${cxt}]}5${ext} ${foreGround[${cxt}]}4${ext} ${foreGround[${c
 if [ -f ${cortMask[${cxt}]}${ext} ] 
   then
   ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
-    -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext} -c ${cortMask[${cxt}]}${ext}
+    -m ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext} -c ${cortMask[${cxt}]}${ext}
 else 
     ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
-    -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext}
+    -m ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext}
 fi
 ###################################################################
 # Now append quality metrics to global quality variables
@@ -428,8 +420,6 @@ qvals=`echo "${qvals},${qualityValues}"`
 ###################################################################
 echo ""; echo ""; echo ""
 echo "Writing outputs..."
-rm -f ${out}/${prefix}${ext}
-ln -s ${img}${ext} ${out}/${prefix}${ext}
 ###################################################################
 # OUTPUT: Foreground Image
 # Test whether the foreground image was created.
@@ -473,7 +463,8 @@ fi
 # OUTPUT: CSF matter mask
 # Test whether the white matter mask image was created.
 # If it does exist then add it to the index of derivatives and
-# to the localised design file ###################################################################
+# to the localised design file 
+###################################################################
 if [[ $(imtest "${csfMask[${cxt}]}") == "1" ]]
   then
   echo "csfMask[${subjidx}]=${csfMask[${cxt}]}" \

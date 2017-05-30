@@ -72,7 +72,7 @@ echo ""; echo ""; echo ""
 echo "###################################################################"
 echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
 echo "#                                                                 #"
-echo "#  ☭              EXECUTING antsCT MODULE                  ☭  #"
+echo "#  ☭                  EXECUTING antsCT MODULE                  ☭  #"
 echo "#                                                                 #"
 echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
 echo "###################################################################"
@@ -129,8 +129,8 @@ corticalThicknessNormalizedToTemplate[${cxt}]=${outdir}/${prefix}_CorticalThickn
 extractedBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
 ## ANTsCT Transofrmations ##
-xfm_warp=${outdir}/${prefix}_SubjectToTemplate1Warp
-ixfm_warp=${outdir}/${prefix}_TemplateToSubject0Warp
+xfm_warp=${outdir}/${prefix}_SubjectToTemplate1Warp.nii.gz
+ixfm_warp=${outdir}/${prefix}_TemplateToSubject0Warp.nii.gz
 xfm_affine=${outdir}/${prefix}_SubjectToTemplate0GenericAffine.mat
 ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 
@@ -286,6 +286,8 @@ if [[ $(imtest ${extractedBrain[${cxt}]}${ext}) == "1" ]] \
         >> $design_local
      echo "#struct#${extractedBrain[${cxt}]}" \
         >> ${auxImgs[${subjidx}]}
+     rm -f ${out}/${prefix}${ext}
+     ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
   fi
    ################################################################
    # OUTPUT: brain-extracted referenceVolume
@@ -440,6 +442,7 @@ while [[ "${#rem}" -gt "0" ]]
                  -w ${EXTRACTION_PRIOR[${cxt}]} -t ${templateExtracted} \
                  -o ${outdir}/${prefix}_ -s ${antsExt}"
         ${antsCMD}
+        ln ${img[${subjidx}]} ${outdir}/${prefix}_RawInputImage.nii.gz
 	buffer=ACT
         echo "done with ANTsCT pipeline"
         ;;
@@ -713,7 +716,12 @@ fi
 #  * Update the audit file and quality index.
 ###################################################################
 echo ""; echo ""; echo ""
+if [[ "${structural_cleanup[${cxt}]}" == "Y" ]]
+   then
+   rm -rf ${outdir}/*~TEMP~*
+fi
 img=$(readlink -f ${img}${ext})
+rm -f ${out}/${prefix}${ext}
 ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
 rm -f ${quality}
 echo ${qvars} >> ${quality}

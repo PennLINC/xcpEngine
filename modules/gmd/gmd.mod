@@ -300,6 +300,11 @@ done
 fslmaths ${outdir}/${prefix}_segmentationImage${ext} -thr 2 -uthr 2 -bin -mul ${outdir}/${prefix}_priorImage002 ${gmSegIntersect[${cxt}]}
 
 ###################################################################
+# Link raw image to output directory
+###################################################################
+ln ${img[${subjidx}]} ${outdir}/${prefix}_RawInputImage.nii.gz
+
+###################################################################
 # Calculate mean GMD in GM compartment
 ###################################################################
 qa_mean=$(fslstats ${gmSegIntersect[${cxt}]} -M)
