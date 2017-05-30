@@ -16,6 +16,8 @@ cxt=0
 ###################################################################
 # GENERAL MODULE HEADER
 ###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/is_image
 source ${XCPEDIR}/core/parseArgsLocaliser
 
 ################################################################### 
