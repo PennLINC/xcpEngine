@@ -254,7 +254,10 @@ case ${norm_prog[${cxt}]} in
       #############################################################
       # Add an argument for the coregistration.
       #############################################################
-		coreg="-t ${seq2struct[${subjidx}]}"
+        if [ ! ${space} == "structural" ]
+        then 	
+ 	  coreg="-t ${seq2struct[${subjidx}]}"
+        fi
       #############################################################
 		# Determine which transforms need to be applied. At this
 		# time, the module-scope norm variables are redundant copies
