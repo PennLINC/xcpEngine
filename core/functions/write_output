@@ -1,0 +1,7 @@
+write_output() {
+   output=${1}[${cxt}]
+   if [[ -e ${!output} ]]
+      then
+      echo "${1}[${subjidx}]=${!output}" >> ${design_local}
+   fi
+}

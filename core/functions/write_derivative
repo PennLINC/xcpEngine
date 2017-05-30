@@ -1,0 +1,8 @@
+write_derivative() {
+   derivative=${1}[${cxt}]
+   if is_image ${!derivative}
+      then
+      echo "#${1}#${!derivative}" >> ${aux_imgs[${subjidx}]}
+      echo "${1}[${subjidx}]=${!derivative}" >> ${design_local}
+   fi
+}
