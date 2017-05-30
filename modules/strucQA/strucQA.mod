@@ -82,14 +82,6 @@ echo ""
 ###################################################################
 source ${design_local}
 ###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-###################################################################
 # Create a directory for intermediate outputs.
 ###################################################################
 [[ ${NUMOUT} == 1 ]] && prep=${cxt}_
@@ -325,7 +317,7 @@ if [[ ${allValsCheck} -lt 3 ]] \
   then
     if [[ ${strucQASeg[${cxt}]} == "FAST" ]] 
       then
-      $FSLDIR/bin/fast -g -o ${outdir}/${prefix}_ ${img}${ext}
+      $FSLDIR/bin/fast -g -o ${outdir}/${prefix}_ ${struct[${subjidx}]}${ext}
       if [ ! -f ${csfMask[${cxt}]}${ext} ] 
         then
         mv ${outdir}/${prefix}_seg_0.nii.gz ${csfMask[${cxt}]}${ext}
@@ -374,7 +366,7 @@ fi
 # in order to perform this
 ###################################################################
 ${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
-  -r [${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
+  -r [${img[${subjidx}]},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img[${subjidx}]},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
   -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 --verbose 1
 
 ###################################################################
@@ -428,8 +420,6 @@ qvals=`echo "${qvals},${qualityValues}"`
 ###################################################################
 echo ""; echo ""; echo ""
 echo "Writing outputs..."
-rm -f ${out}/${prefix}${ext}
-ln -s ${img}${ext} ${out}/${prefix}${ext}
 ###################################################################
 # OUTPUT: Foreground Image
 # Test whether the foreground image was created.
@@ -473,7 +463,8 @@ fi
 # OUTPUT: CSF matter mask
 # Test whether the white matter mask image was created.
 # If it does exist then add it to the index of derivatives and
-# to the localised design file ###################################################################
+# to the localised design file 
+###################################################################
 if [[ $(imtest "${csfMask[${cxt}]}") == "1" ]]
   then
   echo "csfMask[${subjidx}]=${csfMask[${cxt}]}" \
