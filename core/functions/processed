@@ -1,0 +1,5 @@
+processed() {
+   processed=${1}[${cxt}]
+   rm -f ${out}/${prefix}${ext}
+   ln -s ${!processed} ${out}/${prefix}${ext}
+}
