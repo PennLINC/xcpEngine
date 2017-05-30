@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# GENERAL MODULE HEADER
+###################################################################
+export FSLOUTPUTTYPE=NIFTI_GZ
+mod_out=$(cat ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT)
+usage_flag=0
+
+###################################################################
+# Read in:
+#  * path to localised design file
+#  * overall context in pipeline
+#  * whether to explicitly trace all commands
+# Trace status is, by default, set to 0 (no trace)
+###################################################################
+eval "echo -e \"$(<${mod_head})\""
+trace=0
+if (( $# < 2 ))
+   then
+   usage_flag=1
+fi
+while getopts "d:c:t:" OPTION
+   do
+   case $OPTION in
+   d)
+      design_local=${OPTARG}
+      ;;
+   c)
+      cxt=${OPTARG}
+      ! [[ ${cxt} =~ $POSINT ]] && usage_flag=1
+      ;;
+   t)
+      trace=${OPTARG}
+      if (( ${trace} != 0 )) && (( ${trace} != 1 ))
+         then
+         usage_flag=1
+      fi
+      ;;
+   *)
+      echo "Option not recognised: ${OPTION} ${OPTARG}"
+      usage_flag=1
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that the compulsory design_local variable has been defined
+# reasonably.
+###################################################################
+[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
+[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
+###################################################################
+# Set trace status, if applicable
+# If trace is set to 1, then all commands called by the pipeline
+# will be echoed back in the log file.
+###################################################################
+(( ${trace} == 1 )) && set -x
+###################################################################
+# Usage and exit
+###################################################################
+if (( ${usage_flag} == 1 ))
+   then
+   cat ${XCPEDIR}/core/USAGE_MOD
+   exit 1
+fi
+###################################################################
+# Source the design file.
+###################################################################
+source ${design_local}
+source ${XCPEDIR}/core/parseSubject
+source ${XCPEDIR}/core/getIdentifiers
+###################################################################
+# Verify that all compulsory inputs are present.
+###################################################################
+if ! is_image ${out}/${prefix}
+   then
+   echo "::XCP-ERROR: The primary input is absent."
+   exit 666
+fi
+###################################################################
+# Create the primary module output directory.
+###################################################################
+(( ${NUMOUT} == 1 )) && prep=${cxt}_
+outdir=${out}/${prep}${mod_name_short}
+if [[ ! -e ${outdir} ]]
+   then
+   mkdir -p ${outdir}
+fi
+echo "Output directory is ${outdir}"
+###################################################################
+# * Define the root path to processing intermediates.
+# * Initialise a pointer to the image.
+# * Ensure that the pointer references an image.
+###################################################################
+intermediate=${outdir}/${prefix}~TEMP~
+img=${out}/${prefix}.nii.gz
+img_path=${intermediate}.nii.gz
+###################################################################
+# Parse quality variables.
+###################################################################
+qvars=$(head -n1 ${quality} 2>/dev/null)
+qvals=$(tail -n1 ${quality} 2>/dev/null)
+###################################################################
+# Prime the localised design file so that any outputs from this
+# module appear beneath the correct header.
+###################################################################
+eval "echo -e \"${mod_out}\"" >> ${design_local}
