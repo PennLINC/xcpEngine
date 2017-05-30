@@ -1,0 +1,3 @@
+is_image() {
+   (( $(${FSLDIR}/bin/imtest ${1}) == 1 ))
+}
