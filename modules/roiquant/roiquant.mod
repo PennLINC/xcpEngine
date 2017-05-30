@@ -391,7 +391,7 @@ for par in $pars
             -e 3 -d 3 \
             -i ${parPath} \
             -o ${parbase}${parName}${ext} \
-            -r ${referenceVolume[${subjidx}]}${ext} \
+            -r ${struct[${subjidx}]}${ext} \
             $irigid \
             $iaffine \
             $iwarp \

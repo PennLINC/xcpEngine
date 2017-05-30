@@ -286,6 +286,8 @@ if [[ $(imtest ${extractedBrain[${cxt}]}${ext}) == "1" ]] \
         >> $design_local
      echo "#struct#${extractedBrain[${cxt}]}" \
         >> ${auxImgs[${subjidx}]}
+     rm -f ${out}/${prefix}${ext}
+     ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
   fi
    ################################################################
    # OUTPUT: brain-extracted referenceVolume
@@ -714,6 +716,10 @@ fi
 #  * Update the audit file and quality index.
 ###################################################################
 echo ""; echo ""; echo ""
+if [[ "${structural_cleanup[${cxt}]}" == "Y" ]]
+   then
+   rm -rf ${outdir}/*~TEMP~*
+fi
 img=$(readlink -f ${img}${ext})
 rm -f ${out}/${prefix}${ext}
 ln -s ${extractedBrain[${cxt}]}${ext} ${out}/${prefix}${ext}
