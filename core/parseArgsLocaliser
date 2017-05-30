@@ -8,7 +8,6 @@
 ###################################################################
 # GENERAL MODULE HEADER
 ###################################################################
-source ${XCPEDIR}/core/constants
 export FSLOUTPUTTYPE=NIFTI_GZ
 mod_out=$(cat ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT)
 usage_flag=0
@@ -38,7 +37,7 @@ while getopts "d:s:t:" OPTION
       ;;
    t)
       trace=${OPTARG}
-      if (( ${trace} != 0)) && (( ${trace} != 1 ))
+      if (( ${trace} != 0 )) && (( ${trace} != 1 ))
          then
          usage_flag=1
       fi
@@ -60,7 +59,7 @@ shift $((OPTIND-1))
 # If trace is set to 1, then all commands called by the pipeline
 # will be echoed back in the log file.
 ###################################################################
-[[ ${trace} == "1" ]] && set -x
+(( ${trace} == 1 )) && set -x
 ###################################################################
 # Usage and exit
 ###################################################################
