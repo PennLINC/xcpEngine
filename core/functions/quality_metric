@@ -1,0 +1,8 @@
+quality_metric() {
+   quality_value_file=${2}[${cxt}]
+   if [[ -e ${!quality_value_file} ]]
+      then
+      qvars=${qvars},${1}
+      qvals=${qvals},$(cat ${!quality_value_file})
+   fi
+}
