@@ -335,11 +335,11 @@ if [[ ${allValsCheck} -lt 3 ]] \
       then
       if [[ -z ${brainExtractionMask[${subjidx}]} ]]
         then
-        ${FSLDIR}/bin/bet ${img[${subjidx}]} ${outdir}/${prefix}_BEmask~TEMP~.nii.gz
+        ${FSLDIR}/bin/bet ${img[${subjidx}]}${ext} ${outdir}/${prefix}_BEmask~TEMP~.nii.gz
         ${FSLDIR}/bin/fslmaths ${outdir}/${prefix}_BEmask~TEMP~.nii.gz -bin ${outdir}/${prefix}_BEmask~TEMP~.nii.gz
         brainExtractionMask[${subjidx}]=${outdir}/${prefix}_BEmask~TEMP~.nii.gz
       fi
-      ${ANTSPATH}/Atropos -d 3 -a ${img}${ext} -i KMeans[3] \
+      ${ANTSPATH}/Atropos -d 3 -a ${img[${subjidx}]}${ext} -i KMeans[3] \
         -c [ 5,0] -m [ 0,1x1x1] -x ${brainExtractionMask[${subjidx}]} \
         -o [ ${outdir}/${prefix}_seg${ext} ]
       if [ ! -f ${csfMask[${cxt}]}${ext} ] 
@@ -366,7 +366,7 @@ fi
 # in order to perform this
 ###################################################################
 ${ANTSPATH}/antsRegistration -d 3 -v 0 -u 1 -w [0.01,0.99] -o ${outdir}/${prefix}_ \
-  -r [${img[${subjidx}]},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img[${subjidx}]},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
+  -r [${img[${subjidx}]}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1] --float 1 -m MI[${img[${subjidx}]}${ext},${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz,1,32,Regular,0.25] \
   -c [1000x500x250x100,1e-8,10] -t Affine[0.1] -f 8x4x2x1 -s 4x2x1x0 --verbose 1
 
 ###################################################################
@@ -379,7 +379,7 @@ ${ANTSPATH}/antsApplyTransformsToPoints -d 3 -i ${XCPEDIR}/thirdparty/strucQA/mn
 # Now apply this transformation to the MNI mask
 ###################################################################  
 ${ANTSPATH}/antsApplyTransforms -d 3 -i ${XCPEDIR}/thirdparty/strucQA/mniMask/mniForeGroundMask.nii.gz -o ${foreGround[${cxt}]}${ext} \
-  -r ${img[${subjidx}]} -n MultiLabel -t ${affineFiles[${cxt}]}
+  -r ${img[${subjidx}]}${ext} -n MultiLabel -t ${affineFiles[${cxt}]}
   
 ###################################################################
 # Now mask out the neck and nose from the background
@@ -401,10 +401,10 @@ rm -f ${foreGround[${cxt}]}5${ext} ${foreGround[${cxt}]}4${ext} ${foreGround[${c
 ###################################################################
 if [ -f ${cortMask[${cxt}]}${ext} ] 
   then
-  ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
+  ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]}${ext} -o ${outdir}/${prefix}_qualityMetrics.csv \
     -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext} -c ${cortMask[${cxt}]}${ext}
 else 
-    ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]} -o ${outdir}/${prefix}_qualityMetrics.csv \
+    ${XCPEDIR}/utils/strucQA.R -i ${img[${subjidx}]}${ext} -o ${outdir}/${prefix}_qualityMetrics.csv \
     -g ${gmMask[${cxt}]}${ext} -w ${wmMask[${cxt}]}${ext} -f ${foreGround[${cxt}]}${ext}
 fi
 ###################################################################
