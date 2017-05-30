@@ -72,7 +72,7 @@ echo ""; echo ""; echo ""
 echo "###################################################################"
 echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
 echo "#                                                                 #"
-echo "#  ☭              EXECUTING antsCT MODULE                  ☭  #"
+echo "#  ☭                  EXECUTING antsCT MODULE                  ☭  #"
 echo "#                                                                 #"
 echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
 echo "###################################################################"
@@ -129,8 +129,8 @@ corticalThicknessNormalizedToTemplate[${cxt}]=${outdir}/${prefix}_CorticalThickn
 extractedBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
 ## ANTsCT Transofrmations ##
-xfm_warp=${outdir}/${prefix}_SubjectToTemplate1Warp
-ixfm_warp=${outdir}/${prefix}_TemplateToSubject0Warp
+xfm_warp=${outdir}/${prefix}_SubjectToTemplate1Warp.nii.gz
+ixfm_warp=${outdir}/${prefix}_TemplateToSubject0Warp.nii.gz
 xfm_affine=${outdir}/${prefix}_SubjectToTemplate0GenericAffine.mat
 ixfm_affine=${outdir}/${prefix}_TemplateToSubject1GenericAffine.mat
 
