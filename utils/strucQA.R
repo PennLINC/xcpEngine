@@ -27,7 +27,7 @@ option_list = list(
               help="Path to the cortical binary mask."),
    make_option(c("-w", "--whitemask"), action="store", default=NA, type='character',
               help="Path to the white matter binary mask."),
-   make_option(c("-g", "--graymask"), action="store", default=NA, type='character',
+   make_option(c("-m", "--graymask"), action="store", default=NA, type='character',
               help="Path to the gray matter binary mask."),
    make_option(c("-o", "--output"), action="store", default=NA, type='character',
               help="Output CSV."),
@@ -112,9 +112,9 @@ outputVals <- NULL
 ###################################################################
 # Now calculate FBER
 ###################################################################
-if((gCheck > 0) & (wCheck > 0)){
-  meanFG <- (sum(fgvals^2)) / sum(fgvals)
-  meanBG <- (sum(bgvals^2)) / (length(bgvals) -  sum(bgvals))
+if(fgCheck > 0){
+  meanFG <- abs(sum(fgvals^2) / sum(fgvals))
+  meanBG <- abs(sum(bgvals^2) / sum(bgvals))
   FBER <- meanFG / meanBG
   outputVals <- cbind(outputVals, FBER)
 }
@@ -144,7 +144,7 @@ if(cCheck > 0){
 ###################################################################
 if(fgCheck > 0){
   all.vals <- append(fgvals, bgvals)
-  allLength <- length(all.vals)
+  allLength <- dim(img)[1] * dim(img)[2] * dim(img)[3]
   # Calcaulate efc max
   efc.max <- allLength * (1 / sqrt(allLength)) * (log(1/sqrt(allLength)))
   # calculate total image entropy

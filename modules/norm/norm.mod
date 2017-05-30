@@ -254,7 +254,10 @@ case ${norm_prog[${cxt}]} in
       #############################################################
       # Add an argument for the coregistration.
       #############################################################
-		coreg="-t ${seq2struct[${subjidx}]}"
+        if [ ! ${space} == "structural" ]
+        then 	
+ 	  coreg="-t ${seq2struct[${subjidx}]}"
+        fi
       #############################################################
 		# Determine which transforms need to be applied. At this
 		# time, the module-scope norm variables are redundant copies
@@ -263,6 +266,29 @@ case ${norm_prog[${cxt}]} in
 		# manually added rigid or resample transforms.
       #############################################################
 		echo "Selecting transforms to apply"
+      #############################################################
+      # Terrible temporary fix. TEMPORARY.
+      #TODO Accelerator will change all transforms in `norm` to 
+      # reference the xfm variables in the design file instead.
+      #
+      # This fix is bloating the code.
+      #############################################################
+		if [[ ! -z ${xfm_warp} ]]
+		   then
+		   norm_warp[${cxt}]=${xfm_warp}
+		fi
+		if [[ ! -z ${xfm_affine} ]]
+		   then
+		   norm_affine[${cxt}]=${xfm_affine}
+		fi
+		if [[ ! -z ${xfm_rigid} ]]
+		   then
+		   norm_rigid[${cxt}]=${xfm_rigid}
+		fi
+		if [[ ! -z ${xfm_resample} ]]
+		   then
+		   norm_resample[${cxt}]=${xfm_resample}
+		fi
 		if [[ $(imtest "${norm_warp[${cxt}]}") == 1 ]]
 		   then
 		   warp="-t ${norm_warp[${cxt}]}"
