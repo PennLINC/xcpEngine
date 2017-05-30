@@ -1,0 +1,4 @@
+configure() {
+   configuration=${1}[${cxt}]
+   eval ${configuration}=${2}
+}

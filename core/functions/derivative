@@ -1,0 +1,3 @@
+derivative() {
+   eval ${1}[${cxt}]=${outdir}/${2}.nii.gz
+}
