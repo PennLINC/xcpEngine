@@ -1,0 +1,3 @@
+load_derivatives() {
+   derivatives=$(cat ${aux_imgs[${subjidx}]} 2>/dev/null)
+}

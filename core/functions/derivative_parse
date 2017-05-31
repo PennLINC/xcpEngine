@@ -1,0 +1,7 @@
+derivative_parse() {
+   d_name=$(echo "${1}"|cut -d'#' -f2)
+   d_path=$(echo "${1}"|cut -d'#' -f3)
+   d_mod=$(echo "${1}"|cut -d'#' -f4|cut -d',' -f1)
+   d_mod_idx=$(echo "${1}"|cut -d'#' -f4|cut -d',' -f2)
+   d_mod_stats=$(echo "${1}"|cut -d'#' -f4|cut -d',' -f3-)
+}
