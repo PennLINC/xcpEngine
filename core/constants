@@ -9,3 +9,11 @@
 ###################################################################
 readonly RED='\033[0;31m'
 readonly RCL='\033[0m'
+readonly SIGMA=2.35482004503
+
+###################################################################
+# The functionality contained in the following constants will be
+# shifted into XCP bash functions.
+###################################################################
+readonly INT='^-?[0-9]+$'
+readonly POSINT='^[0-9]+$'
