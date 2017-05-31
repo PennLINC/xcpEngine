@@ -1,0 +1,13 @@
+subroutine() {
+   subroutine_id=${1}
+   shift
+   subroutine_description="${@}"
+   verbose && echo ${routine_id}
+   if [[ -n ${subroutine_description} ]]
+      then
+      exec_log_close
+      echo "${subroutine_description}"
+   fi
+   unset subroutine_id
+   unset subroutine_description
+}

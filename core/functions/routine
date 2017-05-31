@@ -1,0 +1,11 @@
+routine() {
+   routine_id=${1}
+   shift
+   routine_description=${@}
+   verbose && echo ${routine_id}
+   if [[ -n ${routine_description} ]]
+      then
+      exec_log_close
+      eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_BEGIN)\""
+   fi
+}
