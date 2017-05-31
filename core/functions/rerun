@@ -1,0 +1,4 @@
+rerun() {
+   rerun=$(basename ${0}|sed s@'.mod'@@g)_rerun[${cxt}]
+   [[ ${!rerun} == Y ]]
+}
