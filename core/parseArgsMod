@@ -99,7 +99,7 @@ echo "Output directory is ${outdir}"
 ###################################################################
 intermediate=${outdir}/${prefix}~TEMP~
 img=${out}/${prefix}.nii.gz
-img_path=${intermediate}.nii.gz
+img_mod=${intermediate}
 ###################################################################
 # Parse quality variables.
 ###################################################################
