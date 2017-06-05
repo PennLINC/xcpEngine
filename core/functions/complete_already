@@ -1,0 +1,5 @@
+complete_already() {
+   echo "${mod_name_short} has already run to completion."
+   echo "Writing outputs..."
+   completion
+}
