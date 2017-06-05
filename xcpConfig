@@ -184,7 +184,7 @@ select option in \
       ;;
    5)
       type=STRC
-      process=struct
+      process=antsCT,gmd,jlf,strucQA,roiquant,norm
       space=structural
       break
       ;;
@@ -306,7 +306,7 @@ while [[ -z $subjects ]]
          idfield=0
       fi
       [[ $idfield == 1 ]] && identifiers="${identifiers} ${field}"
-   done
+   done    
    ################################################################
    # If necessary, disambiguate among candidate analyte images.
    ################################################################
@@ -360,7 +360,22 @@ while [[ -z $subjects ]]
    outsub=$(echo ${identifiers}|sed s@' '@'/'@g)
 done
 step=$(expr ${step} + 1)
-
+################################################################
+# Check if this is the structural pipeline
+# If it is, special steps need to be taken to declare
+# the input images.
+################################################################
+if [[ ${type} == "STRC" ]] 
+   then
+   for field in ${xsubj_fields}
+      do
+         if [[ $(imtest ${field}) == 1 ]]
+            then
+           ximg="${ximg} ${field}"
+           xstruc="${xstruc} ${field}"
+         fi
+   done      
+fi 
 
 
 
@@ -477,7 +492,12 @@ echo "ximg=${ximg}" >> ${design}
 echo img=$(${XCPEDIR}/utils/genpath $ximg $path_cohort $xsubj_idx $KEEPNUM) >> $design
 echo "xants=${xants}" >> ${design}
 echo "xstruct=${xstruct}" >> ${design}
-echo struct=$(${XCPEDIR}/utils/genpath $xstruct $path_cohort $xsubj_idx $KEEPNUM) >> $design
+if [[ ${type} == "STRC" ]] 
+   then
+   echo struc==$(${XCPEDIR}/utils/genpath $ximg $path_cohort $xsubj_idx $KEEPNUM) >> $design
+else
+   echo struct=$(${XCPEDIR}/utils/genpath $xstruct $path_cohort $xsubj_idx $KEEPNUM) >> $design
+fi
 echo prefix=$(${XCPEDIR}/utils/genpath $prefix $path_cohort $xsubj_idx $KEEPNUM) >> $design
 echo xfm_warp=$(${XCPEDIR}/utils/genpath "${xfm_warp}" $path_cohort $xsubj_idx $KEEPNUM) >> $design
 echo ixfm_warp=$(${XCPEDIR}/utils/genpath "${ixfm_warp}" $path_cohort $xsubj_idx $KEEPNUM) >> $design
