@@ -9,7 +9,9 @@
 ###################################################################
 LIBRARY=${XCPEDIR}/core/functions
 
+source ${LIBRARY}/arithmetic
 source ${LIBRARY}/cleanup
+source ${LIBRARY}/complete_already
 source ${LIBRARY}/configure
 source ${LIBRARY}/derivative
 source ${LIBRARY}/derivative_parse
@@ -33,6 +35,7 @@ source ${LIBRARY}/output
 source ${LIBRARY}/processed
 source ${LIBRARY}/quality_metric
 source ${LIBRARY}/rerun
+source ${LIBRARY}/return_field
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
 source ${LIBRARY}/subroutine
