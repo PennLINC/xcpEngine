@@ -2,7 +2,7 @@ subroutine() {
    subroutine_id=${1}
    shift
    subroutine_description="${@}"
-   verbose && echo ${routine_id}
+   verbose && echo ${subroutine_id}
    if [[ -n ${subroutine_description} ]]
       then
       exec_log_close
