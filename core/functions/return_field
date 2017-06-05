@@ -1,0 +1,27 @@
+return_field() {
+   field_is_set=FALSE
+   input=${1}
+   shift
+   while [[ -n ${1} ]]
+      do
+      delim='-d,'
+      if is_integer ${1}
+         then
+         field='-f'${1}
+         field_is_set=TRUE
+         shift
+      fi
+      if [[ ${field_is_set} == TRUE ]]
+         then
+         if [[ -n ${1} ]] \
+         && ! is_integer ${1}
+            then
+            delim='-d'${1}
+            [[ ${1} == '\t' ]] && unset delim
+            shift
+         fi
+         input=$(echo "${input}"|cut "${field}" "${delim}")
+      fi
+   done
+   echo ${input}
+}
