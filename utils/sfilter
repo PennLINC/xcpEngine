@@ -136,7 +136,6 @@ while getopts "i:o:s:k:m:u:th" OPTION
       exit
    esac
 done
-shift $((OPTIND-1))
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
