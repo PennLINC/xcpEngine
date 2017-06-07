@@ -2,7 +2,7 @@ routine() {
    routine_id=${1}
    shift
    routine_description=${@}
-   verbose && echo ${routine_id}
+   verbose && vid=${routine_id}
    if [[ -n ${routine_description} ]]
       then
       exec_log_close
