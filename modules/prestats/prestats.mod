@@ -5,204 +5,155 @@
 ###################################################################
 
 ###################################################################
-# Constants
-# TODO
-# Consider moving PERSIST to a design variable.
+# SPECIFIC MODULE HEADER
+# This module preprocesses fMRI data.
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly INT='^-?[0-9]+$'
-readonly POSINT='^[0-9]+$'
-readonly MOTIONTHR=0.2
-readonly MINCONTIG=0
-readonly PERSIST=0
-
-
-
-
+mod_name='FMRI PREPROCESSING MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+mod_name_short=prestats
 
 ###################################################################
+# GENERAL MODULE HEADER
 ###################################################################
-# BEGIN GENERAL MODULE HEADER
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsMod
+
 ###################################################################
+# MODULE COMPLETION
 ###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
+completion() {
+   processed         final
+   
+   write_derivative  meanIntensity
+   write_derivative  meanIntensityBrain
+   write_derivative  referenceVolume
+   write_derivative  referenceVolumeBrain
+   write_derivative  mask
+   
+   write_output      mcdir
+   write_output      rps
+   write_output      rel_rms
+   write_output      fd
+   write_output      tmask
+   
+   write_output_safe censor
+   
+   quality_metric    relMeanRMSMotion        rel_mean_rms
+   quality_metric    relMaxRMSMotion         rel_max_rms
+   quality_metric    nFramesHighMotion       motion_vols
+   
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   intermediate=${outdir}/${prefix}~TEMP~
+   cleanup && rm -rf ${intermediate}*
+   echo ""
+   echo ""
+   echo "Module complete"
+   exit 0
+}
+
+
+
+
+
 ###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design_local=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
+# OUTPUTS
 ###################################################################
-# Ensure that the compulsory design_local variable has been defined
-###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "###################################################################"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭                 EXECUTING PRESTATS MODULE                 ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_local}
-###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}prestats
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
-#
-# For the prestats module, potential outputs include:
-#  * referenceVolume : an example volume extracted from EPI data,
-#    typically one of the middle volumes, though another may be
-#    selected if the middle volume is corrupted by motion-related
-#    noise; this is used as the reference volume during motion
-#    correction
-#  * meanIntensity : the mean intensity over time of functional data,
-#    after it has been realigned with the example volume
-#  * mcdir : the directory containing motion correction output
-#  * rps : the 6 realignment parameters computed in the motion
-#    correction procedure
-#  * relrms : relative root mean square motion, computed in the
-#    motion correction procedure
-#  * relmeanrms : mean relative RMS motion, computed in the
-#    motion correction procedure
-#  * absrms : absolute root mean square displacement, computed in
-#    the motion correction procedure
-#  * absmeanrms : mean absolute RMS displacement, computed in the
-#    motion correction procedure
-#  * rmat : a directory containing rigid transforms applied to each
-#    volume in order to realign it with the reference volume
-#  * fd : Framewise displacement values, computed as the absolute
-#    sum of realignment parameter first derivatives
-#  * tmask : A temporal mask of binary values, indicating whether
-#    the volume survives motion censorship
-#  * qavol : A quality control file that specifies the number of
-#    volumes that exceeded the maximum motion criterion. If
-#    censoring is enabled, then this will be the same number of
-#    volumes that are to be censored.
-#  * mask : A spatial mask of binary values, indicating whether
-#    a voxel should be analysed as part of the brain; this is often
-#    fairly liberal
-#  * auxImgs : a path to an index of derivative images, after they
-#    have been processed by this module; this is necessary only if
-#    smoothing or temporal filtering is included
-#  * final : The final output of the module, indicating its
-#    successful completion
-###################################################################
-referenceVolume[${cxt}]=${outdir}/${prefix}_referenceVolume
-referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_referenceVolumeBrain
-meanIntensity[${cxt}]=${outdir}/${prefix}_meanIntensity
-meanIntensityBrain[${cxt}]=${outdir}/${prefix}_meanIntensityBrain
-mcdir[${cxt}]=${outdir}/mc
-rps[${cxt}]=${outdir}/mc/${prefix}_realignment.1D
-relrms[${cxt}]=${outdir}/mc/${prefix}_relRMS.1D
-relmeanrms[${cxt}]=${outdir}/mc/${prefix}_relMeanRMS.txt
-absrms[${cxt}]=${outdir}/mc/${prefix}_absRMS.1D
-absmeanrms[${cxt}]=${outdir}/mc/${prefix}_absMeanRMS.txt
-rmat[${cxt}]=${outdir}/mc/${prefix}.mat
-fd[${cxt}]=${outdir}/mc/${prefix}_fd.1D
-tmask[${cxt}]=${outdir}/mc/${prefix}_tmask.1D
-qavol[${cxt}]=${outdir}/mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
-mask[${cxt}]=${outdir}/${prefix}_mask
-auxImgs[${cxt}]=${outdir}/${prefix}_derivs
-final[${cxt}]=${outdir}/${prefix}_preprocessed
-rm -f ${auxImgs[${cxt}]}
-###################################################################
-# * Initialise a pointer to the image.
-# * Ensure that the pointer references an image, and not something
-#   else such as a design file.
-# * On the basis of this, define the image extension to be used for
-#   this module (for operations, such as AFNI, that require an
-#   extension).
-# * Localise the image using a symlink, if applicable.
-# * In the prestats module, the image name is used as the base name
-#   of intermediate outputs.
-###################################################################
-img=${out}/${prefix}
-imgpath=$(ls ${img}.*)
-for i in ${imgpath}
-   do
-   [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-done
-ext=$(echo ${imgpath}|sed s@${img}@@g)
-[[ ${ext} == ".nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext} == ".nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext} == ".hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext} == ".img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-img=${outdir}/${prefix}~TEMP~
-if [[ $(imtest ${img}) != "1" ]] \
-   || [ "${prestats_rerun[${cxt}]}" == "Y" ]
-   then
-   rm -f ${img}*
-   ln -s ${out}/${prefix}${ext} ${img}${ext}
-fi
-imgpath=$(ls ${img}${ext})
-###################################################################
-# Parse quality variables.
-###################################################################
-qvars=$(head -n1 ${quality} 2>/dev/null)
-qvals=$(tail -n1 ${quality} 2>/dev/null)
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from prestats[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
+configure   censor                  $(return_field ${prestats_censor[${cxt}]} 1)
+configure   censored                0
+
+derivative  referenceVolume         ${prefix}_referenceVolume
+derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
+derivative  meanIntensity           ${prefix}_meanIntensity
+derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
+derivative  mask                    ${prefix}_mask
+derivative  final                   ${prefix}_preprocessed
+
+output      aux_imgs                ${prefix}_derivs
+output      mcdir                   mc
+output      rps                     mc/${prefix}_realignment.1D
+output      abs_rms                 mc/${prefix}_absRMS.1D
+output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
+output      rel_rms                 mc/${prefix}_relRMS.1D
+output      rel_max_rms             mc/${prefix}_relMaxRMS.txt
+output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt
+output      rmat                    mc/${prefix}.mat
+output      fd                      mc/${prefix}_fd.1D
+output      tmask                   mc/${prefix}_tmask.1D
+output      motion_vols             mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
+
+<< DICTIONARY
+
+abs_mean_rms
+   The absolute RMS displacement, averaged over all volumes.
+abs_rms
+   Absolute root mean square displacement.
+aux_imgs
+   A path to an index of derivative images, after they have been
+   processed by this module; this is necessary only if smoothing or
+   temporal filtering is included
+censor
+   A set of instructions specifying the type of censoring to be
+   performed in the current pipeline: 'none', 'iter[ative]', or
+   'final'. This instruction is passed to the regress module,
+   which handles the censoring protocol.
+censored
+   A variable that specifies whether censoring has been primed in
+   the current module.
+fd
+   Framewise displacement values, computed as the absolute sum of
+   realignment parameter first derivatives.
+final
+   The final output of the module, indicating its successful
+   completion.
+mcdir
+   The directory containing motion realignment output.
+mask
+   A spatial mask of binary values, indicating whether a voxel
+   should be analysed as part of the brain; the definition of brain
+   tissue is often fairly liberal.
+meanIntensity
+   The mean intensity over time of functional data, after it has
+   been realigned to the example volume
+motion_vols
+   A quality control file that specifies the number of volumes that
+   exceeded the maximum motion criterion. If censoring is enabled,
+   then this will be the same number of volumes that are to be
+   censored.
+referenceVolume
+   An example volume extracted from EPI data, typically one of the
+   middle volumes, though another may be selected if the middle
+   volume is corrupted by motion-related noise. This is used as the
+   reference volume during motion realignment.
+rel_max_rms
+   The maximum single-volume value of relative RMS displacement.
+rel_mean_rms
+   The relative RMS displacement, averaged over all volumes.
+rel_rms
+   Relative root mean square displacement.
+rmat
+   A directory containing rigid transforms applied to each volume
+   in order to realign it with the reference volume
+rps
+   Framewise values of the 6 realignment parameters.
+tmask
+   A temporal mask of binary values, indicating whether the volume
+   survives motion censorship.
+   
+DICTIONARY
+
+
+
+
+
+
+
+
+
+
+
+
 ###################################################################
 # Verify that the module should be run:
 #  * Test whether the final output already exists.
@@ -210,170 +161,22 @@ echo "" >> $design_local
 # If it is determined that the module should not be run, then any
 #  outputs must be written to the local design file.
 ###################################################################
-if [[ $(imtest ${final[${cxt}]}) == "1" ]] \
-   && [[ "${prestats_rerun[${cxt}]}" == "N" ]]
+if is_image ${final[${cxt}]} \
+&& ! rerun
    then
-   echo "Prestats has already run to completion."
-   echo "Writing outputs..."
-   if [[ "${prestats_cleanup[${cxt}]}" == "Y" ]]
-      then
-      rm -rf ${outdir}/*~TEMP~*
-   fi
-   rm -f ${out}/${prefix}${ext}
-   ln -s ${final[${cxt}]}${ext} ${out}/${prefix}${ext}
-   ################################################################
-   # OUTPUT: meanIntensity
-   # Test whether the mean of functional volumes exists as an
-   # image. If it does, add it to the index of derivatives and to
-   # the localised design file.
-   ################################################################
-   if [[ $(imtest ${meanIntensity[${cxt}]}) == "1" ]]
-      then
-      echo "#meanIntensity#${meanIntensity[${cxt}]}" \
-         >> ${auxImgs[${subjidx}]}
-      echo "meanIntensity[${subjidx}]=${meanIntensity[${cxt}]}" \
-         >> $design_local
-   fi
-   ################################################################
-   # OUTPUT: referenceVolume
-   # Test whether an example functional volume exists as an
-   # image. If it does, add it to the index of derivatives and to
-   # the localised design file.
-   ################################################################
-   if [[ $(imtest ${referenceVolume[${cxt}]}) == "1" ]]
-      then
-      echo "referenceVolume[${subjidx}]=${referenceVolume[${cxt}]}" \
-         >> $design_local
-      echo "#referenceVolume#${referenceVolume[${cxt}]}" \
-         >> ${auxImgs[${subjidx}]}
-   fi
-   ################################################################
-   # OUTPUT: brain-extracted referenceVolume and meanIntensity
-   # Test whether brain-extracted mean or example functional volume
-   # exist. If either does, add it to the index of derivatives and
-   # to the localised design file.
-   ################################################################
-   if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == "1" ]]
-      then
-      echo "referenceVolumeBrain[${subjidx}]=${referenceVolumeBrain[${cxt}]}" \
-         >> $design_local
-      echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" \
-         >> ${auxImgs[${subjidx}]}
-   fi
-   if [[ $(imtest ${meanIntensityBrain[${cxt}]}) == "1" ]]
-      then
-      echo "meanIntensityBrain[${subjidx}]=${meanIntensityBrain[${cxt}]}" \
-         >> $design_local
-      echo "#meanIntensityBrain#${meanIntensityBrain[${cxt}]}" \
-         >> ${auxImgs[${subjidx}]}
-   fi
-   ################################################################
-   # OUTPUT: mask
-   # Test whether a binary mask denoting brain voxels exists as an
-   # image. If it does, add it to the index of derivatives and to
-   # the localised design file.
-   ################################################################
-   if [[ $(imtest ${mask[${cxt}]}) == "1" ]]
-      then
-      echo "mask[${subjidx}]=${mask[${cxt}]}" >> $design_local
-      echo "#mask#${mask[${cxt}]}" >> ${auxImgs[${subjidx}]}
-   fi
-   ################################################################
-   # OUTPUT: mcdir
-   # Test whether the motion-correction directory exists. If it
-   # does, add it to the localised design file. Then, search for
-   # other motion-related variables.
-   ################################################################
-   if [[ -d "${mcdir[${cxt}]}" ]]
-      then
-      echo "mcdir[${subjidx}]=${mcdir[${cxt}]}" >> $design_local
-      #############################################################
-      # OUTPUT: rps, relrms
-      # Realignment parameters may exist either in a filtered or
-      # in an unfiltered state. Under any circumstances, they
-      # should exist at the output specified above.
-      #############################################################
-      if [[ -e "${rps[${cxt}]}" ]]
-         then
-         echo "rps[${subjidx}]=${rps[${cxt}]}" >> $design_local
-         echo "relrms[${subjidx}]=${relrms[${cxt}]}" >> \
-            $design_local
-         qvars=${qvars},relMeanRMSmotion
-	      qvals="${qvals},$(cat ${relmeanrms[${cxt}]})"
-      fi
-      #############################################################
-      # OUTPUT: fd, tmask, censor
-      # Volumes to be censored should only be determined once in
-      # the course of an analysis. If, for some unknown reason,
-      # you run motion correction multiple times, only the first
-      # time will produce censorship variables.
-      #############################################################
-      if [[ -z "${censor[${subjidx}]}" ]]
-         then
-         ##########################################################
-         # Even if no censorship is being performed, framewise
-         # displacement is computed and written to the design
-         # file. It may be used for QA purposes, etc.
-         ##########################################################
-         echo "fd[${subjidx}]=${fd[${cxt}]}" >> $design_local
-         echo "motionvols[${subjidx}]=${qavol[${cxt}]}" >> $design_local
-         mthr=$(echo ${prestats_censor[${cxt}]}|cut -d"," -f2)
-         [[ ${mthr} == none ]] && mthr=${MOTIONTHR}
-	      qvars=${qvars},nframesHighMotion${prestats_censor_cr[${cxt}]}${mthr}
-	      qvals="${qvals},$(cat ${qavol[${cxt}]})"
-         ##########################################################
-         # If the user has requested censorship of volumes on
-         # the basis of subject motion, a temporal mask is
-         # written to the design file. In the REGRESS module,
-         # this mask will determine what volumes to take into
-         # account when estimating linear model parameters.
-         # Furthermore, volumes with 0 values are discarded from
-         # the timeseries.
-         ##########################################################
-         if [[ "${prestats_censor[${cxt}]}" != "none" ]]
-            then
-            echo "tmask[${subjidx}]=${tmask[${cxt}]}" >> \
-               $design_local
-	         censor[${cxt}]=$(echo ${prestats_censor[${cxt}]}|cut -d"," -f1)
-            echo "censor[${subjidx}]=${censor[${cxt}]}" >> \
-               $design_local
-         ##########################################################
-         # If the user has not requested censorship, then only
-         # the censorship status is written to the design file.
-         # This prevents future runs of prestats from
-         # overwriting framewise displacement and censorship-
-         # related variables.
-         ##########################################################
-         else
-            echo "censor[${subjidx}]=none" >> $design_local
-         fi
-	   fi
-   fi
-   ################################################################
-   # Since it has been determined that the module does not need to
-   # be executed, update the audit file and quality index, and
-   # exit the module.
-   ################################################################
-   rm -f ${quality}
-   echo ${qvars} >> ${quality}
-   echo ${qvals} >> ${quality}
-   prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-   modaudit=$(expr ${prefields} + ${cxt} + 1)
-   subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-   replacement=$(echo ${subjaudit}\
-      |sed s@[^,]*@@${modaudit}\
-      |sed s@',,'@',1,'@ \
-      |sed s@',$'@',1'@g)
-   sed -i s@${subjaudit}@${replacement}@g ${audit}
-   echo "Module complete"
-   exit 0
+   subroutine                 @0.1
+   complete_already
 fi
-###################################################################
-###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
-###################################################################
 
+if is_image ${img}
+   then
+   exec_sys ln -s ${img} ${intermediate}.nii.gz
+fi
+
+if rerun
+   then
+   exec_sys rm -f ${intermediate}*
+fi
 
 
 
@@ -384,9 +187,9 @@ fi
 # image name and is used to verify that prestats has completed
 # successfully.
 ###################################################################
-buffer=""
+unset buffer
 
-echo "Processing image: $img"
+subroutine                    @0.2 Processing image: ${out}/${prefix}.nii.gz
 
 ###################################################################
 # Parse the processing code to determine what analysis to run next.
@@ -401,7 +204,7 @@ echo "Processing image: $img"
 #  * TMP: temporal filter
 ###################################################################
 rem=${prestats_process[${cxt}]}
-while [[ "${#rem}" -gt "0" ]]
+while (( ${#rem} > 0 ))
    do
    ################################################################
    # * Extract the first three letters from the user-specified
@@ -412,8 +215,8 @@ while [[ "${#rem}" -gt "0" ]]
    ################################################################
    cur=${rem:0:3}
    rem=${rem:3:${#rem}}
-   [[ ${cur} != SNR ]] && buffer=${buffer}_${cur}
-   case $cur in
+   buffer=${buffer}_${cur}
+   case ${cur} in
       
       
       
@@ -423,114 +226,80 @@ while [[ "${#rem}" -gt "0" ]]
          ##########################################################
          # DVO discards the first n volumes of the scan, as
          # specified by user input.
+         #
+         # If dvols is positive, discard the first n volumes
+         # from the BOLD timeseries.
+         # If dvols is negative, discard the last n volumes
+         # from the BOLD timeseries.
          ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Discarding ${prestats_dvols[${cxt}]} volumes"
-	      ##########################################################
-	      # Determine whether this has already been done, and 
-	      # compute the number of volumes to retain.
-	      ##########################################################
-         if [[ ! $(imtest ${img}_${cur}) == "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         routine  @1    Discarding ${prestats_dvols[${cxt}]} volumes
+         if ! is_image ${intermediate}_${cur}.nii.gz \
+         || rerun
             then
-            nvol=$(fslnvols $img)
-            echo "Total original volumes = $nvol"
-	         #######################################################
-	         # If dvols is positive, discard the first n volumes
-	         # from the BOLD timeseries.
-	         #######################################################
-	         if [[ ${prestats_dvols[${cxt}]} =~ ${POSINT} ]]
-	            then
-	            fslroi $img \
-	               ${img}_${cur} \
-	               ${prestats_dvols[${cxt}]} \
-	               $(expr $nvol - ${prestats_dvols[${cxt}]})
-	            echo "First ${prestats_dvols[${cxt}]} volumes discarded"
-	         #######################################################
-	         # If dvols is negative, discard the last n volumes
-	         # from the BOLD timeseries.
-	         #######################################################
-	         else
-	            fslroi $img \
-	               ${img}_${cur} \
-	               0 \
-	               $(expr $nvol + ${prestats_dvols[${cxt}]})
-	            echo "Last ${prestats_dvols[${cxt}]} volumes discarded"
-	         fi
+            nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
+            subroutine        @1.1  Total original volumes = ${nvol}
+            if is+integer ${prestats_dvols[${cxt}]}
+               then
+               subroutine     @1.2  [Discarding initial volumes]
+               vol_begin=${prestats_dvols[${cxt}]}
+               vol_end=$(( ${nvol} - ${prestats_dvols[${cxt}]} ))
+            elif is_integer ${prestats_dvols[${cxt}]}
+               then
+               subroutine     @1.3  [Discarding final volumes]
+               vol_begin=0
+               vol_end=$(( ${nvol} + ${prestats_dvols[${cxt}]} ))
+            fi
+            subroutine        @1.4  [Primary analyte image]
+            exec_fsl \
+               fslroi ${intermediate}.nii.gz \
+               ${intermediate}_${cur}.nii.gz \
+               ${vol_begin} \
+               ${vol_end}
          fi
-	      ##########################################################
-	      # Repeat for any derivatives of the BOLD tiemseries, if
-	      # they contain the same number of volumes as the original
-	      # timeseries.
-	      #
-	      # Why? Unless the number of volumes in the BOLD timeseries
-	      # and in derivative timeseries -- for instance, local
-	      # regressors -- is identical, any linear model
-	      # incorporating the derivatives as predictors would
-	      # introduce a frameshift error; this may result in
-	      # incorrect estimates or even a failure to compute parameter
-	      # estimates for the model.
-	      #
-	      # In many cases, discarding of initial volumes represents
-	      # the first stage of fMRI processing. In these cases,
-	      # the derivatives index will be empty, and the prestats
-	      # module should never enter the conditional block below.
-	      ##########################################################
-         [[ -e "${auxImgs[${subjidx}]}" ]] \
-            && auxImgs=$(cat ${auxImgs[${subjidx}]})
-	      for aimg in ${auxImgs}
+         ##########################################################
+         # Repeat for any derivatives of the BOLD timeseries, if
+         # they contain the same number of volumes as the original
+         # timeseries.
+         #
+         # Why? Unless the number of volumes in the BOLD timeseries
+         # and in derivative timeseries -- for instance, local
+         # regressors -- is identical, any linear model
+         # incorporating the derivatives as predictors would
+         # introduce a frameshift error; this may result in
+         # incorrect estimates or even a failure to compute parameter
+         # estimates for the model.
+         #
+         # In many cases, discarding of initial volumes represents
+         # the first stage of fMRI processing. In these cases,
+         # the derivatives index will be empty, and the prestats
+         # module should never enter the conditional block below.
+         ##########################################################
+         load_derivatives
+         for derivative in ${derivatives}
             do
-	         #######################################################
-	         # Parse the derivative image.
-	         #######################################################
-	         aName=$(echo "$aimg"|cut -d'#' -f2)
-	         aPath=$(echo "$aimg"|cut -d'#' -f3)
-	         #######################################################
-	         # * Determine the number of volumes in the derivative
-	         #   image.
-	         # * If it is identical to the number of volumes in
-	         #   the untruncated BOLD timeseries, discard an equal
-	         #   number of volumes from the derivative image.
-	         #######################################################
-	         aVols=$(fslnvols ${aPath})
-	         if [[ "${aVols}" == "${nvol}" ]]
-	            then
-	            echo "Discarding initial volumes from ${aName}"
-	            fslroi ${aPath} \
-	               ${outdir}/${aName} \
-	               ${prestats_dvols[${cxt}]} \
-	               $nvol
-	            ####################################################
-	            # Write information about the updated derivative
-	            # image to a local version of the derivatives index.
-	            # If volumes have been discarded from the derivative
-	            # image, then also update its path in the design
-	            # file.
-	            ####################################################
-               echo "#${aName}#${outdir}/${aName}" \
-                  >> ${auxImgs[${cxt}]}
-               echo "${aName}"'['"${subjidx}"']='"${outdir}/${aName}"\
-                  >> ${design_local}
-	         else
-               echo "#${aName}#${aPath}" \
-                  >> ${auxImgs[${cxt}]}
-	         fi
-	      done
-	      ##########################################################
-	      # Overwrite the derivatives index with the paths to the
-	      # updated derivatives.
-	      ##########################################################
-         [[ -e "${auxImgs[${subjidx}]}" ]] \
-            && mv ${auxImgs[${cxt}]} ${auxImgs[${subjidx}]}
-	      ##########################################################
-	      # Compute the updated volume count.
-	      ##########################################################
-	      img=${img}_${cur}
-	      nvol=$(fslnvols $img)
-	      echo "New total volumes = $nvol"
-	      echo "Processing step complete:"
-	      echo "Discarding initial volumes"
+            derivative_parse ${derivative}
+            d_type=$(derivative_typeof ${derivative} ${intermediate}.nii.gz)
+            if [[ ${d_type} == timeseries ]]
+               then
+               subroutine     @1.5  [${d_name}]
+               exec_fsl \
+                  fslroi ${d_path} \
+                  ${outdir}/${prefix}_${d_name} \
+                  ${vol_begin} \
+                  ${vol_end}
+               derivative        ${d_name}   ${prefix}_${d_name}
+               write_derivative  ${d_name}
+            else
+               subroutine     @1.6
+            fi
+         done
+         ##########################################################
+         # Compute the updated volume count.
+         ##########################################################
+         intermediate=${intermediate}_${cur}
+         nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
+         subroutine           @1.7  [New total volumes = ${nvol}]
+         routine_end
          ;;
       
       
@@ -561,39 +330,25 @@ while [[ "${#rem}" -gt "0" ]]
          # This step introduces a degree of redundancy to pipelines
          # that do not include slice timing correction.
          ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Computing realignment parameters"
+         routine  @2    Computing realignment parameters
          ##########################################################
          # Determine whether a reference functional image already
          # exists. If it does not, extract it from the timeseries
-         # midpoint.
+         # midpoint for use as a reference in realignment.
          ##########################################################
-         if [[ $(imtest ${referenceVolume[${cxt}]}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         if ! is_image ${referenceVolume[${cxt}]} \
+         || rerun
             then
-            echo "Extracting reference volume"
-            #######################################################
-            # Compute the number of volumes...
-            #######################################################
-            nvol=$(fslnvols $img)
-            #######################################################
-            # ...then use this to obtain the timeseries midpoint.
-            # expr should always return integer values.
-            #######################################################
-            midpt=$(expr $nvol / 2)
-            #######################################################
-            # Finally, extract the indicated volume for use as a
-            # reference in realignment.
-            #######################################################
-	         fslroi $img ${referenceVolume[${cxt}]} $midpt 1
-	      fi
-         ##########################################################
-         # Determine whether this step has already completed: if
-         # it has, then an associated image symlink should exist.
-         ##########################################################
-	      if [[ $(imtest ${img}_${cur}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+            subroutine        @2.1  [Extracting reference volume]
+            nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
+            midpt=$(( ${nvol} / 2))
+            exec_fsl \
+               fslroi ${intermediate}.nii.gz \
+               ${referenceVolume[${cxt}]} \
+               ${midpt} 1
+         fi
+         if ! is_image ${intermediate}_${cur}.nii.gz \
+         || rerun
             then
             #######################################################
             # Run MCFLIRT targeting the reference volume to compute
@@ -603,167 +358,145 @@ while [[ "${#rem}" -gt "0" ]]
             # module output directory; it will be moved into the
             # MC directory.
             #######################################################
-	         echo "Computing realignment parameters..."
-	         mcflirt -in $img \
-	            -out ${outdir}/${prefix}~TEMP~_mc \
-	            -plots \
-	            -reffile ${referenceVolume[${cxt}]} \
-	            -rmsrel \
-	            -rmsabs \
-	            -spline_final
-	         #######################################################
-	         # Create the MC directory, and move outputs to their
-	         # targets.
-	         #######################################################
-	         rm -rf ${mcdir[${cxt}]}
-	         mkdir -p ${mcdir[${cxt}]}
-	         mv -f ${outdir}/${prefix}~TEMP~_mc.par \
-	            ${rps[${cxt}]}
-	         mv -f ${outdir}/${prefix}~TEMP~_mc_abs_mean.rms \
-	            ${absmeanrms[${cxt}]}
-	         mv -f ${outdir}/${prefix}~TEMP~_mc_abs.rms \
-	            ${absrms[${cxt}]}
-	         mv -f ${outdir}/${prefix}~TEMP~_mc_rel_mean.rms \
-	            ${relmeanrms[${cxt}]}
-	         #######################################################
-	         # Append relative mean RMS motion to the index of
-	         # quality variables
-	         #######################################################
-	         qvars=${qvars},relMeanRMSmotion
-	         qvals="${qvals},$(cat ${relmeanrms[${cxt}]})"
-	         #######################################################
-	         # For relative root mean square motion, prepend a
-	         # value of 0 by convention for the first volume.
-	         # FSL may change its pipeline in the future so that
-	         # it automatically does this. If this occurs, then
-	         # this must be changed.
-	         #######################################################
-	         #mv -f ${outdir}/${prefix}~TEMP~_mc_rel.rms \
-	         #   ${relrms[${cxt}]}
-	         rm -f ${relrms[${cxt}]}
-	         echo "0" >> ${relrms[${cxt}]}
-	         cat "${outdir}/${prefix}~TEMP~_mc_rel.rms" \
-	            >> ${relrms[${cxt}]}
-	         #######################################################
-	         # Generate summary plots for motion correction.
-	         #######################################################
-	         echo "Preparing summary plots..."
-	         echo "1/3"
-	         fsl_tsplot -i ${rps[${cxt}]} \
-	            -t 'MCFLIRT estimated rotations (radians)' \
-	            -u 1 --start=1 --finish=3 \
-		         -a x,y,z \
-		         -w 640 \
-		         -h 144 \
-		         -o ${mcdir[${cxt}]}/rot.png
-		      echo "2/3"
-	         fsl_tsplot -i ${rps[${cxt}]} \
-	            -t 'MCFLIRT estimated translations (mm)' \
-	            -u 1 --start=4 --finish=6 \
-		         -a x,y,z \
-		         -w 640 \
-		         -h 144 \
-		         -o ${mcdir[${cxt}]}/trans.png
-		      echo "3/3"
-	         fsl_tsplot \
-	            -i "${absrms[${cxt}]},${relrms[${cxt}]}" \
-	            -t 'MCFLIRT estimated mean displacement (mm)' \
-	            -u 1 \
-	            -w 640 \
-	            -h 144 \
-		         -a "absolute,relative" \
-		         -o ${mcdir[${cxt}]}/disp.png
-	         echo "Realignment parameter plots prepared."
-	         #######################################################
-	         # Compute framewise displacement using the realignment
-	         # parameters.
-	         #######################################################
-	         echo "Computing framewise displacement..."
-	         ${XCPEDIR}/utils/fd.R \
-               -r "${rps[${cxt}]}" \
-               -o "${fd[${cxt}]}"
-	         #######################################################
-	         # Determine whether motion censoring is enabled. If it
-	         # is, then prepare to create a temporal mask indicating
-	         # whether each volume survives censoring.
-	         #
-	         # Censoring information is stored in a single, comma-
-	         # separated variable.
-	         #  * The first element indicates the type of censoring:
-	         #    none, final (e.g. Power et al., 2012), or
-	         #    iterative (e.g., Power et al., 2014).
-	         #  * The second element indicates the FD cutoff for
-	         #    censoring: volumes with FD above the cutoff do not
-	         #    survive censoring.
-	         #######################################################
-	         censor_type=$(echo ${prestats_censor[${cxt}]}\
-	            |cut -d"," -f1)
-	         censor_fd=$(echo ${prestats_censor[${cxt}]}\
-	            |cut -d"," -f2)
-	         #######################################################
-	         # Before creating a temporal mask, ensure that
-	         # censoring has not already been primed in the course
-	         # of this analysis.
-	         #  * It is critical that this step only be performed
-	         #    once in the course of each analysis.
-	         #  * If censoring has already been primed, then the
-	         #    type of censoring requested will be stored in one
-	         #    of the variables: censor[cxt] or censor[subjidx]
-	         #######################################################
-	         if [[ ! -z "$censor_type" ]] \
-	            && [[ "${censor[${subjidx}]}" != "iter" ]] \
-	            && [[ "${censor[${subjidx}]}" != "final" ]] \
-	            && [[ "${censor[${cxt}]}" != "iter" ]] \
-	            && [[ "${censor[${cxt}]}" != "final" ]]
-	            then
-	            echo "Determining volumes to be censored..."
-	            ####################################################
-	            # Create and write the temporal mask.
-	            # Use the criterion dimension and threshold
-	            # specified by the user to determine whether each
-	            # volume should be masked out.
-	            ####################################################
-	            censor[${cxt}]=$censor_type
-	            if [[ ${prestats_censor_cr[${cxt}]} == fd ]]
-	               then
-	               ${XCPEDIR}/utils/tmask.R \
-	                  -s "${fd[${cxt}]}" \
-	                  -t "$censor_fd" \
-	                  -o "${tmask[${cxt}]}" \
-	                  -m ${MINCONTIG} \
-	                  -p ${PERSIST}
-	            elif [[ ${prestats_censor_cr[${cxt}]} == rms ]]
-	               then
-	               ${XCPEDIR}/utils/tmask.R \
-	                  -s "${relrms[${cxt}]}" \
-	                  -t "$censor_fd" \
-	                  -o "${tmask[${cxt}]}" \
-	                  -m ${MINCONTIG} \
-	                  -p ${PERSIST}
-	            fi
-	         fi
-	         #######################################################
-	         # Determine the number of volumes that fail the motion
-	         # criterion and print this to another QA file.
-	         #######################################################
-	         echo "Evaluating data quality..."
-	         [[ ${prestats_censor_cr[${cxt}]} == fd ]] \
-	            && sIn=${fd[${cxt}]}
-	         [[ ${prestats_censor_cr[${cxt}]} == rms ]] \
-	            && sIn=${relrms[${cxt}]}
-	         censor_lim=${censor_fd}
-	         [[ ${censor_lim} == none ]] && censor_lim=${MOTIONTHR}
-	         num_censor=$(${XCPEDIR}/utils/tmask.R \
-	                     -s "${sIn}" \
-	                     -t "$censor_lim" \
-	                     |grep -o 0 \
-	                     |wc -l)
-	         echo ${num_censor} >> ${qavol[${cxt}]}
-            mthr=$(echo ${prestats_censor[${cxt}]}|cut -d"," -f2)
-            [[ ${mthr} == none ]] && mthr=${MOTIONTHR}
-	         qvars=${qvars},nframesHighMotion${prestats_censor_cr[${cxt}]}${mthr}
-	         qvals="${qvals},$(cat ${qavol[${cxt}]})"
-	      fi # run check statement
+            subroutine        @2.2  [Computing realignment parameters]
+            exec_fsl \
+               mcflirt -in ${intermediate}.nii.gz \
+               -out ${intermediate}_mc \
+               -plots \
+               -reffile ${referenceVolume[${cxt}]} \
+               -rmsrel \
+               -rmsabs \
+               -spline_final
+            #######################################################
+            # Create the MC directory, and move outputs to their
+            # targets.
+            #
+            # For relative root mean square motion, prepend a
+            # value of 0 by convention for the first volume.
+            # FSL may change its pipeline in the future so that
+            # it automatically does this. If this occurs, then
+            # this must be changed.
+            #######################################################
+            subroutine        @2.3
+            exec_sys rm -rf ${mcdir[${cxt}]}
+            exec_sys mkdir -p ${mcdir[${cxt}]}
+            exec_sys mv -f ${intermediate}_mc.par \
+               ${rps[${cxt}]}
+            exec_sys mv -f ${intermediate}_mc_abs_mean.rms \
+               ${abs_mean_rms[${cxt}]}
+            exec_sys mv -f ${intermediate}_mc_abs.rms \
+               ${abs_rms[${cxt}]}
+            exec_sys mv -f ${intermediate}_mc_rel_mean.rms \
+               ${rel_mean_rms[${cxt}]}
+            exec_sys rm -f ${relrms[${cxt}]}
+            exec_sys echo 0                         >> ${rel_rms[${cxt}]}
+            exec_sys cat ${intermediate}_mc_rel.rms >> ${rel_rms[${cxt}]}
+            #######################################################
+            # Compute the maximum value of motion.
+            #######################################################
+            subroutine        @2.4
+            exec_xcp \
+               1dTool.R \
+               -i ${rel_mean_rms[${cxt}]} \
+               -o max \
+               -f ${rel_max_rms[${cxt}]}
+            #######################################################
+            # Generate summary plots for motion correction.
+            #######################################################
+            subroutine        @2.5  [Preparing summary plots]
+            subroutine      @2.5.1  [1/3]
+            exec_fsl fsl_tsplot -i ${rps[${cxt}]} \
+               -t 'MCFLIRT_estimated_rotations_(radians)' \
+               -u 1 --start=1 --finish=3 \
+               -a x,y,z \
+               -w 640 \
+               -h 144 \
+               -o ${mcdir[${cxt}]}/rot.png
+            subroutine      @2.5.2  [2/3]
+            exec_fsl fsl_tsplot -i ${rps[${cxt}]} \
+               -t 'MCFLIRT_estimated_translations_(mm)' \
+               -u 1 --start=4 --finish=6 \
+               -a x,y,z \
+               -w 640 \
+               -h 144 \
+               -o ${mcdir[${cxt}]}/trans.png
+            subroutine      @2.5.3  [3/3]
+            exec_fsl fsl_tsplot \
+               -i "${abs_rms[${cxt}]},${rel_rms[${cxt}]}" \
+               -t 'MCFLIRT_estimated_mean_displacement_(mm)' \
+               -u 1 \
+               -w 640 \
+               -h 144 \
+               -a 'absolute,relative' \
+               -o ${mcdir[${cxt}]}/disp.png
+            #######################################################
+            # Compute framewise displacement using the realignment
+            # parameters.
+            #######################################################
+            subroutine        @2.6  [Computing framewise displacement]
+            exec_xcp fd.R \
+               -r ${rps[${cxt}]} \
+               -o ${fd[${cxt}]}
+            if [[ ${prestats_censor_cr[${cxt}]} == fd ]]
+               then
+               subroutine     @2.7  [Quality criterion: FD]
+               censor_criterion='fd['${cxt}']'
+            elif [[ ${prestats_censor_cr[${cxt}]} == rms ]]
+               then
+               subroutine     @2.8  [Quality criterion: RMS]
+               censor_criterion='rel_rms['${cxt}']'
+            fi
+            #######################################################
+            # Determine whether motion censoring is enabled. If it
+            # is, then prepare to create a temporal mask indicating
+            # whether each volume survives censoring.
+            #
+            # Before creating a temporal mask, ensure that
+            # censoring has not already been primed in the course
+            # of this analysis.
+            #  * It is critical that this step only be performed
+            #    once in the course of each analysis.
+            #  * If censoring has already been primed, then the
+            #    type of censoring requested will be stored in one
+            #    of the variables: censor[cxt] or censor[subjidx]
+            #######################################################
+            censor_threshold=$(return_field ${prestats_censor[${cxt}]} 2)
+            if [[ -n ${censored[${subjidx}]} ]]
+               then
+               subroutine     @2.9
+               censored[${cxt}]=${censored[${subjidx}]}
+            fi
+            if (( ${censored[${cxt}]} != 1 ))
+               then
+               subroutine     @2.10 [Determining volumes to be censored]
+               ####################################################
+               # Create and write the temporal mask.
+               # Use the criterion dimension and threshold
+               # specified by the user to determine whether each
+               # volume should be masked out.
+               ####################################################
+               exec_xcp \
+                  tmask.R \
+                  -s ${!censor_criterion} \
+                  -t ${censor_threshold} \
+                  -o ${tmask[${cxt}]} \
+                  -m ${prestats_censor_contig[${cxt}]}
+               configure      censored    1
+               write_output   censored
+            fi
+            #######################################################
+            # Determine the number of volumes that fail the motion
+            # criterion and print this.
+            #######################################################
+            subroutine        @2.11 [Evaluating data quality]
+            num_censor=$(exec_xcp \
+               tmask.R \
+               -s ${!censor_criterion} \
+               -t ${censor_threshold} \
+               |grep -o 0 \
+               |wc -l)
+            echo ${num_censor} >> ${motion_vols[${cxt}]}
+         fi # run check statement
          ##########################################################
          # * Remove the motion corrected image: this step should
          #   only compute parameters, not use them.
@@ -774,13 +507,11 @@ while [[ "${#rem}" -gt "0" ]]
          #   successfully.
          # * Update the image pointer.
          ##########################################################
-	      [[ -e ${img}_${cur}${ext} ]] && rm -f ${img}_${cur}${ext}
-	      rm -rf ${outdir}/${prefix}~TEMP~_mc*.mat
-	      rm -f ${referenceVolume[${cxt}]}
-	      ln -s ${img}${ext} ${img}_${cur}${ext}
-	      img=${img}_${cur}
-	      echo "Processing step complete:"
-	      echo "computing realignment parameters"
+         exec_sys rm -f ${intermediate}_${cur}.nii.gz ${referenceVolume[${cxt}]}
+         exec_sys rm -rf ${intermediate}_mc*.mat
+         exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       
@@ -795,99 +526,72 @@ while [[ "${#rem}" -gt "0" ]]
          # MPR is intended to be run prior to slice timing
          # correction, and MCO after slice timing correction.
          ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Correcting for subject motion"
-         ##########################################################
-         # Determine whether a reference functional image already
-         # exists. If it does not, extract it from the timeseries
-         # midpoint.
-         ##########################################################
-         if [[ $(imtest ${referenceVolume[${cxt}]}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         routine  @3    Realigning functional volumes
+         if ! is_image ${referenceVolume[${cxt}]} \
+         || rerun
             then
-            echo "Extracting reference volume"
+            subroutine        @3.1  Extracting reference volume
+            nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
             #######################################################
             # If the framewise displacement has not been
             # calculated, then use the timeseries midpoint as the
             # reference volume.
             #######################################################
-            if [[ ! -e ${fd[${cxt}]} ]]
+            if ! is_1D ${fd[${cxt}]}
                then
-               ####################################################
-               # Compute the number of volumes...
-               ####################################################
-               nvol=$(fslnvols $img)
-               ####################################################
-               # ...then use this to obtain the timeseries
-               # midpoint. expr should always return integer
-               # values.
-               ####################################################
-               midpt=$(expr $nvol / 2)
-               ####################################################
-               # Finally, extract the indicated volume for use as
-               # a reference in realignment.
-               ####################################################
-	            fslroi $img ${referenceVolume[${cxt}]} $midpt 1
+               subroutine     @3.2
+               midpt=$(( ${nvol} / 2 ))
+               exec_fsl \
+                  fslroi ${intermediate}.nii.gz \
+                  ${referenceVolume[${cxt}]} \
+                  ${midpt} 1
             #######################################################
             # Otherwise, use the volume with minimal framewise
             # displacement.
             #######################################################
-	         else
-	            nvol=$(cat ${fd[${cxt}]}|wc -l)
-	            volmin=2
-	            minfd=$(sed -n 2p ${fd[${cxt}]})
-               ####################################################
-               # Iterate through all volumes; if the FD value at
-               # the current volume is less than the minimum
-               # observed value so far, it becomes the minimum
-               # observed value and the candidate for becoming
-               # the reference volume.
-               ####################################################
-	            for i in $(seq 3 $nvol)
-	               do
-	               curfd=$(sed -n ${i}p ${fd[${cxt}]})
-	               [[ $(echo $curfd'<'$minfd | bc -l) == 1 ]] \
-	                  && minfd=${curfd} \
-	                  && volmin=${i}
-	            done
-               ####################################################
-               # Extract the volume with minimal FD for use as a
-               # reference in realignment.
-               ####################################################
-	            fslroi $img ${referenceVolume[${cxt}]} $volmin 1
-	         fi
-	      fi
+            else
+               subroutine     @3.3
+               vol_min_fd=$(exec_xcp \
+                  1dTool.R -i ${fd[${cxt}]} -o which_min -r T)
+               (( vol_min_fd++ ))
+               exec_fsl \
+                  fslroi ${intermediate}.nii.gz \
+                  ${referenceVolume[${cxt}]} \
+                  ${vol_min_fd} 1
+            fi
+         fi
          ##########################################################
          # Create the motion correction directory if it does not
          # already exist.
          ##########################################################
-	      [[ ! -e "${mcdir[${cxt}]}" ]] && mkdir -p ${mcdir[${cxt}]}
+         exec_sys mkdir -p ${mcdir[${cxt}]}
+         exec_sys mkdir -p ${rmat[${cxt}]}
          ##########################################################
          # Verify that this step has not already completed; if it
          # has, then an associated image should exist.
          ##########################################################
-	      if [[ $(imtest ${img}_${cur}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         if ! is_image ${intermediate}_${cur}.nii.gz \
+         || rerun
             then
-	         echo "Executing motion correction..."
-	         mcflirt -in $img \
-	            -out ${outdir}/${prefix}~TEMP~_mc \
-	            -mats \
-	            -reffile ${referenceVolume[${cxt}]} \
-	            -spline_final
-	      fi # run check statement
+            subroutine        @3.4  Executing motion correction
+            exec_fsl \
+               mcflirt -in ${intermediate}.nii.gz \
+               -out ${intermediate}_mc \
+               -mats \
+               -reffile ${referenceVolume[${cxt}]} \
+               -spline_final
+         fi
          ##########################################################
          # Realignment transforms are always retained from this
          # step and discarded from MPR.
          ##########################################################
-	      mv -f ${outdir}/${prefix}~TEMP~_mc*.mat ${rmat[${cxt}]}
+         exec_sys mv -f ${intermediate}_mc*.mat ${rmat[${cxt}]}
          ##########################################################
          # Update image pointer
          ##########################################################
-         ln -s ${outdir}/${prefix}~TEMP~_mc${ext} ${img}_${cur}${ext}
-	      img=${img}_${cur}
-	      echo "Processing step complete: motion correction"
+         exec_fsl immv ${intermediate}_mc.nii.gz ${intermediate}_${cur}.nii.gz
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       
@@ -899,83 +603,58 @@ while [[ "${#rem}" -gt "0" ]]
          # STM corrects images for timing of slice acquisition
          # based upon user input.
          ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Slice timing correction"
-         echo "Acquisition: ${prestats_stime[${cxt}]}"
-         echo "Acquisition axis: ${prestats_sdir[${cxt}]}"
-         ##########################################################
-         # Ensure that this submodule has not already run to
-         # completion; if it has, then an associated image should
-         # exist.
-         ##########################################################
-         if [[ ! $(imtest ${img}_${cur}) == "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         routine  @4    Slice timing correction
+         subroutine           @4.1a Acquisition: ${prestats_stime[${cxt}]}
+         subroutine           @4.1b Acquisition axis: ${prestats_sdir[${cxt}]}
+         if ! is_image ${intermediate}_${cur}.nii.gz \
+         || rerun
             then
+            st_perform=1
             #######################################################
             # Read in the acquisition axis; translate axes from
             # common names to FSL terminology.
             #######################################################
             case "${prestats_sdir[${cxt}]}" in 
             X)
+               subroutine     @4.2a
                sdir=1
                ;;
             Y)
+               subroutine     @4.2b
                sdir=2
                ;;
             Z)
+               subroutine     @4.2c
                sdir=3
                ;;
             *)
                sdir=3 # set default so as to prevent errors
-               echo "Slice timing correction:"
-               echo "Unrecognised acquisition axis/direction:"
-               echo "${prestats_sdir[${cxt}]}"
+               subroutine     @4.2d Slice timing correction:
+               subroutine     @4.2e Unrecognised acquisition axis/direction:
+               subroutine     @4.2f ${prestats_sdir[${cxt}]}
                ;;
             esac
             #######################################################
             # Read in the direction of acquisition to determine
             # the order in which slices were acquired.
             #######################################################
+            unset st_arguments
             case "${prestats_stime[${cxt}]}" in
             up)
-               ####################################################
-               # For bottom-up acquisition, slicetimer is called
-               # with the default settings.
-               ####################################################
-               slicetimer \
-                  -i $img \
-                  -o ${img}_${cur} \
-                  -d $sdir
-               img=${img}_${cur}
+               subroutine     @4.3
                ;;
             down)
-               ####################################################
-               # For top-down acquisition, slicetimer is called
-               # with the --down flag.
-               ####################################################
-               slicetimer \
-                  -i $img \
-                  -o ${img}_${cur} \
-                  --down \
-                  -d $sdir
-               img=${img}_${cur}
+               subroutine     @4.4
+               st_arguments='--down'
                ;;
             interleaved)
-               ####################################################
-               # For interleaved acquisition, slicetimer is called
-               # with the --odd flag.
-               ####################################################
-               slicetimer \
-                  -i $img \
-                  -o ${img}_${cur} \
-                  --odd \
-                  -d $sdir
-               img=${img}_${cur}
+               subroutine     @4.5
+               st_arguments='--odd'
                ;;
             custom)
-               tpath=${prestats_stime_tpath[${cxt}]}
-               opath=${prestats_stime_opath[${cxt}]}
+               subroutine     @4.6
+               st_custom_time=${prestats_stime_tpath[${cxt}]}
+               st_custom_order=${prestats_stime_opath[${cxt}]}
                ####################################################
                # If you are using both a custom order file and a
                # custom timing file, then congratulations -- you've
@@ -984,71 +663,46 @@ while [[ "${#rem}" -gt "0" ]]
                # The call is still here, but should it become
                # active, the very fabric of the world will unravel.
                ####################################################
-               if [[ "${prestats_stime_order[${cxt}]}" == "true" ]] \
-                  && [[ "${prestats_stime_timing[${cxt}]}" == "true" ]]
+               if [[ "${prestats_stime_order[${cxt}]}" == "true" ]]
                   then
-                  slicetimer \
-                     -i $img \
-                     -o ${img}_${cur} \
-                     -d $sdir \
-                     -ocustom $opath \
-                     -tcustom $tpath
-                  img=${img}_${cur}
-               ####################################################
-               # If a custom slice order file is used, call
-               # slicetimer with the -ocustom flag pointed at the
-               # file.
-               ####################################################
-               elif [[ "${prestats_stime_order[${cxt}]}" == "true" ]]
+                  subroutine  @4.6.1
+                  st_arguments="${st_arguments} -ocustom ${st_custom_order}"
+               fi
+               if [[ "${prestats_stime_timing[${cxt}]}" == "true" ]]
                   then
-                  slicetimer \
-                     -i $img \
-                     -o ${img}_${cur} \
-                     -d $sdir \
-                     -ocustom $opath
-                  img=${img}_${cur}
-               ####################################################
-               # If a custom slice timing file is used, call
-               # slicetimer with the -tcustom flag pointed at the
-               # file.
-               ####################################################
-               elif [[ "${prestats_stime_timing[${cxt}]}" == "true" ]]
-                  then
-                  slicetimer \
-                     -i $img \
-                     -o ${img}_${cur} \
-                     -d $sdir \
-                     -tcustom $tpath
-                  img=${img}_${cur}
+                  subroutine  @4.6.2
+                  st_arguments="${st_arguments} -tcustom ${st_custom_time}"
                fi
                ;;
             none)
-	            ####################################################
-               # Create a symlink to ensure that this step is
-               # counted as complete by the final check, even if
-               # no slice timing correction has actually been
-               # performed.
-               #
+               ####################################################
                # If you are entering this code, you may as well
                # have removed STM from your pipeline. But I sure
                # made that sound quite scary, didn't I?
-	            ####################################################
-               ln -s ${img}${ext} ${img}_${cur}${ext}
-               img=${img}_${cur}
+               ####################################################
+               st_perform=0
                ;;
             *)
-               echo "Slice timing correction:"
-               echo "Unrecognised option ${prestats_stime[${cxt}]}"
+               subroutine     @4.7  Unrecognised option ${prestats_stime[${cxt}]}
+               st_perform=0
                ;;
             esac
-         ##########################################################
-         # If the output of slice timing already exists, then
-         # update the image pointer.
-         ##########################################################
-         else
-            img=${img}_${cur}
+            if (( ${st_perform} == 1 ))
+               then
+               subroutine     @4.8
+               exec_fsl \
+                  slicetimer \
+                  -i ${intermediate}.nii.gz \
+                  -o ${intermediate}_${cur}.nii.gz \
+                  -d $st_direction \
+                  ${st_arguments}
+            else
+               subroutine     @4.9
+               exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+            fi
          fi # run check statement
-	      echo "Processing step complete: slice timing correction"
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       
@@ -1060,77 +714,63 @@ while [[ "${#rem}" -gt "0" ]]
          # BXT computes a mask over the whole brain and excludes
          # non-brain voxels from further analyses.
          ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Brain extraction"
-         echo "Fractional intensity threshold ${prestats_fit[${cxt}]}"
-	      ##########################################################
+         routine  @5    Brain extraction
+         subroutine           @5.1  Generating mean functional image
+         ##########################################################
          # Generate a mean functional image by averaging voxel
          # intensity over time. This mean functional image will be
-         # used as the priamry reference for establishing the
+         # used as the primary reference for establishing the
          # boundary between brain and background.
-	      ##########################################################
-	      fslmaths $img -Tmean ${meanIntensity[${cxt}]}
-	      echo "Mean functional image generated"
          ##########################################################
-         # Brain extraction proceeds in two passes.
-         #  * The first pass uses BET to generate a conservative
-         #    estimate of the brain-background boundary.
-         #  * The second pass uses fslmaths to dilate the initial
-         #    mask, producing a more inclusive brain mask.
-         #
-         # First, verify that the first pass has not already
-         # completed. The first pass writes its output to:
-         # ${img}_${cur}_1
-         ##########################################################
-	      if [[ $(imtest ${img}_${cur}_1) != "1" ]] || \
-            [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         exec_fsl fslmaths ${intermediate}.nii.gz -Tmean ${meanIntensity[${cxt}]}
+         if ! is_image ${intermediate}_${cur}_1.nii.gz \
+         || rerun
             then
-	         echo "Initialising brain extraction..."
-	         #######################################################
-	         # Use BET to generate a preliminary mask. This should
-	         # be written out to the mask[cxt] variable.
-	         #######################################################
-	         bet ${meanIntensity[${cxt}]} \
-	            ${outdir}/${prefix} \
-	            -f ${prestats_fit[${cxt}]} \
-	            -n \
-	            -m \
-	            -R
-	         echo "Binary brain mask generated"
-	         immv ${outdir}/${prefix} ${meanIntensityBrain[${cxt}]}
-	         #######################################################
-	         # Additionally, prepare a brain-extracted version of
-	         # the example functional image; this will later be
-	         # necessary for coregistration of functional and
-	         # structural acquisitions.
-	         #######################################################
-	         if [[ $(imtest ${referenceVolume[${subjidx}]}) == 1 ]]
-	         then
-	         bet ${referenceVolume[${subjidx}]} \
-	            ${referenceVolumeBrain[${cxt}]} \
-	            -f ${prestats_fit[${cxt}]}
-	         else
-	         bet ${referenceVolume[${cxt}]} \
-	            ${referenceVolumeBrain[${cxt}]} \
-	            -f ${prestats_fit[${cxt}]}
-	         fi
-	         #######################################################
-	         # Use the preliminary mask to extract brain tissue.
-	         #######################################################
-	         fslmaths $img -mas ${mask[${cxt}]} ${img}_${cur}_1
-	         echo "Brain extraction first pass complete"
-	      fi
-         ##########################################################
-         # Now, verify that the second pass has not already
-         # completed. The second pass writes its output to:
-         # ${img}_${cur}_2
-         ##########################################################
-	      if [[ $(imtest ${img}_${cur}_2) != "1" ]] || \
-            [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+            subroutine        @5.2a Initialising brain extraction
+            subroutine        @5.2b Fractional intensity threshold:
+            subroutine        @5.2c ${prestats_fit[${cxt}]}
+            #######################################################
+            # Use BET to generate a preliminary mask. This should
+            # be written out to the mask[cxt] variable.
+            #######################################################
+            exec_fsl \
+               bet ${meanIntensity[${cxt}]} \
+               ${outdir}/${prefix} \
+               -f ${prestats_fit[${cxt}]} \
+               -n \
+               -m \
+               -R
+            exec_fsl immv ${outdir}/${prefix}.nii.gz ${meanIntensityBrain[${cxt}]}
+            #######################################################
+            # Additionally, prepare a brain-extracted version of
+            # the example functional image; this will later be
+            # necessary for coregistration of functional and
+            # structural acquisitions.
+            #######################################################
+            if is_image ${referenceVolume[${subjidx}]}
+               then
+               subroutine     @5.3a
+               bet ${referenceVolume[${subjidx}]} \
+                  ${referenceVolumeBrain[${cxt}]} \
+                  -f ${prestats_fit[${cxt}]}
+            else
+               subroutine     @5.3b
+            fi
+            subroutine        @5.4  First pass
+            #######################################################
+            # Use the preliminary mask to extract brain tissue.
+            #######################################################
+            exec_fsl \
+               fslmaths ${intermediate}.nii.gz \
+               -mas ${mask[${cxt}]} \
+               ${intermediate}_${cur}_1.nii.gz
+         fi
+         if ! is_image ${img}_${cur}_2 \
+         || rerun
             then
-            echo "Thresholding and dilating image"
-            echo "Brain-background threshold:"
+            subroutine        @5.5a Thresholding and dilating image
+            subroutine        @5.5b Brain-background threshold:
+            subroutine        @5.5c ${prestats_bbgthr[${cxt}]}
             #######################################################
             # Use the user-specified brain-background threshold
             # to determine what parts of the image to count as
@@ -1145,51 +785,24 @@ while [[ "${#rem}" -gt "0" ]]
             #  * Finally, use the new, dilated mask for the second
             #    pass of brain extraction.
             #######################################################
-            echo "${prestats_bbgthr[${cxt}]}"
-	         perc98=$(fslstats $img -p 98)
-	         newthr=$(echo $perc98 ${prestats_bbgthr[${cxt}]} \
-	            | awk '{printf $1*$2}')
-	         fslmaths ${img}_${cur}_1 \
-	            -thr $newthr \
-	            -Tmin \
-	            -bin \
-	            ${mask[${cxt}]} \
-	            -odt char
-	         fslmaths ${mask[${cxt}]} -dilF ${mask[${cxt}]}
-	         fslmaths $img -mas ${mask[${cxt}]} ${img}_${cur}_2
-	      fi
-	      ##########################################################
-         # Now that brain extraction is complete, the image is
-         # rescaled according to a grand mean.
-         #
-         # Specifically, the median intensity in the brain voxels
-         # is rescaled to a value of 10000.
-         #
-         # This might not be particularly useful if you are
-         # demeaning the data in a later step, but it is retained
-         # here, as it was a part of the FSL FEAT processing
-         # pipeline.
-	      ##########################################################
-         if [[ $(imtest ${img}_${cur}) != "1" ]] || \
-            [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
-            then
-	         #######################################################
-	         # Use the -k flag to ensure that only brain voxels are
-	         # taken into consideration when computing median
-	         # intensity.
-	         #######################################################
-	         perc50=$(fslstats ${img}_${cur}_2 \
-	            -k ${mask[${cxt}]} \
-	            -p 50)
-	         gmscale=$(echo $perc50 | awk '{printf 10000/$1}')
-	         gmscale=1
-	         fslmaths ${img}_${cur}_2 -mul $gmscale ${img}_${cur}
-	      fi
-	      ##########################################################
-	      # Update the image pointer.
-	      ##########################################################
-	      img=${img}_${cur}
-	      echo "Processing step complete: brain extraction"
+            perc_98=$(exec_fsl fslstats ${intermediate}.nii.gz -p 98)
+            new_thresh=$(arithmetic ${perc_98}\*${prestats_bbgthr[${cxt}]})
+            exec_fsl \
+               fslmaths ${intermediate}_${cur}_1.nii.gz \
+               -thr ${new_thresh} \
+               -Tmin \
+               -bin \
+               ${mask[${cxt}]} \
+               -odt char
+            subroutine        @5.6
+            exec_fsl fslmaths ${mask[${cxt}]} -dilF ${mask[${cxt}]}
+            exec_fsl \
+               fslmaths ${intermediate}.nii.gz \
+               -mas ${mask[${cxt}]} \
+               ${intermediate}_${cur}.nii.gz
+         fi
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       
@@ -1206,135 +819,101 @@ while [[ "${#rem}" -gt "0" ]]
          # polynomials as predictor variables, then retains the
          # residuals of the model as the processed timeseries.
          ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Demeaning and detrending BOLD timeseries"
-         echo "Polynomial order: ${prestats_dmdt[${cxt}]}"
-         ##########################################################
-         # Verify that this step has not already run to completion:
-         # check for the associated image.
-         ##########################################################
-         if [[ $(imtest ${img}_${cur}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         routine  @6    Demeaning and detrending BOLD timeseries
+         if ! is_image ${intermediate}_${cur} \
+         || rerun
             then
-	         #######################################################
+            #######################################################
             # DMT uses a utility R script called DMDT to compute
             # the linear model residuals using ANTsR and pracma.
-            # First, the inputs to DMDT must be obtained.
-            # The first of these is the path to the image in its
-            # currently processed state.
-	         #######################################################
-            imgpath=$(ls -d1 ${img}.*)
-	         #######################################################
-            # Second, a spatial mask of the brain is necessary
+            #
+            # A spatial mask of the brain is necessary
             # for ANTsR to read in the image.
             #
-            # If this mask was computed in a previous run or as
-            # part of BXT above, then that mask can be used in
-            # this step.
-	         #######################################################
-            if [[ $(imtest ${mask[${subjidx}]}) == "1" ]]
+            # If no mask has yet been computed for the subject,
+            # then a new mask can be computed quickly using
+            # AFNI's 3dAutomask tool.
+            #######################################################
+            if is_image ${mask[${subjidx}]}
                then
-               echo "Using previously determined mask"
-               maskpath=$(ls -d1 ${mask[${subjidx}]}.*)
-            elif [[ $(imtest ${mask[${cxt}]}) == "1" ]]
+               subroutine     @6.1a Using previously determined mask
+               mask_dmdt=${mask[${subjidx}]}
+            elif is_image ${mask[${cxt}]}
                then
-               echo "Using mask from this preprocessing run"
-               maskpath=$(ls -d1 ${mask[${cxt}]}.*)
-	         #######################################################
-	         # If no mask has yet been computed for the subject,
-	         # then a new mask can be computed quickly using
-	         # AFNI's 3dAutomask tool.
-	         #######################################################
+               subroutine     @6.1b Using mask from this preprocessing run
+               mask_dmdt=${mask[${cxt}]}
             else
-               echo "Unable to locate mask."
-               echo "Generating a mask using 3dAutomask"
-               3dAutomask -prefix ${img}_fmask${ext} \
+               subroutine     @6.2  Generating a mask using 3dAutomask
+               exec_afni \
+                  3dAutomask -prefix ${intermediate}_${cur}_mask.nii.gz \
                   -dilate 3 \
                   -q \
-                  ${img}${ext}
-               maskpath=${img}_fmask${ext}
+                  ${intermediate}.nii.gz
+               mask_dmdt=${intermediate}_${cur}_mask.nii.gz
             fi
-	         #######################################################
-	         # If the user has requested iterative censoring of
-	         # motion-corrupted volumes, then the demean/detrend
-	         # step should exclude the corrupted volumes from the
-	         # linear model. In this case, a temporal mask is
-	         # required for the demean/detrend step.
-	         #
-            # If motion correction was run for the first time
-            # during this module, then the censoring requested by
-            # the user should be defined in censor[cxt]. If it is
-            # not, then set it to the global subject value.
-	         #######################################################
-            if [[ -z "${censor[${cxt}]}" ]]
+            #######################################################
+            # If the user has requested iterative censoring of
+            # motion-corrupted volumes, then the demean/detrend
+            # step should exclude the corrupted volumes from the
+            # linear model. In this case, a temporal mask is
+            # required for the demean/detrend step.
+            #
+            # If iterative censoring has not been specified or
+            # if no temporal mask exists yet, then all time
+            # points must be used in the linear model.
+            #######################################################
+            subroutine        @6.3
+            if [[ -z ${censor[${cxt}]} ]]
                then
+               subroutine     @6.3.1
                censor[${cxt}]=${censor[${subjidx}]}
             fi
-	         #######################################################
-	         # The temporal mask must be stored either in the
-	         # module-specific censor[cxt] variable or in the
-	         # subject-specific censor[subjidx] variable.
-	         #######################################################
-            if [[ ! -z "${tmask[${cxt}]}" ]] \
-               && [[ "${censor[${cxt}]}" == "iter" ]]
+            if is_1D ${tmask[${cxt}]} \
+            && [[ ${censor[${cxt}]} == iter ]]
                then
-               tmaskpath=$(ls -d1 ${tmask[${cxt}]})
-            elif [[ ! -z "${tmask[${subjidx}]}" ]] \
-               && [[ "${censor[${cxt}]}" == "iter" ]]
+               subroutine     @6.3.2
+               tmask_dmdt=${tmask[${cxt}]}
+            elif is_1D ${tmask[${subjidx}]} \
+            && [[ ${censor[${cxt}]} == iter ]]
                then
-               tmaskpath=$(ls -d1 ${tmask[${subjidx}]})
+               subroutine     @6.3.4
+               tmask_dmdt=${tmask[${subjidx}]}
             else
-	            ####################################################
-               # If iterative censoring has not been specified or
-               # if no temporal mask exists yet, then all time
-               # points must be used in the linear model.
-	            ####################################################
-               tmaskpath=ones
+               subroutine     @6.3.5
+               tmask_dmdt=ones
             fi
-	         #######################################################
-	         # AFNI's afni_proc.py pipeline uses a formula to
-	         # automatically determine an appropriate order of
-	         # polynomial detrend to apply to the data.
-	         #
-	         #        floor(1 + TR*nVOLS / 150)
-	         #
-	         # In summary, the detrend order is based upon the
-	         # overall duration of the scan. If the user has
-	         # requested automatic determination of detrend order,
-	         # then it is computed here. Note that there are a
-	         # number of assumptions in this computation, and it
-	         # may not always be appropriate.
-	         #######################################################
-	         if [[ "${prestats_dmdt[${cxt}]}" == "auto" ]]
-	            then
-	            nvol=$(fslnvols $img)
-               trep=$(fslinfo $img \
-                  |grep pixdim4 \
-                  |awk '{print $2}' )
-               prestats_dmdt[${cxt}]=$(echo $trep $nvol \
-                  |awk '{print 1 + $1 * $2 / 150}' \
-                  |cut -d"." -f1)
-               echo "Automatically determined a"
-               echo "   polynomial order of ${prestats_dmdt[${cxt}]}"
-	         fi
-	         #######################################################
-	         # Now, pass the inputs computed above to the detrend
-	         # function itself.
-	         #######################################################
-            echo "Applying polynomial detrend"
-            ${XCPEDIR}/utils/dmdt.R \
-               -d "${prestats_dmdt[${cxt}]}" \
-               -i "${imgpath}" \
-               -m "${maskpath}" \
-               -t "${tmaskpath}" \
-               -o "${img}_${cur}${ext}"
+            #######################################################
+            # AFNI's afni_proc.py pipeline uses a formula to
+            # automatically determine an appropriate order of
+            # polynomial detrend to apply to the data.
+            #
+            #        floor(1 + TR*nVOLS / 150)
+            #
+            # In summary, the detrend order is based upon the
+            # overall duration of the scan.
+            #######################################################
+            if [[ ${prestats_dmdt[${cxt}]} == auto ]]
+               then
+               subroutine     @6.4  Estimating polynomial order
+               nvol=$(exec_fsl fslnvols ${intermediate})
+               trep=$(exec_fsl fslval   ${intermediate} pixdim4)
+               dmdt_order=$(arithmetic 1 + ${trep}\*${nvol})
+               dmdt_order=$(return_field ${dmdt_order} 1 '.')
+            else
+               dmdt_order=${prestats_dmdt[${cxt}]}
+            fi
+            subroutine        @6.5  Applying polynomial detrend
+            subroutine        @6.6  [Order: ${dmdt_order}]
+            exec_xcp \
+               dmdt.R \
+               -d ${dmdt_order} \
+               -i ${intermediate}.nii.gz \
+               -m ${mask_dmdt} \
+               -t ${tmask_dmdt} \
+               -o ${intermediate}_${cur}.nii.gz
          fi
-	      ##########################################################
-	      # Update image pointer
-	      ##########################################################
-         img=${img}_${cur}
-	      echo "Processing step complete: demeaning/detrending"
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       
@@ -1342,57 +921,43 @@ while [[ "${#rem}" -gt "0" ]]
       
       
       DSP)
-	      ##########################################################
-	      # DSP uses AFNI's 3dDespike to remove any intensity
-	      # outliers ("spikes") from the BOLD timeseries and to
-	      # interpolate over outlier epochs.
-	      ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Despiking BOLD timeseries"
-	      ##########################################################
-	      # First, verify that this step has not already run to
-	      # completion by searching for expected output.
-	      ##########################################################
-         if [[ $(imtest ${img}_${cur}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         ##########################################################
+         # DSP uses AFNI's 3dDespike to remove any intensity
+         # outliers ("spikes") from the BOLD timeseries and to
+         # interpolate over outlier epochs.
+         ##########################################################
+         routine  @7    Despiking BOLD timeseries
+         if ! is_image ${intermediate}_${cur}.nii.gz \
+         || rerun
             then
-            rm -rf ${img}_${cur}${ext} #AFNI will not overwrite
-	         #######################################################
+            subroutine        @7.1
+            rm -rf ${intermediate}_${cur}.nii.gz
+            #######################################################
             # Determine whether to run new or old 3dDespike.
             # This is based on the number of volumes.
             # If the timeseries has more than 200 volumes,
             # the old method will be incredibly slow, so the
             # new method should be run.
-	         #######################################################
-            nvol=$(fslnvols $img)
-	         #######################################################
-            # need extension to work with AFNI; will otherwise
-            # default to brickheads
-	         #######################################################
-            if [[ "$nvol" -ge "200" ]]
+            #######################################################
+            nvol=$(exec_fsl fslnvols ${img})
+            if (( ${nvol} >= 200 ))
                then
-               3dDespike \
-                  -prefix ${img}_${cur}${ext} \
-                  -nomask \
-                  -quiet \
-                  -NEW \
-                  ${img}${ext} \
-                  > /dev/null
+               subroutine     @7.2
+               ds_arguments='NEW'
             else
-               3dDespike \
-                  -prefix ${img}_${cur}${ext} \
-                  -nomask \
-                  -quiet \
-                  ${img}${ext} \
-                  > /dev/null
+               subroutine     @7.3
             fi
+            exec_afni \
+               3dDespike \
+               -prefix ${intermediate}_${cur}.nii.gz \
+               -nomask \
+               -quiet \
+               ${ds_arguments} \
+               ${intermediate}.nii.gz \
+               > /dev/null
          fi
-	      ##########################################################
-	      # Update image pointer
-	      ##########################################################
-         img=${img}_${cur}
-	      echo "Processing step complete: despiking timeseries"
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       
@@ -1400,363 +965,338 @@ while [[ "${#rem}" -gt "0" ]]
       
       
       SPT)
-	      ##########################################################
-	      # SPT applies a smoothing kernel to the image. It calls
-	      # the utility script sfilter, which is also used by a
-	      # number of other modules.
-	      ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Spatially filtering image"
-         echo "Filter: ${prestats_sptf[${cxt}]}"
-         echo "Smoothing kernel: ${prestats_smo[${cxt}]} mm"
-	      ##########################################################
-	      # If no spatial filtering has been specified by the user,
-	      # then bypass this step.
-	      ##########################################################
-	      if [[ ${prestats_sptf[${cxt}]} == none ]]
-	         then
-	         ln -s ${img}${ext} ${img}_${cur}${ext}
-	      ##########################################################
-	      # Ensure that this step has not already run to completion
-	      # by checking for the existence of a smoothed image.
-	      ##########################################################
-         elif [[ $(imtest ${img}_${cur}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         ##########################################################
+         # SPT applies a smoothing kernel to the image. It calls
+         # the utility script sfilter, which is also used by a
+         # number of other modules.
+         ##########################################################
+         routine  @8    Spatially filtering image
+         ##########################################################
+         # If no spatial filtering has been specified by the user,
+         # then bypass this step.
+         ##########################################################
+         if [[ ${prestats_sptf[${cxt}]} == none ]]
             then
-	         #######################################################
-	         # Obtain the mask over which smoothing is to be applied
-	         # Begin by searching for the subject mask; if this does
-	         # not exist, then search for a mask created by this
-	         # module.
-	         #######################################################
-            if [[ $(imtest ${mask[${subjidx}]}) == "1" ]]
+            subroutine        @8.1
+            exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+         ##########################################################
+         # Ensure that this step has not already run to completion
+         # by checking for the existence of a smoothed image.
+         ##########################################################
+         elif ! is_image ${img}_${cur}.nii.gz \
+         || rerun
+            then
+            #######################################################
+            # Obtain the mask over which smoothing is to be applied
+            # Begin by searching for the subject mask; if this does
+            # not exist, then search for a mask created by this
+            # module.
+            #
+            # If prestats fails to find a mask, then generate one
+            # using AFNI's 3dAutomask utility. This may not work
+            # particularly well if the BOLD timeseries has already
+            # been demeaned or detrended.
+            #######################################################
+            if is_image ${mask[${subjidx}]}
                then
-               mask=${mask[${subjidx}]}
-            elif [[ $(imtest ${mask[${cxt}]}) == "1" ]]
+               subroutine     @8.2
+               mask_spt=${mask[${subjidx}]}
+            elif is_image ${mask[${cxt}]}
                then
-               mask=${mask[${cxt}]}
-	         #######################################################
-	         # If prestats fails to find a mask, then generate one
-	         # using AFNI's 3dAutomask utility. This may not work
-	         # particularly well if the BOLD timeseries has already
-	         # been demeaned or detrended.
-	         #######################################################
+               subroutine     @8.3
+               mask_spt=${mask[${cxt}]}
             else
-               echo "Unable to locate mask."
-               echo "Generating a mask using 3dAutomask"
-               imgpath=$(ls -d1 ${img}.*)
-               ext=$(echo $imgpath|sed "s@$img@@")
-               3dAutomask -prefix ${img}_fmask${ext} \
+               subroutine     @8.4  Generating a mask using 3dAutomask
+               exec_afni \
+                  3dAutomask -prefix ${intermediate}_${cur}_mask.nii.gz \
                   -dilate 3 \
                   -q \
-                  ${img}${ext}
-               susanmask=${img}_fmask${ext}
+                  ${intermediate}.nii.gz
+               mask_spt=${intermediate}_${cur}_mask.nii.gz
             fi
-	         #######################################################
-	         # Prime the inputs to sfilter for SUSAN filtering
-	         #######################################################
+            #######################################################
+            # Prime the inputs to sfilter for SUSAN filtering
+            #######################################################
             if [[ "${prestats_sptf[${cxt}]}" == susan ]]
                then
-	            ####################################################
-	            # Ensure that an example functional image exists.
-	            #  * If it does not, then you are probably doing
-	            #    something stupid.
-	            #  * In this case, force a switch to uniform
-	            #    smoothing to mitigate the catastrophe.
-	            ####################################################
-	            if [[ $(imtest ${referenceVolumeBrain[${subjidx}]}) == 1 ]]
+               if is_image ${referenceVolumeBrain[${subjidx}]}
                   then
+                  subroutine  @8.5.1
                   usan="-u ${referenceVolumeBrain[${subjidx}]}"
-	            elif [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == 1 ]]
+               elif is_image ${referenceVolumeBrain[${cxt}]}
                   then
+                  subroutine  @8.5.2
                   usan="-u ${referenceVolumeBrain[${cxt}]}"
-	            elif [[ $(imtest ${referenceVolume[${subjidx}]}) == 1 ]]
+               elif is_image ${referenceVolume[${subjidx}]}
                   then
+                  subroutine  @8.5.3
                   usan="-u ${referenceVolume[${subjidx}]}"
-               elif [[ $(imtest ${referenceVolume[${cxt}]}) == 1 ]]
+               elif is_image ${referenceVolume[${cxt}]}
                   then
+                  subroutine  @8.5.4
                   usan="-u ${referenceVolume[${cxt}]}"
                else
+                  subroutine  @8.6a SUSAN requires a reference volume, and none
+                  subroutine  @8.6b was located. Switching to UNIFORM smoothing.
                   ${prestats_sptf[${cxt}]}=uniform
-                  echo "prestats_sptf[${cxt}]=${prestats_sptf[${cxt}]}" \
-                     >> ${design_local}
+                  write_output   prestats_sptf
                fi
             fi
-	         #######################################################
-	         # If the user has requested command tracing, propagate
-	         # that request into the sfilter routine.
-	         #######################################################
-	         [[ ${trace} == 1 ]] && trace_prop="-t"
-	         #######################################################
-	         # Engage the sfilter routine to filter the image.
-	         #  * This is essentially a wrapper around the three
-	         #    implemented smoothing routines: gaussian, susan,
-	         #    and uniform.
-	         #######################################################
-	         ${XCPEDIR}/utils/sfilter \
-	            -i ${img} \
-	            -o ${img}_${cur} \
-	            -s ${prestats_sptf[${cxt}]} \
-	            -k ${prestats_smo[${cxt}]} \
-	            -m ${mask} \
-	            ${usan} \
-	            ${trace_prop}
-	      fi
-	      ##########################################################
-	      # Update image pointer
-	      ##########################################################
-         img=${img}_${cur}
-	      echo "Processing step complete: spatial filtering"
-	      ;;
+            #######################################################
+            # Engage the sfilter routine to filter the image.
+            #  * This is essentially a wrapper around the three
+            #    implemented smoothing routines: gaussian, susan,
+            #    and uniform.
+            #######################################################
+            subroutine        @8.7a Filter: ${prestats_sptf[${cxt}]}
+            subroutine        @8.7b Smoothing kernel: ${prestats_smo[${cxt}]} mm
+            exec_xcp \
+               sfilter \
+               -i ${intermediate}.nii.gz \
+               -o ${intermediate}_${cur}.nii.gz \
+               -s ${prestats_sptf[${cxt}]} \
+               -k ${prestats_smo[${cxt}]} \
+               -m ${mask_spt} \
+               ${usan} \
+               ${trace_prop}
+         fi
+         intermediate=${intermediate}_${cur}
+         routine_end
+         ;;
       
       
       
       
       
       TMP)
-	      ##########################################################
-	      # TMP applies a temporal filter to:
-	      #  * the 4D BOLD timeseries
-	      #  * any derivative images that have the same number of
-	      #    volumes as the 4D timeseries
-	      #  * any 1D timeseries that might function as potential
-	      #    regressors: for instance, realignment parameters
-	      # TMP makes use of the utility function tfilter, which
-	      # itself calls fslmaths, 3dBandpass, or the R script
-	      # genfilter to enable a wide array of filters.
-	      ##########################################################
-         echo ""; echo ""; echo ""
-         echo "Current processing step:"
-         echo "Temporally filtering image"
-         echo "${prestats_tmpf[${cxt}]} filter"
-         echo "High pass frequency: ${prestats_hipass[${cxt}]}"
-         echo "Low pass frequency: ${prestats_lopass[${cxt}]}"
-         
-	      ##########################################################
-	      # If no temporal filtering has been specified by the user,
-	      # then bypass this step.
-	      ##########################################################
-	      if [[ ${prestats_tmpf[${cxt}]} == none ]]
-	         then
-	         ln -s ${img}${ext} ${img}_${cur}${ext}
-	      ##########################################################
-	      # Ensure that this step has not already run to completion
-	      # by checking for the existence of a filtered image.
-	      ##########################################################
-         elif [[ $(imtest ${img}_${cur}) != "1" ]] \
-            || [[ "${prestats_rerun[${cxt}]}" == "Y" ]]
+         ##########################################################
+         # TMP applies a temporal filter to:
+         #  * the 4D BOLD timeseries
+         #  * any derivative images that have the same number of
+         #    volumes as the 4D timeseries
+         #  * any 1D timeseries that might function as potential
+         #    regressors: for instance, realignment parameters
+         # TMP makes use of the utility function tfilter, which
+         # itself calls fslmaths, 3dBandpass, or the R script
+         # genfilter to enable a wide array of filters.
+         ##########################################################
+         routine  @9    Temporally filtering image
+         ##########################################################
+         # If no temporal filtering has been specified by the user,
+         # then bypass this step.
+         ##########################################################
+         if [[ ${prestats_tmpf[${cxt}]} == none ]]
             then
-	         #######################################################
-	         # OBTAIN MASKS: SPATIAL
-	         # Obtain the spatial mask over which filtering is to be
-	         # applied. Begin by searching for the subject mask; if
-	         # this does not exist, then search for a mask created
-	         # by this module.
-	         #######################################################
-            if [[ $(imtest ${mask[${subjidx}]}) == "1" ]]
+            subroutine        @9.1
+            ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+         elif ! is_image ${intermediate}_${cur} \
+         || rerun
+            then
+            #######################################################
+            # OBTAIN MASKS: SPATIAL
+            #######################################################
+            if is_image ${mask[${subjidx}]}
                then
+               subroutine     @9.2.1
                mask="-m ${mask[${subjidx}]}"
-            elif [[ $(imtest ${mask[${cxt}]}) == "1" ]]
+            elif is_image ${mask[${cxt}]}
                then
+               subroutine     @9.2.2
                mask="-m ${mask[${cxt}]}"
-	         #######################################################
-	         # If prestats fails to find a mask, then prepare to
-	         # call tfilter without a mask argument.
-	         #######################################################
             else
-               mask=""
+               subroutine     @9.3
+               mask=''
             fi
-	         #######################################################
-	         # OBTAIN MASKS: TEMPORAL
-	         # Obtain the path to the temporal mask over which
-	         # filtering is to be executed. Begin by searching for
-	         # the subject mask; if this does not exist, then
-	         # search for a mask created by this module.
-	         #######################################################
-	         censor_type=none
-            if [[ -e "${tmask[${subjidx}]}" ]]
+            #######################################################
+            # OBTAIN MASKS: TEMPORAL
+            #######################################################
+            censor_type=none
+            if is_1D ${tmask[${subjidx}]}
                then
-               tmaskpath=$(ls -d1 ${tmask[${subjidx}]})
+               subroutine     @9.4.1
+               tmask_tmp=${tmask[${subjidx}]}
                censor_type=${censor[${subjidx}]}
-	         elif [[ -e "${tmask[${cxt}]}" ]]
+            elif is_1D ${tmask[${cxt}]}
                then
-               tmaskpath=$(ls -d1 ${tmask[${cxt}]})
+               subroutine     @9.4.2
+               tmask_tmp=${tmask[${cxt}]}
                censor_type=${censor[${cxt}]}
             else
-               tmaskpath=ones
+               subroutine     @9.5
+               tmask_tmp=ones
             fi
-	         #######################################################
-	         # Next, determine whether the user has enabled
-	         # censoring of high-motion volumes.
-	         #  * If iterative censoring is enabled, the temporal
-	         #    mask should be passed to tfilter with the -n
-	         #    flag. This will enable interpolation over volumes
-	         #    corrupted by motion.
-	         #  * If final censoring is enabled, the temporal mask
-	         #    should be passed to tfilter with the -k flag.
-	         #    This will ensure that volumes discarded from
-	         #    the BOLD timeseries are also discarded from the
-	         #    temporal mask, but will not interpolate over
-	         #    censored volumes.
-	         #  * If censoring is enabled, but no temporal mask
-	         #    exists yet, no additional argument is passed
-	         #    to tfilter. This is functionally identical to
-	         #    final censoring.
-	         #  * If censoring is disabled, no additional argument
-	         #    is passed to tfilter.
-	         #######################################################
-	         if [[ "${censor_type}" == "iter" ]] \
-	            && [[ ${tmaskpath} != ones ]]
-	            then
-	            tmask="-n ${tmaskpath}"
-	         elif [[ "${censor_type}" == "final" ]] \
-	            && [[ ${tmaskpath} != ones ]]
-	            then
-	            tmask="-k ${tmaskpath}"
-	         else
-	            tmask=""
-	         fi
-	         #######################################################
-	         # DERIVATIVE IMAGES AND TIMESERIES
-	         # Prime the index of derivative images, as well as
-	         # any 1D timeseries (e.g. realignment parameters)
-	         # that should be filtered so that they can be used in
-	         # linear models without reintroducing the frequencies
-	         # removed from the BOLD timeseries.
-	         #######################################################
-	         derivs=""
-	         ts1d=""
-	         [[ -e ${auxImgs[${subjidx}]} ]] \
-	            && derivs="-x ${auxImgs[${subjidx}]}"
-	         #######################################################
-	         # Realignment parameters...
-	         #######################################################
-	         if [[ -e ${rps[${subjidx}]} ]]
-	            then
-	            ts1d="${ts1d} ${rps[${subjidx}]}"
-	         elif  [[ -e ${rps[${cxt}]} ]]
-	            then
-	            ts1d="${ts1d} ${rps[${cxt}]}"
-	         fi
-	         #######################################################
-	         # Relative RMS motion...
-	         #######################################################
-	         if [[ -e ${relrms[${subjidx}]} ]]
-	            then
-	            ts1d="${ts1d} ${relrms[${subjidx}]}"
-	         elif  [[ -e ${relrms[${cxt}]} ]]
-	            then
-	            ts1d="${ts1d} ${relrms[${cxt}]}"
-	         fi
-	         #######################################################
-	         # Absolute RMS motion...
-	         #######################################################
-	         if [[ -e ${absrms[${subjidx}]} ]]
-	            then
-	            ts1d="${ts1d} ${absrms[${subjidx}]}"
-	         elif  [[ -e ${absrms[${cxt}]} ]]
-	            then
-	            ts1d="${ts1d} ${absrms[${cxt}]}"
-	         fi
-	         #######################################################
-	         # Replace any whitespace characters in the 1D
-	         # timeseries list with commas, and prepend the -l flag
-	         # for input as an argument to tfilter
-	         #######################################################
-	         ts1d=$(echo ${ts1d}|sed s@' '@','@g)
-	         [[ ! -z ${ts1d} ]] && ts1d="-1 ${ts1d}"
-	         #######################################################
-	         # FILTER-SPECIFIC ARGUMENTS
-	         # Next, set arguments specific to each filter class.
-	         #######################################################
-	         tforder=""
-	         tfdirec=""
-	         tfprip=""
-	         tfsrip=""
-	         case ${prestats_tmpf[${cxt}]} in
-	         butterworth)
-	            tforder="-r ${prestats_tmpf_order[${cxt}]}"
-	            tfdirec="-d ${prestats_tmpf_pass[${cxt}]}"
-	            ;;
-	         chebyshev1)
-	            tforder="-r ${prestats_tmpf_order[${cxt}]}"
-	            tfdirec="-d ${prestats_tmpf_pass[${cxt}]}"
-	            tfprip="-p ${prestats_tmpf_ripple[${cxt}]}"
-	            ;;
-	         chebyshev2)
-	            tforder="-r ${prestats_tmpf_order[${cxt}]}"
-	            tfdirec="-d ${prestats_tmpf_pass[${cxt}]}"
-	            tfsrip="-s ${prestats_tmpf_ripple2[${cxt}]}"
-	            ;;
-	         elliptic)
-	            tforder="-r ${prestats_tmpf_order[${cxt}]}"
-	            tfdirec="-d ${prestats_tmpf_pass[${cxt}]}"
-	            tfprip="-p ${prestats_tmpf_ripple[${cxt}]}"
-	            tfsrip="-s ${prestats_tmpf_ripple2[${cxt}]}"
-	            ;;
-	         esac
-	         #######################################################
-	         # If the user has requested discarding of initial
-	         # and/or final volumes from the filtered timeseries,
-	         # the request should be passed to tfilter.
-	         #######################################################
-	         tfdvol=""
-	         [[ ! -z ${prestats_tmpf_dvols[${cxt}]} ]] \
-	            && tfdvol="-v ${prestats_tmpf_dvols[${cxt}]}"
-	         #######################################################
-	         # If the user has requested command tracing, propagate
-	         # that request into the tfilter routine.
-	         #######################################################
-	         [[ ${trace} == 1 ]] && trace_prop="-t"
-	         #######################################################
-	         # Engage the tfilter routine to filter the image.
-	         #  * This is essentially a wrapper around the three
-	         #    implemented filtering routines: fslmaths,
-	         #    3dBandpass, and genfilter
-	         #######################################################
-	         ${XCPEDIR}/utils/tfilter \
-	            -i ${img} \
-	            -o ${img}_${cur} \
-	            -f ${prestats_tmpf[${cxt}]} \
-	            -h ${prestats_hipass[${cxt}]} \
-	            -l ${prestats_lopass[${cxt}]} \
-	            ${mask} \
-	            ${tmask} \
-	            ${tforder} \
-	            ${tfdirec} \
-	            ${tfprip} \
-	            ${tfsrip} \
-	            ${tfdvol} \
-	            ${derivs} \
-	            ${ts1d} \
-	            ${trace_prop}
-	         #######################################################
-	         # Move outputs to target
-	         #######################################################
-	         [[ -e ${img}_${cur}_realignment.1D ]] \
-	            && mv -f ${img}_${cur}_${prefix}_realignment.1D \
-	            ${rps[${cxt}]}
-	         [[ -e ${img}_${cur}_abs_rms.1D ]] \
-	            && mv -f ${img}_${cur}_${prefix}_abs_rms.1D \
-	            ${absrms[${cxt}]}
-	         [[ -e ${img}_${cur}_rel_rms.1D ]] \
-	            && mv -f ${img}_${cur}_${prefix}_rel_rms.1D \
-	            ${relrms[${cxt}]}
-	         [[ -e ${img}_${cur}_tmask.1D ]] \
-	            && mv -f ${img}_${cur}_tmask.1D ${tmask[${cxt}]}
-	         [[ -e ${img}_${cur}_derivs ]] \
-	            && mv -f ${img}_${cur}_derivs ${auxImgs[${subjidx}]}
+            #######################################################
+            # Next, determine whether the user has enabled
+            # censoring of high-motion volumes in order to pass
+            # the most appropriate temporal mask to the child
+            # script.
+            #######################################################
+            if [[ ${censor_type} == iter ]] \
+            && [[ ${tmask_tmp} != ones ]]
+               then
+               subroutine     @9.6.1
+               tmask_tmp="-n ${tmask_tmp}"
+            elif [[ ${censor_type} == final ]] \
+            && [[ ${tmask_tmp} != ones ]]
+               then
+               subroutine     @9.6.2
+               tmask_tmp="-k ${tmask_tmp}"
+            else
+               subroutine     @9.7
+               unset tmask_tmp
+            fi
+            #######################################################
+            # DERIVATIVE IMAGES AND TIMESERIES
+            # Prime the index of derivative images, as well as
+            # any 1D timeseries (e.g. realignment parameters)
+            # that should be filtered so that they can be used in
+            # linear models without reintroducing the frequencies
+            # removed from the BOLD timeseries.
+            #######################################################
+            derivs="-x ${aux_imgs[${subjidx}]}"
+            unset ts1d
+            #######################################################
+            # Realignment parameters...
+            #######################################################
+            if is_1D ${rps[${subjidx}]}
+               then
+               subroutine     @9.8.1
+               ts1d="${ts1d} ${rps[${subjidx}]}"
+            elif is_1D ${rps[${cxt}]}
+               then
+               subroutine     @9.8.2
+               ts1d="${ts1d} ${rps[${cxt}]}"
+            fi
+            #######################################################
+            # Relative RMS motion...
+            #######################################################
+            if is_1D ${rel_rms[${subjidx}]}
+               then
+               subroutine     @9.9.1
+               ts1d="${ts1d} ${rel_rms[${subjidx}]}"
+            elif is_1D ${rel_rms[${cxt}]}
+               then
+               subroutine     @9.9.2
+               ts1d="${ts1d} ${rel_rms[${cxt}]}"
+            fi
+            #######################################################
+            # Absolute RMS motion...
+            #######################################################
+            if is_1D ${abs_rms[${subjidx}]}
+               then
+               subroutine     @9.10.1
+               ts1d="${ts1d} ${abs_rms[${subjidx}]}"
+            elif is_1D ${abs_rms[${cxt}]}
+               then
+               subroutine     @9.10.2
+               ts1d="${ts1d} ${abs_rms[${cxt}]}"
+            fi
+            #######################################################
+            # Replace any whitespace characters in the 1D
+            # timeseries list with commas, and prepend the -l flag
+            # for input as an argument to tfilter
+            #######################################################
+            if [[ ! -z ${ts1d} ]]
+               then
+               subroutine     @9.11
+               ts1d="-1 ${ts1d// /,}"
+            fi
+            #######################################################
+            # FILTER-SPECIFIC ARGUMENTS
+            # Next, set arguments specific to each filter class.
+            #######################################################
+            unset tf_order tf_direc tf_p_rip tf_s_rip
+            case ${prestats_tmpf[${cxt}]} in
+            butterworth)
+               subroutine     @9.12
+               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
+               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
+               ;;
+            chebyshev1)
+               subroutine     @9.13
+               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
+               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
+               tf_p_rip="-p ${prestats_tmpf_ripple[${cxt}]}"
+               ;;
+            chebyshev2)
+               subroutine     @9.14
+               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
+               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
+               tf_s_rip="-s ${prestats_tmpf_ripple2[${cxt}]}"
+               ;;
+            elliptic)
+               subroutine     @9.15
+               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
+               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
+               tf_p_rip="-p ${prestats_tmpf_ripple[${cxt}]}"
+               tf_s_rip="-s ${prestats_tmpf_ripple2[${cxt}]}"
+               ;;
+            esac
+            #######################################################
+            # If the user has requested discarding of initial
+            # and/or final volumes from the filtered timeseries,
+            # the request should be passed to tfilter.
+            #######################################################
+            unset tf_dvol
+            if [[ -n ${prestats_tmpf_dvols[${cxt}]} ]]
+               then
+               subroutine     @9.16
+               tf_dvol="-v ${prestats_tmpf_dvols[${cxt}]}"
+            fi
+            #######################################################
+            # Engage the tfilter routine to filter the image.
+            #  * This is essentially a wrapper around the three
+            #    implemented filtering routines: fslmaths,
+            #    3dBandpass, and genfilter
+            #######################################################
+            subroutine        @9.17a   ${prestats_tmpf[${cxt}]} filter
+            subroutine        @9.17b   High pass frequency: ${prestats_hipass[${cxt}]}
+            subroutine        @9.17c   Low pass frequency: ${prestats_lopass[${cxt}]}
+            exec_xcp \
+               tfilter \
+               -i ${intermediate}.nii.gz \
+               -o ${intermediate}_${cur}.nii.gz \
+               -f ${prestats_tmpf[${cxt}]} \
+               -h ${prestats_hipass[${cxt}]} \
+               -l ${prestats_lopass[${cxt}]} \
+               ${mask} \
+               ${tmask} \
+               ${tf_order} \
+               ${tf_direc} \
+               ${tf_p_rip} \
+               ${tf_s_rip} \
+               ${tf_dvol} \
+               ${derivs} \
+               ${ts1d} \
+               ${trace_prop}
+            #######################################################
+            # Move outputs to target
+            #######################################################
+            is_1D ${intermediate}_${cur}_realignment.1D \
+            && mv -f ${intermediate}_${cur}_${prefix}_realignment.1D \
+               ${rps[${cxt}]}
+            is_1D ${intermediate}_${cur}_abs_rms.1D \
+            && mv -f ${intermediate}_${cur}_${prefix}_abs_rms.1D \
+               ${absrms[${cxt}]}
+            is_1D ${intermediate}_${cur}_rel_rms.1D \
+            && mv -f ${intermediate}_${cur}_${prefix}_rel_rms.1D \
+               ${relrms[${cxt}]}
+            is_1D ${intermediate}_${cur}_tmask.1D \
+            && mv -f ${intermediate}_${cur}_tmask.1D \
+               ${tmask[${cxt}]}
+            [[ -e ${intermediate}_${cur}_derivs ]] \
+            && mv -f ${intermediate}_${cur}_derivs \
+               ${aux_imgs[${subjidx}]}
          fi
-	      ##########################################################
-	      # Update image pointer
-	      ##########################################################
-         img=${img}_${cur}
-	      echo "Processing step complete: temporal filtering"
+         ##########################################################
+         # Update image pointer
+         ##########################################################
+         intermediate=${intermediate}_${cur}
+         routine_end
          ;;
       
       *)
-         echo "Invalid option detected: ${cur}"
+         subroutine           @E.1     Invalid option detected: ${cur}
          ;;
          
    esac
@@ -1766,142 +1306,10 @@ done
 
 
 
-################################################################### 
-# Write any remaining output paths to local design file so that
-# they may be used further along the pipeline.
-################################################################### 
-echo ""; echo ""; echo ""
-echo "Writing outputs..."
-###################################################################
-# OUTPUT: meanIntensity
-# Test whether the mean of functional volumes exists as an
-# image. If it does, add it to the index of derivatives and to
-# the localised design file.
-###################################################################
-if [[ $(imtest ${meanIntensity[${cxt}]}) == "1" ]]
-   then
-   echo "#meanIntensity#${meanIntensity[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-   echo "meanIntensity[${subjidx}]=${meanIntensity[${cxt}]}" \
-      >> $design_local
-fi
-###################################################################
-# OUTPUT: referenceVolume
-# Test whether an example functional volume exists as an
-# image. If it does, add it to the index of derivatives and to
-# the localised design file.
-###################################################################
-if [[ $(imtest ${referenceVolume[${cxt}]}) == "1" ]]
-   then
-   echo "referenceVolume[${subjidx}]=${referenceVolume[${cxt}]}" \
-      >> $design_local
-   echo "#referenceVolume#${referenceVolume[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: brain-extracted referenceVolume and meanIntensity
-# Test whether brain-extracted mean or example functional volume
-# exist. If either does, add it to the index of derivatives and
-# to the localised design file.
-###################################################################
-if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == "1" ]]
-   then
-   echo "referenceVolumeBrain[${subjidx}]=${referenceVolumeBrain[${cxt}]}" \
-      >> $design_local
-   echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-if [[ $(imtest ${meanIntensityBrain[${cxt}]}) == "1" ]]
-   then
-   echo "meanIntensityBrain[${subjidx}]=${meanIntensityBrain[${cxt}]}" \
-      >> $design_local
-   echo "#meanIntensityBrain#${meanIntensityBrain[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: mask
-# Test whether a binary mask denoting brain voxels exists as an
-# image. If it does, add it to the index of derivatives and to
-# the localised design file.
-###################################################################
-if [[ $(imtest ${mask[${cxt}]}) == "1" ]]
-   then
-   echo "mask[${subjidx}]=${mask[${cxt}]}" >> $design_local
-   echo "#mask#${mask[${cxt}]}" >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: mcdir
-# Test whether the motion-correction directory exists. If it
-# does, add it to the localised design file. Then, search for
-# other motion-related variables.
-###################################################################
-if [[ -d "${mcdir[${cxt}]}" ]]
-   then
-   echo "mcdir[${subjidx}]=${mcdir[${cxt}]}" >> $design_local
-   ################################################################
-   # OUTPUT: rps, relrms
-   # Realignment parameters may exist either in a filtered or
-   # in an unfiltered state. Under any circumstances, they
-   # should exist at the output specified above.
-   ################################################################
-   if [[ -e "${rps[${cxt}]}" ]]
-      then
-      echo "rps[${subjidx}]=${rps[${cxt}]}" >> $design_local
-      echo "relrms[${subjidx}]=${relrms[${cxt}]}" >> \
-         $design_local
-   fi
-   ################################################################
-   # OUTPUT: fd, tmask, censor
-   # Volumes to be censored should only be determined once in
-   # the course of an analysis. If, for some unknown reason,
-   # you run motion correction multiple times, only the first
-   # time will produce censorship variables.
-   ################################################################
-   if [[ -z "${censor[${subjidx}]}" ]]
-      then
-      #############################################################
-      # Even if no censorship is being performed, framewise
-      # displacement is computed and written to the design
-      # file. It may be used for QA purposes, etc.
-      #############################################################
-      echo "fd[${subjidx}]=${fd[${cxt}]}" >> $design_local
-      echo "motionvols[${subjidx}]=${qavol[${cxt}]}" >> $design_local
-      #############################################################
-      # If the user has requested censorship of volumes on
-      # the basis of subject motion, a temporal mask is
-      # written to the design file. In the REGRESS module,
-      # this mask will determine what volumes to take into
-      # account when estimating linear model parameters.
-      # Furthermore, volumes with 0 values are discarded from
-      # the timeseries.
-      #############################################################
-      if [[ "${prestats_censor[${cxt}]}" != "none" ]]
-         then
-         echo "tmask[${subjidx}]=${tmask[${cxt}]}" >> \
-            $design_local
-         echo "censor[${subjidx}]=${censor[${cxt}]}" >> \
-            $design_local
-      #############################################################
-      # If the user has not requested censorship, then only
-      # the censorship status is written to the design file.
-      # This prevents future runs of prestats from
-      # overwriting framewise displacement and censorship-
-      # related variables.
-      #############################################################
-      else
-         echo "censor[${subjidx}]=none" >> $design_local
-      fi
-	fi
-fi
-
-
-
-
-
 ###################################################################
 # CLEANUP
 #  * Test for the expected output. This should be the initial
-#    image name with any subroutine suffixes appended.
+#    image name with any routine suffixes appended.
 #  * If the expected output is present, move it to the target path.
 #  * Remove any temporary files if cleanup is enabled.
 #  * Update the audit file to reflect successful completion of the
@@ -1909,59 +1317,17 @@ fi
 #  * If the expected output is absent, notify the user.
 ###################################################################
 img=$(readlink -f ${img}${ext})
-if [[ "${prestats_cleanup[${cxt}]}" == "Y" ]] \
-   && [[ $(imtest ${outdir}/${prefix}~TEMP~${buffer}) == "1" ]]
+if is_image ${outdir}/${prefix}~TEMP~${buffer}.nii.gz
    then
-   echo ""; echo ""; echo ""
-   echo "Cleaning up..."
-   rm -f ${out}/${prefix}${ext}
-   immv ${img} ${final[${cxt}]}
-   ln -s ${final[${cxt}]}${ext} ${out}/${prefix}${ext}
-   rm -rf ${outdir}/*~TEMP~*
-   ################################################################
-   # Update audit file and quality index
-   ################################################################
-   rm -f ${quality}
-   echo ${qvars} >> ${quality}
-   echo ${qvals} >> ${quality}
-   prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-   modaudit=$(expr ${prefields} + ${cxt} + 1)
-   subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-   replacement=$(echo ${subjaudit}\
-      |sed s@[^,]*@@${modaudit}\
-      |sed s@',,'@',1,'@ \
-      |sed s@',$'@',1'@g)
-   sed -i s@${subjaudit}@${replacement}@g ${audit}
-elif [[ $(imtest ${outdir}/${prefix}~TEMP~${buffer}) == "1" ]]
-   then
-   rm -f ${out}/${prefix}${ext}
-   immv ${img} ${final[${cxt}]}
-   ln -s ${final[${cxt}]}${ext} ${out}/${prefix}${ext}
-   ################################################################
-   # Update audit file and quality index
-   ################################################################
-   rm -f ${quality}
-   echo ${qvars} >> ${quality}
-   echo ${qvals} >> ${quality}
-   prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-   modaudit=$(expr ${prefields} + ${cxt} + 1)
-   subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-   replacement=$(echo ${subjaudit}\
-      |sed s@[^,]*@@${modaudit}\
-      |sed s@',,'@',1,'@ \
-      |sed s@',$'@',1'@g)
-   sed -i s@${subjaudit}@${replacement}@g ${audit}
+   subroutine                 @0.3
+   processed=$(readlink -f ${intermediate}.nii.gz)
+   exec_fsl immv ${processed} ${final[${cxt}]}
+   completion
 else
-   rm -f ${quality}
-   echo ${qvars} >> ${quality}
-   echo ${qvals} >> ${quality}
-   rm -f ${out}/${prefix}${ext}
-   ln -s ${img} ${out}/${prefix}${ext}
+   subroutine                 @0.4
+   echo "XCP-ERROR: Expected output not present."
    echo "Expected: ${outdir}/${prefix}${buffer}"
-   echo "Expected output not present."
    echo "Check the log to verify that processing"
    echo "completed as intended."
    exit 1
 fi
-
-echo "Module complete"
