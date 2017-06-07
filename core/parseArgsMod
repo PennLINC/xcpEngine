@@ -59,7 +59,7 @@ shift $((OPTIND-1))
 # If trace is set to 1, then all commands called by the pipeline
 # will be echoed back in the log file.
 ###################################################################
-(( ${trace} == 1 )) && set -x
+(( ${trace} == 1 )) && set -x && trace_prop='-t'
 ###################################################################
 # Usage and exit
 ###################################################################
@@ -72,12 +72,13 @@ fi
 # Source the design file.
 ###################################################################
 source ${design_local}
+design=${design_local}
 source ${XCPEDIR}/core/parseSubject
 source ${XCPEDIR}/core/getIdentifiers
 ###################################################################
 # Verify that all compulsory inputs are present.
 ###################################################################
-if ! is_image ${out}/${prefix}
+if ! is_image ${out}/${prefix}.nii.gz
    then
    echo "::XCP-ERROR: The primary input is absent."
    exit 666
