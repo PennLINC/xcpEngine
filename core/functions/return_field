@@ -5,9 +5,16 @@ return_field() {
    while [[ -n ${1} ]]
       do
       delim='-d,'
-      if is_integer ${1}
+      rev=0
+      if is+integer ${1}
          then
          field='-f'${1}
+         field_is_set=TRUE
+         shift
+      elif is_integer ${1}
+         then
+         rev=1
+         field='-f'${1//-/}
          field_is_set=TRUE
          shift
       fi
@@ -20,7 +27,9 @@ return_field() {
             [[ ${1} == '\t' ]] && unset delim
             shift
          fi
+         (( ${rev} == 1 )) && input=$(echo ${input}|rev)
          input=$(echo "${input}"|cut "${field}" "${delim}")
+         (( ${rev} == 1 )) && input=$(echo ${input}|rev)
       fi
    done
    echo ${input}
