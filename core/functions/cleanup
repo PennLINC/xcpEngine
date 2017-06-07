@@ -1,4 +1,4 @@
 cleanup() {
-   cleanup=$(basename ${0}|sed s@'.mod'@@g)_cleanup[${cxt}]
+   cleanup=${mod_name_short}_cleanup[${cxt}]
    [[ ${!cleanup} == Y ]]
 }
