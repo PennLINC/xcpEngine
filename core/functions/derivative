@@ -1,3 +1,4 @@
 derivative() {
    eval ${1}[${cxt}]=${outdir}/${2}.nii.gz
+   export derivatives_floating="${derivatives_floating} #${1}#${outdir}/${2}.nii.gz"
 }

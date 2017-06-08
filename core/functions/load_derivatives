@@ -1,3 +1,8 @@
 load_derivatives() {
    derivatives=$(cat ${aux_imgs[${subjidx}]} 2>/dev/null)
+   for derivative in ${derivatives_floating}
+      do
+      derivative_parse ${derivative}
+      is_image ${d_path} && derivatives="${derivatives} ${derivative}"
+   done
 }
