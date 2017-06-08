@@ -1,6 +1,5 @@
 exec_c3d() {
    process_command=${@}
-   exec_log_open
    verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
    ${C3D_PATH}/${process_command}
 }

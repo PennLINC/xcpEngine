@@ -1,6 +1,5 @@
 exec_fsl() {
    process_command=${@}
-   exec_log_open
    verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
    ${FSLDIR}/bin/${process_command}
 }
