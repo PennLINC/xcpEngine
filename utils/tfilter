@@ -230,8 +230,8 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
       ;;
    d)
       pass=${OPTARG}
-      [[ ${pass} != 1 ]] \
-         && [[ ${pass} != 2 ]] \
+      (( ${pass} != 1 )) \
+         && (( ${pass} != 2 )) \
          && Usage \
          && exit
       ;;
@@ -250,6 +250,11 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
    x)
       derivsList=${OPTARG}
       derivatives=$(cat ${derivsList})
+      for derivative in ${derivatives_floating}
+         do
+         derivative_parse ${derivative}
+         is_image ${d_path} && derivatives="${derivatives} ${derivative}"
+      done
       ;;
    1)
       tslist=${OPTARG}
@@ -269,7 +274,7 @@ done
 [[ -z ${image} ]]  && Usage && exit
 [[ -z ${out} ]]    && Usage && exit
 [[ -z ${filter} ]] && Usage && exit
-if (( ${ntrue} == ${ktrue} )) \
+if (( ${ntrue} == ${ktrue} ))
    then
    echo "You may only specify one of -n and -k"
    exit
@@ -279,9 +284,9 @@ fi
 # the same number of volumes as the primary BOLD timeseries
 ###################################################################
 nvol=$(exec_fsl fslnvols ${image})
-if [[ ${tmask} != ones ]] \
+if [[ ${tmask} != ones ]]
    then
-   cvol=$(wc -l < ${tmask}) \
+   cvol=$(wc -l < ${tmask})
 else
    cvol=${nvol}
 fi
@@ -316,7 +321,7 @@ t_rep=$(exec_fsl fslval ${image} pixdim4)
 if [[ ${tmask} != ones ]]
    then
    subroutine     @u.1a Interpolating over masked-out epochs...
-   subroutine     @u.1b (This will be slow)
+   subroutine     @u.1b This will be slow
    exec_xcp \
       interpolate.R \
       -i "${image}" \
@@ -525,7 +530,7 @@ fft)
             ${maskcall} \
             ${hipass} ${lopass} \
             ${d_path} \
-            2>/dev/null
+            &>/dev/null
          echo "#${d_name}#${out_root}_${d_name}.nii.gz" \
             >> ${out_root}_derivatives
       #############################################################
@@ -614,7 +619,7 @@ if (( ${genfilt} == 1 ))
    exec_sys rm -rf ${out}
    exec_xcp \
       genfilter.R \
-      -i ${imgpath} \
+      -i ${image} \
       -o ${out} \
       ${fcall} \
       ${maskcall} \
@@ -645,7 +650,7 @@ if (( ${genfilt} == 1 ))
          ##########################################################
          exec_xcp \
             genfilter.R \
-            -i ${input} \
+            -i ${d_path} \
             -o ${out_root}_${d_name}.nii.gz \
             ${fcall} \
             ${maskcall} \
@@ -756,7 +761,7 @@ if (( ${dvol} > 0 ))
    #  * Iterate through all derivatives, obtain their names, and
    #    again use fslroi.
    ################################################################
-   derivatives=$(cat ${out_root}_derivs)
+   derivatives=$(cat ${out_root}_derivatives)
    for derivative in ${derivatives}
       do
       #############################################################

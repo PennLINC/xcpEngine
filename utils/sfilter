@@ -186,7 +186,7 @@ uniform)
       -detrend \
       -temper \
       ${mask} \
-      ${master} > /dev/null
+      ${master} 2>/dev/null
    ;;
 susan)
    subroutine     @u.3
@@ -211,6 +211,11 @@ susan)
       3 1 1 \
       ${usan} \
       ${bt} \
+      ${out}
+   [[ -n ${mask} ]] && exec_fsl \
+      fslmaths \
+      ${out} \
+      -mul ${mask} \
       ${out}
    ;;
 esac
