@@ -1,12 +1,16 @@
 subroutine() {
    subroutine_id=${1}
+   routine_map="${routine_map}
+· ${subroutine_id}"
    shift
    subroutine_description="${@}"
    verbose && vid="${subroutine_id} "
    if [[ -n ${subroutine_description} ]]
       then
-      exec_log_close
       echo "· ${vid}${subroutine_description}"
+   elif verbose
+      then
+      echo "· ${vid}"
    fi
    unset subroutine_id
    unset subroutine_description

@@ -1,11 +1,12 @@
 routine() {
    routine_id=${1}
+   routine_map="${routine_map}
+· ${routine_id}"
    shift
    routine_description=${@}
-   verbose && vid=${routine_id}
+   verbose && vid="${routine_id} "
    if [[ -n ${routine_description} ]]
       then
-      exec_log_close
       eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_BEGIN)\""
    fi
 }
