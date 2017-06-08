@@ -45,12 +45,7 @@ completion() {
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
-   intermediate=${outdir}/${prefix}~TEMP~
-   cleanup && rm -rf ${intermediate}*
-   echo ""
-   echo ""
-   echo "Module complete"
-   exit 0
+   source ${XCPEDIR}/core/moduleEnd
 }
 
 
@@ -189,7 +184,7 @@ fi
 ###################################################################
 unset buffer
 
-subroutine                    @0.2 Processing image: ${out}/${prefix}.nii.gz
+subroutine                    @0.2
 
 ###################################################################
 # Parse the processing code to determine what analysis to run next.
@@ -200,6 +195,7 @@ subroutine                    @0.2 Processing image: ${out}/${prefix}.nii.gz
 #  * STM: slice timing correction
 #  * BXT: brain extraction
 #  * DMT: demean and detrend timeseries
+#  * DSP: despike timeseries
 #  * SPT: spatial filter
 #  * TMP: temporal filter
 ###################################################################
@@ -232,12 +228,12 @@ while (( ${#rem} > 0 ))
          # If dvols is negative, discard the last n volumes
          # from the BOLD timeseries.
          ##########################################################
-         routine  @1    Discarding ${prestats_dvols[${cxt}]} volumes
+         routine              @1    Discarding ${prestats_dvols[${cxt}]} volumes
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
             nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
-            subroutine        @1.1  Total original volumes = ${nvol}
+            subroutine        @1.1  [Total original volumes = ${nvol}]
             if is+integer ${prestats_dvols[${cxt}]}
                then
                subroutine     @1.2  [Discarding initial volumes]
@@ -330,7 +326,7 @@ while (( ${#rem} > 0 ))
          # This step introduces a degree of redundancy to pipelines
          # that do not include slice timing correction.
          ##########################################################
-         routine  @2    Computing realignment parameters
+         routine              @2    Computing realignment parameters
          ##########################################################
          # Determine whether a reference functional image already
          # exists. If it does not, extract it from the timeseries
@@ -397,7 +393,7 @@ while (( ${#rem} > 0 ))
             subroutine        @2.4
             exec_xcp \
                1dTool.R \
-               -i ${rel_mean_rms[${cxt}]} \
+               -i ${rel_rms[${cxt}]} \
                -o max \
                -f ${rel_max_rms[${cxt}]}
             #######################################################
@@ -496,6 +492,7 @@ while (( ${#rem} > 0 ))
                |grep -o 0 \
                |wc -l)
             echo ${num_censor} >> ${motion_vols[${cxt}]}
+            exec_sys rm -f ${referenceVolume[${cxt}]}
          fi # run check statement
          ##########################################################
          # * Remove the motion corrected image: this step should
@@ -507,7 +504,7 @@ while (( ${#rem} > 0 ))
          #   successfully.
          # * Update the image pointer.
          ##########################################################
-         exec_sys rm -f ${intermediate}_${cur}.nii.gz ${referenceVolume[${cxt}]}
+         exec_sys rm -f ${intermediate}_${cur}.nii.gz
          exec_sys rm -rf ${intermediate}_mc*.mat
          exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
          intermediate=${intermediate}_${cur}
@@ -526,11 +523,11 @@ while (( ${#rem} > 0 ))
          # MPR is intended to be run prior to slice timing
          # correction, and MCO after slice timing correction.
          ##########################################################
-         routine  @3    Realigning functional volumes
+         routine              @3    Realigning functional volumes
          if ! is_image ${referenceVolume[${cxt}]} \
          || rerun
             then
-            subroutine        @3.1  Extracting reference volume
+            subroutine        @3.1  [Extracting reference volume]
             nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
             #######################################################
             # If the framewise displacement has not been
@@ -553,7 +550,6 @@ while (( ${#rem} > 0 ))
                subroutine     @3.3
                vol_min_fd=$(exec_xcp \
                   1dTool.R -i ${fd[${cxt}]} -o which_min -r T)
-               (( vol_min_fd++ ))
                exec_fsl \
                   fslroi ${intermediate}.nii.gz \
                   ${referenceVolume[${cxt}]} \
@@ -573,7 +569,7 @@ while (( ${#rem} > 0 ))
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
-            subroutine        @3.4  Executing motion correction
+            subroutine        @3.4  [Executing motion correction]
             exec_fsl \
                mcflirt -in ${intermediate}.nii.gz \
                -out ${intermediate}_mc \
@@ -585,7 +581,9 @@ while (( ${#rem} > 0 ))
          # Realignment transforms are always retained from this
          # step and discarded from MPR.
          ##########################################################
-         exec_sys mv -f ${intermediate}_mc*.mat ${rmat[${cxt}]}
+         [[ -e ${intermediate}_mc*.mat ]] && exec_sys \
+            mv -f ${intermediate}_mc*.mat \
+            ${rmat[${cxt}]}
          ##########################################################
          # Update image pointer
          ##########################################################
@@ -603,7 +601,7 @@ while (( ${#rem} > 0 ))
          # STM corrects images for timing of slice acquisition
          # based upon user input.
          ##########################################################
-         routine  @4    Slice timing correction
+         routine              @4    Slice timing correction
          subroutine           @4.1a Acquisition: ${prestats_stime[${cxt}]}
          subroutine           @4.1b Acquisition axis: ${prestats_sdir[${cxt}]}
          if ! is_image ${intermediate}_${cur}.nii.gz \
@@ -714,8 +712,8 @@ while (( ${#rem} > 0 ))
          # BXT computes a mask over the whole brain and excludes
          # non-brain voxels from further analyses.
          ##########################################################
-         routine  @5    Brain extraction
-         subroutine           @5.1  Generating mean functional image
+         routine              @5    Brain extraction
+         subroutine           @5.1  [Generating mean functional image]
          ##########################################################
          # Generate a mean functional image by averaging voxel
          # intensity over time. This mean functional image will be
@@ -726,9 +724,9 @@ while (( ${#rem} > 0 ))
          if ! is_image ${intermediate}_${cur}_1.nii.gz \
          || rerun
             then
-            subroutine        @5.2a Initialising brain extraction
-            subroutine        @5.2b Fractional intensity threshold:
-            subroutine        @5.2c ${prestats_fit[${cxt}]}
+            subroutine        @5.2a [Initialising brain extraction]
+            subroutine        @5.2b [Fractional intensity threshold:]
+            subroutine        @5.2c [${prestats_fit[${cxt}]}]
             #######################################################
             # Use BET to generate a preliminary mask. This should
             # be written out to the mask[cxt] variable.
@@ -755,8 +753,11 @@ while (( ${#rem} > 0 ))
                   -f ${prestats_fit[${cxt}]}
             else
                subroutine     @5.3b
+               bet ${referenceVolume[${cxt}]} \
+                  ${referenceVolumeBrain[${cxt}]} \
+                  -f ${prestats_fit[${cxt}]}
             fi
-            subroutine        @5.4  First pass
+            subroutine        @5.4  [Initial estimate]
             #######################################################
             # Use the preliminary mask to extract brain tissue.
             #######################################################
@@ -768,9 +769,9 @@ while (( ${#rem} > 0 ))
          if ! is_image ${img}_${cur}_2 \
          || rerun
             then
-            subroutine        @5.5a Thresholding and dilating image
-            subroutine        @5.5b Brain-background threshold:
-            subroutine        @5.5c ${prestats_bbgthr[${cxt}]}
+            subroutine        @5.5a [Thresholding and dilating image]
+            subroutine        @5.5b [Brain-background threshold:]
+            subroutine        @5.5c [${prestats_bbgthr[${cxt}]}]
             #######################################################
             # Use the user-specified brain-background threshold
             # to determine what parts of the image to count as
@@ -819,7 +820,7 @@ while (( ${#rem} > 0 ))
          # polynomials as predictor variables, then retains the
          # residuals of the model as the processed timeseries.
          ##########################################################
-         routine  @6    Demeaning and detrending BOLD timeseries
+         routine              @6    Demeaning and detrending BOLD timeseries
          if ! is_image ${intermediate}_${cur} \
          || rerun
             then
@@ -836,14 +837,14 @@ while (( ${#rem} > 0 ))
             #######################################################
             if is_image ${mask[${subjidx}]}
                then
-               subroutine     @6.1a Using previously determined mask
+               subroutine     @6.1a [Using previously determined mask]
                mask_dmdt=${mask[${subjidx}]}
             elif is_image ${mask[${cxt}]}
                then
-               subroutine     @6.1b Using mask from this preprocessing run
+               subroutine     @6.1b [Using mask from this preprocessing run]
                mask_dmdt=${mask[${cxt}]}
             else
-               subroutine     @6.2  Generating a mask using 3dAutomask
+               subroutine     @6.2  [Generating a mask using 3dAutomask]
                exec_afni \
                   3dAutomask -prefix ${intermediate}_${cur}_mask.nii.gz \
                   -dilate 3 \
@@ -892,17 +893,17 @@ while (( ${#rem} > 0 ))
             # In summary, the detrend order is based upon the
             # overall duration of the scan.
             #######################################################
-            if [[ ${prestats_dmdt[${cxt}]} == auto ]]
+            if ! is+integer ${prestats_dmdt[${cxt}]}
                then
-               subroutine     @6.4  Estimating polynomial order
-               nvol=$(exec_fsl fslnvols ${intermediate})
-               trep=$(exec_fsl fslval   ${intermediate} pixdim4)
-               dmdt_order=$(arithmetic 1 + ${trep}\*${nvol})
+               subroutine     @6.4  [Estimating polynomial order]
+               nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
+               trep=$(exec_fsl fslval   ${intermediate}.nii.gz pixdim4)
+               dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
                dmdt_order=$(return_field ${dmdt_order} 1 '.')
             else
                dmdt_order=${prestats_dmdt[${cxt}]}
             fi
-            subroutine        @6.5  Applying polynomial detrend
+            subroutine        @6.5  [Applying polynomial detrend]
             subroutine        @6.6  [Order: ${dmdt_order}]
             exec_xcp \
                dmdt.R \
@@ -926,7 +927,7 @@ while (( ${#rem} > 0 ))
          # outliers ("spikes") from the BOLD timeseries and to
          # interpolate over outlier epochs.
          ##########################################################
-         routine  @7    Despiking BOLD timeseries
+         routine              @7    Despiking BOLD timeseries
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
@@ -942,10 +943,10 @@ while (( ${#rem} > 0 ))
             nvol=$(exec_fsl fslnvols ${img})
             if (( ${nvol} >= 200 ))
                then
-               subroutine     @7.2
+               subroutine     @7.2  [Long timeseries configuration]
                ds_arguments='NEW'
             else
-               subroutine     @7.3
+               subroutine     @7.3  [Short timeseries configuration]
             fi
             exec_afni \
                3dDespike \
@@ -953,8 +954,7 @@ while (( ${#rem} > 0 ))
                -nomask \
                -quiet \
                ${ds_arguments} \
-               ${intermediate}.nii.gz \
-               > /dev/null
+               ${intermediate}.nii.gz
          fi
          intermediate=${intermediate}_${cur}
          routine_end
@@ -970,7 +970,7 @@ while (( ${#rem} > 0 ))
          # the utility script sfilter, which is also used by a
          # number of other modules.
          ##########################################################
-         routine  @8    Spatially filtering image
+         routine              @8    Spatially filtering image
          ##########################################################
          # If no spatial filtering has been specified by the user,
          # then bypass this step.
@@ -1048,8 +1048,8 @@ while (( ${#rem} > 0 ))
             #    implemented smoothing routines: gaussian, susan,
             #    and uniform.
             #######################################################
-            subroutine        @8.7a Filter: ${prestats_sptf[${cxt}]}
-            subroutine        @8.7b Smoothing kernel: ${prestats_smo[${cxt}]} mm
+            subroutine        @8.7a [Filter: ${prestats_sptf[${cxt}]}]
+            subroutine        @8.7b [Smoothing kernel: ${prestats_smo[${cxt}]} mm]
             exec_xcp \
                sfilter \
                -i ${intermediate}.nii.gz \
@@ -1080,7 +1080,7 @@ while (( ${#rem} > 0 ))
          # itself calls fslmaths, 3dBandpass, or the R script
          # genfilter to enable a wide array of filters.
          ##########################################################
-         routine  @9    Temporally filtering image
+         routine              @9    Temporally filtering image
          ##########################################################
          # If no temporal filtering has been specified by the user,
          # then bypass this step.
@@ -1325,9 +1325,14 @@ if is_image ${outdir}/${prefix}~TEMP~${buffer}.nii.gz
    completion
 else
    subroutine                 @0.4
-   echo "XCP-ERROR: Expected output not present."
-   echo "Expected: ${outdir}/${prefix}${buffer}"
-   echo "Check the log to verify that processing"
-   echo "completed as intended."
+   echo \
+   "
+
+
+XCP-ERROR: Expected output not present.
+Expected: ${outdir}/${prefix}${buffer}
+Check the log to verify that processing
+completed as intended.
+"
    exit 1
 fi
