@@ -60,7 +60,6 @@ shift $((OPTIND-1))
 # will be echoed back in the log file.
 ###################################################################
 (( ${trace} == 1 )) && set -x && trace_prop='-t'
-trace=1
 routine_map='· START'
 ###################################################################
 # Usage and exit
@@ -94,8 +93,12 @@ if [[ ! -e ${outdir} ]]
    then
    mkdir -p ${outdir}
 fi
-echo "Output directory is ${outdir}"
-echo "Processing image: ${out}/${prefix}.nii.gz"
+echo \
+"
+
+
+[I][${out}/${prefix}.nii.gz]
+[O][${outdir}]"
 ###################################################################
 # * Define the root path to processing intermediates.
 # * Initialise a pointer to the image.
