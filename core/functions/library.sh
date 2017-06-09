@@ -32,6 +32,7 @@ source ${LIBRARY}/is_numeric
 source ${LIBRARY}/is+numeric
 source ${LIBRARY}/load_derivatives
 source ${LIBRARY}/output
+source ${LIBRARY}/process
 source ${LIBRARY}/processed
 source ${LIBRARY}/quality_metric
 source ${LIBRARY}/rerun

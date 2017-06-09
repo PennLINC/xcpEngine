@@ -35,7 +35,7 @@ subroutine                    @1.1  [Parsing subject identifiers]
 # Create output directory
 ###################################################################
 subroutine                    @1.1a [Creating output directory]
-   subroutine                 @1.1b ${out} 
+   subroutine                 @1.1b [${out}]
    mkdir -p $out
 
 ###################################################################

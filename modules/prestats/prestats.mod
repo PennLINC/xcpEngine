@@ -63,7 +63,6 @@ derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensity           ${prefix}_meanIntensity
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
-derivative  final                   ${prefix}_preprocessed
 
 output      aux_imgs                ${prefix}_derivs
 output      mcdir                   mc
@@ -77,6 +76,8 @@ output      rmat                    mc/${prefix}.mat
 output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 output      motion_vols             mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
+
+process     final                   ${prefix}_preprocessed
 
 << DICTIONARY
 
@@ -150,27 +151,11 @@ DICTIONARY
 
 
 ###################################################################
-# Verify that the module should be run:
-#  * Test whether the final output already exists.
-#  * Determine whether the user requested the module to be re-run.
-# If it is determined that the module should not be run, then any
-#  outputs must be written to the local design file.
+# Determine whether the user requested the module to be re-run.
 ###################################################################
-if is_image ${final[${cxt}]} \
-&& ! rerun
-   then
-   subroutine                 @0.1
-   complete_already
-fi
-
-if is_image ${img}
-   then
-   exec_sys ln -s ${img} ${intermediate}.nii.gz
-fi
-
 if rerun
    then
-   exec_sys rm -f ${intermediate}*
+   exec_sys rm -rf ${intermediate}*
 fi
 
 
@@ -184,7 +169,7 @@ fi
 ###################################################################
 unset buffer
 
-subroutine                    @0.2
+subroutine                    @0.1
 
 ###################################################################
 # Parse the processing code to determine what analysis to run next.
@@ -766,7 +751,7 @@ while (( ${#rem} > 0 ))
                -mas ${mask[${cxt}]} \
                ${intermediate}_${cur}_1.nii.gz
          fi
-         if ! is_image ${img}_${cur}_2 \
+         if ! is_image ${intermediate}_${cur}_2 \
          || rerun
             then
             subroutine        @5.5a [Thresholding and dilating image]
@@ -940,7 +925,7 @@ while (( ${#rem} > 0 ))
             # the old method will be incredibly slow, so the
             # new method should be run.
             #######################################################
-            nvol=$(exec_fsl fslnvols ${img})
+            nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
             if (( ${nvol} >= 200 ))
                then
                subroutine     @7.2  [Long timeseries configuration]
@@ -983,7 +968,7 @@ while (( ${#rem} > 0 ))
          # Ensure that this step has not already run to completion
          # by checking for the existence of a smoothed image.
          ##########################################################
-         elif ! is_image ${img}_${cur}.nii.gz \
+         elif ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
             #######################################################
@@ -1316,15 +1301,14 @@ done
 #    module.
 #  * If the expected output is absent, notify the user.
 ###################################################################
-img=$(readlink -f ${img}${ext})
 if is_image ${outdir}/${prefix}~TEMP~${buffer}.nii.gz
    then
-   subroutine                 @0.3
+   subroutine                 @0.2
    processed=$(readlink -f ${intermediate}.nii.gz)
    exec_fsl immv ${processed} ${final[${cxt}]}
    completion
 else
-   subroutine                 @0.4
+   subroutine                 @0.3
    echo \
    "
 
