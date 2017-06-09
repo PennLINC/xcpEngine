@@ -1,0 +1,13 @@
+process() {
+   eval ${1}[${cxt}]=${outdir}/${2}.nii.gz
+   local output=${1}[${cxt}]
+   if is_image ${!output} \
+   && ! rerun
+      then
+      complete_already
+   fi
+   if is_image ${out}/${prefix}.nii.gz
+      then
+      exec_sys ln -s ${out}/${prefix}.nii.gz ${intermediate}.nii.gz
+   fi
+}
