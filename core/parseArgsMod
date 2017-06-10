@@ -106,8 +106,8 @@ echo \
 ###################################################################
 intermediate=${outdir}/${prefix}~TEMP~
 intermediate_root=${intermediate}
+img_raw=${img}
 img=${out}/${prefix}.nii.gz
-img_mod=${intermediate}
 ###################################################################
 # Parse quality variables.
 ###################################################################
@@ -118,3 +118,10 @@ qvals=$(tail -n1 ${quality} 2>/dev/null)
 # module appear beneath the correct header.
 ###################################################################
 eval "echo -e \"${mod_out}\"" >> ${design_local}
+###################################################################
+# Determine whether the user requested the module to be re-run.
+###################################################################
+if rerun
+   then
+   exec_sys rm -rf ${intermediate}*
+fi
