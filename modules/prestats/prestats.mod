@@ -8,9 +8,9 @@
 # SPECIFIC MODULE HEADER
 # This module preprocesses fMRI data.
 ###################################################################
+mod_name_short=prestats
 mod_name='FMRI PREPROCESSING MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
-mod_name_short=prestats
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -144,19 +144,6 @@ DICTIONARY
 
 
 
-
-
-
-
-
-
-###################################################################
-# Determine whether the user requested the module to be re-run.
-###################################################################
-if rerun
-   then
-   exec_sys rm -rf ${intermediate}*
-fi
 
 
 
