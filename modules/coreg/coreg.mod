@@ -5,305 +5,136 @@
 ###################################################################
 
 ###################################################################
-# Constants
-# FIT will only be used if brain extraction has not already been
-# performed on the reference volume.
+# SPECIFIC MODULE HEADER
+# This module preprocesses fMRI data.
 ###################################################################
-FIT=0.3
-readonly POSNUM='^[0-9]+([.][0-9]+)?$'
-readonly ALTREG1=corratio
-readonly ALTREG2=mutualinfo
-readonly QADECIDE=qa_coverage
+mod_name_short=coreg
+mod_name='IMAGE COREGISTRATION MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+
+###################################################################
+# GENERAL MODULE HEADER
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsMod
+
+###################################################################
+# MODULE COMPLETION
+###################################################################
+completion() {
+   write_derivative  referenceVolume
+   write_derivative  referenceVolumeBrain
+   write_derivative  e2simg
+   write_derivative  s2eimg
+   write_derivative  e2smask
+   write_derivative  s2emask
+   
+   write_output      seq2struct
+   write_output      struct2seq
+   write_output      e2smat
+   write_output      s2emat
+   
+   quality_metric    coregCoverage            coreg_coverage
+   quality_metric    coregCrossCorr           coreg_cross_corr
+   
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   source ${XCPEDIR}/core/moduleEnd
+}
 
 
 
 
-###################################################################
-###################################################################
-# BEGIN GENERAL MODULE HEADER
-###################################################################
-###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
-###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design_local=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
-###################################################################
-# Ensure that the compulsory design_local variable has been defined
-###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "################################################################### "
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭              EXECUTING COREGISTRATION MODULE              ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_local}
-###################################################################
-# Verify that all required inputs are present.
-###################################################################
-if [[ ${coreg_cfunc[${cxt}]} == bbr ]] \
-   && [[ $(imtest ${coreg_seg[${cxt}]}) != 1 ]]
-   then
-   echo "::XCP-ERROR: BBR is selected as the cost function for"
-   echo "  coregistration, but the segmentation provided is"
-   echo "  invalid."
-   exit 666
-fi
-if [[ $(imtest ${out}/${prefix}) != 1 ]] \
-   && [[ $(imtest ${referenceVolume[${subjidx}]}) != 1 ]]
-   then
-   echo "::XCP-ERROR: A required input (reference volume) is "
-   echo "  absent, as are the resources required to generate "
-   echo "  this input."
-   exit 666
-fi
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}coreg
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
 
-# For the coregistration module, potential outputs include:
-#  * seq2struct : Affine coregistration whose application to the
-#    subject's reference volume will output a reference volume
-#    that is aligned with the subject's structural acquisition
-#  * struct2seq : Affine coregistration whose application to the
-#    subject's structural image will output a structural image
-#    that is aligned with the subject's reference acquisition
-#  * Also included are the structural and analyte images warped
-#    into one another's spaces, as well as the binarised versions
-#    of those images (used as masks for quality control)
-#  * quality : A comma-delimited list of coregistration quality
-#    variables
-#  * referenceVolumeBrain : The brain-extracted version of the
-#    subject's example reference volume; this will probably
-#    already have been obtained in prestats
 ###################################################################
-seq2struct[${cxt}]=${outdir}/${prefix}_seq2struct.txt
-struct2seq[${cxt}]=${outdir}/${prefix}_struct2seq.txt
-e2smat[${cxt}]=${outdir}/${prefix}_seq2struct.mat
-s2emat[${cxt}]=${outdir}/${prefix}_struct2seq.mat
-e2simg[${cxt}]=${outdir}/${prefix}_seq2struct
-s2eimg[${cxt}]=${outdir}/${prefix}_struct2seq
-e2smask[${cxt}]=${outdir}/${prefix}_seq2structMask
-s2emask[${cxt}]=${outdir}/${prefix}_struct2seqMask
-quality[${cxt}]=${outdir}/${prefix}_coregQuality.csv
-referenceVolume[${cxt}]=${outdir}/${prefix}_referenceVolume
-referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_referenceVolumeBrain
+# OUTPUTS
 ###################################################################
-# * Initialise a pointer to the image.
-# * Ensure that the pointer references an image, and not something
-#   else such as a design file.
-# * On the basis of this, define the image extension to be used for
-#   this module (for operations, such as AFNI, that require an
-#   extension).
-# * Localise the image using a symlink, if applicable.
-# * Define the base output path for intermediate files.
-###################################################################
-img=${out}/${prefix}
-imgpath=$(ls ${img}.*)
-for i in ${imgpath}
-   do
-   [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-done
-ext=$(echo ${imgpath}|sed s@${img}@@g)
-[[ ${ext} == ".nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext} == ".nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext} == ".hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext} == ".img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-outbase=${outdir}/${prefix}~TEMP~
-[[ -e ${outdir}/${prefix}_referenceVolume${ext} ]] \
-   && rm -f ${outdir}/${prefix}_referenceVolume${ext}
-ln -s ${referenceVolume[${subjidx}]}${ext} ${outdir}/${prefix}_referenceVolume${ext}
-###################################################################
-# Parse quality variables.
-###################################################################
-qvars=$(head -n1 ${quality} 2>/dev/null)
-qvals=$(tail -n1 ${quality} 2>/dev/null)
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from coreg[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
-###################################################################
-# Verify that the module should be run:
-#  * Test whether the final output already exists.
-#  * Determine whether the user requested the module to be re-run.
-# If it is determined that the module should not be run, then any
-#  outputs must be written to the local design file.
-###################################################################
-if [[ -e ${seq2struct[${cxt}]} ]] \
-   && [[ -e ${struct2seq[${cxt}]} ]] \
-   && [[ -n $(cat ${quality[${cxt}]} 2>/dev/null) ]] \
-   && [[ $(tail -n1 ${quality[${cxt}]}) != ',' ]] \
-   && [[ ${coreg_rerun[${cxt}]} == "N" ]]
-   then
-   echo "Coregistration has already run to completion."
-   echo "Writing outputs..."
-   if [[ "${coreg_cleanup[${cxt}]}" == "Y" ]]
-      then
-      rm -rf ${outdir}/*~TEMP~*
-   fi
-   ################################################################
-   # OUTPUT: seq2struct
-   # Write the affine transform from reference to target
-   # space to the localised design file.
-   ################################################################
-   echo "seq2struct[${subjidx}]=${seq2struct[${cxt}]}" \
-      >> $design_local
-   ################################################################
-   # OUTPUT: struct2seq
-   # Test whether the inverse transform from target to reference
-   # space exists. If it does, add it to the localised design
-   # file.
-   ################################################################
-   if [[ -e "${struct2seq[${cxt}]}" ]]
-      then
-      echo "struct2seq[${subjidx}]=${struct2seq[${cxt}]}" \
-         >> $design_local
-   fi
-   ################################################################
-   # OUTPUT: quality
-   # Test whether a text file containing metrics of coregistration
-   # quality exists. If it does, then add it to the localised
-   # design file.
-   ################################################################
-   if [[ -e "${quality[${cxt}]}" ]]
-      then
-      echo "coreg_quality[${subjidx}]=${quality[${cxt}]}" \
-         >> $design_local
-      qvars=${qvars},$(head -n1 ${quality[${cxt}]})
-	   qvals=${qvals},$(tail -n1 ${quality[${cxt}]})
-   fi
-   ################################################################
-   # OUTPUT: e2simg e2smask s2eimg s2emask
-   # Test whether each warped volume and each binarised mask exists
-   # as an image. If it does, then add it to the localised design
-   # file.
-   ################################################################
-   if [[ $(imtest ${s2eimg[${cxt}]}) == "1" ]]
-      then
-      echo "s2eimg[${subjidx}]=${s2eimg[${cxt}]}" >> $design_local
-   fi
-   if [[ $(imtest ${e2simg[${cxt}]}) == "1" ]]
-      then
-      echo "e2simg[${subjidx}]=${e2simg[${cxt}]}" >> $design_local
-   fi
-   if [[ $(imtest ${s2emask[${cxt}]}) == "1" ]]
-      then
-      echo "s2emask[${subjidx}]=${s2emask[${cxt}]}" >> $design_local
-   fi
-   if [[ $(imtest ${e2smask[${cxt}]}) == "1" ]]
-      then
-      echo "e2smask[${subjidx}]=${e2smask[${cxt}]}" >> $design_local
-   fi
-   ################################################################
-   # OUTPUT: referenceVolume
-   # Test whether a reference volume exists as an image. If
-   # it does, add it to the index of derivatives and to
-   # the localised design file.
-   #
-   # THIS SHOULD NOT EXIST IN NEARLY ANY CASE. If it does, ensure
-   # that your pipeline is behaving as intended.
-   ################################################################
-   if [[ $(imtest ${referenceVolume[${cxt}]}) == "1" ]]
-      then
-      echo "referenceVolume[${subjidx}]=${referenceVolume[${cxt}]}" \
-         >> $design_local
-      echo "#referenceVolume#${referenceVolume[${cxt}]}" \
-         >> ${auxImgs[${subjidx}]}
-   fi
-   ################################################################
-   # OUTPUT: brain-extracted referenceVolume
-   # Test whether a local brain-extracted reference volume exists.
-   # In most cases, it will not, as the coregistration module only
-   # performs brain extraction on the reference volume if
-   # prestats or another module has not already done so. If it
-   # does, add it to the index of derivatives and to the localised
-   # design file.
-   ################################################################
-   if [[ $(imtest "${referenceVolumeBrain[${cxt}]}") == "1" ]]
-      then
-      echo "referenceVolumeBrain[${subjidx}]=${referenceVolumeBrain[${cxt}]}"\
-         >> $design_local
-      echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" \
-         >> ${auxImgs[${subjidx}]}
-   fi
-   ################################################################
-   # Since it has been determined that the module does not need to
-   # be executed, update the audit file and exit the module.
-   ################################################################
-   rm -f ${quality}
-   echo ${qvars} >> ${quality}
-   echo ${qvals} >> ${quality}
-   prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-   modaudit=$(expr ${prefields} + ${cxt} + 1)
-   subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-   replacement=$(echo ${subjaudit}\
-      |sed s@[^,]*@@${modaudit}\
-      |sed s@',,'@',1,'@ \
-      |sed s@',$'@',1'@g)
-   sed -i s@${subjaudit}@${replacement}@g ${audit}
-   echo "Module complete"
-   exit 0
-fi
-###################################################################
-###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
-###################################################################
+configure   fit                     0.3
+configure   altreg1                 corratio
+configure   altreg2                 mutualinfo
+configure   qa_decide               1
+
+derivative  referenceVolume         ${prefix}_referenceVolume
+derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
+derivative  e2simg                  ${prefix}_seq2struct
+derivative  s2eimg                  ${prefix}_struct2seq
+derivative  e2smask                 ${prefix}_seq2structMask
+derivative  s2emask                 ${prefix}_struct2seqMask
+
+output      seq2struct              ${prefix}_seq2struct.txt
+output      struct2seq              ${prefix}_struct2seq.txt
+output      e2smat                  ${prefix}_seq2struct.mat
+output      s2emat                  ${prefix}_struct2seq.mat
+output      coreg_cross_corr        ${prefix}_coregCrossCorr.txt
+output      coreg_coverage          ${prefix}_coregCoverage.txt
+
+<< DICTIONARY
+
+altreg1
+   First alternative cost function. If coregistration under the
+   user-specified cost function fails to meet user quality
+   criteria, then coregistration will be re-executed using this
+   cost function.
+altreg2
+   Second alternative cost function. This will only be used
+   instead of altreg1 if the user-specified cost function is the
+   same as altreg1.
+coreg_coverage
+   The percentage of the structural image that is covered by
+   the aligned analyte image.
+corev_cross_corr
+   The spatial cross-correlation between the structural image
+   mask and the aligned analyte mask.
+e2simg
+   The reference volume from the analyte sequence, aligned into
+   structural space.
+e2smask
+   A binarised version of e2simg. Used to estimate the quality
+   of coregistration.
+e2smat
+   The FSL-formatted affine transformation matrix containing a
+   map from analyte space to structural space.
+fit
+   The fractional intensity threshold. Used only in the unlikely
+   event that brain extraction has not already been run.
+qa_decide
+   In the event that the first round of coregistration fails to
+   satisfy the user criteria, a second round will be performed.
+   Only the coregistration that scores better according to the
+   metric defined in this variable will be retained.
+   (0 = cross-correlation, 1 = coverage, 2 = jaccard, 3 = dice)
+referenceVolume
+   An exemplar volume from the subject's 4D timeseries that is
+   used to compute the coregistration. If this has already been
+   defined by a previous module, it will instead be symbolically
+   linked.
+referenceVolumeBrain
+   The brain-extracted version of the subject's reference volume;
+   this will probably already have been obtained in prestats.
+s2eimg
+   The subject's structural image, aligned into analyte space.
+s2emask
+   A binarised version of s2eimg. Used to estimate the quality
+   of coregistration.
+s2emat
+   The FSL-formatted affine transformation matrix containing a
+   map from structural space to analyte space.
+seq2struct
+   Affine coregistration whose application to the subject's
+   reference volume will output a reference volume that is
+   aligned with the subject's structural acquisition.
+struct2seq
+   Affine coregistration whose application to the subject's
+   structural image will output a structural image that is
+   aligned with the subject's reference acquisition.
+   
+DICTIONARY
+
+
+
+
+
 
 
 
@@ -319,31 +150,17 @@ fi
 # Before coregistration can be performed, the coregistration
 # module must obtain a pointer to this source volume.
 ###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Identifying reference volume"
+routine                       @1    Identifying reference volume
 ###################################################################
 # Determine whether a brain-extracted version of the source
 # reference volume already exists.
 ###################################################################
-existRVol=$(imtest "${referenceVolumeBrain[${subjidx}]}")
-case $existRVol in
-1)
-   ################################################################
-   # If it does, the pointer should be identical to the path to
-   # that brain-extracted volume.
-   ################################################################
-   echo " * Existing reference image recognised"
-   rVolBrain=${referenceVolumeBrain[${subjidx}]}
-   ;;
-0)
-   ################################################################
-   # If it does not, this could be either because the source
-   # volume itself does not exist, or because brain extraction
-   # has not yet been run on the reference volume.
-   ################################################################
-   rVol=${referenceVolume[${subjidx}]}
-   if [[ $(imtest "${rVol}") != 1 ]]
+if is_image ${referenceVolumeBrain[${subjidx}]}
+   then
+   subroutine                 @1.1  Existing reference image recognised
+   derivative referenceVolumeBrain  ${referenceVolumeBrain[${subjidx}]}
+else
+   if ! is_image ${referenceVolume[${subjidx}]}
       then
       #############################################################
       # * If the source volume does not exist, this reflects an
@@ -354,20 +171,20 @@ case $existRVol in
       #   might lead to unexpected or catastrophic results if, for
       #   instance, the primary BOLD timeseries has been demeaned.
       #############################################################
-      echo "XCP-WARNING: No reference volume detected."
-      echo " * This probably means that you are doing something"
-      echo "   unconventional (for instance, computing"
-      echo "   coregistration prior to alignment of volumes)."
-      echo "   You are advised to inspect your pipeline to ensure"
-      echo "   that this is intentional."
-      echo " * Preparing reference volume"
-      nvol=$(fslnvols ${img})
-      midpt=$(expr $nvol / 2)
-      fslroi ${out}/${prefix} ${referenceVolume[${cxt}]} $midpt 1
-      rVol=${referenceVolume[${cxt}]}
+      subroutine              @1.2a XCP-WARNING: No reference volume detected. This
+      subroutine              @1.2b probably means that you are doing something
+      subroutine              @1.2c unconventional, like computing coregistration prior
+      subroutine              @1.2d to alignment of volumes. You are advised to inspect
+      subroutine              @1.2e your pipeline to ensure that this is intentional.
+      subroutine              @1.2f Preparing reference volume
+      nvol=$(exec_fsl fslnvols ${img})
+      midpt=$(arithmetic ${nvol}/2)
+      exec_fsl \
+         fslroi ${out}/${prefix}.nii.gz \
+         ${referenceVolume[${cxt}]} ${midpt} 1
    fi
-   if [[ $(imtest "${referenceVolumeBrain[${cxt}]}") != 1 ]] \
-      && [[ "${coreg_rerun[${cxt}]}" != "N" ]]
+   if ! is_image ${referenceVolumeBrain[${cxt}]} \
+   || rerun
       then
       #############################################################
       # * If the source volume exists but brain extraction has
@@ -375,15 +192,14 @@ case $existRVol in
       #   will automatically identify and isolate brain tissue in
       #   the reference volume using BET.
       #############################################################
-      echo "No brain-extracted reference volume detected."
-      echo " * Extracting brain from reference volume"
-      bet ${rVol} \
+      subroutine              @1.3a No brain-extracted reference volume detected.
+      subroutine              @1.3b Extracting brain from reference volume
+      exec_fsl bet ${referenceVolume[${subjidx}]} \
          ${referenceVolumeBrain[${cxt}]} \
-         -f $FIT
+         -f $fit[${cxt}]
    fi
-   rVolBrain=${referenceVolumeBrain[${cxt}]}
-   ;;
-esac
+fi
+routine_end
 
 
 
@@ -396,46 +212,28 @@ esac
 #    considered a temporary file, so it will be deleted in the
 #    cleanup phase.
 ###################################################################
-if [[ "${coreg_cfunc[${cxt}]}" == "bbr" ]]
+if [[ ${coreg_cfunc[${cxt}]} == bbr ]]
    then
-   wmmask=${outbase}_t1wm
-   if [[ $(imtest "${wmmask}") != 1 ]] \
-      || [[ "${coreg_rerun[${cxt}]}" != "N" ]]
+   wmmask=${intermediate}_t1wm.nii.gz
+   if ! is_image ${wmmask} \
+   || rerun
       then
-      echo ""; echo ""; echo ""
-      echo "Current processing step:"
-	   echo "Extracting white matter mask from segmentation"
+      routine                 @2    Preparing white matter mask
 	   case ${coreg_wm[${cxt}]} in
-      #############################################################
-      # * If the user-specified tissue segmentation includes only
-      #   white matter, then it only needs to be binarised.
-      #############################################################
 	   all)
-	      echo "All nonzero voxels correspond to white matter."
-	      echo "Binarising image..."
-	      fslmaths ${coreg_seg[${cxt}]} -bin ${wmmask}
+	      subroutine           @2.1a All nonzero voxels correspond to white matter.
+	      subroutine           @2.1b Binarising image
+	      exec_fsl fslmaths ${coreg_seg[${cxt}]} -bin ${wmmask}
 	      ;;
-      #############################################################
-      # * If the user has provided specific values in the
-      #   segmentation that correspond to white matter, then
-      #   a mask must be created that comprises only the voxels
-      #   in which the user-specified segmentation takes one of
-      #   the user-specified intensity values.
-      # * This will be the case if the user provides the ANTsCT
-      #   segmentation or intensity values in a bias-corrected
-      #   structural image.
-      # * The coregistration module uses the utility script
-      #   val2mask to convert the specified values to a binary
-      #   mask.
-      #############################################################
       *)
-         echo "Voxels with value ${coreg_wm[${cxt}]} correspond to"
-         echo "white matter. Thresholding out all other voxels"
-         echo "and binarising image..."
-         ${XCPEDIR}/utils/val2mask.R \
+         subroutine           @2.2a Voxels with value ${coreg_wm[${cxt}]} correspond to
+         subroutine           @2.2b white matter. Thresholding out all other voxels
+         subroutine           @2.2c and binarising image...
+         exec_xcp \
+            val2mask.R \
             -i ${coreg_seg[${cxt}]} \
             -v ${coreg_wm[${cxt}]} \
-            -o ${wmmask}${ext}
+            -o ${wmmask}
          ;;
       esac
    fi
@@ -443,9 +241,8 @@ if [[ "${coreg_cfunc[${cxt}]}" == "bbr" ]]
    # Prime an additional input argument to FLIRT, containing
    # the path to the new mask.
    ################################################################
-   wmmaskincl="-wmseg $wmmask"
-   echo "Processing step complete:"
-   echo "White matter mask"
+   wmmaskincl="-wmseg ${wmmask}"
+   routine_end
 fi
 
 
@@ -460,20 +257,24 @@ fi
 # * refwt : weights in the reference/target/structural space
 # * inwt : weights in the input/registrand/analyte space
 ###################################################################
-if [[ "${coreg_refwt[${cxt}]}" != "NULL" ]] \
-   && [[ $(imtest ${coreg_refwt[${cxt}]}) == 1 ]]
+routine                       @3    Obtaining voxelwise weights
+if is_image ${coreg_refwt[${cxt}]}
    then
+   subroutine                 @3.1  Reading structural weights
    refwt="-refweight ${coreg_refwt[${cxt}]}"
 else
-   refwt=""
+   subroutine                 @3.2  Structural: all voxels weighted uniformly
+   unset refwt
 fi
-if [[ "${coreg_inwt[${cxt}]}" != "NULL" ]] \
-   && [[ $(imtest ${coreg_inwt[${cxt}]}) == 1 ]]
+if is_image ${coreg_inwt[${cxt}]}
    then
+   subroutine                 @3.3  Reading input weights
    inwt="-inweight ${coreg_inwt[${cxt}]}"
 else
-   inwt=""
+   subroutine                 @3.4  Input: all voxels weighted uniformly
+   unset inwt
 fi
+routine_end
 
 
 
@@ -483,94 +284,99 @@ fi
 # Perform the affine coregistration using FLIRT and user
 # specifications.
 ###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Executing affine coregistration"
-echo "Cost function: ${coreg_cfunc[${cxt}]}"
-echo "Input volume ${rVolBrain}"
-echo "Reference volume ${struct[${subjidx}]}"
-echo "Output volume ${e2simg[${cxt}]}"
+routine                       @4    Executing affine coregistration
 if [[ ! -e ${e2smat[${cxt}]} ]] \
-   || [[ "${coreg_rerun[${cxt}]}" != "N" ]]
+|| rerun
    then
-   flirt -in ${rVolBrain} \
+   subroutine                 @4.1a Cost function: ${coreg_cfunc[${cxt}]}
+   subroutine                 @4.1b Input volume ${rVolBrain}
+   subroutine                 @4.1c Reference volume ${struct[${subjidx}]}
+   subroutine                 @4.1d Output volume ${e2simg[${cxt}]}
+   flirt -in ${referenceVolumeBrain[${cxt}]} \
       -ref ${struct[${subjidx}]} \
       -dof 6 \
-      -out ${outbase}_seq2struct \
-      -omat ${outbase}_seq2struct.mat \
+      -out ${intermediate}_seq2struct \
+      -omat ${intermediate}_seq2struct.mat \
       -cost ${coreg_cfunc[${cxt}]} \
       ${refwt} \
       ${inwt} \
       ${wmmaskincl}
+else
+   subroutine                 @4.2  Coregistration already run
 fi
-echo "Processing step complete:"
-echo "Affine coregistration"
 ###################################################################
 # Move outputs.
 ###################################################################
-[[ $(imtest ${outbase}_seq2struct) == 1 ]] \
-   && immv ${outbase}_seq2struct ${e2simg[${cxt}]}
-[[ ! -e ${e2smat[${cxt}]} ]] \
-   && mv -f ${outbase}_seq2struct.mat ${e2smat[${cxt}]}
-
-
-
-
-
-###################################################################
-# Compute metrics of coregistration quality:
-#  * Spatial correlation of structural and seq -> structural masks
-#  * Coverage: structural brain <=> sequence -> structural
-###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Quality control"
-if [[ ! -e ${quality[${cxt}]} ]] \
-   || [[ "${coreg_rerun[${cxt}]}" != "N" ]] \
-   || [[ $(tail -n1 /data/joy/BBL/studies/pnc/processedData/dtiXCPtest/100031/20100918x3818/coreg/100031_20100918x3818_coregQuality.csv) == ',' ]]
+if is_image ${outbase}_seq2struct) == 1
    then
-   rm -f ${quality[${cxt}]}
-   fslmaths ${e2simg[${cxt}]} -bin ${e2smask[${cxt}]}
-   fslmaths ${struct[${subjidx}]} -bin ${outbase}_struct_mask
-#   fslmaths ${outbase}_seq2struct_mask \
-#      -sub ${outbase}_struct_mask \
-#      -thr 0 \
-#      -bin \
-#      ${outbase}_seq2struct_maskdiff
-   fslmaths ${outbase}_struct_mask \
-      -sub ${e2smask[${cxt}]} \
-      -thr 0 \
-      -bin \
-      ${outbase}_struct_maskdiff
-   qa_vol_struct=$(fslstats ${outbase}_struct_mask -V\
-      |awk '{print $2}')
-#   qa_vol_seq2struct=$(fslstats ${outbase}_seq2struct_mask -V\
-#      |awk '{print $2}')
-   qa_vol_diff=$(fslstats ${outbase}_struct_maskdiff -V\
-      |awk '{print $2}')
-   qa_cov_obs=$(echo "scale=10; 1 - ${qa_vol_diff} / ${qa_vol_struct}"|bc)
-#   qa_cov_max=$(echo "scale=10; ${qa_vol_seq2struct} / ${qa_vol_struct}"|bc)
-#   [[ $(echo "${qa_cov_max} > 1"|bc -l) == 1 ]] && qa_cov_max=1
-   qa_cov_max=1
-   qa_coverage=$(echo "scale=10; ${qa_cov_obs} / ${qa_cov_max}"|bc)
-   qa_cc=$(fslcc -p 8 ${e2smask[${cxt}]} ${outbase}_struct_mask\
-      |awk '{print $3}')
-   echo "coregCrossCorr,coregCoverage"\
-      >> ${quality[${cxt}]}
-   echo "${qa_cc},${qa_coverage}"\
-      >> ${quality[${cxt}]}
-   echo "Cross-correlation: ${qa_cc}"
-   echo "Coverage: ${qa_coverage}"
-   #qa_miss_struct=$(fslstats ${outbase}_seq2struct_maskdiff -V\
-   #   |awk '{print $2}')
-   #qa_miss_seq2struct=$(fslstats ${outbase}_struct_maskdiff -V\
-   #   |awk '{print $2}')
-   #qa_miss_vox=$(echo ${qa_miss_struct} \* ${qa_miss_seq2struct}\
-   #   |bc)
-   #echo "coregCrossCorr,coreg_nvoxel_seq2struct_not_covered,coreg_nvoxel_struct_not_covered,coregCoverage_product"\
-   #   >> ${quality[${cxt}]}
-   #echo ${qa_cc},${qa_miss_struct},${qa_miss_seq2struct},${qa_miss_vox}\
-   #   >> ${quality[${cxt}]}
+   subroutine                 @4.3
+   exec_fsl immv ${outbase}_seq2struct ${e2simg[${cxt}]}
+fi
+if [[ ! -e ${e2smat[${cxt}]} ]]
+   then
+   subroutine                 @4.4
+   exec_sys mv -f ${outbase}_seq2struct.mat ${e2smat[${cxt}]}
+fi
+routine_end
+
+
+
+
+
+###################################################################
+# Compute metrics of coregistration quality.
+###################################################################
+flag=0
+if [[ ! -e ${quality[${cxt}]} ]] \
+|| rerun \
+|| [[ $(tail -n1 ${quality[${cxt}]} == ',' ]]
+   then
+   routine                    @5    Quality assessment
+   subroutine                 @5.1
+   exec_sys rm -f ${quality[${cxt}]}
+   exec_fsl fslmaths ${e2simg[${cxt}]} -bin ${e2smask[${cxt}]}
+   registration_quality=( $(exec_xcp \
+      maskOverlap.R \
+      -m ${e2smask[${cxt}]} \
+      -r ${struct[${subjidx}]}) )
+   echo  ${registration_quality[0]} >> ${coreg_cross_corr[${cxt}]}
+   echo  ${registration_quality[1]} >> ${coreg_coverage[${cxt}]}
+   echo  ${registration_quality[2]} >> ${coreg_jaccard[${cxt}]}
+   echo  ${registration_quality[3]} >> ${coreg_dice[${cxt}]}
+   subroutine                 @5.1a Cross-correlation:   ${registration_quality[0]}
+   subroutine                 @5.1b Coverage:            ${registration_quality[1]}
+   subroutine                 @5.1c Jaccard coefficient: ${registration_quality[2]}
+   subroutine                 @5.1d Dice coefficient:    ${registration_quality[3]}
+   ################################################################
+   # If the subject fails quality control, then repeat
+   # coregistration using an alternative metric: crosscorrelation.
+   # Unless crosscorrelation has been specified and failed, in
+   # which case mutual information is used instead.
+   #
+   # Determine whether each quality index warrants flagging the
+   # coregistration for poor quality.
+   ################################################################
+   cc_min=$(return_field   ${coreg_qacut[${cxt}]} 1)
+   co_min=$(return_field   ${coreg_qacut[${cxt}]} 2)
+   cc_flag=$(arithmetic ${registration_quality[0]}'<'${cc_min})
+   co_flag=$(arithmetic ${registration_quality[1]}'<'${co_min})
+   if (( ${cc_flag} == 1 )) \
+   && is+numeric ${cc_min}
+      then
+      subroutine              @5.2  Cross-correlation flagged
+      flag=1
+   fi
+   if (( ${co_flag} == 1 )) \
+   && is+numeric ${co_min}
+      then
+      subroutine              @5.3  Coverage flagged
+      flag=1
+   fi
+   if (( ${flag} != 1 ))
+      then
+      subroutine              @5.4  Coregistration quality meets standards
+   fi
+   routine_end
 fi
 
 
@@ -578,157 +384,80 @@ fi
 
 
 ###################################################################
-# If the subject fails quality control, then repeat coregistration
-# using an alternative metric: crosscorrelation. Unless
-# crosscorrelation has been specified and failed, in which case
-# mutual information is used instead.
-#
-# First, parse the quality control cutoffs.
-###################################################################
-qa_cc_min=$(echo ${coreg_qacut[${cxt}]}|cut -d"," -f1)
-qa_coverage_min=$(echo ${coreg_qacut[${cxt}]}|cut -d"," -f2)
-#qa_miss_struct_max=$(echo ${coreg_qacut[${cxt}]}|cut -d"," -f2)
-#qa_miss_seq2struct_max=$(echo ${coreg_qacut[${cxt}]}|cut -d"," -f3)
-#qa_miss_vox_max=$(echo ${coreg_qacut[${cxt}]}|cut -d"," -f4)
-###################################################################
-# Then, parse the observed quality metrics.
-###################################################################
-flag=0
-qa_obs=$(tail -n1 ${quality[${cxt}]})
-qa_cc=$(echo ${qa_obs}|cut -d"," -f1)
-qa_coverage=$(echo ${qa_obs}|cut -d"," -f2)
-#qa_miss_struct=$(echo ${qa_obs}|cut -d"," -f2)
-#qa_miss_seq2struct=$(echo ${qa_obs}|cut -d"," -f3)
-#qa_miss_vox=$(echo ${qa_obs}|cut -d"," -f4)
-###################################################################
-# Determine whether each warrants flagging the coregistration
-# for poor quality.
-#
-# A negative or nonsense input for any value indicates never to
-# flag.
-###################################################################
-[[ $(echo $qa_cc'<'$qa_cc_min | bc -l) == 1 ]] \
-   && [[ $qa_cc_min =~ ${POSNUM} ]] \
-   && flag=1
-[[ $(echo $qa_coverage'<'$qa_coverage_min | bc -l) == 1 ]] \
-   && [[ $qa_coverage_min =~ ${POSNUM} ]] \
-   && flag=1
-#[[ $(echo $qa_miss_struct_max'<'$qa_miss_struct | bc -l) == 1 ]] \
-#   && [[ $qa_miss_struct_max =~ ${POSNUM} ]] \
-#   && flag=1
-#[[ $(echo $qa_miss_seq2struct_max'<'$qa_miss_seq2struct | bc -l) == 1 ]] \
-#   && [[ $qa_miss_seq2struct_max =~ ${POSNUM} ]] \
-#   && flag=1
-#[[ $(echo $qa_miss_vox_max'<'$qa_miss_vox | bc -l) == 1 ]] \
-#   && [[ $qa_miss_vox_max =~ ${POSNUM} ]] \
-#   && flag=1
-###################################################################
 # If coregistration was flagged for poor quality, repeat it.
 ###################################################################
-if [[ ${flag} == 1 ]]
+if (( ${flag} == 1 ))
    then
-   echo "WARNING: Coregistration was flagged using"
-   echo "         cost function ${coreg_cfunc[${cxt}]}"
+   routine                    @6    Retrying flagged coregistration
+   subroutine                 @6.1a WARNING: Coregistration was flagged using
+   subroutine                 @6.1b cost ${coreg_cfunc[${cxt}]}
    ################################################################
    # First, determine what cost function to use.
    ################################################################
-   [[ ${coreg_cfunc[${cxt}]} == ${ALTREG1} ]] \
-      && coreg_cfunc[${cxt}]=${ALTREG2} \
-      || coreg_cfunc[${cxt}]=${ALTREG1}
-   echo "Coregistration will be repeated using"
-   echo "  cost function ${coreg_cfunc[${cxt}]}"
-   echo "All other parameters remain the same."
-   echo "Only the coregistration with better results on"
-   echo "  the ${QADECIDE} metric will be retained."
+   if [[ ${coreg_cfunc[${cxt}]} == ${altreg1[${cxt}]} ]]
+      then
+      subroutine              @6.2
+      coreg_cfunc[${cxt}]=${altreg2[${cxt}]}
+   else
+      subroutine              @6.3
+      coreg_cfunc[${cxt}]=${altreg1[${cxt}]}
+   fi
+   subroutine                 @6.4a Coregistration will be repeated using
+   subroutine                 @6.4b cost ${coreg_cfunc[${cxt}]}
    ################################################################
    # Re-compute coregistration.
    ################################################################
-   flirt -in ${rVolBrain} \
+   exec_fsl \
+      flirt -in ${referenceVolumeBrain[${cxt}]} \
       -ref ${struct[${subjidx}]} \
       -dof 6 \
-      -out ${outbase}_seq2struct_alt \
-      -omat ${outbase}_seq2struct_alt.mat \
+      -out ${intermediate}_seq2struct_alt \
+      -omat ${intermediate}_seq2struct_alt.mat \
       -cost ${coreg_cfunc[${cxt}]} \
       ${refwt} \
       ${inwt}
    ################################################################
    # Compute the quality metrics for the new registration.
    ################################################################
-   fslmaths ${outbase}_seq2struct_alt -bin ${outbase}_seq2struct_alt_mask
-   fslmaths ${struct[${subjidx}]} -bin ${outbase}_struct_mask
-#   fslmaths ${outbase}_seq2struct_alt_mask \
-#      -sub ${outbase}_struct_mask \
-#      -thr 0 \
-#      -bin \
-#      ${outbase}_seq2struct_alt_maskdiff
-   fslmaths ${outbase}_struct_mask \
-      -sub ${outbase}_seq2struct_alt_mask \
-      -thr 0 \
-      -bin \
-      ${outbase}_struct_alt_maskdiff
-   qa_vol_struct_alt=$(fslstats ${outbase}_struct_mask -V\
-      |awk '{print $2}')
-   qa_vol_seq2struct_alt=$(fslstats ${outbase}_seq2struct_alt_mask -V\
-      |awk '{print $2}')
-   qa_vol_diff_alt=$(fslstats ${outbase}_struct_alt_maskdiff -V\
-      |awk '{print $2}')
-   qa_cov_obs_alt=$(echo "scale=10; 1 - ${qa_vol_diff_alt} / ${qa_vol_struct_alt}"|bc)
-   qa_cov_max_alt=$(echo "scale=10; ${qa_vol_seq2struct_alt} / ${qa_vol_struct_alt}"|bc)
-   [[ $(echo "${qa_cov_max} > 1"|bc -l) == 1 ]] && qa_cov_max=1
-   qa_coverage_alt=$(echo "scale=10; ${qa_cov_obs_alt} / ${qa_cov_max_alt}"|bc)
-   qa_cc_alt=$(fslcc -p 8 ${outbase}_seq2struct_alt_mask ${outbase}_struct_mask\
-      |awk '{print $3}')
-#   qa_miss_struct_alt=$(fslstats ${outbase}_seq2struct_alt_maskdiff -V\
-#      |awk '{print $2}')
-#   qa_miss_seq2struct_alt=$(fslstats ${outbase}_struct_alt_maskdiff -V\
-#      |awk '{print $2}')
-#   qa_miss_vox_alt=$(echo ${qa_miss_struct_alt} \* ${qa_miss_seq2struct_alt}\
-#      |bc)
-   echo "Recomputed cross-correlation: ${qa_cc_alt}"
-   echo "Recomputed coverage: ${qa_coverage_alt}"
+   exec_fsl \
+      fslmaths ${intermediate}_seq2struct_alt.nii.gz \
+      -bin ${intermediate}_seq2struct_alt_mask.nii.gz
+   registration_quality_alt=( $(exec_xcp \
+      maskOverlap.R \
+      -m ${intermediate}_seq2struct_alt_mask.nii.gz \
+      -r ${struct[${subjidx}]}) )
+   subroutine                 @5.1a Cross-correlation:   ${registration_quality_alt[0]}
+   subroutine                 @5.1b Coverage:            ${registration_quality_alt[1]}
+   subroutine                 @5.1c Jaccard coefficient: ${registration_quality_alt[2]}
+   subroutine                 @5.1d Dice coefficient:    ${registration_quality_alt[3]}
    ################################################################
    # Compare the metrics to the old ones. The decision is made
    # based on the QADECIDE constant if coregistration is repeated
    # due to failing quality control.
    ################################################################
-   ineq=gt
-   [[ ${QADECIDE} == qa_NOTUSEDANYMOREBUTITMIGHTBEINTHEFUTURE ]] && ineq=lt
-   QADECIDE_ALT=${QADECIDE}_alt
-   if [[ ${ineq} == gt ]]
+   decision=$(arithmetic ${registration_quality_alt[${qa_decide}]}'>'${registration_quality[${qa_decide}]})
+   if (( ${decision} == 1 ))
       then
-      decision=$(echo ${!QADECIDE_ALT}'>'${!QADECIDE}|bc -l)
+      subroutine              @5.2a The coregistration result improved; however, you
+      subroutine              @5.2c are encouraged to verify the results
+      exec_sys mv ${intermediate}_seq2struct_alt.mat ${e2smat[${cxt}]}
+      exec_fsl immv ${intermediate}_seq2struct_alt ${e2simg[${cxt}]}
+      exec_fsl immv ${intermediate}_seq2struct_alt_mask ${e2smask[${cxt}]}
+      exec_sys rm -f ${coreg_cross_corr[${cxt}]}
+      exec_sys rm -f ${coreg_coverage[${cxt}]}
+      exec_sys rm -f ${coreg_jaccard[${cxt}]}
+      exec_sys rm -f ${coreg_dice[${cxt}]}
+      echo  ${registration_quality_alt[0]} >> ${coreg_cross_corr[${cxt}]}
+      echo  ${registration_quality_alt[1]} >> ${coreg_coverage[${cxt}]}
+      echo  ${registration_quality_alt[2]} >> ${coreg_jaccard[${cxt}]}
+      echo  ${registration_quality_alt[3]} >> ${coreg_dice[${cxt}]}
+      write_output coreg_cfunc[${cxt}]
    else
-      decision=$(echo ${!QADECIDE_ALT}'<'${!QADECIDE}|bc -l)
+      subroutine              @5.3a Coregistration failed to improve. This may be 
+      subroutine              @5.3b attributable to incomplete acquisition coverage
    fi
-   if [[ ${decision} == 1 ]]
-      then
-      mv ${outbase}_seq2struct_alt.mat ${e2smat[${cxt}]}
-      immv ${outbase}_seq2struct_alt ${e2simg[${cxt}]}
-      immv ${outbase}_seq2struct_alt_mask ${e2smask[${cxt}]}
-      echo "coreg_cfunc[${cxt}]=${coreg_cfunc[${cxt}]}" \
-         >> $design_local
-      rm -f ${quality[${cxt}]}
-      echo "coregCrossCorr,coregCoverage"\
-         >> ${quality[${cxt}]}
-      echo "${qa_cc_alt},${qa_coverage_alt}"\
-         >> ${quality[${cxt}]}
-#      echo "coregCrossCorr,coreg_nvoxel_seq2struct_not_covered,coreg_nvoxel_struct_not_covered,coregCoverage_product"\
-#         >> ${quality[${cxt}]}
-#      echo ${qa_cc_alt},${qa_miss_struct_alt},${qa_miss_seq2struct_alt},${qa_miss_vox_alt}\
-#         >> ${quality[${cxt}]}
-      echo "The coregistration result improved; however, there"
-      echo "  is a chance that it still failed. You are encouraged "
-      echo "  to verify the results."
-   else
-      echo "Coregistration failed to improve with a change in"
-      echo "  the cost function. This may be attributable to"
-      echo "  incomplete coverage in the acquisitions."
-   fi
-else
-   echo "Coregistration passed quality control!"
+   routine_end
 fi
-echo "Processing step complete:"
-echo "Quality control"
 
 
 
@@ -738,74 +467,18 @@ echo "Quality control"
 # Prepare slice graphics as an additional assessor of
 # coregistration quality.
 ###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Preparing visual aids for coregistration quality"
-[[ -e ${outdir}/${prefix}_targetVolume${ext} ]] \
-   && unlink ${outdir}/${prefix}_targetVolume${ext}
-ln -s ${struct[${subjidx}]} ${outdir}/${prefix}_targetVolume${ext}
-slicer ${e2simg[${cxt}]} ${struct[${subjidx}]} \
-   -s 2 \
-   -x 0.35 ${outdir}/${prefix}_sla.png \
-   -x 0.45 ${outdir}/${prefix}_slb.png \
-   -x 0.55 ${outdir}/${prefix}_slc.png \
-   -x 0.65 ${outdir}/${prefix}_sld.png \
-   -y 0.35 ${outdir}/${prefix}_sle.png \
-   -y 0.45 ${outdir}/${prefix}_slf.png \
-   -y 0.55 ${outdir}/${prefix}_slg.png \
-   -y 0.65 ${outdir}/${prefix}_slh.png \
-   -z 0.35 ${outdir}/${prefix}_sli.png \
-   -z 0.45 ${outdir}/${prefix}_slj.png \
-   -z 0.55 ${outdir}/${prefix}_slk.png \
-   -z 0.65 ${outdir}/${prefix}_sll.png
-pngappend ${outdir}/${prefix}_sla.png \
-   + ${outdir}/${prefix}_slb.png \
-   + ${outdir}/${prefix}_slc.png \
-   + ${outdir}/${prefix}_sld.png \
-   + ${outdir}/${prefix}_sle.png \
-   + ${outdir}/${prefix}_slf.png \
-   + ${outdir}/${prefix}_slg.png \
-   + ${outdir}/${prefix}_slh.png \
-   + ${outdir}/${prefix}_sli.png \
-   + ${outdir}/${prefix}_slj.png \
-   + ${outdir}/${prefix}_slk.png \
-   + ${outdir}/${prefix}_sll.png \
-   ${outdir}/${prefix}_seq2struct1.png
-slicer ${struct[${subjidx}]} ${e2simg[${cxt}]} \
-   -s 2 \
-   -x 0.35 ${outdir}/${prefix}_sla.png \
-   -x 0.45 ${outdir}/${prefix}_slb.png \
-   -x 0.55 ${outdir}/${prefix}_slc.png \
-   -x 0.65 ${outdir}/${prefix}_sld.png \
-   -y 0.35 ${outdir}/${prefix}_sle.png \
-   -y 0.45 ${outdir}/${prefix}_slf.png \
-   -y 0.55 ${outdir}/${prefix}_slg.png \
-   -y 0.65 ${outdir}/${prefix}_slh.png \
-   -z 0.35 ${outdir}/${prefix}_sli.png \
-   -z 0.45 ${outdir}/${prefix}_slj.png \
-   -z 0.55 ${outdir}/${prefix}_slk.png \
-   -z 0.65 ${outdir}/${prefix}_sll.png
-pngappend ${outdir}/${prefix}_sla.png \
-   + ${outdir}/${prefix}_slb.png \
-   + ${outdir}/${prefix}_slc.png \
-   + ${outdir}/${prefix}_sld.png \
-   + ${outdir}/${prefix}_sle.png \
-   + ${outdir}/${prefix}_slf.png \
-   + ${outdir}/${prefix}_slg.png \
-   + ${outdir}/${prefix}_slh.png \
-   + ${outdir}/${prefix}_sli.png \
-   + ${outdir}/${prefix}_slj.png \
-   + ${outdir}/${prefix}_slk.png \
-   + ${outdir}/${prefix}_sll.png \
-   ${outdir}/${prefix}_seq2struct2.png
-pngappend ${outdir}/${prefix}_seq2struct1.png \
-   - ${outdir}/${prefix}_seq2struct2.png \
-   ${outdir}/${prefix}_seq2struct.png
-rm -f ${outdir}/${prefix}_sl*.png \
-   ${outdir}/${prefix}_seq2struct1.png \
-   ${outdir}/${prefix}_seq2struct2.png
-echo "Processing step complete:"
-echo "Coregistration visuals"
+routine                       @6    Coregistration visual aids
+[[ -e ${outdir}/${prefix}_targetVolume.nii.gz ]] \
+   && exec_sys unlink ${outdir}/${prefix}_targetVolume.nii.gz
+exec_sys ln -s ${struct[${subjidx}]} ${outdir}/${prefix}_targetVolume.nii.gz
+subroutine                    @6.1  Slicewise rendering
+exec_xcp \
+   regslicer \
+   -s ${e2simg[${cxt}]} \
+   -t ${struct[${subjidx}]}
+   -i ${intermediate}
+   -o ${outdir}/${prefix}_seq2struct
+routine_end
 
 
 
@@ -818,12 +491,11 @@ echo "Coregistration visuals"
 # the subject's native analyte space, allowing for accelerated
 # pipelines and reduced disk usage.
 ###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Derivative transformations"
-echo " * Computing inverse transformation"
-convert_xfm \
-   -omat ${outbase}_struct2seq.mat \
+routine                       @7    Derivative transformations
+subroutine                    @7.1  Computing inverse transformation
+exec_fsl \
+   convert_xfm \
+   -omat ${s2emat[${cxt}]} \
    -inverse ${e2smat[${cxt}]}
 ###################################################################
 # The XCP Engine uses ANTs-based registration; the
@@ -831,17 +503,13 @@ convert_xfm \
 # convert the FSL output into a format that can be read by ANTs.
 ###################################################################
 if [[ ! -e ${seq2struct[${cxt}]} ]] \
-   || [[ "${coreg_rerun[${cxt}]}" != "N" ]]
+|| rerun
    then
-   structpath=$(\ls ${struct[${subjidx}]}*)
-   for i in ${structpath}
-      do
-      [[ $(imtest ${i}) == 1 ]] && structpath=${i} && break
-   done
-   echo " * Converting coregistration .mat to ANTs format"
-	c3d_affine_tool \
-	   -src ${rVolBrain}${ext} \
-	   -ref ${structpath} \
+   subroutine                 @7.2  Converting coregistration .mat to ANTs format
+	exec_c3d \
+	   c3d_affine_tool \
+	   -src ${referenceVolumeBrain[${cxt}]} \
+	   -ref ${struct[${subjidx}]} \
 	   ${e2smat[${cxt}]} \
 		-fsl2ras \
 		-oitk ${seq2struct[${cxt}]}
@@ -852,162 +520,39 @@ fi
 # convert the FSL output into a format that can be read by ANTs.
 ###################################################################
 if [[ ! -e ${struct2seq[${cxt}]} ]] \
-   || [[ "${coreg_rerun[${cxt}]}" != "N" ]]
+|| rerun
    then
-   structpath=$(\ls ${struct[${subjidx}]}*)
-   for i in ${structpath}
-      do
-      [[ $(imtest ${i}) == 1 ]] && structpath=${i} && break
-   done
-   echo " * Converting inverse coregistration .mat to ANTs format"
-	c3d_affine_tool \
-	   -src ${structpath} \
-	   -ref ${rVolBrain}${ext} \
-	   ${outbase}_struct2seq.mat \
+   subroutine                 @7.3  Converting inverse coregistration .mat to ANTs format
+	exec_c3d \
+	   c3d_affine_tool \
+	   -src ${struct[${subjidx}]} \
+	   -ref ${referenceVolumeBrain[${cxt}]} \
+	   ${s2emat[${cxt}]} \
 		-fsl2ras \
 		-oitk ${struct2seq[${cxt}]}
-   mv -f ${outbase}_struct2seq.mat ${s2emat[${cxt}]}
 fi
 ###################################################################
 # Compute the structural image in analytic space, and generate
 # a mask for that image.
 ###################################################################
 if [[ ! -e ${s2emask[${cxt}]} ]] \
-   || [[ "${coreg_rerun[${cxt}]}" != "N" ]]
+|| rerun
    then
-   ${ANTSPATH}/antsApplyTransforms \
+   subroutine                 @7.4  Preparing inverse mask
+   exec_ants \
+      antsApplyTransforms \
       -e 3 -d 3 \
-      -r ${referenceVolumeBrain[${subjidx}]}${ext} \
-      -o ${s2eimg[${cxt}]}${ext} \
+      -r ${referenceVolumeBrain[${subjidx}]} \
+      -o ${s2eimg[${cxt}]} \
       -i ${struct[${subjidx}]} \
       -t ${struct2seq[${cxt}]}
-   fslmaths ${s2eimg[${cxt}]} -bin ${s2emask[${cxt}]}
+   exec_fsl fslmaths ${s2eimg[${cxt}]} -bin ${s2emask[${cxt}]}
 fi
-echo "Processing step complete:"
-echo "Derivative transforms"
+routine_end
 
 
 
 
 
-###################################################################
-# write remaining output paths to local design file so that
-# they may be used further along the pipeline
-###################################################################
-echo ""; echo ""; echo ""
-echo "Writing outputs..."
-###################################################################
-   # OUTPUT: seq2struct
-   # Write the affine transform from sequence to structural
-   # space to the localised design file.
-###################################################################
-echo "seq2struct[${subjidx}]=${seq2struct[${cxt}]}" \
-   >> $design_local
-###################################################################
-# OUTPUT: struct2seq
-# Test whether the transform from structural to sequence
-# space exists. If it does, add it to the localised design
-# file.
-###################################################################
-if [[ -e "${struct2seq[${cxt}]}" ]]
-   then
-   echo "struct2seq[${subjidx}]=${struct2seq[${cxt}]}" \
-      >> $design_local
-fi
-###################################################################
-# OUTPUT: quality
-# Test whether a text file containing metrics of coregistration
-# quality exists. If it does, then add it to the localised
-# design file.
-###################################################################
-if [[ -e "${quality[${cxt}]}" ]]
-   then
-   echo "coreg_quality[${subjidx}]=${quality[${cxt}]}" \
-      >> $design_local
-   qvars=${qvars},$(head -n1 ${quality[${cxt}]})
-   qvals=${qvals},$(tail -n1 ${quality[${cxt}]})
-fi
-###################################################################
-# OUTPUT: e2simg e2smask s2eimg s2emask
-# Test whether each warped volume and each binarised mask exists
-# as an image. If it does, then add it to the localised design
-# file.
-###################################################################
-if [[ $(imtest ${s2eimg[${cxt}]}) == "1" ]]
-   then
-   echo "s2eimg[${subjidx}]=${s2eimg[${cxt}]}" >> $design_local
-fi
-if [[ $(imtest ${e2simg[${cxt}]}) == "1" ]]
-   then
-   echo "e2simg[${subjidx}]=${e2simg[${cxt}]}" >> $design_local
-fi
-if [[ $(imtest ${s2emask[${cxt}]}) == "1" ]]
-   then
-   echo "s2emask[${subjidx}]=${s2emask[${cxt}]}" >> $design_local
-fi
-if [[ $(imtest ${e2smask[${cxt}]}) == "1" ]]
-   then
-   echo "e2smask[${subjidx}]=${e2smask[${cxt}]}" >> $design_local
-fi
-###################################################################
-# OUTPUT: referenceVolume
-# Test whether a reference volume exists as an image. If
-# it does, add it to the index of derivatives and to
-# the localised design file.
-#
-# THIS SHOULD NOT EXIST IN NEARLY ANY CASE. If it does, ensure
-# that your pipeline is behaving as intended.
-###################################################################
-if [[ $(imtest ${referenceVolume[${cxt}]}) == "1" ]]
-   then
-   echo "referenceVolume[${subjidx}]=${referenceVolume[${cxt}]}" \
-      >> $design_local
-   echo "#referenceVolume#${referenceVolume[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: brain-extracted referenceVolume
-# Test whether a brain-extracted reference volume exists.
-# In most cases, it will not, as the coregistration module only
-# performs brain extraction on the reference volume if
-# prestats or another module has not already done so. If it
-# does, add it to the index of derivatives and to the localised
-# design file.
-###################################################################
-if [[ $(imtest "${referenceVolumeBrain[${cxt}]}") == "1" ]]
-   then
-   echo "referenceVolumeBrain[${subjidx}]=${referenceVolumeBrain[${cxt}]}"\
-      >> $design_local
-   echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" \
-      >> ${auxImgs[${subjidx}]}
-fi
-
-
-
-
-
-###################################################################
-# CLEANUP
-#  * Remove any temporary files if cleanup is enabled.
-#  * Update the quality index.
-#  * Update the audit file.
-###################################################################
-if [[ "${coreg_cleanup[${cxt}]}" == "Y" ]]
-   then
-   echo ""; echo ""; echo ""
-   echo "Cleaning up..."
-   rm -rf ${outdir}/*~TEMP~*
-fi
-rm -f ${quality}
-echo ${qvars} >> ${quality}
-echo ${qvals} >> ${quality}
-prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-modaudit=$(expr ${prefields} + ${cxt} + 1)
-subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-replacement=$(echo ${subjaudit}\
-   |sed s@[^,]*@@${modaudit}\
-   |sed s@',,'@',1,'@ \
-   |sed s@',$'@',1'@g)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
-
-echo "Module complete"
+subroutine                    @0.1
+completion
