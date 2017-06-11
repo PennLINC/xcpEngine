@@ -68,26 +68,26 @@ if(vol1 <= vol2) {
 # 2. Cross-correlation
 ###################################################################
 cc <- cor(mask1,mask2)
-cat('· [Cross-correlation]\n', file=stderr())
+cat('· [Cross-correlation:   ',cc,']\n', file=stderr())
 cat(cc, '\n')
 
 ###################################################################
 # 3. Coverage
 ###################################################################
 cov <- vol_intersect/vol_small
-cat('· [Coverage]\n', file=stderr())
+cat('· [Coverage:            ',cov,']\n', file=stderr())
 cat(cov, '\n')
 
 ###################################################################
 # 4. Jaccard
 ###################################################################
 jacc <- vol_intersect/vol_union
-cat('· [Jaccard coefficient]\n', file=stderr())
+cat('· [Jaccard coefficient: ',jacc,']\n', file=stderr())
 cat(jacc, '\n')
 
 ###################################################################
 # 5. Dice
 ###################################################################
 dice <- 2 * vol_intersect / (vol1 + vol2)
-cat('· [Dice coefficient]\n', file=stderr())
+cat('· [Dice coefficient:    ',dice,']\n', file=stderr())
 cat(dice, '\n')
