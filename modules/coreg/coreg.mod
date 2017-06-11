@@ -208,9 +208,6 @@ routine_end
 ###################################################################
 # If BBR is the cost function being used, a white matter mask
 # must be extracted from the user-specified tissue segmentation.
-#  * This mask is written to the path ${outbase}_t1wm. It is
-#    considered a temporary file, so it will be deleted in the
-#    cleanup phase.
 ###################################################################
 if [[ ${coreg_cfunc[${cxt}]} == bbr ]]
    then
@@ -295,27 +292,14 @@ if [[ ! -e ${e2smat[${cxt}]} ]] \
    flirt -in ${referenceVolumeBrain[${cxt}]} \
       -ref ${struct[${subjidx}]} \
       -dof 6 \
-      -out ${intermediate}_seq2struct \
-      -omat ${intermediate}_seq2struct.mat \
+      -out ${e2simg[${cxt}]} \
+      -omat ${e2smat[${cxt}]} \
       -cost ${coreg_cfunc[${cxt}]} \
       ${refwt} \
       ${inwt} \
       ${wmmaskincl}
 else
    subroutine                 @4.2  Coregistration already run
-fi
-###################################################################
-# Move outputs.
-###################################################################
-if is_image ${outbase}_seq2struct) == 1
-   then
-   subroutine                 @4.3
-   exec_fsl immv ${outbase}_seq2struct ${e2simg[${cxt}]}
-fi
-if [[ ! -e ${e2smat[${cxt}]} ]]
-   then
-   subroutine                 @4.4
-   exec_sys mv -f ${outbase}_seq2struct.mat ${e2smat[${cxt}]}
 fi
 routine_end
 
@@ -343,10 +327,6 @@ if [[ ! -e ${quality[${cxt}]} ]] \
    echo  ${registration_quality[1]} >> ${coreg_coverage[${cxt}]}
    echo  ${registration_quality[2]} >> ${coreg_jaccard[${cxt}]}
    echo  ${registration_quality[3]} >> ${coreg_dice[${cxt}]}
-   subroutine                 @5.1a Cross-correlation:   ${registration_quality[0]}
-   subroutine                 @5.1b Coverage:            ${registration_quality[1]}
-   subroutine                 @5.1c Jaccard coefficient: ${registration_quality[2]}
-   subroutine                 @5.1d Dice coefficient:    ${registration_quality[3]}
    ################################################################
    # If the subject fails quality control, then repeat
    # coregistration using an alternative metric: crosscorrelation.
@@ -426,10 +406,6 @@ if (( ${flag} == 1 ))
       maskOverlap.R \
       -m ${intermediate}_seq2struct_alt_mask.nii.gz \
       -r ${struct[${subjidx}]}) )
-   subroutine                 @5.1a Cross-correlation:   ${registration_quality_alt[0]}
-   subroutine                 @5.1b Coverage:            ${registration_quality_alt[1]}
-   subroutine                 @5.1c Jaccard coefficient: ${registration_quality_alt[2]}
-   subroutine                 @5.1d Dice coefficient:    ${registration_quality_alt[3]}
    ################################################################
    # Compare the metrics to the old ones. The decision is made
    # based on the QADECIDE constant if coregistration is repeated
@@ -438,8 +414,8 @@ if (( ${flag} == 1 ))
    decision=$(arithmetic ${registration_quality_alt[${qa_decide}]}'>'${registration_quality[${qa_decide}]})
    if (( ${decision} == 1 ))
       then
-      subroutine              @5.2a The coregistration result improved; however, you
-      subroutine              @5.2c are encouraged to verify the results
+      subroutine              @6.5a The coregistration result improved; however, you
+      subroutine              @6.5b are encouraged to verify the results
       exec_sys mv ${intermediate}_seq2struct_alt.mat ${e2smat[${cxt}]}
       exec_fsl immv ${intermediate}_seq2struct_alt ${e2simg[${cxt}]}
       exec_fsl immv ${intermediate}_seq2struct_alt_mask ${e2smask[${cxt}]}
@@ -453,8 +429,8 @@ if (( ${flag} == 1 ))
       echo  ${registration_quality_alt[3]} >> ${coreg_dice[${cxt}]}
       write_output coreg_cfunc[${cxt}]
    else
-      subroutine              @5.3a Coregistration failed to improve. This may be 
-      subroutine              @5.3b attributable to incomplete acquisition coverage
+      subroutine              @6.6a Coregistration failed to improve. This may be 
+      subroutine              @6.6b attributable to incomplete acquisition coverage
    fi
    routine_end
 fi
@@ -467,11 +443,11 @@ fi
 # Prepare slice graphics as an additional assessor of
 # coregistration quality.
 ###################################################################
-routine                       @6    Coregistration visual aids
+routine                       @7    Coregistration visual aids
 [[ -e ${outdir}/${prefix}_targetVolume.nii.gz ]] \
    && exec_sys unlink ${outdir}/${prefix}_targetVolume.nii.gz
 exec_sys ln -s ${struct[${subjidx}]} ${outdir}/${prefix}_targetVolume.nii.gz
-subroutine                    @6.1  Slicewise rendering
+subroutine                    @7.1  Slicewise rendering
 exec_xcp \
    regslicer \
    -s ${e2simg[${cxt}]} \
@@ -491,8 +467,8 @@ routine_end
 # the subject's native analyte space, allowing for accelerated
 # pipelines and reduced disk usage.
 ###################################################################
-routine                       @7    Derivative transformations
-subroutine                    @7.1  Computing inverse transformation
+routine                       @8    Derivative transformations
+subroutine                    @8.1  Computing inverse transformation
 exec_fsl \
    convert_xfm \
    -omat ${s2emat[${cxt}]} \
@@ -505,7 +481,7 @@ exec_fsl \
 if [[ ! -e ${seq2struct[${cxt}]} ]] \
 || rerun
    then
-   subroutine                 @7.2  Converting coregistration .mat to ANTs format
+   subroutine                 @8.2  Converting coregistration .mat to ANTs format
 	exec_c3d \
 	   c3d_affine_tool \
 	   -src ${referenceVolumeBrain[${cxt}]} \
@@ -522,7 +498,7 @@ fi
 if [[ ! -e ${struct2seq[${cxt}]} ]] \
 || rerun
    then
-   subroutine                 @7.3  Converting inverse coregistration .mat to ANTs format
+   subroutine                 @8.3  Converting inverse coregistration .mat to ANTs format
 	exec_c3d \
 	   c3d_affine_tool \
 	   -src ${struct[${subjidx}]} \
@@ -538,7 +514,7 @@ fi
 if [[ ! -e ${s2emask[${cxt}]} ]] \
 || rerun
    then
-   subroutine                 @7.4  Preparing inverse mask
+   subroutine                 @8.4  Preparing inverse mask
    exec_ants \
       antsApplyTransforms \
       -e 3 -d 3 \
