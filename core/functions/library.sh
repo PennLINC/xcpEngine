@@ -31,6 +31,9 @@ source ${LIBRARY}/is+integer
 source ${LIBRARY}/is_numeric
 source ${LIBRARY}/is+numeric
 source ${LIBRARY}/load_derivatives
+source ${LIBRARY}/nat2native
+source ${LIBRARY}/nat2standard
+source ${LIBRARY}/nat2structural
 source ${LIBRARY}/output
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
@@ -39,6 +42,12 @@ source ${LIBRARY}/rerun
 source ${LIBRARY}/return_field
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
+source ${LIBRARY}/std2native
+source ${LIBRARY}/std2standard
+source ${LIBRARY}/std2structural
+source ${LIBRARY}/str2native
+source ${LIBRARY}/str2standard
+source ${LIBRARY}/str2structural
 source ${LIBRARY}/subroutine
 source ${LIBRARY}/verbose
 source ${LIBRARY}/write_derivative
