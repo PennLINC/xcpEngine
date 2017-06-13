@@ -196,32 +196,11 @@ for c in $(seq 1 ${#tissue_classes})
       # EPI space. If the BOLD timeseries is already standardised,
       # then instead move it to standard space.
       #############################################################
-      if [[ ${space} == standard ]]
-         then
-         subroutine           @3.3
-         exec_ants antsApplyTransforms \
-            -i ${mask}.nii.gz \
-            -o ${!class_mask} \
-            -r ${template} \
-            -n NearestNeighbor \
-            ${rigid} \
-            ${affine} \
-            ${warp} \
-            ${resample}
-      elif [[ ${space} == structural ]]
-         then
-         subroutine           @3.4
-         exec_fsl immv ${mask}.nii.gz ${!class_mask}
-      else
-         subroutine           @3.5
-         exec_ants antsApplyTransforms \
-            -i ${mask}.nii.gz \
-            -o ${!class_mask} \
-            -r ${referenceVolumeBrain[${subjidx}]} \
-            -n NearestNeighbor \
-            -t ${struct2seq[${subjidx}]}
-      fi
-      
+      ${XCPEDIR}/core/map2space \
+         str2${space} \
+         ${mask}.nii.gz \
+         ${!class_mask} \
+         NearestNeighbor
       #############################################################
       # Determine whether to extract a mean timecourse or to apply
       # aCompCor to extract PC timecourses.
@@ -592,7 +571,7 @@ routine_end
 
 
 
-
+routine                       @11   Validating confound model
 ###################################################################
 # Verify that the confound matrix produced by the confound module
 # contains the expected number of time series.
@@ -617,14 +596,14 @@ for cts in ${confound_custom_ts[@]}
 done
 if (( ${obs} == ${exp} ))
    then
-   subroutine                 @0.1
+   subroutine                 @11.1
 else
-   subroutine                 @0.2  Dimensions of the existing confound matrix are incorrect
+   subroutine                 @11.2 Dimensions of the existing confound matrix are incorrect
 fi
+routine_end
 
 
 
 
 
-subroutine                    @0.3
 completion
