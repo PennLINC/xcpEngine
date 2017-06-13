@@ -14,69 +14,73 @@
 ###################################################################
 # Constants
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly POSNUM='^[0-9]+([.][0-9]+)?$'
-readonly POSINT='^[0-9]+$'
-export FSLOUTPUTTYPE=NIFTI_GZ
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
 
 ###################################################################
 # Usage function
 ###################################################################
 Usage(){
-   echo ""; echo ""; echo ""
-   echo "Usage: `basename $0` -i <input> -o <output> <options>"
-   echo ""
-   echo "Compulsory arguments:"
-   echo " -i : Input timeseries"
-   echo "      The 1D (or 2D) timeseries to be despiked"
-   echo ""
-   echo "Optional arguments (copied from 3dDespike):"
-   echo ""
-   echo " -o : Prefix of despiked output [default 'despike']"
-   echo ""
-   echo " -b : Despike using 3dBandpass rather than 3dDespike. "
-   echo "      This is a simpler procedure that will not handle "
-   echo "      drift or activation as well. All extraneous inputs "
-   echo "      will be ignored if this is enabled."
-   echo ""
-   echo " -r : Repetition time of timeseries [default 1]"
-   echo ""
-   echo " -l : Ignore leading points [default 0]"
-   echo "      Ignore the first t points in the timeseries: "
-   echo "      these values will be copied to the output "
-   echo "      dataset without modification."
-   echo ""
-   echo " -f : Curve fit order [default nvol/30]"
-   echo "      Set the curve fit order to L:"
-   echo "      the curve that is fit to voxel data v(t) is"
-   echo ""
-   echo "                            k=L [        (2*PI*k*t)          (2*PI*k*t) ]"
-   echo "      f(t) = a+b*t+c*t*t + SUM  [ d * sin(--------) + e * cos(--------) ]"
-   echo "                            k=1 [  k     (    T   )    k     (    T   ) ]"
-   echo ""
-   echo "      where T = duration of time series;"
-   echo "      the a,b,c,d,e parameters are chosen to minimize"
-   echo "      the sum over t of |v(t)-f(t)| (L1 regression);"
-   echo "      this type of fitting is is insensitive to large"
-   echo "      spikes in the data."
-   echo ""
-   echo " -c : Spike cut values [default 2.5,4.0]"
-   echo ""
-   echo " -s : Output path for an index of the number of spikes in "
-   echo "      each column of the input timeseries"
-   echo ""
-   echo " -q : Toggle quiet processing: omit informational messages"
-   echo ""
-   echo " -n : Use the 'NEW' method for despiking. This will "
-   echo "      markedly accelerate the despiking procedure for "
-   echo "      timeseries with over "
-   echo ""
-   echo " -t : Trace"
-   echo "      If this flag is set, then any commands called by the"
-   echo "      1dDespike routine will be explicitly printed to the"
-   echo "      console or log."
-   echo ""; echo ""; echo ""
+cat << endstream
+___________________________________________________________________
+
+
+Usage: 1dDespike -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -i : Input timeseries
+      The 1D (or 2D) timeseries to be despiked
+
+Optional arguments (copied from 3dDespike):
+
+ -o : Prefix of despiked output [default 'despike']
+ 
+ -x : Output path for temporary or intermediate files.
+
+ -b : Despike using 3dBandpass rather than 3dDespike. 
+      This is a simpler procedure that will not handle 
+      drift or activation as well. All extraneous inputs 
+      will be ignored if this is enabled.
+
+ -r : Repetition time of timeseries [default 1]
+
+ -l : Ignore leading points [default 0]
+      Ignore the first t points in the timeseries: 
+      these values will be copied to the output 
+      dataset without modification.
+
+ -f : Curve fit order [default nvol/30]
+      Set the curve fit order to L:
+      the curve that is fit to voxel data v(t) is
+
+                            k=L [        (2*PI*k*t)          (2*PI*k*t) ]
+      f(t) = a+b*t+c*t*t + SUM  [ d * sin(--------) + e * cos(--------) ]
+                            k=1 [  k     (    T   )    k     (    T   ) ]
+
+      where T = duration of time series;
+      the a,b,c,d,e parameters are chosen to minimize
+      the sum over t of |v(t)-f(t)| (L1 regression);
+      this type of fitting is is insensitive to large
+      spikes in the data.
+
+ -c : Spike cut values [default 2.5,4.0]
+
+ -s : Output path for an index of the number of spikes in 
+      each column of the input timeseries
+
+ -q : Toggle quiet processing: omit informational messages
+
+ -n : Use the 'NEW' method for despiking. This will 
+      markedly accelerate the despiking procedure for 
+      timeseries with more volumes.
+
+ -t : Trace"
+      If this flag is set, then any commands called by the
+      1dDespike routine will be explicitly printed to the
+      console or log.
+
+
+endstream
 }
 
 
@@ -100,7 +104,7 @@ t_rep=1
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:l:f:c:s:bnqt" OPTION
+while getopts "i:o:x:l:f:c:s:bnqt" OPTION
    do
    case $OPTION in
    i)
@@ -113,13 +117,15 @@ while getopts "i:o:l:f:c:s:bnqt" OPTION
       outbase=$(basename ${out})
       outpfx=${outdir}/~TEMP~
       ;;
+   x)
+      intermediate=${OPTARG}
+      ;;
    l)
-      if [[ ${OPTARG} =~ ${POSINT} ]]
+      if is+integer ${OPTARG}
          then
          ignore="-ignore ${OPTARG}"
       else
-         echo "Number of leading points to ignore must"
-         echo "be a positive integer."
+         echo "Number of leading points to ignore must be a positive integer."
          Usage
          exit
       fi
@@ -130,10 +136,10 @@ while getopts "i:o:l:f:c:s:bnqt" OPTION
    c)
       scut1=$(echo ${OPTARG}|cut -d',' -f1)
       scut2=$(echo ${OPTARG}|cut -d',' -f2)
-      ! [[ ${scut1} =~ ${POSNUM} ]] \
+      ! is+numeric ${scut1} \
          && Usage \
          && exit
-      ! [[ ${scut2} =~ ${POSNUM} ]] \
+      ! is+numeric ${scut2} \
          && Usage \
          && exit
       scut="-cut ${scut1} ${scut2}"
@@ -145,10 +151,10 @@ while getopts "i:o:l:f:c:s:bnqt" OPTION
       bpopt=1
       ;;
    n)
-      new="-NEW"
+      new=-NEW
       ;;
    q)
-      quiet="-quiet"
+      quiet=-quiet
       ;;
    t)
       set -x
@@ -171,6 +177,7 @@ shift $((OPTIND-1))
 # specified.
 ###################################################################
 [[ -z ${ts} ]] && Usage && exit 1
+[[ -z ${intermediate} ]] && intermediate=${outpfx}
 ext=$(echo ${out}|cut -d'.' -f1 --complement)
 [[ ${ext} == ${out} ]] && out=${out}.1D
 
@@ -178,44 +185,42 @@ ext=$(echo ${out}|cut -d'.' -f1 --complement)
 
 
 
-
+subroutine                 @u.1
 ###################################################################
 # Convert the input timeseries to an image
 # * Obtain the base name of the current 1D timeseries file.
 ###################################################################
-tsname=$(basename ${ts}|cut -d"." -f1)
-###################################################################
-# * Determine the number of volumes in the current timeseries.
-###################################################################
-nvol=$(cat ${ts}|wc -l)
+tsname=$(return_field ${ts} -1 '/' 1 '.')
 ###################################################################
 # * Determine the number of timeseries in the 1D timeseries
 #   file by dividing the total number of words in the file
 #   by the number of time points (volumes).
 ###################################################################
-nfld=$(wc -w ${ts}|cut -d" " -f1)
-nfld=$(echo ${nfld} ${nvol}|awk '{print $1/$2}')
+nfld=( $(exec_sys wc ${ts}) )
+nfld=$(arithmetic ${nfld[1]}/${nfld[0]})
 ###################################################################
 # * Through trial and error, we have found that the desired
 #   result is obtained only if the timeseries is transposed
 #   first.
 ###################################################################
-1dtranspose ${ts} ${outpfx}${tsname}_tp.1D
+subroutine                 @u.2
+exec_afni 1dtranspose ${ts} ${intermediate}${tsname}_tp.1D
 ###################################################################
 # * Next, convert it to a NIfTI timeseries.
 ###################################################################
-fslascii2img ${outpfx}${tsname}_tp.1D \
+exec_fsl fslascii2img ${intermediate}${tsname}_tp.1D \
    ${nfld} 1 1 \
    ${nvol} 1 1 1 \
    ${t_rep} \
-   ${outpfx}${tsname}.nii.gz
+   ${intermediate}${tsname}.nii.gz
 ###################################################################
 # And then convert it back to a .1D file, but with a 3D header.
 # I certainly hope that there is a better way of doing this, but
 # for now, it appears that this approach works.
 ###################################################################
-3dcopy ${outpfx}${tsname}.nii.gz \
-   ${outpfx}${tsname}
+subroutine                 @u.3
+exec_afni 3dcopy ${intermediate}${tsname}.nii.gz \
+   ${intermediate}${tsname}
 
 
 
@@ -225,15 +230,17 @@ fslascii2img ${outpfx}${tsname}_tp.1D \
 # Despike the input timeseries
 # * Note that the file extension is hard-coded here.
 ###################################################################
-if [[ ${bpopt} == 1 ]]
+if (( ${bpopt} == 1 ))
    then
-   3dBandpass \
+   subroutine              @u.4
+   exec_afni 3dBandpass \
       -despike \
-      -prefix ${outpfx}${tsname}_despike \
-      ${outpfx}${tsname}.1D \
+      -prefix ${intermediate}${tsname}_despike \
+      ${intermediate}${tsname}.1D \
       2> /dev/null
 else
-   3dDespike \
+   subroutine              @u.5
+   exec_afni 3dDespike \
       ${ignore} \
       ${corder} \
       ${scut} \
@@ -241,8 +248,8 @@ else
       ${new} \
       ${quiet} \
       -nomask \
-      -prefix ${outpfx}${tsname}_despike \
-      ${outpfx}${tsname}.1D \
+      -prefix ${intermediate}${tsname}_despike \
+      ${intermediate}${tsname}.1D \
       2> /dev/null
 fi
 
@@ -253,13 +260,15 @@ fi
 ###################################################################
 # And now strip the AFNI header information from the 1D file.
 ###################################################################
-data_dsp_nohd=$(cat ${outpfx}${tsname}_despike.1D|grep -v '#')
-rm -f ${outpfx}${tsname}_despike.1D
-echo "${data_dsp_nohd}" >> ${outpfx}${tsname}_despike.1D
+subroutine                 @u.6
+data_dsp_nohd=$(cat ${intermediate}${tsname}_despike.1D|grep -v '#')
+exec_sys rm -f ${intermediate}${tsname}_despike.1D
+echo "${data_dsp_nohd}" >> ${intermediate}${tsname}_despike.1D
 ###################################################################
 # Finally, transpose it back.
 ###################################################################
-1dtranspose ${outpfx}${tsname}_despike.1D ${out}
+subroutine                 @u.7
+exec_afni 1dtranspose ${intermediate}${tsname}_despike.1D ${out}
 
 
 
@@ -268,7 +277,7 @@ echo "${data_dsp_nohd}" >> ${outpfx}${tsname}_despike.1D
 ###################################################################
 # Clean up intermediate files.
 ###################################################################
-rm -rf ${outpfx}${tsname}_despike.1D \
-   ${outpfx}${tsname}.1D \
-   ${outpfx}${tsname}.nii.gz \
-   ${outpfx}${tsname}_tp.1D
+exec_sys rm -rf ${intermediate}${tsname}_despike.1D \
+   ${intermediate}${tsname}.1D \
+   ${intermediate}${tsname}.nii.gz \
+   ${intermediate}${tsname}_tp.1D
