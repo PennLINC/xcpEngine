@@ -2,7 +2,7 @@
 ___________________________________________________________________
 
 Usage for pipeline localiser:
-<module_name>.mod -d <design> <options>
+xcpLocaliser -d <design> <options>
 
 Compulsory arguments:
  -d : Design file for pipeline:

@@ -52,8 +52,11 @@ shift $((OPTIND-1))
 # Ensure that the compulsory design_local variable has been defined
 # reasonably.
 ###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
+if (( ${usage_flag} == 1 ))
+   then
+   cat ${XCPEDIR}/core/USAGE_MOD
+   exit
+fi
 ###################################################################
 # Set trace status, if applicable
 # If trace is set to 1, then all commands called by the pipeline
