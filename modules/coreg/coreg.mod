@@ -35,8 +35,10 @@ completion() {
    write_output      e2smat
    write_output      s2emat
    
-   quality_metric    coregCoverage            coreg_coverage
-   quality_metric    coregCrossCorr           coreg_cross_corr
+   quality_metric    coregCoverage           coreg_coverage
+   quality_metric    coregCrossCorr          coreg_cross_corr
+   quality_metric    coregJaccard            coreg_jaccard
+   quality_metric    coregDice               coreg_dice
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -68,6 +70,8 @@ output      e2smat                  ${prefix}_seq2struct.mat
 output      s2emat                  ${prefix}_struct2seq.mat
 output      coreg_cross_corr        ${prefix}_coregCrossCorr.txt
 output      coreg_coverage          ${prefix}_coregCoverage.txt
+output      coreg_jaccard           ${prefix}_coregJaccard.txt
+output      coreg_dice              ${prefix}_coregDice.txt
 
 << DICTIONARY
 
@@ -86,6 +90,10 @@ coreg_coverage
 corev_cross_corr
    The spatial cross-correlation between the structural image
    mask and the aligned analyte mask.
+coreg_dice
+   The Dice coefficient between structural and aligned analyte.
+coreg_jaccard
+   The Jaccard coefficient between structural and aligned analyte.
 e2simg
    The reference volume from the analyte sequence, aligned into
    structural space.
