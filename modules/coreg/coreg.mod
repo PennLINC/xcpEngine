@@ -216,12 +216,12 @@ if [[ ${coreg_cfunc[${cxt}]} == bbr ]]
    || rerun
       then
       routine                 @2    Preparing white matter mask
-	   case ${coreg_wm[${cxt}]} in
-	   all)
-	      subroutine           @2.1a All nonzero voxels correspond to white matter.
-	      subroutine           @2.1b Binarising image
-	      exec_fsl fslmaths ${coreg_seg[${cxt}]} -bin ${wmmask}
-	      ;;
+      case ${coreg_wm[${cxt}]} in
+      all)
+         subroutine           @2.1a All nonzero voxels correspond to white matter.
+         subroutine           @2.1b Binarising image
+         exec_fsl fslmaths ${coreg_seg[${cxt}]} -bin ${wmmask}
+         ;;
       *)
          subroutine           @2.2a Voxels with value ${coreg_wm[${cxt}]} correspond to
          subroutine           @2.2b white matter. Thresholding out all other voxels
@@ -233,13 +233,13 @@ if [[ ${coreg_cfunc[${cxt}]} == bbr ]]
             -o ${wmmask}
          ;;
       esac
+      routine_end
    fi
    ################################################################
    # Prime an additional input argument to FLIRT, containing
    # the path to the new mask.
    ################################################################
    wmmaskincl="-wmseg ${wmmask}"
-   routine_end
 fi
 
 
@@ -482,13 +482,13 @@ if [[ ! -e ${seq2struct[${cxt}]} ]] \
 || rerun
    then
    subroutine                 @8.2  Converting coregistration .mat to ANTs format
-	exec_c3d \
-	   c3d_affine_tool \
-	   -src ${referenceVolumeBrain[${cxt}]} \
-	   -ref ${struct[${subjidx}]} \
-	   ${e2smat[${cxt}]} \
-		-fsl2ras \
-		-oitk ${seq2struct[${cxt}]}
+   exec_c3d \
+      c3d_affine_tool \
+      -src ${referenceVolumeBrain[${cxt}]} \
+      -ref ${struct[${subjidx}]} \
+      ${e2smat[${cxt}]} \
+      -fsl2ras \
+      -oitk ${seq2struct[${cxt}]}
 fi
 ###################################################################
 # The XCP Engine uses ANTs-based registration; the
@@ -499,13 +499,13 @@ if [[ ! -e ${struct2seq[${cxt}]} ]] \
 || rerun
    then
    subroutine                 @8.3  Converting inverse coregistration .mat to ANTs format
-	exec_c3d \
-	   c3d_affine_tool \
-	   -src ${struct[${subjidx}]} \
-	   -ref ${referenceVolumeBrain[${cxt}]} \
-	   ${s2emat[${cxt}]} \
-		-fsl2ras \
-		-oitk ${struct2seq[${cxt}]}
+   exec_c3d \
+      c3d_affine_tool \
+      -src ${struct[${subjidx}]} \
+      -ref ${referenceVolumeBrain[${cxt}]} \
+      ${s2emat[${cxt}]} \
+      -fsl2ras \
+      -oitk ${struct2seq[${cxt}]}
 fi
 ###################################################################
 # Compute the structural image in analytic space, and generate

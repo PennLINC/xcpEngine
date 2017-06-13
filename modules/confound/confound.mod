@@ -104,7 +104,6 @@ if [[ ${confound_rp[${cxt}]} == Y ]]
       -y ${rps[${subjidx}]} \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
-   routine_end
 fi
 
 
@@ -124,7 +123,6 @@ if [[ ${confound_rms[${cxt}]} == Y ]]
       -y ${relrms[${subjidx}]} \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
-   routine_end
 fi
 
 
