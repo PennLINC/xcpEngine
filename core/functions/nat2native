@@ -1,0 +1,7 @@
+nat2native() {
+   local i=${1}
+   local o=${2}
+   local n=${3}
+   exec_sys rm -f ${o}
+   exec_sys ln -s ${i} ${o}
+}

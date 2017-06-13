@@ -1,0 +1,25 @@
+load_transforms() {
+   coreg="-t ${seq2struct[${subjidx}]}"
+   icoreg="-t ${struct2seq[${subjidx}]}"
+   if [[ ! -z ${xfm_warp} ]] \
+      && [[ $(imtest "${xfm_warp}") == 1 ]]
+      then
+	   warp="-t ${xfm_warp}"
+	   iwarp="-t ${ixfm_warp}"
+   fi
+   if [[ ! -z ${xfm_affine} ]]
+	   then
+	   affine="-t ${xfm_affine}"
+	   iaffine="-t [${xfm_affine},1]"
+   fi
+   if [[ ! -z ${xfm_rigid} ]]
+	   then
+	   rigid="-t ${xfm_rigid}"
+	   irigid="-t [${xfm_rigid},1]"
+   fi
+   if [[ ! -z ${xfm_resample} ]]
+	   then
+	   resample="-t ${xfm_resample}"
+	   iresample="-t [${xfm_resample},1]"
+   fi
+}

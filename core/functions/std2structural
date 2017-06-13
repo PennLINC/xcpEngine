@@ -1,0 +1,17 @@
+std2structural() {
+   local i=${1}
+   local o=${2}
+   local n=${3}
+   exec_sys rm -f ${o}
+   exec_ants \
+      antsApplyTransforms \
+      -e 3 -d 3 \
+      -i ${i} \
+      -o ${o} \
+      -r ${struct[${subjidx}]} \
+      ${irigid} \
+      ${iaffine} \
+      ${iwarp} \
+      ${iresample} \
+      -n ${n}
+}

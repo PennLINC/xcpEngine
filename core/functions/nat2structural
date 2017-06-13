@@ -1,0 +1,14 @@
+nat2structural() {
+   i=${1}
+   o=${2}
+   n=${3}
+   exec_sys rm -f ${o}
+   exec_ants \
+      antsApplyTransforms \
+      -e 3 -d 3 \
+      -i ${i} \
+      -o ${o} \
+      -r ${struct[${subjidx}]} \
+      ${coreg} \
+      -n ${n}
+}
