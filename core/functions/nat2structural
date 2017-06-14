@@ -1,7 +1,7 @@
 nat2structural() {
    i=${1}
    o=${2}
-   n=${3}
+   [[ -n ${3} ]] && local n="-n ${3}"
    exec_sys rm -f ${o}
    exec_ants \
       antsApplyTransforms \
@@ -10,5 +10,5 @@ nat2structural() {
       -o ${o} \
       -r ${struct[${subjidx}]} \
       ${coreg} \
-      -n ${n}
+      ${n}
 }

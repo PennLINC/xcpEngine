@@ -13,7 +13,7 @@ source ${XCPEDIR}/core/functions/library.sh
 map=${1}
 source=${2}
 target=${3}
-interpolation=${4}
+[[ -n ${4} ]] && interpolation=${4}
 
 case ${map} in
 nat2native)

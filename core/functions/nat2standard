@@ -1,7 +1,7 @@
 nat2standard() {
    local i=${1}
    local o=${2}
-   local n=${3}
+   [[ -n ${3} ]] && local n="-n ${3}"
    exec_sys rm -f ${o}
    exec_ants \
       antsApplyTransforms \
@@ -14,5 +14,5 @@ nat2standard() {
       ${affine} \
       ${rigid} \
       ${coreg} \
-      -n ${n}
+      ${n}
 }
