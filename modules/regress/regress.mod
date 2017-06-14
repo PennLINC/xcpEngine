@@ -27,6 +27,7 @@ completion() {
    
    write_output      confmat
    write_output      confcor
+   
    quality_metric    nVolCensored            n_volumes_censored
    
    source ${XCPEDIR}/core/auditComplete
@@ -41,12 +42,12 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-process     final                   ${prefix}_residualised
-
 output      confmat                 ${prefix}_confmat.1D
 output      confcor                 ${prefix}_confcor.txt
 output      n_volumes_censored      ${prefix}_nVolumesCensored.txt
 output      smooth_root             ${prefix}_sm
+
+process     final                   ${prefix}_residualised
 
 << DICTIONARY
 
@@ -74,27 +75,12 @@ DICTIONARY
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ###################################################################
 # Read in any local regressors, if they are present.
 ###################################################################
 if [[ ! -z "${locregs[${subjidx}]}" ]]
    then
+   subroutine              @0.1
    locregs=$(cat ${locregs[${subjidx}]})
 fi
 
@@ -182,6 +168,7 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
    confmat[${subjidx}]=${confmat[${cxt}]}
 	routine_end
 fi
+
 
 
 
@@ -556,9 +543,10 @@ elif is_image ${intermediate}_residuals.nii.gz \
 fi
 if is_image ${intermediate}_residuals.nii.gz
    then
+   subroutine              @5.7
    intermediate=${intermediate}_residuals
 else
-   subroutine              @5.7  ::XCP-ERROR: The confound regression procedure failed.
+   subroutine              @5.8  ::XCP-ERROR: The confound regression procedure failed.
    exit 666
 fi
 routine_end

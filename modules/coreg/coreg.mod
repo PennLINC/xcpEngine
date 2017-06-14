@@ -325,16 +325,15 @@ if [[ ! -e ${quality[${cxt}]} ]] \
    then
    routine                    @5    Quality assessment
    subroutine                 @5.1
-   exec_sys rm -f ${quality[${cxt}]}
    exec_fsl fslmaths ${e2simg[${cxt}]} -bin ${e2smask[${cxt}]}
    registration_quality=( $(exec_xcp \
       maskOverlap.R \
       -m ${e2smask[${cxt}]} \
       -r ${struct[${subjidx}]}) )
-   echo  ${registration_quality[0]} >> ${coreg_cross_corr[${cxt}]}
-   echo  ${registration_quality[1]} >> ${coreg_coverage[${cxt}]}
-   echo  ${registration_quality[2]} >> ${coreg_jaccard[${cxt}]}
-   echo  ${registration_quality[3]} >> ${coreg_dice[${cxt}]}
+   echo  ${registration_quality[0]} > ${coreg_cross_corr[${cxt}]}
+   echo  ${registration_quality[1]} > ${coreg_coverage[${cxt}]}
+   echo  ${registration_quality[2]} > ${coreg_jaccard[${cxt}]}
+   echo  ${registration_quality[3]} > ${coreg_dice[${cxt}]}
    ################################################################
    # If the subject fails quality control, then repeat
    # coregistration using an alternative metric: crosscorrelation.
