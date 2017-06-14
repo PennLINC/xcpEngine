@@ -42,6 +42,7 @@ source ${LIBRARY}/rerun
 source ${LIBRARY}/return_field
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
+source ${LIBRARY}/set_space
 source ${LIBRARY}/std2native
 source ${LIBRARY}/std2standard
 source ${LIBRARY}/std2structural
