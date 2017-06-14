@@ -87,7 +87,7 @@ altreg2
 coreg_coverage
    The percentage of the structural image that is covered by
    the aligned analyte image.
-corev_cross_corr
+coreg_cross_corr
    The spatial cross-correlation between the structural image
    mask and the aligned analyte mask.
 coreg_dice
