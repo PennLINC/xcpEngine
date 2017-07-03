@@ -8,8 +8,15 @@ atlas_parse() {
       a_space=$(return_field ${1} 4 '#')
       a_path=$(eval echo ${a_path})
       a_path=$(ls -d1 ${a_path} 2>/dev/null)
+      if is_image ${a2}
+         then
+         a_type=image
+      else
+         a_type=sclib
+      fi
    else
       a_coor=${a2}
       a_radius=$(return_field ${1} 4 '#')
+      a_type=sphere
    fi
 }
