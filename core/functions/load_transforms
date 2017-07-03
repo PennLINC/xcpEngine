@@ -4,8 +4,7 @@ load_transforms() {
       coreg="-t ${seq2struct[${subjidx}]}"
       icoreg="-t ${struct2seq[${subjidx}]}"
    fi
-   if [[ ! -z ${xfm_warp} ]] \
-   && is_image ${xfm_warp}
+   if is_image ${xfm_warp}
       then
 	   warp="-t ${xfm_warp}"
 	   iwarp="-t ${ixfm_warp}"
