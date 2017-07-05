@@ -904,7 +904,8 @@ while (( ${#rem} > 0 ))
          || rerun
             then
             subroutine        @7.1
-            rm -rf ${intermediate}_${cur}.nii.gz
+            exec_sys rm -rf ${intermediate}_${cur}.nii.gz
+            unset ds_arguments
             #######################################################
             # Determine whether to run new or old 3dDespike.
             # This is based on the number of volumes.
