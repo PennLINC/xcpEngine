@@ -432,7 +432,7 @@ while (( ${#rem} > 0 ))
             if [[ -n ${censored[${subjidx}]} ]]
                then
                subroutine     @2.9
-               censored[${cxt}]=${censored[${subjidx}]}
+               configure      censored    ${censored[${subjidx}]}
             fi
             if (( ${censored[${cxt}]} != 1 ))
                then
