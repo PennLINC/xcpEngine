@@ -1,12 +1,21 @@
 # new home directory for the XCP Engine
 
-##### Adding modules
-
-The primary output of any module must be an image whose name matches the primary subject identifier.
-
 ##### Change log
+v0.6.0 2017.07 (target)
+* Operational modules (18): alff, benchmark, antsCT, confound, dynamics, coreg, gmd, jlf, locreg, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
+* Internal-only modules (3): asl, dico, dti2xcp
+* Modules added (1): dynamics
+* Development for the XCP system is now easier. The generalised module header (and other cumbersome code) has been encapsulated in a new directory for core scripts, functions, and text blocks.
+* The code has been extensively rewritten. 
+
+v0.5.1 2017.06
+* Operational modules (20): asl, alff, benchmark, antsCT, confound, coreg, dico, dti2xcp, gmd, jlf, locreg, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
+* Modules added (4): antsCT, gmd, jlf, strucQA
+* Multimodal processing now stably encompasses high-resolution anatomical sequences. Cortical thickness and grey matter density analyses, as well as multi-atlas parcellation construction, are performed through ANTs.
+* Automated template construction and atlas generation are now available through ANTs.
+
 v0.5.0 2016.07
-* Operational modules (16): asl, alff, confound, coreg, dico, locreg, net, norm, prestats, regress, reho, roiquant, seed, task
+* Operational modules (16): asl, alff, benchmark, confound, coreg, dico, dti2xcp, locreg, net, norm, prestats, regress, reho, roiquant, seed, task
 * Modules added (6): benchmark, dico, dti2xcp, locreg, roiquant, task
 * Multimodal processing potential is extended to task-constrained activation analysis (and internally DTI). Task activation analysis is currently performed through FSL's FEAT, and the XCP Engine can now process any individual-level FEAT design file.
 * ROI-wise quantification is centralised into the roiquant module.
