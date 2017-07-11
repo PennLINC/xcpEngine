@@ -10,9 +10,9 @@
 ###################################################################
 << XCPENGINE
 
- xcpEngine is software that reads in functional connectivity
- pipelines (design files) and deploys an assortment of multimodal
- analytic tools in order to run those pipelines.
+ xcpEngine is software that reads in image processing pipelines
+ (design files) and deploys an assortment of multimodal analytic
+ tools in order to run those pipelines.
 
  Development team:
  Lead:         Rastko Ciric 
