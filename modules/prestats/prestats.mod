@@ -1289,7 +1289,7 @@ done
 #    module.
 #  * If the expected output is absent, notify the user.
 ###################################################################
-if is_image ${outdir}/${prefix}~TEMP~${buffer}.nii.gz
+if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f ${intermediate}.nii.gz)
@@ -1302,7 +1302,7 @@ else
 
 
 XCP-ERROR: Expected output not present.
-Expected: ${outdir}/${prefix}${buffer}
+Expected: $${prefix}${buffer}
 Check the log to verify that processing
 completed as intended.
 "
