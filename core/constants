@@ -9,6 +9,7 @@
 ###################################################################
 readonly RED='\033[0;31m'
 readonly RCL='\033[0m'
+readonly ORIENTATION_ITK=RAI
 readonly SIGMA=2.35482004503
 readonly PI=3.14159265359
 readonly NBASE=2.71828182846
