@@ -21,7 +21,10 @@ suppressMessages(require(optparse))
 option_list = list(
    make_option(c("-t", "--ts"), action="store", default=NA, type='character',
               help="Path to the timeseries from which the adjacency matrix
-                  will be constructed.")
+                  will be constructed."),
+   make_option(c("-m", "--mask"), action="store", default=NA, type='character',
+              help="Path to a binary-valued  temporal mask specifying time
+                  points to include in the correlation.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -31,16 +34,22 @@ if (is.na(opt$ts)) {
    quit()
 }
 tsPath <- opt$ts
+tmPath <- opt$mask
 
 ###################################################################
 # 1. Read in the node timecourses
 ###################################################################
-tc <- as.array(unname(read.table(tsPath)))
+tc <- as.matrix(unname(read.table(tsPath,header=F)))
+if (! is.na(tmPath)) {
+   tm <- as.logical(unname(unlist(read.table(tmPath,header=F))))
+   tc <- tc[tm,]
+}
 
 ###################################################################
 # 2. Compute the adjacency matrix
 ###################################################################
 adjmat <- cor(tc)
+adjmat[is.na(adjmat)] <- NaN
 
 ###################################################################
 # 3. Print the adjacency matrix
