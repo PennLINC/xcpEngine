@@ -205,12 +205,12 @@ echo x,y,z,t >> ${ctemp}.csv
 for coor in ${coors[@]}
    do
    subroutine                 @u.6
-   [[ ${sclib} == 1 ]] && atlas_parse ${coor} && coor=${a_coor}
+   (( ${sclib} == 1 )) && atlas_parse ${coor} && coor=${a_coor}
    ################################################################
    # Move out of voxel space
    ################################################################
    coor=${coor//,/ }
-   if [[ ${space} == VOXEL ]] || [[ ${VOXIN} == 1 ]]
+   if [[ ${space} == VOXEL ]] || (( ${VOXIN} == 1 ))
       then
       subroutine              @u.7
       coor=$(echo ${coor}|\
@@ -226,17 +226,17 @@ for coor in ${coors[@]}
    ################################################################
    # Reflect into the realm of RAI, if necessary
    ################################################################
-   if [[ ${x_sign} == -1 ]]
+   if (( ${x_sign} == -1 ))
       then
       subroutine              @u.9.1
       xcoor=$(arithmetic -1*${xcoor})
    fi
-   if [[ ${y_sign} == -1 ]]
+   if (( ${y_sign} == -1 ))
       then
       subroutine              @u.9.2
       ycoor=$(arithmetic -1*${ycoor})
    fi
-   if [[ ${z_sign} == -1 ]]
+   if (( ${z_sign} == -1 ))
       then
       subroutine              @u.9.3
       zcoor=$(arithmetic -1*${zcoor})
@@ -272,7 +272,7 @@ ${ANTSPATH}/antsApplyTransformsToPoints \
 subroutine                    @u.11
 coorsxfm=$(tail -n +2 ${ctemp}out.csv)
 coorsxfm=(${coorsxfm})
-if [[ ${VOXEL} == 1 ]]
+if (( ${VOXEL} == 1 ))
    then
    subroutine                 @u.12
    xres=$(exec_fsl fslval ${reference} pixdim1)
@@ -290,7 +290,7 @@ for ((i=0;i<${#coorsxfm[@]};i++))
    coor=${coors[i]}
    coor_xfm=${coorsxfm[i]}
    unset a_name a_radius a_coor a_type
-   if [[ ${sclib} == 1 ]]
+   if (( ${sclib} == 1 ))
       then
       subroutine              @u.15
       atlas_parse ${coor}
@@ -302,17 +302,17 @@ for ((i=0;i<${#coorsxfm[@]};i++))
    ################################################################
    # Return from the realm of RAI, if necessary
    ################################################################
-   if [[ ${x_sign} == -1 ]]
+   if (( ${x_sign} == -1 ))
       then
       subroutine              @u.16.1
       xcoor=$(arithmetic -1*${xcoor})
    fi
-   if [[ ${y_sign} == -1 ]]
+   if (( ${y_sign} == -1 ))
       then
       subroutine              @u.16.2
       ycoor=$(arithmetic -1*${ycoor})
    fi
-   if [[ ${z_sign} == -1 ]]
+   if (( ${z_sign} == -1 ))
       then
       subroutine              @u.16.3
       zcoor=$(arithmetic -1*${zcoor})
@@ -321,7 +321,7 @@ for ((i=0;i<${#coorsxfm[@]};i++))
    ################################################################
    # Convert the output to voxel space if requested
    ################################################################
-   if [[ ${VOXEL} == 1 ]]
+   if (( ${VOXEL} == 1 ))
       then
       subroutine              @u.17
       coor=$(echo ${coor//,/ }|\
