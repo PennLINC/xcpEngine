@@ -83,7 +83,7 @@ while getopts "i:s:t:r:vlx" OPTION
       ;;
    s)
       template=${OPTARG}
-      [[ $(imtest ${template}) != 1 ]] && Usage && exit
+      ! is_image ${template} && Usage && exit
       ;;
    t)
       [[ -z ${transforms} ]] \
@@ -92,7 +92,7 @@ while getopts "i:s:t:r:vlx" OPTION
       ;;
    r)
       reference=${OPTARG}
-      [[ $(imtest ${reference}) != 1 ]] && Usage && exit
+      ! is_image ${reference} && Usage && exit
       ;;
    v)
       VOXEL=1
