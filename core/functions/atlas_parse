@@ -6,6 +6,7 @@ atlas_parse() {
       then
       a_path=${a2}
       a_space=$(return_field ${1} 4 '#')
+      a_community=$(return_field ${1} 5 '#')
       a_path=$(eval echo ${a_path})
       a_path=$(ls -d1 ${a_path} 2>/dev/null)
       if is_image ${a2}
@@ -13,6 +14,7 @@ atlas_parse() {
          a_type=image
       else
          a_type=sclib
+         a_nodes=$(grep -i '^#' ${a_path}|wc -l)
       fi
    else
       a_coor=${a2}

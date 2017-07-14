@@ -1,0 +1,5 @@
+load_atlas() {
+   atlas=( $(grep -i '^#' ${1}) )
+   atlas_space=$(grep -i '^SPACE::' ${1})
+   atlas_space=${atlas_space//SPACE::/}
+}
