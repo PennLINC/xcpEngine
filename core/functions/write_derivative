@@ -2,7 +2,7 @@ write_derivative() {
    derivative=${1}[${cxt}]
    if is_image ${!derivative}
       then
-      check=$(grep ${1} ${aux_imgs[${subjidx}]})
+      check=$(grep '#'${1}'#' ${aux_imgs[${subjidx}]})
       if [[ -n ${check} ]]
          then
          sed -i s@'^#'${1}'.*'@"#${1}#${!derivative}"@ ${aux_imgs[${subjidx}]}
