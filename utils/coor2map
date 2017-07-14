@@ -48,7 +48,7 @@ Optional arguments:"
 
  -x : Trace"
       If this flag is set, then any commands called by the
-      `basename $0` routine will be explicitly printed to the
+      coor2map routine will be explicitly printed to the
       console or log.
 
 
@@ -94,21 +94,10 @@ shift $((OPTIND-1))
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
+subroutine                    @u.1
 [[ -z ${sclib} ]]    && Usage && exit
 [[ -z ${out} ]]      && Usage && exit
 [[ -z ${template} ]] && Usage && exit
-
-
-
-
-
-###################################################################
-# Prime temporary command file.
-###################################################################
-subroutine                    @u.1
-rng=$(date +%N)
-ctemp=${rng}coor2map~TEMP~.sh
-[[ -n ${TMPDIR} ]] && ctemp=${TMPDIR}/${ctemp}
 
 
 
@@ -145,9 +134,10 @@ zvox=$(exec_fsl fslval $template pixdim3)
 
 load_atlas ${sclib}
 
-space=$(grep -i '^SPACE::' ${sclib}|cut -d':' -f3)
+space=$(echo ${atlas_space}|cut -d':' -f5)
 
 nodeidx=1
+mapidx=0
 for node in ${atlas[@]}
    do
    ################################################################
@@ -162,7 +152,6 @@ for node in ${atlas[@]}
    # Some redundant calculations here are (rather insignificantly)
    # slowing the computation
    ################################################################
-   res=$(grep -i '^SPACE::' ${sclib}|cut -d":" -f5)
    if [[ -z ${res} ]]
       then
       subroutine              @u.5
@@ -242,7 +231,7 @@ for node in ${atlas[@]}
       netexpr=${nodeexpr}
    else
       subroutine              @u.13.2
-      netexpr="(-1*${nodeexpr}+1)*(${netexpr}) + ${nodeidx}*${nodeexpr}"
+      netexpr="(-1*${nodeexpr}+1)*(${netexpr})+${nodeidx}*${nodeexpr}"
    fi
    
    ################################################################
@@ -251,19 +240,16 @@ for node in ${atlas[@]}
    # will need to be split into 35-node subnetworks, then
    # aggregated in the final step
    ################################################################
-   if (( $(( ${nodeidx} % 35 )) == 0 ))
+   if (( $(( ${nodeidx} % 10 )) == 0 ))
       then
       subroutine              @u.14
-      exec_sys rm -f ${ctemp}
-      echo "#!/usr/bin/env bash" >> ${ctemp}
-      echo "exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}.nii.gz" >> ${ctemp}
-      exec_sys chmod 755 ${ctemp}
-      exec_sys bash ${ctemp}
-      imgpath=${out}.nii.gz
+      cmd[mapidx]="exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}"
+      imgpath=${out}
       netexpr=a
+      (( mapidx++ ))
    fi
    
-   nodeidx=$(( ${nodeidx} + 1 ))
+   (( nodeidx++ ))
    
 done
 
@@ -271,13 +257,13 @@ done
 # Collate all subnetwork maps
 ###################################################################
 subroutine                    @u.15
-exec_sys rm -f ${ctemp}
-echo "#!/usr/bin/env bash" >> ${ctemp}
-echo "exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}.nii.gz" >> ${ctemp}
-exec_sys chmod 755 ${ctemp}
-exec_sys bash ${ctemp}
-
-###################################################################
-# Delete all intermediate files
-###################################################################
+ctemp=$(date +%N)coor2map
+[[ -z ${TMPDIR} ]] && ctemp=${TEMPDIR}/${ctemp}
+cmd[mapidx]="exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}"
+for c in "${cmd[@]}"
+   do
+   echo ${c} >> ${ctemp}
+done
+exec_sys chmod +x ${ctemp}
+source ${ctemp}
 exec_sys rm -f ${ctemp}
