@@ -9,7 +9,9 @@
 ###################################################################
 LIBRARY=${XCPEDIR}/core/functions
 
+source ${LIBRARY}/add_reference
 source ${LIBRARY}/arithmetic
+source ${LIBRARY}/atlas_parse
 source ${LIBRARY}/cleanup
 source ${LIBRARY}/complete_already
 source ${LIBRARY}/configure
@@ -30,7 +32,9 @@ source ${LIBRARY}/is_integer
 source ${LIBRARY}/is+integer
 source ${LIBRARY}/is_numeric
 source ${LIBRARY}/is+numeric
+source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
+source ${LIBRARY}/load_transforms
 source ${LIBRARY}/nat2native
 source ${LIBRARY}/nat2standard
 source ${LIBRARY}/nat2structural
