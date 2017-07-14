@@ -39,19 +39,21 @@ if (is.na(opt$input)) {
 input <- read.table(opt$input,header=F)
 
 ###################################################################
-# Identify the number of missing items in each row.
+# Create a missing-values mask
 ###################################################################
-missing_ct <- apply(input, 2, function(x) sum(is.nan(x)))
-if (sum(missing_ct)==0) { return() }
+missing_mask <- function(adjmat) {
+   missing_idx       <- c()
+   missing_ct        <- apply(adjmat, 2, function(x) sum(is.na(x)))
+   while (sum(missing_ct)!=0) {
+      idx_max        <- which(missing_ct==max(missing_ct))
+      missing_idx    <- c(missing_idx,idx_max)
+      adjmat         <- adjmat[-missing_idx,-missing_idx]
+      missing_ct     <- apply(adjmat, 2, function(x) sum(is.nan(x)))
+   }
+   return(as.vector(unname(missing_idx)))
+}
 
-idx_max <- which(missing_ct==max(missing_ct))
-
-###################################################################
-# Determine whether removing the worst rows results in a matrix
-# without missing values.
-###################################################################
-input_new <- input[-idx_max,-idx_max]
-missing_ct_new <- apply(input_new, 2, function(x) sum(is.nan(x)))
-if (sum(missing_ct_new)==0) {
-   cat(idx_max,'\n')
+missing_idx <- missing_mask(input)
+for (i in missing_idx) {
+   cat(i,'\n')
 }
