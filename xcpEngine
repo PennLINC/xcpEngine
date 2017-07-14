@@ -119,7 +119,7 @@ mode=s
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "d:m:t" OPTION
+while getopts "d:m:t:" OPTION
    do
    case $OPTION in
    d)
@@ -129,8 +129,9 @@ while getopts "d:m:t" OPTION
       mode=${OPTARG}
       ;;
    t)
-      set -x
-      trace_prop="-t 1"
+      trace=${OPTARG}
+      trace_prop="-t ${trace}"
+      (( ${trace} > 3 )) && trace=3
       ;;
    *)
       echo "Option not recognised: ${OPTARG}"

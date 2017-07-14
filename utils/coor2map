@@ -12,45 +12,47 @@
 # Constants
 # "orientation" is the orientation enforced by AFNI's 3dcalc
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly POSNUM='^[0-9]+([.][0-9]+)?$'
-readonly POSINT='^[0-9]+$'
-readonly ORIENTATION=LAI
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
 
 ###################################################################
 # Usage function
 ###################################################################
 Usage(){
-   echo ""; echo ""; echo ""
-   echo "Usage: `basename $0` -i <input> -o <output> <options>"
-   echo ""
-   echo "`basename $0` receives an octothorpe-delimited seed index"
-   echo "  as input and creates a network map image as an output."
-   echo ""
-   echo "Compulsory arguments:"
-   echo " -i : Input seed library"
-   echo "      An octothorpe/hash- (#) delimited list of seed names,"
-   echo "      non-overlapping coordinates, and potentially radii."
-   echo ""
-   echo " -o : Output network"
-   echo "      The path to the file where the output network will"
-   echo "      be written."
-   echo ""
-   echo "Optional arguments:"
-   echo " -r : Override radius. If this argument is passed to the"
-   echo "      conversion script, then this radius will take the place"
-   echo "      of any voxel radii defined in the seed library."
-   echo ""
-   echo " -t : Template image [default MNI 2mm]"
-   echo "      The path to an image file that defines the coordinate"
-   echo "      space used in the seed library."
-   echo ""
-   echo " -x : Trace"
-   echo "      If this flag is set, then any commands called by the"
-   echo "      `basename $0` routine will be explicitly printed to the"
-   echo "      console or log."
-   echo ""; echo ""; echo ""
+cat << endstream
+___________________________________________________________________
+
+
+Usage: coor2map -i <input> -o <output> <options>
+
+`basename $0` receives an octothorpe-delimited seed index
+  as input and creates a network map image as an output.
+
+Compulsory arguments:
+ -i : Input seed library
+      An octothorpe/hash- (#) delimited list of seed names,
+      non-overlapping coordinates, and potentially radii."
+
+ -o : Output network"
+      The path to the file where the output network will
+      be written."
+
+Optional arguments:"
+ -r : Override radius. If this argument is passed to the
+      conversion script, then this radius will take the place
+      of any voxel radii defined in the seed library.
+
+ -t : Template image [default MNI 2mm]
+      The path to an image file that defines the coordinate
+      space used in the seed library.
+
+ -x : Trace"
+      If this flag is set, then any commands called by the
+      `basename $0` routine will be explicitly printed to the
+      console or log.
+
+
+endstream
 }
 
 ###################################################################
@@ -72,11 +74,12 @@ while getopts "i:o:t:r:x" OPTION
       ;;
    t)
       template=${OPTARG}
-      [[ $(imtest ${template}) != 1 ]] && Usage && exit
+      ! is_image ${template} && Usage && exit
+      imgpath=${template}
       ;;
    r)
       radius=${OPTARG}
-      ! [[ ${radius} =~ ${POSNUM} ]] && Usage && exit
+      ! is+numeric ${radius} && Usage && exit
       ;;
    x)
       set -x
@@ -91,8 +94,8 @@ shift $((OPTIND-1))
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${sclib} ]] && Usage && exit
-[[ -z ${out} ]] && Usage && exit
+[[ -z ${sclib} ]]    && Usage && exit
+[[ -z ${out} ]]      && Usage && exit
 [[ -z ${template} ]] && Usage && exit
 
 
@@ -100,39 +103,12 @@ shift $((OPTIND-1))
 
 
 ###################################################################
-# Determine the extension of the input and the extension to use
-# for the output.
-#  * If the user-provided input omits the extension, store the
-#    path with its extension in imgpath. Then, obtain the
-#    extension by removing the user-specified input from the
-#    complete input path.
-#  * Determine the extension for the output by taking all
-#    characters following the first '.' in the input path.
-#  * Ensure that the output has an extension so that it is not
-#    automatically brickheaded by AFNI scripts.
+# Prime temporary command file.
 ###################################################################
-imgpath=$(ls -d1 ${template}.* 2>/dev/null)
-for i in ${imgpath}
-   do
-   [[ $(imtest ${i} == 1) ]] && imgpath=$i
-done
-[[ ! -z ${imgpath} ]] \
-   && ext_in=$(echo $imgpath|sed "s@${template}@@") \
-   || imgpath=${template}
-out_noext=$(echo ${out}|cut -d"." -f1)
-ext_out=$(echo ${out}|cut -d"." -f1 --complement)
-[[ ${out} == ${ext_out} ]] \
-   && ext_out=$(basename ${imgpath}|cut -d"." -f1 --complement)
-img_noext=$(echo ${template}|cut -d"." -f1)
-
-[[ ${out} == ${out_noext} ]] && out=${out}.${ext_out}
-[[ ${out} == ${out_noext} ]] && out=${out}.${ext_out}
-[[ ${ext_out} == "nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext_out} == "nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext_out} == "hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext_out} == "img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext_out} == "hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext_out} == "img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
+subroutine                    @u.1
+rng=$(date +%N)
+ctemp=${rng}coor2map~TEMP~.sh
+[[ -n ${TMPDIR} ]] && ctemp=${TMPDIR}/${ctemp}
 
 
 
@@ -146,22 +122,10 @@ img_noext=$(echo ${template}|cut -d"." -f1)
 # This is no longer necessary, as this function now operates
 # directly in voxel space.
 ###################################################################
-xsg='-'
-ysg='-'
-zsg='-'
-#xorient=$(3dinfo ${imgpath}|grep -i \(x\)|cut -d"=" -f2)
-#xorient=$(echo ${xorient}|head -c 1)
-#yorient=$(3dinfo ${imgpath}|grep -i \(y\)|cut -d"=" -f2)
-#yorient=$(echo ${yorient}|head -c 1)
-#zorient=$(3dinfo ${imgpath}|grep -i \(z\)|cut -d"=" -f2)
-#zorient=$(echo ${zorient}|head -c 1)
-#orient=${xorient}${yorient}${zorient}
-#rxorient=${ORIENTATION:0:1}
-#ryorient=${ORIENTATION:1:1}
-#rzorient=${ORIENTATION:2:2}
-#[[ ${xorient} != ${rxorient} ]] && xsg='+'
-#[[ ${yorient} != ${ryorient} ]] && ysg='+'
-#[[ ${zorient} != ${rzorient} ]] && zsg='+'
+subroutine                    @u.2
+x_sign='-'
+y_sign='-'
+z_sign='-'
 
 
 
@@ -170,26 +134,27 @@ zsg='-'
 ###################################################################
 # Obtain conversion factors for radii: mm to vox
 ###################################################################
-xvox=$(fslval $template pixdim1)
-yvox=$(fslval $template pixdim2)
-zvox=$(fslval $template pixdim3)
+subroutine                    @u.3
+xvox=$(exec_fsl fslval $template pixdim1)
+yvox=$(exec_fsl fslval $template pixdim2)
+zvox=$(exec_fsl fslval $template pixdim3)
 
 
 
 
 
-nodes=$(grep -i '^#' ${sclib}|tail -n +1)
+load_atlas ${sclib}
 
 space=$(grep -i '^SPACE::' ${sclib}|cut -d':' -f3)
 
 nodeidx=1
-for node in ${nodes}
+for node in ${atlas[@]}
    do
    ################################################################
    # Parse node information
    ################################################################
-   name=$(echo $node|cut -d'#' -f2)
-   coor=$(echo $node|cut -d'#' -f3)
+   subroutine                 @u.4
+   atlas_parse ${node}
    ################################################################
    # Move to voxel coordinates
    #
@@ -198,24 +163,29 @@ for node in ${nodes}
    # slowing the computation
    ################################################################
    res=$(grep -i '^SPACE::' ${sclib}|cut -d":" -f5)
-   [[ -z ${res} ]] \
-      && coor=$(echo ${coor}|sed s@','@' '@g) \
-      && coor=$(echo ${coor}\
-            |std2imgcoord -img ${space} -std ${space} -vox) \
-      && coor=$(echo ${coor}|sed s@' '@','@g) \
-      && xres=$(fslval $space pixdim1) \
-      && yres=$(fslval $space pixdim2) \
-      && zres=$(fslval $space pixdim3) \
-      && res=${xres},${yres},${zres}
-   [[ ${space} == "MNI152" ]] \
-      && coor=$(${XCPEDIR}/utils/mni2vox ${coor} 1) \
-      && res=1
-   xres=$(echo $res|cut -d"," -f1)
-   yres=$(echo $res|cut -d"," -f2)
-   zres=$(echo $res|cut -d"," -f3)
-   x2res=$(echo "scale=7; $xvox / $xres"|bc)
-   y2res=$(echo "scale=7; $yvox / $yres"|bc)
-   z2res=$(echo "scale=7; $zvox / $zres"|bc)
+   if [[ -z ${res} ]]
+      then
+      subroutine              @u.5
+      a_coor=$(echo ${a_coor//,/ }\
+            |exec_fsl std2imgcoord -img ${space} -std ${space} -vox)
+      xres=$(exec_fsl fslval $space pixdim1)
+      yres=$(exec_fsl fslval $space pixdim2)
+      zres=$(exec_fsl fslval $space pixdim3)
+      res=(${xres} ${yres} ${zres})
+   fi
+   if [[ ${space} == "MNI152" ]]
+      then
+      subroutine              @u.6
+      a_coor=$(exec_fsl mni2vox ${a_coor} 1)
+      res=(1 1 1)
+   fi
+   subroutine                 @u.7
+   xres=${res[0]}
+   yres=${res[1]}
+   zres=${res[2]}
+   x2res=$(arithmetic ${xvox}/${xres})
+   y2res=$(arithmetic ${yvox}/${yres})
+   z2res=$(arithmetic ${zvox}/${zres})
    ################################################################
    # Determine radius: Order of precedence is:
    #  (1) User input
@@ -223,30 +193,38 @@ for node in ${nodes}
    #  (3) default value
    ################################################################
    rad=${radius}
-   [[ -z ${rad} ]] && rad=$(echo $node|cut -d'#' -f4)
-   [[ -z ${rad} ]] && rad=${radius_default}
-   
+   if [[ -z ${rad} ]]
+      then
+      subroutine              @u.8
+      rad=${a_radius}
+   fi
+   if [[ -z ${rad} ]]
+      then
+      subroutine              @u.9
+      rad=${radius_default}
+   fi
+
    ################################################################
    # Add ROI to network
    # Any previous, overlapping ROIs will be overwritten; only a
    # hard parcellation is supported
    ################################################################
-   xcoor=$(echo $coor|cut -d"," -f1)
-   ycoor=$(echo $coor|cut -d"," -f2)
-   zcoor=$(echo $coor|cut -d"," -f3)
-   xcoor=$(echo "scale=7; $xcoor / $x2res"|bc)
-   ycoor=$(echo "scale=7; $ycoor / $y2res"|bc)
-   zcoor=$(echo "scale=7; $zcoor / $z2res"|bc)
+   subroutine                 @u.10
+   coor=(${a_coor//,/ })
+   xcoor=$(arithmetic ${coor[0]}/${x2res})
+   ycoor=$(arithmetic ${coor[1]}/${y2res})
+   zcoor=$(arithmetic ${coor[2]}/${z2res})
    
    ################################################################
    # Scale radius to the coordinate space
    ################################################################
-   xrad=$(echo "scale=7; $rad / $xvox"|bc)
-   yrad=$(echo "scale=7; $rad / $yvox"|bc)
-   zrad=$(echo "scale=7; $rad / $zvox"|bc)
-   xradsq=$(echo "scale=7; ${xrad}^2"|bc)
-   yradsq=$(echo "scale=7; ${yrad}^2"|bc)
-   zradsq=$(echo "scale=7; ${zrad}^2"|bc)
+   subroutine                 @u.11
+   xrad=$(arithmetic ${rad}/${xvox})
+   yrad=$(arithmetic ${rad}/${yvox})
+   zrad=$(arithmetic ${rad}/${zvox})
+   xradsq=$(arithmetic ${xrad}^2)
+   yradsq=$(arithmetic ${yrad}^2)
+   zradsq=$(arithmetic ${zrad}^2)
    
    ################################################################
    # Generate a solid ellipsoid (a sphere in true physical space)
@@ -256,11 +234,14 @@ for node in ${nodes}
    #    will result in a much slower module, but is necessary to
    #    ensure that there is no overlap.
    ################################################################
-   nodeexpr="step(1-(i${xsg}${xcoor})*(i${xsg}${xcoor})/${xradsq}-(j${ysg}${ycoor})*(j${ysg}${ycoor})/${yradsq}-(k${zsg}${zcoor})*(k${zsg}${zcoor})/${yradsq})"
+   subroutine                 @u.12
+   nodeexpr="step(1-(i${x_sign}${xcoor})*(i${x_sign}${xcoor})/${xradsq}-(j${y_sign}${ycoor})*(j${y_sign}${ycoor})/${yradsq}-(k${z_sign}${zcoor})*(k${z_sign}${zcoor})/${yradsq})"
    if [[ -z ${netexpr} ]]
       then
+      subroutine              @u.13.1
       netexpr=${nodeexpr}
    else
+      subroutine              @u.13.2
       netexpr="(-1*${nodeexpr}+1)*(${netexpr}) + ${nodeidx}*${nodeexpr}"
    fi
    
@@ -270,33 +251,33 @@ for node in ${nodes}
    # will need to be split into 35-node subnetworks, then
    # aggregated in the final step
    ################################################################
-   if [[ $(echo ${nodeidx} % 35|bc) == 0 ]]
+   if (( $(( ${nodeidx} % 35 )) == 0 ))
       then
-      cursubnet=${out_noext}.${ext_out}
-      rm -f ${out_noext}cmd.sh
-      echo "#!/usr/bin/env bash" >> ${out_noext}cmd.sh
-      echo "3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${cursubnet} > /dev/null 2>&1" >> ${out_noext}cmd.sh
-      chmod 755 ${out_noext}cmd.sh
-      bash ${out_noext}cmd.sh
-      imgpath=${cursubnet}
+      subroutine              @u.14
+      exec_sys rm -f ${ctemp}
+      echo "#!/usr/bin/env bash" >> ${ctemp}
+      echo "exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}.nii.gz" >> ${ctemp}
+      exec_sys chmod 755 ${ctemp}
+      exec_sys bash ${ctemp}
+      imgpath=${out}.nii.gz
       netexpr=a
    fi
    
-   nodeidx=$(expr ${nodeidx} + 1)
+   nodeidx=$(( ${nodeidx} + 1 ))
    
 done
 
 ###################################################################
 # Collate all subnetwork maps
 ###################################################################
-cursubnet=${out_noext}.${ext_out}
-rm -f ${out_noext}cmd.sh
-echo "#!/usr/bin/env bash" >> ${out_noext}cmd.sh
-echo "3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${cursubnet} > /dev/null 2>&1" >> ${out_noext}cmd.sh
-chmod 755 ${out_noext}cmd.sh
-bash ${out_noext}cmd.sh
+subroutine                    @u.15
+exec_sys rm -f ${ctemp}
+echo "#!/usr/bin/env bash" >> ${ctemp}
+echo "exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}.nii.gz" >> ${ctemp}
+exec_sys chmod 755 ${ctemp}
+exec_sys bash ${ctemp}
 
 ###################################################################
 # Delete all intermediate files
 ###################################################################
-rm -f ${out_noext}cmd.sh
+exec_sys rm -f ${ctemp}

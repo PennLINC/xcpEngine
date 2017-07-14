@@ -37,7 +37,10 @@ while getopts "d:c:t:" OPTION
       ;;
    t)
       trace=${OPTARG}
-      if (( ${trace} != 0 )) && (( ${trace} != 1 ))
+      if (( ${trace} != 0 )) \
+      && (( ${trace} != 1 )) \
+      && (( ${trace} != 2 )) \
+      && (( ${trace} != 3 ))
          then
          usage_flag=1
       fi
@@ -59,10 +62,22 @@ if (( ${usage_flag} == 1 ))
 fi
 ###################################################################
 # Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
 ###################################################################
-(( ${trace} == 1 )) && set -x && trace_prop='-t'
+case ${trace} in
+0)
+   trace=0
+   ;;
+1)
+   trace=1
+   ;;
+2)
+   export trace=1
+   ;;
+3)
+   set -x
+   export ${SHELLOPTS}
+   ;;
+esac
 routine_map='· START'
 ###################################################################
 # Usage and exit

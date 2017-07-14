@@ -17,10 +17,18 @@ Optional arguments:
       the overall position of the module in the
       analytic pipeline.
  -t : Trace status:
-      Boolean value ( 0[default] or 1 ) that indicates
-      whether all commands called by the module should
-      be traced and explicitly replicated in a log
-      file. This log file can then be used to debug
-      output or can be converted to a standalone
-      pipeline.
+      Integer value ( 0 - 3 ) that indicates the level
+      of verbosity during module execution. Higher
+      levels reduce readability but provide useful
+      information for troubleshooting.
+      0  [default]: Human-readable explanations of
+         processing steps and error traces only.
+      1: Explicitly trace module-level computations.
+         Print a workflow map when execution completes.
+      2: Explicitly trace module- and utility-level
+         computations.
+      3: All commands called by the module and all
+         children are traced and explicitly replicated
+         in a log file. This log file can then be used
+         to debug output.
 
