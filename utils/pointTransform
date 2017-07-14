@@ -278,7 +278,7 @@ if (( ${VOXEL} == 1 ))
    xres=$(exec_fsl fslval ${reference} pixdim1)
    yres=$(exec_fsl fslval ${reference} pixdim2)
    zres=$(exec_fsl fslval ${reference} pixdim3)
-   space="VOXEL::${xres},${yres},${zres}::${reference}"
+   space="${reference}::VOXEL"
 else
    subroutine                 @u.13
    space=${reference}
