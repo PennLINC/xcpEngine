@@ -99,13 +99,13 @@ if [[ $(arch) == x86_64 ]]
 else
    export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
 fi
-ver_JQ="· Version JQ           $(${JQ_PATH} --version)"
+ver_JQ="· Version JQ             $(${JQ_PATH} --version)"
 echo "${ver_JQ}"
 
 ###################################################################
 # XCP
 ###################################################################
-ver_XCP="· Version XCP Engine  "$(cat ${XCPEDIR}/core/VERSION \
+ver_XCP="· Version XCP Engine     "$(cat ${XCPEDIR}/core/VERSION \
    2>/dev/null)
 echo "${ver_XCP}"
 
@@ -122,7 +122,7 @@ if [[ -z ${ver_R} ]]
    "
    dc_FAIL=1
 else
-   ver_R="· ${ver_R}"
+   ver_R="· ${ver_R/version/version             }"
    echo "${ver_R}"
 fi
 
@@ -139,7 +139,7 @@ if [[ -z ${ver_RSCRIPT} ]]
    "
    dc_FAIL=1
 else
-   ver_RSCRIPT="· ${ver_RSCRIPT}"
+   ver_RSCRIPT="· ${ver_RSCRIPT/version/}"
    echo "${ver_RSCRIPT}"
 fi
 

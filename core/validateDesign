@@ -32,8 +32,11 @@ fi
 # Load the design file.
 ###################################################################
 echo \
-"...Constructing a pipeline based on user specifications...
- * ${indesign}"
+"
+Constructing a pipeline based on user specifications
+····································································
+· ${indesign}
+····································································"
 source ${indesign} 2>/dev/null
 ###################################################################
 # Verify that the design variable specified in the design file
