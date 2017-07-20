@@ -1,8 +1,0 @@
-write_output_safe() {
-   output=${1}[${cxt}]
-   output_check=${1}[${subjidx}]
-   if [[ -e ${!output} ]] && [[ -z ${!output_check} ]]
-      then
-      echo "${1}[${subjidx}]=${!output}" >> ${design_local}
-   fi
-}

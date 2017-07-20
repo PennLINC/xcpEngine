@@ -34,10 +34,14 @@ source ${LIBRARY}/is_numeric
 source ${LIBRARY}/is+numeric
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
+source ${LIBRARY}/load_networks
 source ${LIBRARY}/load_transforms
 source ${LIBRARY}/nat2native
 source ${LIBRARY}/nat2standard
 source ${LIBRARY}/nat2structural
+source ${LIBRARY}/network
+source ${LIBRARY}/network_add
+source ${LIBRARY}/network_parse
 source ${LIBRARY}/output
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
@@ -55,6 +59,8 @@ source ${LIBRARY}/str2standard
 source ${LIBRARY}/str2structural
 source ${LIBRARY}/subroutine
 source ${LIBRARY}/verbose
+source ${LIBRARY}/write_config_safe
+source ${LIBRARY}/write_config
 source ${LIBRARY}/write_derivative
+source ${LIBRARY}/write_networks
 source ${LIBRARY}/write_output
-source ${LIBRARY}/write_output_safe
