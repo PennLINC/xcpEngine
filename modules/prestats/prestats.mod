@@ -37,7 +37,8 @@ completion() {
    write_output      fd
    write_output      tmask
    
-   write_output_safe censor
+   write_config_safe censor
+   write_config_safe censored
    
    quality_metric    relMeanRMSMotion        rel_mean_rms
    quality_metric    relMaxRMSMotion         rel_max_rms
@@ -55,9 +56,6 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   censor                  $(return_field ${prestats_censor[${cxt}]} 1)
-configure   censored                0
-
 derivative  referenceVolume         ${prefix}_referenceVolume
 derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensity           ${prefix}_meanIntensity
@@ -78,6 +76,18 @@ output      tmask                   mc/${prefix}_tmask.1D
 output      motion_vols             mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
 
 process     final                   ${prefix}_preprocessed
+
+configure   censor                  $(return_field ${prestats_censor[${cxt}]} 1)
+configure   censored                0
+
+if [[ -n    ${censor[${subjidx}]} ]]
+   then
+   configure   censor               ${censor[${subjidx}]}
+fi
+if [[ -n    ${censored[${subjidx}]} ]]
+   then
+   configure   censored             ${censored[${subjidx}]}
+fi
 
 << DICTIONARY
 
@@ -429,14 +439,9 @@ while (( ${#rem} > 0 ))
             #    of the variables: censor[cxt] or censor[subjidx]
             #######################################################
             censor_threshold=$(return_field ${prestats_censor[${cxt}]} 2)
-            if [[ -n ${censored[${subjidx}]} ]]
-               then
-               subroutine     @2.9
-               configure      censored    ${censored[${subjidx}]}
-            fi
             if (( ${censored[${cxt}]} != 1 ))
                then
-               subroutine     @2.10 [Determining volumes to be censored]
+               subroutine     @2.9  [Determining volumes to be censored]
                ####################################################
                # Create and write the temporal mask.
                # Use the criterion dimension and threshold
@@ -450,13 +455,13 @@ while (( ${#rem} > 0 ))
                   -o ${tmask[${cxt}]} \
                   -m ${prestats_censor_contig[${cxt}]}
                configure      censored    1
-               write_output   censored
+               write_config   censored
             fi
             #######################################################
             # Determine the number of volumes that fail the motion
             # criterion and print this.
             #######################################################
-            subroutine        @2.11 [Evaluating data quality]
+            subroutine        @2.10 [Evaluating data quality]
             num_censor=$(exec_xcp \
                tmask.R \
                -s ${!censor_criterion} \
@@ -836,23 +841,18 @@ while (( ${#rem} > 0 ))
             # points must be used in the linear model.
             #######################################################
             subroutine        @6.3
-            if [[ -z ${censor[${cxt}]} ]]
-               then
-               subroutine     @6.3.1
-               censor[${cxt}]=${censor[${subjidx}]}
-            fi
             if is_1D ${tmask[${cxt}]} \
             && [[ ${censor[${cxt}]} == iter ]]
                then
-               subroutine     @6.3.2
+               subroutine     @6.3.1
                tmask_dmdt=${tmask[${cxt}]}
             elif is_1D ${tmask[${subjidx}]} \
             && [[ ${censor[${cxt}]} == iter ]]
                then
-               subroutine     @6.3.4
+               subroutine     @6.3.2
                tmask_dmdt=${tmask[${subjidx}]}
             else
-               subroutine     @6.3.5
+               subroutine     @6.3.3
                tmask_dmdt=ones
             fi
             #######################################################
@@ -1083,20 +1083,19 @@ while (( ${#rem} > 0 ))
             #######################################################
             # OBTAIN MASKS: TEMPORAL
             #######################################################
-            censor_type=none
+            censor_type=${censor[${cxt}]}
             if is_1D ${tmask[${subjidx}]}
                then
                subroutine     @9.4.1
                tmask_tmp=${tmask[${subjidx}]}
-               censor_type=${censor[${subjidx}]}
             elif is_1D ${tmask[${cxt}]}
                then
                subroutine     @9.4.2
                tmask_tmp=${tmask[${cxt}]}
-               censor_type=${censor[${cxt}]}
             else
                subroutine     @9.5
                tmask_tmp=ones
+               censor_type=none
             fi
             #######################################################
             # Next, determine whether the user has enabled
