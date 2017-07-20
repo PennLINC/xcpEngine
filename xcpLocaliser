@@ -63,16 +63,25 @@ subroutine                    @1.3  [Writing localised design]
 # Write path to derivative image index
 ###################################################################
 subroutine                    @1.4  [Writing path to derivative map index]
-   aux_img_path=${out}/${prefix}_derivsNative
-   rm -f $aux_img_path
-   touch $aux_img_path
-   echo "aux_imgs[${subjidx}]=${aux_img_path}"  >> ${design_local_path}
+   output                     aux_imgs    ${prefix}_derivsNative
+   write_output               aux_imgs
+   rm -f ${aux_imgs[${cxt}]}
+   touch ${aux_imgs[${cxt}]}
+
+###################################################################
+# Write path to network index
+###################################################################
+subroutine                    @1.5  Writing path to network index
+   output                     network     ${prefix}_networks.json
+   write_output               network
+   exec_sys rm -f                                  ${network[${cxt}]}
+   exec_sys echo '[]'                           >> ${network[${cxt}]}
 
 ###################################################################
 # Write path to audit file, and write information
 # to the audit file
 ###################################################################
-subroutine                    @1.5  [Priming analytic audit]
+subroutine                    @1.6  [Priming analytic audit]
    audit=${out}/${prefix}_logs/${prefix}_audit
    rm -f ${audit}
    echo "audit=${audit}"                        >> ${design_local_path}
@@ -97,7 +106,7 @@ subroutine                    @1.5  [Priming analytic audit]
 ###################################################################
 # Write path to index of quality variables
 ###################################################################
-subroutine                    @1.6  [Priming quality assessment]
+subroutine                    @1.7  [Priming quality assessment]
    quality=${out}/${prefix}_quality.csv
    rm -f ${quality}
    echo "quality=${quality}"                    >> ${design_local_path}
