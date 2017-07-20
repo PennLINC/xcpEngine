@@ -36,6 +36,7 @@ subroutine                    @1.1  [Parsing subject identifiers]
 ###################################################################
 subroutine                    @1.1a [Creating output directory]
    subroutine                 @1.1b [${out}]
+   outdir=${out}
    mkdir -p $out
 
 ###################################################################
@@ -64,18 +65,18 @@ subroutine                    @1.3  [Writing localised design]
 ###################################################################
 subroutine                    @1.4  [Writing path to derivative map index]
    output                     aux_imgs    ${prefix}_derivsNative
-   write_output               aux_imgs
    rm -f ${aux_imgs[${cxt}]}
    touch ${aux_imgs[${cxt}]}
+   write_output               aux_imgs
 
 ###################################################################
 # Write path to network index
 ###################################################################
-subroutine                    @1.5  Writing path to network index
+subroutine                    @1.5  [Writing path to network index]
    output                     network     ${prefix}_networks.json
+   rm -f                                  ${network[${cxt}]}
+   echo '[]'                           >> ${network[${cxt}]}
    write_output               network
-   exec_sys rm -f                                  ${network[${cxt}]}
-   exec_sys echo '[]'                           >> ${network[${cxt}]}
 
 ###################################################################
 # Write path to audit file, and write information
@@ -137,4 +138,4 @@ routine_end
 
 echo "
 
-Localiser complete"
+Localiser complete
