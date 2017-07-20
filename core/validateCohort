@@ -23,7 +23,7 @@ if [[ -z ${path_cohort} ]]
    ::Missing cohort file
    ::Aborting
    "
-   Usage
+   usage
    exit 2.1
 fi
 ###################################################################
