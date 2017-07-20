@@ -89,7 +89,3 @@ fi
 source $design
 subjrow=$(( ${subjidx} - ${idx_offset} ))
 subject=$(sed ${subjrow}'q;d' ${path_cohort})
-###################################################################
-# Create the primary module output directory.
-###################################################################
-outdir=${out}

@@ -18,7 +18,9 @@
 # Obtain version information for all dependencies.
 ###################################################################
 dc_FAIL=0
-echo ""; echo "...Checking general dependencies..."
+echo "
+Checking general dependencies
+···································································"
 
 ###################################################################
 # AFNI
@@ -33,7 +35,7 @@ if [[ -z ${ver_AFNI} ]]
    "
    dc_FAIL=1
 else
-   ver_AFNI=" * ${ver_AFNI}"
+   ver_AFNI="· Version AFNI           ${ver_AFNI//Version /}"
    echo "${ver_AFNI}"
 fi
 
@@ -50,7 +52,7 @@ if [[ -z ${ver_ANTS} ]]
    "
    dc_FAIL=1
 else
-   ver_ANTS=" * Version ANTs "${ver_ANTS}
+   ver_ANTS="· Version ANTs           ${ver_ANTS}"
    echo "${ver_ANTS}"
 fi
 
@@ -67,7 +69,7 @@ if [[ -z ${ver_FSL} ]]
    "
    dc_FAIL=1
 else 
-   ver_FSL=" * Version FSL ${ver_FSL}"
+   ver_FSL="· Version FSL            ${ver_FSL}"
    echo "${ver_FSL}"
 fi
 
@@ -84,14 +86,26 @@ if [[ -z ${ver_C3D} ]]
    "
    dc_FAIL=1
 else
-   ver_C3D=" * Version C3D ${ver_C3D}"
+   ver_C3D="· Version C3D            ${ver_C3D}"
    echo "${ver_C3D}"
 fi
 
 ###################################################################
+# JQ
+###################################################################
+if [[ $(arch) == x86_64 ]]
+   then
+   export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux64
+else
+   export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
+fi
+ver_JQ="· Version JQ           $(${JQ_PATH} --version)"
+echo "${ver_JQ}"
+
+###################################################################
 # XCP
 ###################################################################
-ver_XCP=" * Version XCP Engine  "$(cat ${XCPEDIR}/core/VERSION \
+ver_XCP="· Version XCP Engine  "$(cat ${XCPEDIR}/core/VERSION \
    2>/dev/null)
 echo "${ver_XCP}"
 
@@ -108,7 +122,7 @@ if [[ -z ${ver_R} ]]
    "
    dc_FAIL=1
 else
-   ver_R=" * ${ver_R}"
+   ver_R="· ${ver_R}"
    echo "${ver_R}"
 fi
 
@@ -125,7 +139,7 @@ if [[ -z ${ver_RSCRIPT} ]]
    "
    dc_FAIL=1
 else
-   ver_RSCRIPT=" * ${ver_RSCRIPT}"
+   ver_RSCRIPT="· ${ver_RSCRIPT}"
    echo "${ver_RSCRIPT}"
 fi
 
@@ -151,7 +165,8 @@ echo "${RpackageChk}"
    && dc_FAIL=1
 
 [[ ${dc_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 1
-echo " * All general dependencies are present."
+echo "···································································
+All general dependencies are present."
 
 
 
@@ -160,7 +175,8 @@ echo " * All general dependencies are present."
 ###################################################################
 # Ensure environment variables are defined
 ###################################################################
-echo "...Checking environment..."
+echo "
+Checking environment"
 
 ###################################################################
 # FSL
@@ -214,20 +230,8 @@ if [[ -z ${XCPEDIR} ]]
    ec_FAIL=1
 fi
 
-###################################################################
-# JQ
-###################################################################
-if [[ $(arch) == x86_64 ]]
-   then
-   export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux64
-else
-   export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
-fi
-ver_JQ=" * Version JQ $(${JQ_PATH} --version)"
-echo "${ver_JQ}"
-
 [[ ${ec_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 2
-echo " * All environmental variables are defined."
+echo "All environmental variables are defined."
 
 
 
@@ -238,7 +242,9 @@ echo " * All environmental variables are defined."
 # installed. (This will probably be executed only from within
 # the XCP Engine.)
 ###################################################################
-modreqs="...Checking module-specific dependencies..."
+echo "
+Checking module-specific dependencies
+"
 for module in ${modules}
    do
    reqpath=${XCPEDIR}/modules/${module}/${module}.req
@@ -247,7 +253,3 @@ for module in ${modules}
       source ${reqpath}
    fi
 done
-echo \
-"
-${modreqs}
-"
