@@ -214,6 +214,18 @@ if [[ -z ${XCPEDIR} ]]
    ec_FAIL=1
 fi
 
+###################################################################
+# JQ
+###################################################################
+if [[ $(arch) == x86_64 ]]
+   then
+   export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux64
+else
+   export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
+fi
+ver_JQ=" * Version JQ $(${JQ_PATH} --version)"
+echo "${ver_JQ}"
+
 [[ ${ec_FAIL} == 1 ]] && echo "Aborting" && echo "" && exit 2
 echo " * All environmental variables are defined."
 
