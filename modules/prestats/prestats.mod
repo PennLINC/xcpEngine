@@ -38,6 +38,11 @@ completion() {
    write_output      tmask
    
    write_config_safe censor
+   if is_1D ${tmask[${cxt}]}
+      then
+      configure      censored       1
+      write_config   censored
+   fi
    
    quality_metric    relMeanRMSMotion        rel_mean_rms
    quality_metric    relMaxRMSMotion         rel_max_rms
@@ -74,8 +79,6 @@ output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 output      motion_vols             mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
 
-process     final                   ${prefix}_preprocessed
-
 configure   censor                  $(return_field ${prestats_censor[${cxt}]} 1)
 configure   censored                0
 
@@ -87,6 +90,8 @@ if [[ -n    ${censored[${subjidx}]} ]]
    then
    configure   censored             ${censored[${subjidx}]}
 fi
+
+process     final                   ${prefix}_preprocessed
 
 << DICTIONARY
 
@@ -454,7 +459,6 @@ while (( ${#rem} > 0 ))
                   -o ${tmask[${cxt}]} \
                   -m ${prestats_censor_contig[${cxt}]}
                configure      censored    1
-               write_config   censored
                ####################################################
                # Determine the number of volumes that fail the
                # motion criterion and print this.
@@ -542,7 +546,7 @@ while (( ${#rem} > 0 ))
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
-            subroutine        @3.4  [Executing motion correction]
+            subroutine        @3.4  [Executing motion realignment]
             exec_fsl \
                mcflirt -in ${intermediate}.nii.gz \
                -out ${intermediate}_mc \
