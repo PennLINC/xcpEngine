@@ -7,9 +7,6 @@
 ###################################################################
 # Apply transforms to warp an image into a target space.
 ###################################################################
-source ${XCPEDIR}/core/constants
-source ${XCPEDIR}/core/functions/library.sh
-
 map=${1}
 source=${2}
 target=${3}
