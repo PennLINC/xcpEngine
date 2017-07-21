@@ -1,0 +1,4 @@
+write_networks() {
+   rm -f                                  ${network[${subjidx}]}
+   echo ${network[${cxt}]}|${JQ_PATH}  >> ${network[${subjidx}]}
+}

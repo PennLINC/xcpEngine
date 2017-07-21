@@ -1,0 +1,5 @@
+load_networks() {
+   configure      network     $(cat ${network[${subjidx}]})
+   network_list=$(${JQ_PATH} '.[]|.Name' ${network[${subjidx}]})
+   network_list=( ${network_list//\"/} )
+}
