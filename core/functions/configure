@@ -1,4 +1,3 @@
 configure() {
-   configuration=${1}[${cxt}]
-   eval ${configuration}=${2}
+   eval ${1}[${cxt}]=${2}
 }

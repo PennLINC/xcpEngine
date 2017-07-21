@@ -92,9 +92,9 @@ if (operation == 'min') {
 }
 
 if (!is.na(title)) {
-   cat(title,'\n')
+   cat(title,'\n',sep='')
 }
-cat(out,'\n')
+cat(out,'\n',sep='')
 
 if (!is.na(file)) {
    sink(NULL)
