@@ -33,9 +33,9 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=rest_$(whoami)
-design=example.dsn
-path_cohort=/data/joy/BBL/projects/xcpWorkshop/config/cohort.csv
+analysis=accelerator_$(whoami)
+design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
+path_cohort=/data/joy/BBL/projects/xcpWorkshop/config/cohort_example.csv
 subjects_ct=5
 img=${subject[2]}
 struct=${subject[3]}/ExtractedBrain0N4.nii.gz
@@ -45,6 +45,7 @@ ixfm_warp=${subject[3]}/TemplateToSubject0Warp.nii.gz
 xfm_affine=${subject[3]}/SubjectToTemplate0GenericAffine.mat
 ixfm_affine=${subject[3]}/TemplateToSubject1GenericAffine.mat
 out_super=/data/joy/BBL/projects/xcpWorkshop/output/${analysis}
+out_group=${out_super}/group
 out=/data/joy/BBL/projects/xcpWorkshop/output/${analysis}/${subject[0]}/${subject[1]}
 space=native
 template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
@@ -53,16 +54,18 @@ template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound,regress,seed,reho,alff,roiquant,net,norm
+pipeline=prestats,coreg,confound #,regress,seed,reho,alff,roiquant,net,norm
 
 ###################################################################
 # GLOBAL VARIABLES
 ###################################################################
 
-XCPEDIR=${XCPEDIR}
-RPATH=/share/apps/R/R-3.1.1/bin/R
-FSLDIR=/share/apps/fsl/5.0.8
-ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin/
+export XCPEDIR=${XCPEDIR}
+export RPATH=/share/apps/R/R-3.1.1/bin/R
+export FSLDIR=/share/apps/fsl/5.0.8
+export AFNI_PATH=/share/apps/afni/linux_xorg7_64_2014_06_16
+export ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin/
+export C3D_PATH=/share/apps/c3d/c3d-1.0.0-Linux-x86_64/bin
 KEEPNUM=1
 NUMOUT=0
 TIMESTAMP=1
@@ -74,16 +77,22 @@ TIMESTAMP=1
 prestats_dvols[1]=4
 prestats_stime[1]=none
 prestats_sdir[1]=Z
-prestats_sptf[1]=none
+prestats_sptf[1]=gaussian
 prestats_smo[1]=6
-prestats_tmpf[1]=none
+prestats_tmpf[1]=elliptic
+prestats_tmpf_order[1]=1
+prestats_tmpf_pass[1]=2
+prestats_tmpf_ripple[1]=0.5
+prestats_tmpf_ripple2[1]=20
+prestats_tmpf_dvols[1]=2
 prestats_hipass[1]=0.01
 prestats_lopass[1]=0.08
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
-prestats_dmdt[1]=2
-prestats_censor[1]=none,0.25
+prestats_dmdt[1]=auto
+prestats_censor[1]=final,0.25
 prestats_censor_cr[1]=rms
+prestats_censor_contig[1]=0
 prestats_rerun[1]=N
 prestats_cleanup[1]=Y
 prestats_process[1]=DVOMPRMCOBXTDSPDMT
@@ -97,7 +106,7 @@ coreg_seg[2]=${subject[3]}/BrainSegmentation.nii.gz
 coreg_wm[2]=3
 coreg_refwt[2]=NULL
 coreg_inwt[2]=NULL
-coreg_qacut[2]=0.7,0.8
+coreg_qacut[2]=0.8,0.9
 coreg_rerun[2]=N
 coreg_cleanup[2]=Y
 
