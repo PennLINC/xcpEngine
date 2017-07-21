@@ -13,7 +13,6 @@ source ${LIBRARY}/add_reference
 source ${LIBRARY}/arithmetic
 source ${LIBRARY}/atlas_parse
 source ${LIBRARY}/cleanup
-source ${LIBRARY}/complete_already
 source ${LIBRARY}/configure
 source ${LIBRARY}/derivative
 source ${LIBRARY}/derivative_parse

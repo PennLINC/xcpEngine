@@ -4,7 +4,14 @@ process() {
    if is_image ${!output} \
    && ! rerun
       then
-      complete_already
+      echo \
+"
+
+
+${mod_name_short} has already run to completion.
+Writing outputs..."
+
+      completion
    fi
    if is_image ${out}/${prefix}.nii.gz
       then
