@@ -23,7 +23,7 @@ cat << endstream
 ___________________________________________________________________
 
 
-Usage: sfilter -i <input> -o <output> <options>
+Usage: regslicer -i <input> -o <output> <options>
 
 Compulsory arguments:
  -s : Source image
