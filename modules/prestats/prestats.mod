@@ -38,7 +38,6 @@ completion() {
    write_output      tmask
    
    write_config_safe censor
-   write_config_safe censored
    
    quality_metric    relMeanRMSMotion        rel_mean_rms
    quality_metric    relMaxRMSMotion         rel_max_rms
@@ -441,7 +440,7 @@ while (( ${#rem} > 0 ))
             censor_threshold=$(return_field ${prestats_censor[${cxt}]} 2)
             if (( ${censored[${cxt}]} != 1 ))
                then
-               subroutine     @2.9  [Determining volumes to be censored]
+               subroutine     @2.9  [Applying motion threshold to volumes]
                ####################################################
                # Create and write the temporal mask.
                # Use the criterion dimension and threshold
@@ -456,19 +455,16 @@ while (( ${#rem} > 0 ))
                   -m ${prestats_censor_contig[${cxt}]}
                configure      censored    1
                write_config   censored
+               ####################################################
+               # Determine the number of volumes that fail the
+               # motion criterion and print this.
+               ####################################################
+               subroutine        @2.10 [Evaluating data quality]
+               num_censor=$(exec_sys cat ${tmask[${cxt}]} \
+                  |grep -o 0 \
+                  |wc -l)
+               echo ${num_censor} >> ${motion_vols[${cxt}]}
             fi
-            #######################################################
-            # Determine the number of volumes that fail the motion
-            # criterion and print this.
-            #######################################################
-            subroutine        @2.10 [Evaluating data quality]
-            num_censor=$(exec_xcp \
-               tmask.R \
-               -s ${!censor_criterion} \
-               -t ${censor_threshold} \
-               |grep -o 0 \
-               |wc -l)
-            echo ${num_censor} >> ${motion_vols[${cxt}]}
             exec_sys rm -f ${referenceVolume[${cxt}]}
          fi # run check statement
          ##########################################################
@@ -846,13 +842,8 @@ while (( ${#rem} > 0 ))
                then
                subroutine     @6.3.1
                tmask_dmdt=${tmask[${cxt}]}
-            elif is_1D ${tmask[${subjidx}]} \
-            && [[ ${censor[${cxt}]} == iter ]]
-               then
-               subroutine     @6.3.2
-               tmask_dmdt=${tmask[${subjidx}]}
             else
-               subroutine     @6.3.3
+               subroutine     @6.3.2
                tmask_dmdt=ones
             fi
             #######################################################
@@ -1232,7 +1223,7 @@ while (( ${#rem} > 0 ))
                -h ${prestats_hipass[${cxt}]} \
                -l ${prestats_lopass[${cxt}]} \
                ${mask} \
-               ${tmask} \
+               ${tmask_tmp} \
                ${tf_order} \
                ${tf_direc} \
                ${tf_p_rip} \
@@ -1301,7 +1292,7 @@ else
 
 
 XCP-ERROR: Expected output not present.
-Expected: $${prefix}${buffer}
+Expected: ${prefix}${buffer}
 Check the log to verify that processing
 completed as intended.
 "

@@ -60,6 +60,7 @@
 XCPENGINE
 ###################################################################
 source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
 
 usage(){
 cat << endstream

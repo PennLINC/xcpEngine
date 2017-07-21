@@ -8,7 +8,7 @@
 # Validate a design file that is input to the XCP Engine.
 ###################################################################
 indesign=$1
-#indesign=$(exec_fsl fsl_abspath ${indesign})
+indesign=$(exec_fsl fsl_abspath ${indesign})
 
 
 
