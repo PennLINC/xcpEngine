@@ -217,7 +217,9 @@ routine_end
 # If BBR is the cost function being used, a white matter mask
 # must be extracted from the user-specified tissue segmentation.
 ###################################################################
-if [[ ${coreg_cfunc[${cxt}]} == bbr ]]
+if [[ ${coreg_cfunc[${cxt}]} == bbr ]]; then
+if [[ ! -e ${e2smat[${cxt}]} ]] \
+|| rerun
    then
    wm_mask=${intermediate}_t1wm.nii.gz
    if ! is_image ${wm_mask} \
@@ -247,7 +249,7 @@ if [[ ${coreg_cfunc[${cxt}]} == bbr ]]
    # the path to the new mask.
    ################################################################
    wm_mask_cmd="-wmseg ${wm_mask}"
-fi
+fi; fi
 
 
 
@@ -386,10 +388,10 @@ if (( ${flag} == 1 ))
    if [[ ${coreg_cfunc[${cxt}]} == ${altreg1[${cxt}]} ]]
       then
       subroutine              @6.2
-      coreg_cfunc[${cxt}]=${altreg2[${cxt}]}
+      configure               coreg_cfunc  ${altreg2[${cxt}]}
    else
       subroutine              @6.3
-      coreg_cfunc[${cxt}]=${altreg1[${cxt}]}
+      configure               coreg_cfunc  ${altreg1[${cxt}]}
    fi
    subroutine                 @6.4a [Coregistration will be repeated using cost ${coreg_cfunc[${cxt}]}]
    subroutine                 @6.4 
@@ -432,11 +434,15 @@ if (( ${flag} == 1 ))
       exec_sys rm -f ${coreg_coverage[${cxt}]}
       exec_sys rm -f ${coreg_jaccard[${cxt}]}
       exec_sys rm -f ${coreg_dice[${cxt}]}
-      echo  ${registration_quality_alt[0]} >> ${coreg_cross_corr[${cxt}]}
-      echo  ${registration_quality_alt[1]} >> ${coreg_coverage[${cxt}]}
-      echo  ${registration_quality_alt[2]} >> ${coreg_jaccard[${cxt}]}
-      echo  ${registration_quality_alt[3]} >> ${coreg_dice[${cxt}]}
-      write_output coreg_cfunc[${cxt}]
+      echo     ${registration_quality_alt[0]} >> ${coreg_cross_corr[${cxt}]}
+      echo     ${registration_quality_alt[1]} >> ${coreg_coverage[${cxt}]}
+      echo     ${registration_quality_alt[2]} >> ${coreg_jaccard[${cxt}]}
+      echo     ${registration_quality_alt[3]} >> ${coreg_dice[${cxt}]}
+      exec_sys rm -f ${s2emat[${cxt}]}
+      exec_sys rm -f ${seq2struct[${cxt}]}
+      exec_sys rm -f ${struct2seq[${cxt}]}
+      exec_sys rm -f ${s2eimg[${cxt}]}
+      write_config            coreg_cfunc
    else
       subroutine              @6.6a [Coregistration failed to improve. This may be]
       subroutine              @6.6b [attributable to incomplete acquisition coverage]
