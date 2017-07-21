@@ -59,7 +59,8 @@ if (is.na(opt$out)) {
 refImgPath <- opt$img
 valStr <- opt$values
 outPath <- opt$out
-sink("/dev/null")
+f <- file()
+sink(tempfile())
 
 
 ###################################################################
@@ -72,10 +73,8 @@ maskVals <- unlist(strsplit(valStr,','))
 # Read input image
 ###################################################################
 suppressMessages(require(ANTsR))
-refImg <- antsImageRead(refImgPath,3)
-# because getMask does not support -Inf
-# I'll assume your image doesn't have values smaller than -99^9
-mask <- getMask(refImg,-99^9,Inf)
+refImg <- as.array(antsImageRead(refImgPath,3))
+mask <- as.antsImage(refImg<Inf)
 refImg <- imagesToMatrix(refImgPath,mask)
 
 
@@ -99,4 +98,5 @@ outImg <- antsImageClone(mask)
 outImg[mask <= 0] <- 0
 outImg[mask > 0] <- outImgVec
 antsImageWrite(outImg, outPath)
-sink(NULL)
+sink()
+close(f)
