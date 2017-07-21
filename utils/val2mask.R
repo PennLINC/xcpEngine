@@ -73,8 +73,10 @@ maskVals <- unlist(strsplit(valStr,','))
 # Read input image
 ###################################################################
 suppressMessages(require(ANTsR))
-refImg <- as.array(antsImageRead(refImgPath,3))
-mask <- as.antsImage(refImg<Inf)
+refImg <- antsImageRead(refImgPath,3)
+refImgArr <- as.array(refImg)
+mask <- as.antsImage(refImgArr<Inf)
+antsCopyImageInfo(refImg,mask)
 refImg <- imagesToMatrix(refImgPath,mask)
 
 
@@ -97,6 +99,7 @@ for (maskVal in maskVals) {
 outImg <- antsImageClone(mask)
 outImg[mask <= 0] <- 0
 outImg[mask > 0] <- outImgVec
+antsCopyImageInfo(mask,outImg)
 antsImageWrite(outImg, outPath)
 sink()
 close(f)
