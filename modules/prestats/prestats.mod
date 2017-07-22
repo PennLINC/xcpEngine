@@ -912,7 +912,7 @@ while (( ${#rem} > 0 ))
             if (( ${nvol} >= 200 ))
                then
                subroutine     @7.2  [Long timeseries configuration]
-               ds_arguments='NEW'
+               ds_arguments='-NEW'
             else
                subroutine     @7.3  [Short timeseries configuration]
             fi
