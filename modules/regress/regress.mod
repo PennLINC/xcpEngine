@@ -54,6 +54,11 @@ process     final                   ${prefix}_residualised
 
 << DICTIONARY
 
+censor
+   A set of instructions specifying the type of censoring to be
+   performed in the current pipeline: 'none', 'iter[ative]', or
+   'final'. This instruction is inherited from the prestats module,
+   which selects volumes for censoring.
 confcor
    A matrix of correlations among confound timeseries.
 confmat
@@ -66,6 +71,9 @@ final
 n_volumes_censored
    The number of volumes excised from the timeseries during the
    confound regression procedure.
+tmask
+   A temporal mask of binary values, indicating whether each
+   volume survives motion censorship.
 
 DICTIONARY
 
