@@ -103,7 +103,7 @@ if (!is.na(derivspath)) {
       #############################################################
       # Obtain the derivative extension
       #############################################################
-      derivFull <- system(paste('ls',paste(derivPath,'.*',sep='')), intern=TRUE)
+      derivFull <- system(paste('ls',paste(derivPath)), intern=TRUE)
       derivExt <- sub('^[^.]*[.]','',derivFull)
       derivOut <- paste(derivName,derivExt,sep='.')
       derivOut <- paste(getwd(),derivOut,sep='/')
