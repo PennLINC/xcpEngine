@@ -643,6 +643,7 @@ if (( ${genfilt} == 1 ))
       #############################################################
 	   if [[ ${d_type} == timeseries ]]
 	      then
+         subroutine  @u.8.1
          ##########################################################
          # * Ensure that the ultimate input to genfilter has an
          #   appropriate extension. Genfilter requires the complete
@@ -668,6 +669,7 @@ if (( ${genfilt} == 1 ))
       #   filtered derivatives without making any changes.
       #############################################################
 	   else
+         subroutine  @u.8.2
          echo "#${d_name}#${d_path}" \
             >> ${out_root}_derivatives
 	   fi
@@ -683,6 +685,7 @@ if (( ${genfilt} == 1 ))
    ################################################################
    for ts in ${tslist}
       do
+      subroutine  @u.8.3
       tsname=$(return_field ${ts} -1 '/' 1 '.')
       exec_sys rm -rf ${out_root}_${tsname}.1D
       exec_xcp \
@@ -717,6 +720,7 @@ fi
 ###################################################################
 if (( ${dvol} > 0 ))
    then
+   subroutine     @u.9
    ################################################################
    # Compute the number of volumes to be retained following
    # timeseries truncation.
@@ -731,11 +735,13 @@ if (( ${dvol} > 0 ))
    ################################################################
    case ${pass} in
    1)
+      subroutine  @u.9.1
       retain=$(( ${nvol} - ${dvol}))
       echo "Discarding ${dvol} volumes from beginning of"
       echo "  timeseries"
       ;;
    2)
+      subroutine  @u.9.2
       retain=$(( ${nvol} - 2*${dvol} ))
       echo "Discarding ${dvol} volumes from beginning and end"
       echo "  of timeseries"
@@ -764,6 +770,7 @@ if (( ${dvol} > 0 ))
    derivatives=$(cat ${out_root}_derivatives)
    for derivative in ${derivatives}
       do
+      subroutine  @u.9.3
       #############################################################
       # * Parse the derivative image.
       #############################################################
@@ -771,6 +778,7 @@ if (( ${dvol} > 0 ))
 	   d_type=$(derivative_typeof ${derivative} ${image})
 	   if [[ ${d_type} == timeseries ]]
 	      then
+         subroutine  @u.9.4
 	      fsl_exec \
 	         fslroi ${d_path} ${d_path} \
             0 -1 \
@@ -787,6 +795,7 @@ if (( ${dvol} > 0 ))
    ################################################################
    for ts in ${tslist}
       do
+      subroutine  @u.9.5
       #############################################################
       # * Obtain the base name of the old 1D timeseries file; use
       #   this to find the path to the filtered version of
@@ -809,6 +818,7 @@ if (( ${dvol} > 0 ))
    tmask=${tmaskcut}
    if [[ ${tmask} != "ones" ]]
       then
+      subroutine  @u.9.6
       tail -n +${dvol} ${tmask} >> ${out_root}_TEMP_tmask
       head -n ${retain} ${out_root}_TEMP_tmask >> ${out_root}_tmask.1D
       rm -f ${out_root}_TEMP_tmask
