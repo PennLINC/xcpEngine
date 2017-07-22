@@ -1,0 +1,101 @@
+[
+   {
+      "Name" : "add_reference",
+      "Description" : "Adds a reference image (not produced by the current module) to the current module's output directory",
+      "Input" : {
+         "1" : "The variable pointing to the reference image to be added",
+         "2" : "The path (within the current module's output directory, no extensions) where the reference image will be added"
+      },
+      "Keywords" : [ "" ]
+   },
+   {
+      "Name" : "arithmetic",
+      "Description" : "Evaluates elementary arithmetic expressions, including decimal addition, subtraction, multiplication, division, and radicals, with high precision",
+      "Input" : {
+         "ALL" : "The expression to be evaluated"
+      },
+      "Output" : {
+         "STDOUT" : "The simplified value of the expression",
+         "STDERR" : "(if verbose) The expression to be evaluated"
+      },
+      "Keywords" : [ "operation" ]
+   },
+   {
+      "Name" : "atlas_parse",
+      "Description" : "Parses a given atlas or parcellation for use by module routines",
+      "Input" : {
+         "1" : "The identifier (name) of the atlas to be parsed"
+      },
+      "Output" : {
+         "a_name" : "The name of the atlas",
+         "a_space" : "Identifier for the coordinate space in which the atlas is situated",
+         "a_community" : "Path to a file containing an affiliation vector that declares the community assignment of each atlas region (used for network analysis)",
+         "a_type" : {
+            "image" : "Indicates that the atlas is stored on the file system as an image",
+            "sclib" : "Indicates that the atlas is stored on the file system as a text-based coordinates library",
+            "sphere" : "Indicates that the provided identifier denotes a single spherical region of interest in a text-based coordinates library"
+         },
+         "a_coor" : "The coordinates of the centre of the current spherical atlas region",
+         "a_radius" : "The radius of the current spherical atlas region"
+      },
+      "Keywords" : [ "interface", "atlas", "parse" ]
+   },
+   {
+      "Name" : "cleanup",
+      "Description" : "Tests whether the design file specifies that intermediate outputs from the current module should be deleted on successful completion",
+      "Return" : {
+         "0" : "Indicates that any intermediate outputs should be deleted",
+         "1" : "Indicates that any intermediate outputs should be retained"
+      },
+      "Keywords" : [ "test" ]
+   },
+   {
+      "Name" : "configure",
+      "Description" : "Declares a new context-level variable without an associated path on the file system; used to guide the module control structures",
+      "Input" : {
+         "0" : "The name of the context-level variable to be declared",
+         "1" : "The value to be assigned to the context-level variable"
+      },
+      "Keywords" : [ "declare", "context" ]
+   },
+   {
+      "Name" : "derivative",
+      "Description" : "Declares a new neuroimage derivative by pairing (1) a context-level variable name to (2) a path in the current module's output directory that includes the standard extension for neuroimages",
+      "Input" : {
+         "1" : "The name of the context-level variable to be declared; this also becomes the name of the derivative if it is indexed by write_derivative",
+         "2" : "The value to be assigned to the context-level variable; this should be a path relative to the module output directory and should not include any extensions"
+      },
+      "Output" : {
+         "derivatives_floating" : "A catalogue of any derivative images that have been declared but are not yet indexed"
+      },
+      "Keywords" : [ "declare", "context", "image" ]
+   },
+   {
+      "Name" : "derivative_parse",
+      "Description" : "Parses a given image derivative for use by module routines",
+      "Input" : {
+         "1" : "The derivative to be parsed [NYI]"
+      },
+      "Output" : {
+         "d_name" : "The name of the derivative",
+         "d_path" : "The location of the derivative image on the file system",
+         "d_mod" : "The provenance of the derivative: the name of the module that created it",
+         "d_mod_idx" : "The provenance of the derivative: the context index of the module that created it",
+         "d_mod_stats" : {
+            "Description" : "The summary statistic that should be computed over any groupings of voxels from the current derivative",
+            "mean" : "The arithmetic mean",
+            "kw" : "Kendall's coefficient of concordance",
+            "vol" : "The volume"
+         },
+         "d_type [NYI]" : {
+            "map" : "Indicates that the derivative is a 3-dimensional voxelwise map",
+            "maps [NYI]" : "Indicates that the derivative is a grouping of 3-dimensional voxelwise maps",
+            "timeseries" : "Indicates that the derivative is a 4-dimensional time series with the same number of volumes as the primary analyte image"
+         }
+      },
+      "Keywords" : [ "interface", "image", "parse" ]
+   },
+   {
+      "Name" : "exec_afni"
+   }
+]
