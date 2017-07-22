@@ -91,7 +91,6 @@ endstream
 # Define defaults
 ###################################################################
 out=despike.1D
-outdir=.
 outpfx=~TEMP~
 ignore=""
 corder=""
@@ -104,7 +103,7 @@ t_rep=1
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:x:l:f:c:s:bnqt" OPTION
+while getopts "i:o:x:r:l:f:c:s:bnqt" OPTION
    do
    case $OPTION in
    i)
@@ -113,12 +112,12 @@ while getopts "i:o:x:l:f:c:s:bnqt" OPTION
       ;;
    o)
       out=${OPTARG}
-      outdir=$(dirname ${out})
-      outbase=$(basename ${out})
-      outpfx=${outdir}/~TEMP~
       ;;
    x)
       intermediate=${OPTARG}
+      ;;
+   r)
+      is+numeric ${OPTARG} && t_rep=${OPTARG}
       ;;
    l)
       if is+integer ${OPTARG}
@@ -172,14 +171,10 @@ shift $((OPTIND-1))
 
 
 ###################################################################
-# Ensure that an input timeseries has been provided, and
-# automatically suffix the output 1D if no extension is otherwise
-# specified.
+# Ensure that an input timeseries has been provided.
 ###################################################################
 [[ -z ${ts} ]] && Usage && exit 1
-[[ -z ${intermediate} ]] && intermediate=${outpfx}
-ext=$(echo ${out}|cut -d'.' -f1 --complement)
-[[ ${ext} == ${out} ]] && out=${out}.1D
+[[ -z ${intermediate} ]] && intermediate=./~TEMP~
 
 
 
@@ -188,15 +183,12 @@ ext=$(echo ${out}|cut -d'.' -f1 --complement)
 subroutine                 @u.1
 ###################################################################
 # Convert the input timeseries to an image
-# * Obtain the base name of the current 1D timeseries file.
-###################################################################
-tsname=$(return_field ${ts} -1 '/' 1 '.')
-###################################################################
 # * Determine the number of timeseries in the 1D timeseries
 #   file by dividing the total number of words in the file
 #   by the number of time points (volumes).
 ###################################################################
 nfld=( $(exec_sys wc ${ts}) )
+nvol=${nfld[0]}
 nfld=$(arithmetic ${nfld[1]}/${nfld[0]})
 ###################################################################
 # * Through trial and error, we have found that the desired
@@ -204,23 +196,23 @@ nfld=$(arithmetic ${nfld[1]}/${nfld[0]})
 #   first.
 ###################################################################
 subroutine                 @u.2
-exec_afni 1dtranspose ${ts} ${intermediate}${tsname}_tp.1D
+exec_afni 1dtranspose ${ts} ${intermediate}_tp.1D
 ###################################################################
 # * Next, convert it to a NIfTI timeseries.
 ###################################################################
-exec_fsl fslascii2img ${intermediate}${tsname}_tp.1D \
+exec_fsl fslascii2img ${intermediate}_tp.1D \
    ${nfld} 1 1 \
    ${nvol} 1 1 1 \
    ${t_rep} \
-   ${intermediate}${tsname}.nii.gz
+   ${intermediate}.nii.gz
 ###################################################################
 # And then convert it back to a .1D file, but with a 3D header.
 # I certainly hope that there is a better way of doing this, but
 # for now, it appears that this approach works.
 ###################################################################
 subroutine                 @u.3
-exec_afni 3dcopy ${intermediate}${tsname}.nii.gz \
-   ${intermediate}${tsname}
+exec_afni 3dcopy ${intermediate}.nii.gz \
+   ${intermediate}
 
 
 
@@ -235,8 +227,8 @@ if (( ${bpopt} == 1 ))
    subroutine              @u.4
    exec_afni 3dBandpass \
       -despike \
-      -prefix ${intermediate}${tsname}_despike \
-      ${intermediate}${tsname}.1D \
+      -prefix ${intermediate}_despike \
+      ${intermediate}.1D \
       2> /dev/null
 else
    subroutine              @u.5
@@ -248,8 +240,8 @@ else
       ${new} \
       ${quiet} \
       -nomask \
-      -prefix ${intermediate}${tsname}_despike \
-      ${intermediate}${tsname}.1D \
+      -prefix ${intermediate}_despike \
+      ${intermediate}.1D \
       2> /dev/null
 fi
 
@@ -261,14 +253,14 @@ fi
 # And now strip the AFNI header information from the 1D file.
 ###################################################################
 subroutine                 @u.6
-data_dsp_nohd=$(cat ${intermediate}${tsname}_despike.1D|grep -v '#')
-exec_sys rm -f ${intermediate}${tsname}_despike.1D
-echo "${data_dsp_nohd}" >> ${intermediate}${tsname}_despike.1D
+data_dsp_nohd=$(cat ${intermediate}_despike.1D|grep -v '#')
+exec_sys rm -f ${intermediate}_despike.1D
+echo "${data_dsp_nohd}" >> ${intermediate}_despike.1D
 ###################################################################
 # Finally, transpose it back.
 ###################################################################
 subroutine                 @u.7
-exec_afni 1dtranspose ${intermediate}${tsname}_despike.1D ${out}
+exec_afni 1dtranspose ${intermediate}_despike.1D ${out}
 
 
 
@@ -277,7 +269,7 @@ exec_afni 1dtranspose ${intermediate}${tsname}_despike.1D ${out}
 ###################################################################
 # Clean up intermediate files.
 ###################################################################
-exec_sys rm -rf ${intermediate}${tsname}_despike.1D \
-   ${intermediate}${tsname}.1D \
-   ${intermediate}${tsname}.nii.gz \
-   ${intermediate}${tsname}_tp.1D
+exec_sys rm -rf ${intermediate}_despike.1D \
+   ${intermediate}.1D \
+   ${intermediate}.nii.gz \
+   ${intermediate}_tp.1D
