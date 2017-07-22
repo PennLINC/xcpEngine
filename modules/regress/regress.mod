@@ -6,7 +6,7 @@
 
 ###################################################################
 # SPECIFIC MODULE HEADER
-# This module preprocesses fMRI data.
+# This module executes confound regression and censoring.
 ###################################################################
 mod_name_short=regress
 mod_name='CONFOUND REGRESSION MODULE'
@@ -45,24 +45,27 @@ completion() {
 output      confmat                 ${prefix}_confmat.1D
 output      confcor                 ${prefix}_confcor.txt
 output      n_volumes_censored      ${prefix}_nVolumesCensored.txt
-output      smooth_root             ${prefix}_sm
+output      tmask                   ${prefix}_tmask.1D
+
+configure   confproc                ${confmat[${subjidx}]}
+configure   censor                  ${censor[${subjidx}]}
 
 process     final                   ${prefix}_residualised
 
 << DICTIONARY
 
-confmat
-   The confound matrix after filtering and censoring.
 confcor
    A matrix of correlations among confound timeseries.
+confmat
+   The confound matrix after filtering and censoring.
+confproc
+   A pointer to the working version of the confound matrix.
 final
    The residualised timeseries, indicating the successful
    completion of the module.
 n_volumes_censored
    The number of volumes excised from the timeseries during the
    confound regression procedure.
-smooth_root
-   A root path for all smoothed images.
 
 DICTIONARY
 
@@ -106,11 +109,12 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       then
       exec_sys rm -rf ${intermediate}_despike.nii.gz
       nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
+      t_rep=$(exec_fsl fslval ${intermediate} pixdim4)
       if (( ${nvol} > 500 ))
          then
          subroutine        @1.1  
          ds_arguments="-NEW"
-         1d_arguments="-n"
+         oneD_arguments="-n"
       else
          subroutine        @1.2
       fi
@@ -123,7 +127,7 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
          -nomask \
          -quiet \
          ${ds_arguments} \
-         ${intermediate}
+         ${intermediate}.nii.gz
 	   #############################################################
 	   # Derivatives
 	   #############################################################
@@ -153,19 +157,20 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       ##########################################################
       subroutine           @1.6
       exec_xcp 1dDespike \
-         -i ${confmat[${subjidx}]} \
-         -x ${intermediate}_despike_1d
-         -o ${confmat[${cxt}]} \
-         ${1d_arguments} \
+         -i ${confproc[${cxt}]} \
+         -x ${intermediate}_1dDespike \
+         -o ${intermediate}_despike_confmat.1D \
+         -r ${t_rep} \
+         ${oneD_arguments} \
          -q
    fi
 	################################################################
 	# Update image pointers
 	################################################################
 	subroutine              @1.7
-   intermediate=${intermediate}_despike
+   configure   confproc    ${intermediate}_despike_confmat.1D
    locregs=$(exec_sys ls -d1 ${outdir}/*loc*despike* 2>/dev/null)
-   confmat[${subjidx}]=${confmat[${cxt}]}
+   intermediate=${intermediate}_despike
 	routine_end
 fi
 
@@ -193,7 +198,7 @@ if [[ ${regress_tmpf[${cxt}]} == none ]]
    then
    subroutine              @2.1
    exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_filtered.nii.gz
-   cp ${confmat[${subjidx}]} ${confmat[${cxt}]}
+   cp ${confproc[${cxt}]}  ${intermediate}_confmat.1D
 ###################################################################
 # Ensure that this step has not already run to completion by
 # checking for the existence of a filtered image and confound
@@ -229,8 +234,7 @@ elif ! is_image ${intermediate}_filtered.nii.gz \
 	# temporal filter, resulting in corruption of adjacent volumes
 	# by motion-related variance.
 	################################################################
-	censor[${cxt}]=${censor[${subjidx}]}
-	if [[ -e ${tmask[${subjidx}]} ]]
+	if is_1D ${tmask[${subjidx}]}
       then
       subroutine           @2.4.1
       tmaskpath=${tmask[${subjidx}]}
@@ -262,7 +266,8 @@ No censoring will be performed."
 	   configure            censor   none
 	   write_output         censor
 	   unset tmask
-	else
+	elif [[ ${regress_spkreg[${cxt}]} == N ]]
+	   then
 	   subroutine           @2.5.4
 	   unset tmask
 	fi
@@ -278,10 +283,10 @@ No censoring will be performed."
 	subroutine              @2.6
 	unset derivs ts1d
 	derivs="-x ${aux_imgs[${subjidx}]}"
-	if [[ -e ${confmat[${subjidx}]} ]]
+	if is_1D ${confproc[${cxt}]}
 	   then
 	   subroutine           @2.7
-	   ts1d="${confmat[${subjidx}]}"
+	   ts1d="${confproc[${cxt}]}"
 	fi
 	[[ -n ${ts1d} ]] && ts1d="-1 ${ts1d// /,}"
 	################################################################
@@ -335,9 +340,9 @@ No censoring will be performed."
 	#    censoring is not being run, and no volumes are to be
 	#    discarded from the timeseries.
 	################################################################
-   subroutine              @2.13a   ${regress_tmpf[${cxt}]} filter
-   subroutine              @2.13b   High pass frequency: ${regress_hipass[${cxt}]}
-   subroutine              @2.13c   Low pass frequency: ${regress_lopass[${cxt}]}
+   subroutine              @2.13a   [${regress_tmpf[${cxt}]} filter]
+   subroutine              @2.13b   [High pass frequency: ${regress_hipass[${cxt}]}]
+   subroutine              @2.13c   [Low pass frequency: ${regress_lopass[${cxt}]}]
 	if [[ ${regress_tmpf[${cxt}]} == fft ]] \
 	&& [[ -z ${locregs} ]] \
 	&& [[ ${censor[${cxt}]} != iter ]] \
@@ -381,9 +386,12 @@ No censoring will be performed."
 	   #############################################################
 	   # Reorganise outputs
 	   #############################################################
-	   [[ -e ${intermediate}_filtered_${prefix}_confmat.1D ]] \
-	      && exec_sys mv -f ${intermediate}_filtered_${prefix}_confmat.1D \
-	      ${confmat[${cxt}]}
+	   has_residuals=0
+	   cmat_filtered=$(exec_sys \
+	      ls -d1 ${intermediate}_filtered_${prefix}*_confmat.1D 2>/dev/null)
+	   is_1D ${cmat_filtered} \
+	      && exec_sys mv -f ${cmat_filtered}  \
+	      ${intermediate}_filtered_confmat.1D
 	   [[ -e ${intermediate}_filtered_tmask.1D ]] \
 	      && exec_sys mv -f ${intermediate}_filtered_tmask.1D ${tmask[${cxt}]}
 	   [[ -e ${intermediate}_filtered_derivs ]] \
@@ -394,6 +402,7 @@ fi
 # Update image pointer
 ###################################################################
 intermediate=${intermediate}_filtered
+configure   confproc    ${intermediate}_confmat.1D
 routine_end
 
 
@@ -403,14 +412,15 @@ routine_end
 ###################################################################
 # Next, verify that the temporal mask exists before censoring.
 ###################################################################
-if [[ ${censor[${cxt}]} != none ]]
+if [[ ${censor[${cxt}]} != none ]] \
+|| [[ ${regress_spkreg[${cxt}]} == Y ]]
 	then
 	routine                 @3    Censoring BOLD timeseries
-	if [[ -e ${tmask[${cxt}]} ]]
+	if is_1D ${tmask[${cxt}]}
 	   then
 	   subroutine           @3.1
 	   tmaskpath=$(ls -d1 ${tmask[${cxt}]})
-	elif [[ -e ${tmask[${subjidx}]} ]]
+	elif is_1D ${tmask[${subjidx}]}
 	   then
 	   subroutine           @3.2
 	   tmaskpath=$(ls -d1 ${tmask[${subjidx}]})
@@ -425,7 +435,8 @@ to ensure that this is intentional.
 Overriding user input:
 No censoring will be performed."
 	   configure            censor   none
-	   write_output         censor
+	   write_config         censor
+	   routine_end
 	fi
 fi
 ###################################################################
@@ -435,30 +446,37 @@ fi
 ###################################################################
 if [[ ${censor[${cxt}]} != none ]]
 	then
-   subroutine              @3.4  ${censor[${cxt}]} censoring
-	exec_sys cp ${intermediate}.nii.gz ${outdir}/${prefix}_uncensored.nii.gz
-	exec_sys cp ${confmat[${cxt}]} ${outdir}/${prefix}_confmat_uncensored.1D
+   subroutine              @3.4  [${censor[${cxt}]} censoring]
+	exec_sys imcp ${intermediate}.nii.gz ${outdir}/${prefix}_uncensored.nii.gz
+	exec_sys cp ${confproc[${cxt}]} ${outdir}/${prefix}_confmat_uncensored.1D
 	################################################################
 	# Use the temporal mask to determine which volumes are to be
 	# left intact.
 	#
 	# Censoring is performed using the censor utility.
 	################################################################
-   subroutine              @3.5  Applying the final censor
-	${XCPEDIR}/utils/censor.R \
+   subroutine              @3.5  [Applying the final censor]
+	exec_xcp censor.R \
 	   -t ${tmaskpath} \
 	   -i ${intermediate}.nii.gz \
 	   -o ${intermediate}_censored.nii.gz \
 	   -d ${aux_imgs[${subjidx}]} \
-	   -s ${confmat[${cxt}]}
+	   -s ${confproc[${cxt}]}
 	intermediate=${intermediate}_censored
+	configure   confproc    ${intermediate}_confmat.1D
 	exec_sys mv ${intermediate}_derivs ${aux_imgs[${subjidx}]}
-	exec_sys mv ${intermediate}*confmat*.1D ${confmat[${cxt}]}
+	exec_sys mv ${intermediate}*confmat*.1D ${confproc[${cxt}]}
 	nvol_pre=$(exec_fsl fslnvols ${outdir}/${prefix}_uncensored.nii.gz)
 	nvol_post=$(exec_fsl fslnvols ${intermediate}.nii.gz)
 	nvol_censored=$(( ${nvol_pre} - ${nvol_post} ))
-	subroutine              @3.6  ${nvol_censored} volumes censored
+	subroutine              @3.6  [${nvol_censored} volumes censored]
 	echo ${nvol_censored} >> ${n_volumes_censored[${cxt}]}
+   if [[ ${regress_spkreg[${cxt}]} == Y ]]
+      then
+      subroutine           @3.7  [Censoring executed: deactivating spike regression]
+      configure            regress_spkreg    N
+   fi
+   routine_end
 fi
 
 
@@ -481,10 +499,10 @@ if [[ ${regress_spkreg[${cxt}]} == Y ]] \
       subroutine           @4.2  Adding motion spikes
       exec_xcp tmask2spkreg.R \
          -t ${tmask[${subjidx}]} \
-         -r ${confmat[${cxt}]} \
-         >> ${confmat[${cxt}]}~TEMP~
-      mv ${confmat[${cxt}]}~TEMP~ \
-         ${confmat[${cxt}]}
+         -r ${confproc[${cxt}]} \
+         >> ${confproc[${cxt}]}~TEMP~
+      exec_sys mv ${confproc[${cxt}]}~TEMP~ \
+         ${confproc[${cxt}]}
    fi
    routine_end
 fi
@@ -504,42 +522,42 @@ if (( ${has_residuals} == 1 ))
 ###################################################################
 # Determine whether it is necessary to run the linear model.
 ###################################################################
-elif is_image ${intermediate}_residuals.nii.gz \
+elif ! is_image ${intermediate}_residuals.nii.gz \
 || rerun
    then
    subroutine              @5.2
-	if [[ -e ${confmat[${cxt}]} ]]
+	if [[ -e ${confproc[${cxt}]} ]]
 	   then
 	   subroutine           @5.3
-	   confmat=${confmat[${cxt}]}
+	   exec_sys mv ${confproc[${cxt}]} ${confmat[${cxt}]}
+	   configure            confproc   ${confmat[${cxt}]}
 	else
 	   subroutine           @5.4
-	   confmat=${confmat[${subjidx}]}
+	   configure            confproc   ${confmat[${subjidx}]}
 	fi
 	################################################################
 	# Compute the internal correlations within the confound
 	# matrix.
 	################################################################
-	subroutine              @5.5  Computing confound correlations
+	subroutine              @5.5  [Computing confound correlations]
 	exec_xcp ts2adjmat.R \
-	   -t ${confmat} \
+	   -t ${confproc[${cxt}]} \
 	   >> ${confcor[${cxt}]}
 	################################################################
 	# Update paths to any local regressors.
 	################################################################
 	locregs=$(ls -d1 ${outdir}/*filtered_loc* 2>/dev/null)
-   subroutine              @5.6  Executing detrend
+   subroutine              @5.6  [Executing detrend]
    rm -f ${intermediate}_residuals.nii.gz
    for lr in ${locregs}
       do
       locreg_opts="${locreg_opts} -dsort ${lr}"
    done
-   3dTproject \
+   exec_afni 3dTproject \
       -input ${intermediate}.nii.gz \
-      -ort ${confmat} \
+      -ort ${confproc[${cxt}]} \
       ${locreg_opts} \
-      -prefix ${intermediate}_residuals.nii.gz \
-      2>/dev/null
+      -prefix ${intermediate}_residuals.nii.gz
 fi
 if is_image ${intermediate}_residuals.nii.gz
    then
@@ -567,7 +585,7 @@ smo=${regress_smo[${cxt}]//, }
 if [[ ${regress_sptf[${cxt}]} == susan ]] \
 && [[ -n ${smo} ]]
    then
-   subroutine              @6.1  Configuring SUSAN
+   subroutine              @6.1  [Configuring SUSAN]
    ################################################################
    # Determine whether a custom USAN is being used, and register
    # it to analyte space if so.
@@ -576,7 +594,7 @@ if [[ ${regress_sptf[${cxt}]} == susan ]] \
       then
       subroutine           @6.2  Warping USAN
       load_transforms
-      ${XCPEDIR}/core/map2space \
+      source ${XCPEDIR}/core/mapToSpace \
          ${regress_usan_space[${cxt}]}2${space} \
          ${regress_usan[${cxt}]} \
          ${intermediate}usan.nii.gz \
@@ -601,7 +619,7 @@ fi
 for ker in ${smo}
    do
    subroutine              @6.5
-   derivative              img_sm${ker}   ${smooth_root}${ker}
+   derivative              img_sm${ker}   ${prefix}_sm${ker}
    img_sm_name=sm${ker}
    smoothed='img_sm'${ker}'['${cxt}']'
    if is_image ${!smoothed}
@@ -617,15 +635,15 @@ for ker in ${smo}
       then
       subroutine           @6.8
    else
-      subroutine           @6.9a Filter: ${regress_sptf[${cxt}]}
-      subroutine           @6.9b Smoothing kernel: ${ker} mm
+      subroutine           @6.9a [Filter: ${regress_sptf[${cxt}]}]
+      subroutine           @6.9b [Smoothing kernel: ${ker} mm]
       #############################################################
 	   # Ensure that this step has not already run to completion
 	   # by checking for the existence of a smoothed image. First,
 	   # obtain the mask for filtering. Then, engage the sfilter
 	   # routine.
       #############################################################
-      if ! is_image ${!smoothed}) \
+      if ! is_image ${!smoothed} \
       || rerun
          then
          subroutine        @6.10
