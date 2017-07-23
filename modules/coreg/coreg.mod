@@ -25,10 +25,6 @@ source ${XCPEDIR}/core/parseArgsMod
 completion() {
    write_derivative  referenceVolume
    write_derivative  referenceVolumeBrain
-   write_derivative  e2simg
-   write_derivative  s2eimg
-   write_derivative  e2smask
-   write_derivative  s2emask
    
    write_output      seq2struct
    write_output      struct2seq
@@ -430,6 +426,10 @@ if (( ${flag} == 1 ))
       exec_sys mv ${intermediate}_seq2struct_alt.mat ${e2smat[${cxt}]}
       exec_fsl immv ${intermediate}_seq2struct_alt ${e2simg[${cxt}]}
       exec_fsl immv ${intermediate}_seq2struct_alt_mask ${e2smask[${cxt}]}
+      exec_sys rm -f ${s2emat[${cxt}]}
+      exec_sys rm -f ${seq2struct[${cxt}]}
+      exec_sys rm -f ${struct2seq[${cxt}]}
+      exec_sys rm -f ${s2eimg[${cxt}]}
       exec_sys rm -f ${coreg_cross_corr[${cxt}]}
       exec_sys rm -f ${coreg_coverage[${cxt}]}
       exec_sys rm -f ${coreg_jaccard[${cxt}]}
@@ -438,10 +438,6 @@ if (( ${flag} == 1 ))
       echo     ${registration_quality_alt[1]} >> ${coreg_coverage[${cxt}]}
       echo     ${registration_quality_alt[2]} >> ${coreg_jaccard[${cxt}]}
       echo     ${registration_quality_alt[3]} >> ${coreg_dice[${cxt}]}
-      exec_sys rm -f ${s2emat[${cxt}]}
-      exec_sys rm -f ${seq2struct[${cxt}]}
-      exec_sys rm -f ${struct2seq[${cxt}]}
-      exec_sys rm -f ${s2eimg[${cxt}]}
       write_config            coreg_cfunc
    else
       subroutine              @6.6a [Coregistration failed to improve. This may be]
