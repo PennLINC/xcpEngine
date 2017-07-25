@@ -1323,12 +1323,7 @@ while [[ "${#rem}" -gt "0" ]]
 	         # function itself.
 	         #######################################################
             echo "Applying polynomial detrend"
-            ${XCPEDIR}/utils/dmdt.R \
-               -d "${prestats_dmdt[${cxt}]}" \
-               -i "${imgpath}" \
-               -m "${maskpath}" \
-               -t "${tmaskpath}" \
-               -o "${img}_${cur}${ext}"
+            3dDetrend -prefix "${img}_${cur}${ext}" -polort "${prestats_dmdt[${cxt}]}" "${imgpath}"
          fi
 	      ##########################################################
 	      # Update image pointer
