@@ -79,7 +79,7 @@ fi
 ###################################################################
 # Write to the global variables file.
 ###################################################################
-rm -rf ${XCPEDIR}/settings/global
+rm -rf ${XCPEDIR}/core/global
 echo \
 "#!/usr/bin/env bash
 
@@ -155,6 +155,6 @@ TIMESTAMP=1
 # default pipeline.
 pipeline=
 ###################################################################
-" >> ${XCPEDIR}/settings/global
+" >> ${XCPEDIR}/core/global
 
-chmod 755 ${XCPEDIR}/settings/global
+chmod 755 ${XCPEDIR}/core/global
