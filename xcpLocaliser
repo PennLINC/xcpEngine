@@ -73,10 +73,11 @@ subroutine                    @1.4  [Writing path to derivative map index]
 # Write path to network index
 ###################################################################
 subroutine                    @1.5  [Writing path to network index]
-   output                     network     ${prefix}_networks.json
-   rm -f                                  ${network[${cxt}]}
-   echo '[]'                           >> ${network[${cxt}]}
-   write_output               network
+   mkdir -p                               ${out}/${prefix}_atlas
+   output                     atlas       ${prefix}_atlas/${prefix}_atlas.json
+   rm -f                                  ${atlas[${cxt}]}
+   echo '{}'                           >> ${atlas[${cxt}]}
+   write_output               atlas
 
 ###################################################################
 # Write path to audit file, and write information
