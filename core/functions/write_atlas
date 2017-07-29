@@ -1,0 +1,4 @@
+write_atlas() {
+   rm -f ${atlas[${subjidx}]}
+   echo ${atlas[${cxt}]}|$JQ_PATH --sort-keys . >> ${atlas[${subjidx}]}
+}

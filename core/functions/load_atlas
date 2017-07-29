@@ -1,5 +1,6 @@
 load_atlas() {
-   atlas=( $(grep -i '^#' ${1}) )
-   atlas_space=$(grep -i '^SPACE::' ${1})
-   atlas_space=${atlas_space//SPACE::/}
+   [[ -z ${atlas[${cxt}]} ]] && configure atlas '{}'
+   atlas_new=$(cat ${1})
+   atlas[${cxt}]="$(echo ${atlas[${cxt}]} ${atlas_new}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
+   atlas_names=( $(echo ${atlas[${cxt}]}|$JQ_PATH --raw-output 'keys[]') )
 }
