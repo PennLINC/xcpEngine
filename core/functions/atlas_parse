@@ -1,24 +1,18 @@
 atlas_parse() {
-   a_name=$(return_field ${1} 2 '#')
-   a_name=$(eval echo ${a_name})
-   local a2=$(return_field ${1} 3 '#')
-   if [[ -e ${a2} ]]
+   a_name=${1}
+   a_map=$(                json_query     ${a_name}   Map         "${atlas[${cxt}]}")
+   a_type=$(               json_query     ${a_name}   Type        "${atlas[${cxt}]}")
+   a_space=$(              json_query     ${a_name}   Space       "${atlas[${cxt}]}")
+   a_rois=$(               json_query     ${a_name}   NodeIndex   "${atlas[${cxt}]}")
+   a_roinames=$(           json_query     ${a_name}   NodeNames   "${atlas[${cxt}]}")
+   a_community=$(          json_query     ${a_name}   Community   "${atlas[${cxt}]}")
+   a_community_names=( $(  json_query     ${a_name}   Community   KEY_NAME    "${atlas[${cxt}]}") )
+   a_map=$(       ls -d1         $(eval      echo        ${a_map}))
+   a_community=( $(ls -d1        $(eval      echo        ${a_community})) )
+   a_rois=$(      ls -d1         $(eval      echo        ${a_rois}))
+   a_roinames=$(  ls -d1         $(eval      echo        ${a_roinames}))
+   if [[ -e ${a_map} ]] && ! is_image ${a_map}
       then
-      a_path=${a2}
-      a_space=$(return_field ${1} 4 '#')
-      a_community=$(return_field ${1} 5 '#')
-      a_path=$(eval echo ${a_path})
-      a_path=$(ls -d1 ${a_path} 2>/dev/null)
-      if is_image ${a2}
-         then
-         a_type=image
-      else
-         a_type=sclib
-         a_nodes=$(grep -i '^#' ${a_path}|wc -l)
-      fi
-   else
-      a_coor=${a2}
-      a_radius=$(return_field ${1} 4 '#')
-      a_type=sphere
+      echo SEED COORDINATE INTERFACE NYI
    fi
 }
