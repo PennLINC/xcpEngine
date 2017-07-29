@@ -1,0 +1,4 @@
+atlas_add() {
+   [[ ! -f ${3} ]] && return
+   atlas[${cxt}]=$(echo ${atlas[${cxt}]}|$JQ_PATH '.'"${1}"' += {'"${2}"': "'"${3}"'"}')
+}
