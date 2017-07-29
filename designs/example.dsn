@@ -54,7 +54,7 @@ template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound #,regress,seed,reho,alff,roiquant,net,norm
+pipeline=prestats,coreg,confound,regress,net,norm #,seed,reho,alff,roiquant,norm
 
 ###################################################################
 # GLOBAL VARIABLES
@@ -90,7 +90,7 @@ prestats_lopass[1]=0.08
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
 prestats_dmdt[1]=auto
-prestats_censor[1]=final,0.25
+prestats_censor[1]=none,0.25
 prestats_censor_cr[1]=rms
 prestats_censor_contig[1]=0
 prestats_rerun[1]=N
@@ -146,7 +146,7 @@ regress_hipass[4]=0.01
 regress_lopass[4]=0.08
 regress_rerun[4]=N
 regress_cleanup[4]=Y
-regress_despike[4]=N
+regress_despike[4]=Y
 regress_spkreg[4]=Y
 regress_tmpf_order[4]=1
 regress_tmpf_pass[4]=2
@@ -155,8 +155,8 @@ regress_tmpf_ripple2[4]=20
 regress_tmpf_dvols[4]=0
 regress_smo[4]=6
 regress_sptf[4]=susan
-regress_usan[4]=default
-regress_usan_space[4]=
+regress_usan[4]=${subject[3]}/BrainSegmentation.nii.gz
+regress_usan_space[4]=str
 
 ###################################################################
 # 5 SEED
@@ -206,25 +206,23 @@ roiquant_cleanup[8]=Y
 # 9 NET
 ###################################################################
 
-net_lib[9]=/data/joy/BBL/projects/xcpWorkshop/config/example.parc
-net_name[9]=NULL
-net_metric[9]=corrcoef
-net_thr[9]=N
-net_com[9]=genlouvain
-net_comh[9]=Y
-net_gamma[9]=1,7
-net_consensus[9]=100
-net_wb[9]=Y
-net_rerun[9]=N
-net_cleanup[9]=Y
+net_atlas[5]=/home/rciric/xcpAccelerator/xcpEngine/atlas/metadata/TEMPatlas_PNC_std.json
+net_name[5]=NULL
+net_metric[5]=corrcoef
+net_thr[5]=N
+net_com[5]=genlouvain
+net_gamma[5]=1,7
+net_consensus[5]=1
+net_rerun[5]=N
+net_cleanup[5]=Y
 
 ###################################################################
 # 10 NORM
 ###################################################################
 
-norm_prog[10]=ants
-norm_warp[10]=${subject[3]}/SubjectToTemplate1Warp.nii.gz
-norm_affine[10]=${subject[3]}/SubjectToTemplate0GenericAffine.mat
-norm_template[10]=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
-norm_rerun[10]=N
-norm_cleanup[10]=Y
+norm_prog[6]=ants
+norm_warp[6]=${subject[3]}/SubjectToTemplate1Warp.nii.gz
+norm_affine[6]=${subject[3]}/SubjectToTemplate0GenericAffine.mat
+norm_template[6]=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
+norm_rerun[6]=N
+norm_cleanup[6]=Y
