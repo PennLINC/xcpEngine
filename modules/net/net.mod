@@ -174,7 +174,7 @@ for net in ${atlas_names[@]}
          subroutine           @1.2.3   Skipping ${a_name}: Not a well-formed node system
          continue
       fi
-      source ${XCPEDIR}/core/mapToSpace ${a_space}2${space} ${a_map} ${nodemap[${cxt}]} NearestNeighbor
+      source ${XCPEDIR}/core/mapToSpace ${a_space}2${space} ${a_map} ${nodemap[${cxt}]} MultiLabel
       ;;
    Coordinates)
       subroutine              @1.2.4
