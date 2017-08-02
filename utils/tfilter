@@ -395,7 +395,6 @@ gaussian)
 	for derivative in ${derivatives}
       do
       derivative_parse ${derivative}
-      d_type=$(derivative_typeof ${derivative} ${image})
       #############################################################
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
@@ -513,7 +512,6 @@ fft)
 	for derivative in ${derivatives}
       do
       derivative_parse ${derivative}
-      d_type=$(derivative_typeof ${derivative} ${image})
       #############################################################
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
@@ -636,7 +634,6 @@ if (( ${genfilt} == 1 ))
    for derivative in ${derivatives}
       do
       derivative_parse ${derivative}
-      d_type=$(derivative_typeof ${derivative} ${image})
       #############################################################
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
@@ -775,7 +772,6 @@ if (( ${dvol} > 0 ))
       # * Parse the derivative image.
       #############################################################
 	   derivative_parse ${derivative}
-	   d_type=$(derivative_typeof ${derivative} ${image})
 	   if [[ ${d_type} == timeseries ]]
 	      then
          subroutine  @u.9.4

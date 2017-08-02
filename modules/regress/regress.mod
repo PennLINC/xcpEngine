@@ -143,7 +143,6 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       for derivative in ${derivatives}
          do
          derivative_parse ${derivative}
-         d_type=$(derivative_typeof ${derivative} ${img})
          if [[ ${d_type} == timeseries ]]
             then
             subroutine     @1.4

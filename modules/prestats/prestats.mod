@@ -260,7 +260,6 @@ while (( ${#rem} > 0 ))
          for derivative in ${derivatives}
             do
             derivative_parse ${derivative}
-            d_type=$(derivative_typeof ${derivative} ${intermediate}.nii.gz)
             if [[ ${d_type} == timeseries ]]
                then
                subroutine     @1.5  [${d_name}]
