@@ -264,7 +264,7 @@ while (( ${#rem} > 0 ))
                then
                subroutine     @1.5  [${d_name}]
                exec_fsl \
-                  fslroi ${d_path} \
+                  fslroi ${d_map} \
                   ${outdir}/${prefix}_${d_name} \
                   ${vol_begin} \
                   ${vol_end}

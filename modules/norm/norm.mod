@@ -160,7 +160,7 @@ case ${norm_prog[${cxt}]} in
             subroutine     @1.7
             source ${XCPEDIR}/core/mapToSpace \
                ${space_code}2standard \
-               ${d_path} \
+               ${d_map} \
                ${!d_call} \
                ${interpol}
          fi

@@ -401,7 +401,7 @@ gaussian)
 	      then
          subroutine           @u.2.4
 	      exec_fsl \
-	         fslmaths ${d_path} \
+	         fslmaths ${d_map} \
             -bptf ${hpf} ${lpf} \
             ${maskcall} \
             ${out_root}_${d_name}.nii.gz
@@ -520,7 +520,7 @@ fft)
             -quiet \
             ${maskcall} \
             ${hipass} ${lopass} \
-            ${d_path} \
+            ${d_map} \
             &>/dev/null
          derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
       #############################################################
@@ -639,7 +639,7 @@ if (( ${genfilt} == 1 ))
          ##########################################################
          exec_xcp \
             genfilter.R \
-            -i ${d_path} \
+            -i ${d_map} \
             -o ${out_root}_${d_name}.nii.gz \
             ${fcall} \
             ${maskcall} \
@@ -765,7 +765,7 @@ if (( ${dvol} > 0 ))
 	      then
          subroutine  @u.9.4
 	      fsl_exec \
-	         fslroi ${d_path} ${d_path} \
+	         fslroi ${d_map} ${d_map} \
             0 -1 \
             0 -1 \
             0 -1 \
