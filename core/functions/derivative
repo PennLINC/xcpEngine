@@ -1,4 +1,4 @@
 derivative() {
    eval ${1}[${cxt}]=${outdir}/${2}.nii.gz
-   export derivatives_floating="${derivatives_floating} #${1}#${outdir}/${2}.nii.gz"
+   export derivatives_floating=$(echo ${derivatives_floating}|${JQ_PATH} '.'${1}' += {Map:"'"${outdir}"'/'"${2}"'.nii.gz", Space:"'"${space}"'", ProvenanceName:"'"${mod_name_short}"'", ProvenanceIndex:"'"${cxt}"'", Statistic:"null", Type:"map"}')
 }

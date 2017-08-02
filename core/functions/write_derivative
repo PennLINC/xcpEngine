@@ -2,13 +2,13 @@ write_derivative() {
    derivative=${1}[${cxt}]
    if is_image ${!derivative}
       then
-      check=$(grep '#'${1}'#' ${aux_imgs[${subjidx}]})
-      if [[ -n ${check} ]]
-         then
-         sed -i s@'^#'${1}'.*'@"#${1}#${!derivative}"@ ${aux_imgs[${subjidx}]}
-      else
-         echo "#${1}#${!derivative}" >> ${aux_imgs[${subjidx}]}
-      fi
+      deriv[${cxt}]=${derivatives_floating}
+      derivative_parse ${1}
+      deriv_cur=$(echo ${deriv[${cxt}]}|$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
+      deriv[${cxt}]=$(cat ${aux_imgs[${subjidx}]} 2>/dev/null)
+      deriv[${cxt}]="$(echo ${deriv[${cxt}]} ${deriv_cur}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
+      rm -f ${aux_imgs[${subjidx}]}
+      echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${aux_imgs[${subjidx}]}
       echo "${1}[${subjidx}]=${!derivative}" >> ${design_local}
    fi
 }
