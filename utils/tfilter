@@ -249,12 +249,7 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
       ;;
    x)
       derivsList=${OPTARG}
-      derivatives=$(cat ${derivsList})
-      for derivative in ${derivatives_floating}
-         do
-         derivative_parse ${derivative}
-         is_image ${d_path} && derivatives="${derivatives} ${derivative}"
-      done
+      load_derivatives ${derivsList}
       ;;
    1)
       tslist=${OPTARG}
@@ -410,14 +405,12 @@ gaussian)
             -bptf ${hpf} ${lpf} \
             ${maskcall} \
             ${out_root}_${d_name}.nii.gz
-         echo "#${d_name}#${out_root}_${d_name}.nii.gz" \
-            >> ${out_root}_derivatives
+         derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
 	   else
          subroutine           @u.2.5
-         echo "#${d_name}#${d_path}" \
-            >> ${out_root}_derivatives
 	   fi
 	done
+	echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
    ################################################################
    # 4a. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -529,8 +522,7 @@ fft)
             ${hipass} ${lopass} \
             ${d_path} \
             &>/dev/null
-         echo "#${d_name}#${out_root}_${d_name}.nii.gz" \
-            >> ${out_root}_derivatives
+         derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
       #############################################################
       # * If the derivative image has a different number of volumes
       #   from the primary image, then copy it to the index of
@@ -538,10 +530,9 @@ fft)
       #############################################################
 	   else
          subroutine           @u.3.3
-         echo "#${d_name}#${d_path}" \
-            >> ${out_root}_derivatives
 	   fi
 	done
+	echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
    ################################################################
    # 4b. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -658,8 +649,7 @@ if (( ${genfilt} == 1 ))
             ${dcall} \
             ${rpcall} \
             ${rscall}
-         echo "#${d_name}#${out_root}_${d_name}.nii.gz" \
-            >> ${out_root}_derivatives
+         derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
       #############################################################
       # * If the derivative image has a different number of volumes
       #   from the primary image, then copy it to the index of
@@ -667,10 +657,9 @@ if (( ${genfilt} == 1 ))
       #############################################################
 	   else
          subroutine  @u.8.2
-         echo "#${d_name}#${d_path}" \
-            >> ${out_root}_derivatives
 	   fi
 	done
+	echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
    ################################################################
    # Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
