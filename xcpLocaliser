@@ -64,9 +64,9 @@ subroutine                    @1.3  [Writing localised design]
 # Write path to derivative image index
 ###################################################################
 subroutine                    @1.4  [Writing path to derivative map index]
-   output                     aux_imgs    ${prefix}_derivsNative
+   output                     aux_imgs    ${prefix}_derivatives.json
    rm -f ${aux_imgs[${cxt}]}
-   touch ${aux_imgs[${cxt}]}
+   echo '{}'                           >> ${aux_imgs[${cxt}]}
    write_output               aux_imgs
 
 ###################################################################
