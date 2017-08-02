@@ -8,5 +8,10 @@ derivative_config() {
    if [[ ${derivatives[@]//${1}/} != ${derivatives[@]} ]]
       then
       deriv[${cxt}]=$(echo ${deriv[${cxt}]}|$JQ_PATH '.'"${1}"' += {'"${2}"': "'"${3}"'"}')
+      if [[ -f ${4} ]]
+         then
+         rm -f ${4}
+         "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${4}
+      fi
    fi
 }
