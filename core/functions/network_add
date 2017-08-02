@@ -1,3 +1,0 @@
-network_add() {
-   network[${cxt}]=$(echo ${network[${cxt}]}|${JQ_PATH} --arg name ${1} --arg key "${2}" --arg val "${3}" '[ .[] | (if .Name==$name then . + {($key): $val} else . end) ]')
-}

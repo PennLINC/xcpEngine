@@ -37,7 +37,6 @@ source ${LIBRARY}/is+numeric
 source ${LIBRARY}/json_query
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
-source ${LIBRARY}/load_networks
 source ${LIBRARY}/load_transforms
 source ${LIBRARY}/nat2native
 source ${LIBRARY}/nat2standard
@@ -63,5 +62,4 @@ source ${LIBRARY}/write_atlas
 source ${LIBRARY}/write_config_safe
 source ${LIBRARY}/write_config
 source ${LIBRARY}/write_derivative
-source ${LIBRARY}/write_networks
 source ${LIBRARY}/write_output

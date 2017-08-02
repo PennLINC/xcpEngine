@@ -1,3 +1,0 @@
-network() {
-   network[${cxt}]=$(echo ${network[${cxt}]}|${JQ_PATH} --arg name ${1} ' .[.|length] |= . + {Name: ($name)}')
-}
