@@ -1,0 +1,7 @@
+derivative_config() {
+   local dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )
+   if [[ ${dfloat_names[@]//${1}/} != ${derivatives[@]} ]]
+      then
+      derivatives_floating=$(echo ${derivatives_floating}|$JQ_PATH '.'"${1}"' += {'"${2}"': "'"${3}"'"}')
+   fi
+}

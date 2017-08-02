@@ -17,6 +17,7 @@ source ${LIBRARY}/atlas_parse
 source ${LIBRARY}/cleanup
 source ${LIBRARY}/configure
 source ${LIBRARY}/derivative
+source ${LIBRARY}/derivative_config
 source ${LIBRARY}/derivative_parse
 source ${LIBRARY}/derivative_typeof
 source ${LIBRARY}/echo_cmd
