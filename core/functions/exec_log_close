@@ -1,8 +1,0 @@
-exec_log_close() {
-   if [[ -n ${exec_log} ]] \
-   && (( ${exec_log} == 1 ))
-      then
-      exec_log=0
-      (>&2 cat ${XCPEDIR}/core/CONSOLE_COMMAND_END)
-   fi
-}

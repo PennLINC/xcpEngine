@@ -24,8 +24,6 @@ source ${LIBRARY}/exec_afni
 source ${LIBRARY}/exec_ants
 source ${LIBRARY}/exec_c3d
 source ${LIBRARY}/exec_fsl
-source ${LIBRARY}/exec_log_open
-source ${LIBRARY}/exec_log_close
 source ${LIBRARY}/exec_sys
 source ${LIBRARY}/exec_xcp
 source ${LIBRARY}/is_1D

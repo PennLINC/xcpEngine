@@ -1,8 +1,0 @@
-exec_log_open() {
-   if [[ -n ${exec_log} ]] \
-   && (( ${exec_log} != 1 ))
-      then
-      exec_log=1
-      (>&2 cat ${XCPEDIR}/core/CONSOLE_COMMAND_BEGIN)
-   fi
-}
