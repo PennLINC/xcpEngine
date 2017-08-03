@@ -1,0 +1,59 @@
+strslice() {
+   local i=${1}
+   shift
+   while [[ -n ${1} ]]
+      do
+      local d=','
+      local bounds=( ${1//:/ } )
+      shift
+      if is_integer ${bounds[0]}
+         then
+         if [[ -n ${1} ]] \
+         && ! is_integer ${1}
+            then
+            local d=${1}
+            shift
+         fi
+         ! is_integer ${bounds[1]} && bounds[1]=${bounds[0]}
+         local sliced=( ${i//${d}/ } )
+         (( ${bounds[0]} >  ${#sliced[@]} )) && echo ${i} && return
+         (( ${bounds[1]} >  ${#sliced[@]} )) && echo ${i} && return
+         (( ${bounds[0]} < -${#sliced[@]} )) && echo ${i} && return
+         (( ${bounds[1]} < -${#sliced[@]} )) && echo ${i} && return
+         is+integer ${bounds[0]} && local s=+ || local s=-
+         is+integer ${bounds[1]} && local e=+ || local e=-
+         case ${s}${e} in
+         ++)
+            local s=$(( ${bounds[0]} - 1 ))
+            local e=$(( ${bounds[1]} - 1 ))
+            ;;
+         +-)
+            local s=$(( ${bounds[0]} - 1 ))
+            local e=$(( ${#sliced[@]} + ${bounds[1]} ))
+            ;;
+         -+)
+            local s=$(( ${#sliced[@]} + ${bounds[0]} ))
+            local e=$(( ${bounds[1]} - 1 ))
+            ;;
+         --)
+            local s=$(( ${#sliced[@]} + ${bounds[0]} ))
+            local e=$(( ${#sliced[@]} + ${bounds[1]} ))
+            ;;
+         esac
+         local r=$(( ${e} - ${s} ))
+         unset i bounds
+         if is+integer ${r}
+            then
+            local l=$(( ${e} - ${s} + 1 ))
+            local i=${sliced[@]:${s}:${l}}
+         elif is_integer ${r}
+            then
+            local l=$(( ${s} - ${e} + 1 ))
+            local i=${sliced[@]:${e}:${l}}
+         fi
+         local c=${i[@]}
+         local i=${c// /${d}}
+      fi
+   done
+   echo ${i}
+}

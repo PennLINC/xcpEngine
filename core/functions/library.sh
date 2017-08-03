@@ -44,7 +44,6 @@ source ${LIBRARY}/process
 source ${LIBRARY}/processed
 source ${LIBRARY}/quality_metric
 source ${LIBRARY}/rerun
-source ${LIBRARY}/return_field
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
 source ${LIBRARY}/set_space
@@ -54,6 +53,7 @@ source ${LIBRARY}/std2structural
 source ${LIBRARY}/str2native
 source ${LIBRARY}/str2standard
 source ${LIBRARY}/str2structural
+source ${LIBRARY}/strslice
 source ${LIBRARY}/subroutine
 source ${LIBRARY}/verbose
 source ${LIBRARY}/write_atlas
