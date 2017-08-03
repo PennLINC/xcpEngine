@@ -29,6 +29,11 @@ completion() {
    write_output      confcor
    
    quality_metric    nVolCensored            n_volumes_censored
+
+   for k in ${kernel[${cxt}]}
+      do
+      write_derivative  img_sm${k}
+   done
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -49,8 +54,15 @@ output      tmask                   ${prefix}_tmask.1D
 
 configure   confproc                ${confmat[${subjidx}]}
 configure   censor                  ${censor[${subjidx}]}
+configure   kernel                  ${regress_smo[${cxt}]//,/ }
 
 process     final                   ${prefix}_residualised
+
+for k in ${kernel[${cxt}]}
+   do
+   derivative        img_sm${k}     ${prefix}_sm${k}
+   derivative_config img_sm${k}     Type     timeseries
+done
 
 << DICTIONARY
 
@@ -68,6 +80,12 @@ confproc
 final
    The residualised timeseries, indicating the successful
    completion of the module.
+img_sm
+   The residualised timeseries, after it has undergone spatial
+   smoothing.
+kernel
+   An array of all smoothing kernels to be applied to the
+   timeseries, measured in mm.
 n_volumes_censored
    The number of volumes excised from the timeseries during the
    confound regression procedure.
@@ -585,12 +603,11 @@ routine_end
 #  * First, identify all kernels to apply.
 ###################################################################
 routine                    @6    Spatially filtering image
-smo=${regress_smo[${cxt}]//, }
 ###################################################################
 # SUSAN setup
 ###################################################################
 if [[ ${regress_sptf[${cxt}]} == susan ]] \
-&& [[ -n ${smo} ]]
+&& [[ -n ${kernel[${cxt}]} ]]
    then
    subroutine              @6.1  [Configuring SUSAN]
    ################################################################
@@ -623,12 +640,11 @@ if [[ ${regress_sptf[${cxt}]} == susan ]] \
       configure            regress_sptf   uniform
    fi
 fi
-for ker in ${smo}
+for k in ${kernel[${cxt}]}
    do
    subroutine              @6.5
-   derivative              img_sm${ker}   ${prefix}_sm${ker}
-   img_sm_name=sm${ker}
-   smoothed='img_sm'${ker}'['${cxt}']'
+   img_sm_name=sm${k}
+   smoothed='img_sm'${k}'['${cxt}']'
    if is_image ${!smoothed}
       then
       subroutine           @6.7
@@ -638,12 +654,12 @@ for ker in ${smo}
    # bypass this step.
    ################################################################
    elif [[ ${regress_sptf[${cxt}]} == none ]] \
-   || [[ ${ker} == 0 ]]
+   || [[ ${k} == 0 ]]
       then
       subroutine           @6.8
    else
       subroutine           @6.9a [Filter: ${regress_sptf[${cxt}]}]
-      subroutine           @6.9b [Smoothing kernel: ${ker} mm]
+      subroutine           @6.9b [Smoothing kernel: ${k} mm]
       #############################################################
 	   # Ensure that this step has not already run to completion
 	   # by checking for the existence of a smoothed image. First,
@@ -673,18 +689,12 @@ for ker in ${smo}
 	         -i ${intermediate}.nii.gz \
 	         -o ${!smoothed} \
 	         -s ${regress_sptf[${cxt}]} \
-	         -k ${ker} \
+	         -k ${k} \
 	         -m ${mask} \
 	         ${usan} \
 	         ${hardseg} \
 	         ${trace_prop}
 	   fi
-      #############################################################
-      # Update image pointer, and write the smoothed image path to
-      # the design file and derivatives index so that it may be used
-      # by additional modules.
-      #############################################################
-      write_derivative     img_sm${ker}
    fi
 done
 routine_end
