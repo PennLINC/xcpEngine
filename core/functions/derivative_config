@@ -11,7 +11,7 @@ derivative_config() {
       if [[ -f ${4} ]]
          then
          rm -f ${4}
-         "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${4}
+         echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${4}
       fi
    fi
 }

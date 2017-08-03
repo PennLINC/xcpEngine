@@ -2,15 +2,16 @@ load_derivatives() {
    deriv_json=${aux_imgs[${subjidx}]}
    [[ -n ${1} ]] && deriv_json=${1}
    deriv[${cxt}]=$(cat ${deriv_json} 2>/dev/null)
-   derivatives=( $(echo ${deriv[${cxt}]}|$JQ_PATH --raw-output 'keys[]') )
    local dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )
-   for derivative in ${dfloat_names[@]}
+   local d_name
+   for d_name in ${dfloat_names[@]}
       do
-      derivative_parse ${derivative} floating
+      local d_map=$(       json_query  ${d_name}   Map               "${derivatives_floating}")
       if is_image ${d_map}
          then
-         derivative=$(echo ${derivatives_floating}|$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
+         local derivative=$(echo ${derivatives_floating}|$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
          deriv[${cxt}]=$(echo ${deriv[${cxt}]} ${derivative}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')
       fi
    done
+   derivatives=( $(echo ${deriv[${cxt}]}|$JQ_PATH --raw-output 'keys[]') )
 }
