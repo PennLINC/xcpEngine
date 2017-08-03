@@ -1,4 +1,4 @@
 write_config() {
-   config=${1}[${cxt}]
+   local config=${1}[${cxt}]
    echo "${1}[${subjidx}]=${!config}" >> ${design_local}
 }

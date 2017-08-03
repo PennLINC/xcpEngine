@@ -1,6 +1,6 @@
 load_atlas() {
    [[ -z ${atlas[${cxt}]} ]] && configure atlas '{}'
-   atlas_new=$(cat ${1})
+   local atlas_new=$(cat ${1})
    atlas[${cxt}]="$(echo ${atlas[${cxt}]} ${atlas_new}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
    atlas_names=( $(echo ${atlas[${cxt}]}|$JQ_PATH --raw-output 'keys[]') )
 }

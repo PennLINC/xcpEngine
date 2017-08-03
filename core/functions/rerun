@@ -1,4 +1,4 @@
 rerun() {
-   rerun=${mod_name_short}_rerun[${cxt}]
+   local rerun=${mod_name_short}_rerun[${cxt}]
    [[ ${!rerun} == Y ]]
 }
