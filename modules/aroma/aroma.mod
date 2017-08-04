@@ -47,18 +47,22 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  ic_maps                 melodic/${prefix}_melodic_IC
-derivative  ic_maps_thr             melodic/${prefix}_melodic_IC_thr
-derivative  ic_maps_thr_std         melodic/${prefix}_melodic_IC_thr_std
+derivative  ic_maps                 melodic/melodic_IC
+derivative  ic_maps_thr             melodic/melodic_IC_thr
+derivative  ic_maps_thr_std         melodic/melodic_IC_thr_std
 derivative  sm${aroma_smo[${cxt}]}  ${prefix}_sm${aroma_smo[${cxt}]}
 
 output      melodir                 melodic
-output      ic_mix                  melodic/${prefix}_melodic_mix
+output      ic_mix                  melodic/melodic_mix
 output      ic_ft                   ${prefix}_ic_ft.1D
 output      ic_ts                   ${prefix}_ic_ts.1D
 output      ic_confmat              ${prefix}_ic_confmat.1D
 output      ic_class                ${prefix}_ic_class.csv
 output      ic_noise                ${prefix}_nICsNoise.txt
+
+derivative_config   ic_maps         Type              maps
+derivative_config   ic_maps_thr     Type              maps
+derivative_config   ic_maps_thr_std Type              maps
 
 process     final                   ${prefix}_icaDenoised
 
@@ -68,19 +72,36 @@ final
    The final output of the module, indicating its successful
    completion.
 ic_class
-   A matrix specifying e 
+   A matrix cataloguing the features used to classify MELODIC
+   components as signal or noise.
 ic_confmat
+   A matrix of realignment parameter time courses. Includes
+   6 realignment parameters, 6 temporal derivatives, 12 forward-
+   shifted versions of the previous, 12 reverse-shifted versions
+   of the previous, and 36 squared versions of all the previous.
 ic_ft
    The frequency domain of the IC time series, separated into
    discrete bins. Used to determine the high-frequency content of
    each component.
 ic_maps
+   Spatial maps of all components identified by the MELODIC
+   decomposition.
 ic_maps_thr
+   Spatial maps of all components identified by the MELODIC
+   decomposition, thresholded.
 ic_maps_thr_std
+   Spatial maps of all components identified by the MELODIC
+   decomposition, thresholded and normalised to a template.
 ic_mix
+   The time domain of the IC time series. Also called the MELODIC
+   mixing matrix.
 ic_noise
+   The number of MELODIC components classified as noise.
 ic_ts
+   The time domain of the IC time series, along with the squares
+   of the IC time series. The correlation between these 
 melodir
+   The MELODIC output directory.
 
 DICTIONARY
 
@@ -505,13 +526,13 @@ noiseIdx=${noiseIdx// /,}
 subroutine                    @7.1  Non-aggressive filter
 exec_fsl fsl_regfilt \
    --in=${img} \
-   --design=${ic_ts[${cxt}]} \
+   --design=${ic_mix[${cxt}]} \
    --filter=${noiseIdx} \
    --out=${outdir}/${prefix}_icaDenoised_nonaggr
 subroutine                    @7.2  Aggressive filter
 fsl_regfilt \
    --in=${img} \
-   --design=${ic_ts[${cxt}]} \
+   --design=${ic_mix[${cxt}]} \
    --filter=${noiseIdx} \
    -a \
    --out=${outdir}/${prefix}_icaDenoised_aggr
