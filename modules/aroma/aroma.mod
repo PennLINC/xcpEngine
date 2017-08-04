@@ -424,11 +424,7 @@ exec_xcp mbind.R \
    -o ${ic_confmat[${cxt}]}
 exec_xcp mbind.R \
    -x ${ic_confmat[${cxt}]} \
-   -y OPprev1 \
-   -o ${ic_confmat[${cxt}]}
-exec_xcp mbind.R \
-   -x ${ic_confmat[${cxt}]} \
-   -y OPprev-1 \
+   -y OPprev1,-1 \
    -o ${ic_confmat[${cxt}]}
 exec_xcp mbind.R \
    -x ${ic_confmat[${cxt}]} \
