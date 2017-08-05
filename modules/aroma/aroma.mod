@@ -202,7 +202,7 @@ fi
 # First, determine whether the user has specified the model order.
 # If not, then MELODIC will automatically estimate it.
 ###################################################################
-routine                       @2    ICA decomposition (MELODIC)
+routine                       @2    "ICA decomposition (MELODIC)"
 if [[ ${aroma_dim[${cxt}]} != auto ]]
    then
    subroutine                 @2.1
@@ -215,8 +215,8 @@ trep=$(exec_fsl fslval ${img} pixdim4)
 ###################################################################
 # Determine whether it is necessary to run MELODIC.
 ###################################################################
-if ! is_image ${icmaps[${cxt}]} \
-|| [[ ! -e ${icmix[${cxt}]} ]] \
+if ! is_image ${ic_maps[${cxt}]} \
+|| [[ ! -e ${ic_mix[${cxt}]} ]] \
 || rerun
    then
    subroutine                 @2.2  Model order: ${aroma_dim[${cxt}]}
@@ -238,12 +238,12 @@ if ! is_image ${icmaps[${cxt}]} \
       --tr=${trep}
    SGE_ROOT=${buffer}
 fi
-exec_sys mv -f ${outdir}/*.ica ${melodir[${cxt}]}
+exec_sys mv -f ${outdir}/*.ica ${melodir[${cxt}]} 2>/dev/null
 ###################################################################
 # Read in the dimension of the results (number of components
 # obtained).
 ###################################################################
-icdim=$(exec_fsl fslval ${icmaps[${cxt}]} dim4)
+icdim=$(exec_fsl fslval ${ic_maps[${cxt}]} dim4)
 ###################################################################
 # Concatenate the mixture-modelled, thresholded spatial maps of
 # the independent components.
@@ -278,14 +278,14 @@ done
 ###################################################################
 # Concatenate and delete temporary files.
 ###################################################################
-exec_fsl fslmerge -t ${icmaps_thr[${cxt}]} ${toMerge}
+exec_fsl fslmerge -t ${ic_maps_thr[${cxt}]} ${toMerge}
 cleanup && exec_sys rm -f ${toMerge}
 ###################################################################
 # Mask the thresholded component maps.
 ###################################################################
-exec_fsl fslmaths ${icmaps_thr[${cxt}]} \
+exec_fsl fslmaths ${ic_maps_thr[${cxt}]} \
    -mas ${mask[${subjidx}]} \
-   ${icmaps_thr[${cxt}]}
+   ${ic_maps_thr[${cxt}]}
 routine_end
 
 
@@ -308,11 +308,11 @@ if ! is_image ${icmaps_thr_std[${cxt}]} \
    subroutine                 @3.1  Standardising component maps
    spa=${space:0:3}
    [[ ${spa} == sta ]] && spa=std
-   exec_sys rm -f ${icmaps_thr_std[${cxt}]}
+   exec_sys rm -f ${ic_maps_thr_std[${cxt}]}
    source ${XCPEDIR}/core/mapToSpace \
       ${spa}2standard \
-      ${icmaps_thr[${cxt}]} \
-      ${icmaps_thr_std[${cxt}]}
+      ${ic_maps_thr[${cxt}]} \
+      ${ic_maps_thr_std[${cxt}]}
 fi
 ###################################################################
 # TODO (or perhaps not)
@@ -343,7 +343,7 @@ while (( ${i} < ${icdim} ))
    ################################################################
    # * Extract the current z-scored IC.
    ################################################################
-   exec_fsl fslroi ${icmaps_thr_std[${cxt}]} ${intermediate}IC ${i} 1
+   exec_fsl fslroi ${ic_maps_thr_std[${cxt}]} ${intermediate}IC ${i} 1
    ################################################################
    # * Change to absolute value of z-score.
    ################################################################
@@ -503,9 +503,9 @@ done
 ###################################################################
 subroutine                    @6.3  Applying the classifier
 echo_cmd ${XCPEDIR}/modules/aroma/aromaCLASS.R \
-   -m ${classmat[${cxt}]}
+   -m ${ic_class[${cxt}]}
 noiseIdx=$(${XCPEDIR}/modules/aroma/aromaCLASS.R \
-   -m ${classmat[${cxt}]})
+   -m ${ic_class[${cxt}]})
 noiseComponents=( ${noiseIdx} )
 echo ${#noiseComponents[@]} >> ${ic_noise[${cxt}]}
 routine_end
@@ -526,7 +526,7 @@ exec_fsl fsl_regfilt \
    --filter=${noiseIdx} \
    --out=${outdir}/${prefix}_icaDenoised_nonaggr
 subroutine                    @7.2  Aggressive filter
-fsl_regfilt \
+exec_fsl fsl_regfilt \
    --in=${img} \
    --design=${ic_mix[${cxt}]} \
    --filter=${noiseIdx} \
