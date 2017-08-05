@@ -1,8 +1,8 @@
 zscore_image() {
    local mask mean std
-   if [[ -z ${3} ]]
+   if [[ -n ${3} ]]
       then
-      local mask=( '-k ${3}' '-mask ${3}' )
+      local mask=( "-k ${3}" "-mul ${3}" )
    fi
    local mean=$(exec_fsl fslstats ${1} \
                ${mask[0]} \
@@ -13,6 +13,6 @@ zscore_image() {
    exec_fsl fslmaths ${1} \
       -sub ${mean} \
       -div ${std} \
-      {mask[1]} \
+      ${mask[1]} \
       ${2}
 }
