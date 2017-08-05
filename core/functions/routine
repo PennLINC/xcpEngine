@@ -1,10 +1,10 @@
 routine() {
-   routine_id=${1}
+   local routine_id=${1}
    routine_map="${routine_map}
 · ${routine_id}"
    shift
    routine_description=${@}
-   verbose && vid="${routine_id} "
+   verbose && local vid="${routine_id} "
    if [[ -n ${routine_description} ]]
       then
       eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_BEGIN)\""

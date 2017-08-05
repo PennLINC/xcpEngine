@@ -1,10 +1,10 @@
 subroutine() {
-   subroutine_id=${1}
+   local subroutine_id=${1}
    routine_map="${routine_map}
 · ${subroutine_id}"
    shift
-   subroutine_description="${@}"
-   verbose && vid="${subroutine_id} "
+   local subroutine_description="${@}"
+   verbose && local vid="${subroutine_id} "
    if [[ -n ${subroutine_description} ]]
       then
       echo "· ${vid}${subroutine_description}"
@@ -12,6 +12,4 @@ subroutine() {
       then
       echo "· ${vid}"
    fi
-   unset subroutine_id
-   unset subroutine_description
 }
