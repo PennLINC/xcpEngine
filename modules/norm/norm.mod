@@ -136,6 +136,7 @@ case ${norm_prog[${cxt}]} in
       for derivative in ${derivatives[@]}
          do
          derivative_parse  ${derivative}
+         derivative_config ${d_name}            Space    standard
          subroutine        @1.5  [${d_name}]
          derivative              ${d_name}      ${prefix}_${d_name}Std
          d_call=${d_name}'['${cxt}']'
@@ -162,7 +163,6 @@ case ${norm_prog[${cxt}]} in
                ${interpol}
          fi
          write_derivative        ${d_name}
-         derivative_config       ${d_name}      Space    standard
       done
       routine_end
       #############################################################
