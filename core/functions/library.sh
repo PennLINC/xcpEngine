@@ -16,6 +16,7 @@ source ${LIBRARY}/atlas_config
 source ${LIBRARY}/atlas_parse
 source ${LIBRARY}/cleanup
 source ${LIBRARY}/configure
+source ${LIBRARY}/contains
 source ${LIBRARY}/derivative
 source ${LIBRARY}/derivative_config
 source ${LIBRARY}/derivative_parse
@@ -61,3 +62,4 @@ source ${LIBRARY}/write_config_safe
 source ${LIBRARY}/write_config
 source ${LIBRARY}/write_derivative
 source ${LIBRARY}/write_output
+source ${LIBRARY}/zscore_image
