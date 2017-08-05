@@ -397,7 +397,7 @@ gaussian)
       #   linear models do not re-introduce frequencies that were
       #   filtered out of the primary image.
       #############################################################
-	   if [[ ${d_type} == timeseries ]]
+	   if contains ${d_type} timeseries
 	      then
          subroutine           @u.2.4
 	      exec_fsl \
@@ -422,7 +422,7 @@ gaussian)
    for ts in ${tslist}
       do
       subroutine              @u.2.6
-      tsname=$(return_field ${ts} -1 '/' 1 '.')
+      tsname=$(strslice ${ts} -1 '/' 1 '.')
       #############################################################
       # * Determine the number of timeseries in the 1D timeseries
       #   file by dividing the total number of words in the file
@@ -509,7 +509,7 @@ fft)
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
       #############################################################
-	   if [[ ${d_type} == timeseries ]]
+	   if contains ${d_type} timeseries
 	      then
          subroutine           @u.3.2
          exec_sys rm -rf ${out_root}_${d_name}.nii.gz
@@ -544,7 +544,7 @@ fft)
    ################################################################
    for ts in ${tslist}
       do
-      tsname=$(return_field ${ts} -1 '/' 2 '.')
+      tsname=$(strslice ${ts} -1 '/' 2 '.')
       exec_sys rm -rf ${out_root}_${tsname}.1D
       exec_afni \
          1dBandpass \
@@ -629,7 +629,7 @@ if (( ${genfilt} == 1 ))
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
       #############################################################
-	   if [[ ${d_type} == timeseries ]]
+	   if contains ${d_type} timeseries
 	      then
          subroutine  @u.8.1
          ##########################################################
@@ -672,7 +672,7 @@ if (( ${genfilt} == 1 ))
    for ts in ${tslist}
       do
       subroutine  @u.8.3
-      tsname=$(return_field ${ts} -1 '/' 1 '.')
+      tsname=$(strslice ${ts} -1 '/' 1 '.')
       exec_sys rm -rf ${out_root}_${tsname}.1D
       exec_xcp \
          1dGenfilter.R \
@@ -761,7 +761,7 @@ if (( ${dvol} > 0 ))
       # * Parse the derivative image.
       #############################################################
 	   derivative_parse ${derivative}
-	   if [[ ${d_type} == timeseries ]]
+	   if contains ${d_type} timeseries
 	      then
          subroutine  @u.9.4
 	      fsl_exec \
@@ -787,7 +787,7 @@ if (( ${dvol} > 0 ))
       #   the same timeseries.
       # * Discard volumes from the timeseries limits.
       #############################################################
-      tsname=$(return_field ${ts} -1 '/' 1 '.')
+      tsname=$(strslice ${ts} -1 '/' 1 '.')
       ts=${out_root}_${tsname}.1D
       exec_sys tail -n +${dvol} ${ts} >> ${out_root}_TEMP_ts
       exec_sys rm -f ${ts}

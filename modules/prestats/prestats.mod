@@ -79,7 +79,7 @@ output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 output      motion_vols             mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
 
-configure   censor                  $(return_field ${prestats_censor[${cxt}]} 1)
+configure   censor                  $(strslice ${prestats_censor[${cxt}]} 1)
 configure   censored                0
 
 if [[ -n    ${censor[${subjidx}]} ]]
@@ -260,7 +260,7 @@ while (( ${#rem} > 0 ))
          for derivative in ${derivatives}
             do
             derivative_parse ${derivative}
-            if [[ ${d_type} == timeseries ]]
+            if contains ${d_type} timeseries
                then
                subroutine     @1.5  [${d_name}]
                exec_fsl \
@@ -441,7 +441,7 @@ while (( ${#rem} > 0 ))
             #    type of censoring requested will be stored in one
             #    of the variables: censor[cxt] or censor[subjidx]
             #######################################################
-            censor_threshold=$(return_field ${prestats_censor[${cxt}]} 2)
+            censor_threshold=$(strslice ${prestats_censor[${cxt}]} 2)
             if (( ${censored[${cxt}]} != 1 ))
                then
                subroutine     @2.9  [Applying motion threshold to volumes]
@@ -865,7 +865,7 @@ while (( ${#rem} > 0 ))
                nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
                trep=$(exec_fsl fslval   ${intermediate}.nii.gz pixdim4)
                dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
-               dmdt_order=$(return_field ${dmdt_order} 1 '.')
+               dmdt_order=$(strslice ${dmdt_order} 1 '.')
             else
                dmdt_order=${prestats_dmdt[${cxt}]}
             fi

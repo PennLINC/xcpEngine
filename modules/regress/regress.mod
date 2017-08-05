@@ -161,7 +161,7 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       for derivative in ${derivatives}
          do
          derivative_parse ${derivative}
-         if [[ ${d_type} == timeseries ]]
+         if contains ${d_type} timeseries
             then
             subroutine     @1.4
             derivative     ${d_name}   ${prefix}_${d_name}_despike
@@ -638,6 +638,7 @@ if [[ ${regress_sptf[${cxt}]} == susan ]] \
       subroutine           @6.4a No appropriate USAN: reconfiguring pipeline
       subroutine           @6.4b to smooth to uniformity instead
       configure            regress_sptf   uniform
+      write_config         regress_sptf
    fi
 fi
 for k in ${kernel[${cxt}]}
