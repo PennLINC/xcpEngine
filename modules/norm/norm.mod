@@ -98,12 +98,12 @@ case ${norm_prog[${cxt}]} in
    ants)
       routine              @1    Normalising using ANTs
       #############################################################
-		# Determine which transforms need to be applied.
+      # Determine which transforms need to be applied.
       #############################################################
       subroutine           @1.1  [Selecting transforms to apply]
-		load_transforms
+      load_transforms
       #############################################################
-		# Apply the transforms to the primary BOLD timeseries.
+      # Apply the transforms to the primary BOLD timeseries.
       #############################################################
       case ${space} in
       native)
@@ -122,7 +122,7 @@ case ${norm_prog[${cxt}]} in
       if ! is_image ${std[${cxt}]} \
       || rerun
          then
-		   subroutine        @1.3  [Applying composite diffeomorphism to primary dataset]
+         subroutine        @1.3  [Applying composite diffeomorphism to primary dataset]
          source ${XCPEDIR}/core/mapToSpace \
             ${space_code}2standard \
             ${img} \
@@ -133,15 +133,15 @@ case ${norm_prog[${cxt}]} in
       # the computed transforms to each.
       #############################################################
       load_derivatives
-		subroutine           @1.4  [Applying composite diffeomorphism to derivative images:]
-		touch ${aux_imgs[${cxt}]}
+      subroutine           @1.4  [Applying composite diffeomorphism to derivative images:]
+      touch ${aux_imgs[${cxt}]}
       aux_imgs[${subjidx}]=${aux_imgs[${cxt}]}
       for derivative in ${derivatives}
          do
          derivative_parse  ${derivative}
-		   subroutine        @1.5  [${d_name}]
-		   derivative              ${d_name}      ${prefix}_${d_name}Std
-		   d_call=${d_name}'['${cxt}']'
+         subroutine        @1.5  [${d_name}]
+         derivative              ${d_name}      ${prefix}_${d_name}Std
+         d_call=${d_name}'['${cxt}']'
          ##########################################################
          # If the image is a mask, apply nearest neighbour
          # interpolation to prevent introduction of intermediate

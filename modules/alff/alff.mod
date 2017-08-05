@@ -129,10 +129,10 @@ for k in ${kernel[${cxt}]}
       subroutine              @1.4a Filter: ${alff_sptf[${cxt}]}
       subroutine              @1.4a Smoothing kernel: ${k} mm
       #############################################################
-	   # Obtain the mask over which smoothing is to be applied.
-	   # Begin by searching for the subject mask; if this does
-	   # not exist, then search for a mask created by this
-	   # module.
+      # Obtain the mask over which smoothing is to be applied.
+      # Begin by searching for the subject mask; if this does
+      # not exist, then search for a mask created by this
+      # module.
       #############################################################
       if is_image ${mask[${subjidx}]}
          then
@@ -147,7 +147,7 @@ for k in ${kernel[${cxt}]}
          mask=${outbase}_fmask${ext}
       fi
       #############################################################
-	   # Prime the inputs to sfilter for SUSAN filtering
+      # Prime the inputs to sfilter for SUSAN filtering
       #############################################################
       if [[ ${alff_sptf[${cxt}]} == susan ]]
          then
@@ -163,13 +163,13 @@ for k in ${kernel[${cxt}]}
             usan="-u ${intermediate}usan"
             hardseg=-h
          ##########################################################
-	      # Ensure that an example functional image exists.
-	      #  * If it does not, then you are probably doing
-	      #    something stupid.
-	      #  * In this case, force a switch to uniform
-	      #    smoothing to mitigate the catastrophe.
+         # Ensure that an example functional image exists.
+         #  * If it does not, then you are probably doing
+         #    something stupid.
+         #  * In this case, force a switch to uniform
+         #    smoothing to mitigate the catastrophe.
          ##########################################################
-	      elif is_image ${referenceVolumeBrain[${subjidx}]}
+         elif is_image ${referenceVolumeBrain[${subjidx}]}
             then
             subroutine        @1.8
             usan="-u ${referenceVolumeBrain[${subjidx}]}"
@@ -181,20 +181,20 @@ for k in ${kernel[${cxt}]}
          fi
       fi
       ##########################################################
-	   # Engage the sfilter routine to filter the image.
-	   #  * This is essentially a wrapper around the three
-	   #    implemented smoothing routines: gaussian, susan,
-	   #    and uniform.
+      # Engage the sfilter routine to filter the image.
+      #  * This is essentially a wrapper around the three
+      #    implemented smoothing routines: gaussian, susan,
+      #    and uniform.
       ##########################################################
       subroutine              @1.10
-	   exec_xcp sfilter \
-	      -i ${img} \
-	      -o ${!sm_mod} \
-	      -s ${alff_sptf[${cxt}]} \
-	      -k ${alff_smo[${cxt}]} \
-	      -m ${mask} \
-	      ${usan} \
-	      ${trace_prop}
+      exec_xcp sfilter \
+         -i ${img} \
+         -o ${!sm_mod} \
+         -s ${alff_sptf[${cxt}]} \
+         -k ${alff_smo[${cxt}]} \
+         -m ${mask} \
+         ${usan} \
+         ${trace_prop}
       #############################################################
       # Update image pointer, and write the smoothed image path to
       # the design file and derivatives index so that it may be used

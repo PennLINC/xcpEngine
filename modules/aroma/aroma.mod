@@ -122,8 +122,8 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
    then
    routine                    @1    Spatially filtering image
    ################################################################
-	# Ensure that this step has not already run to completion
-	# by checking for the existence of a smoothed image.
+   # Ensure that this step has not already run to completion
+   # by checking for the existence of a smoothed image.
    ################################################################
    img_sm=sm${aroma_smo[${cxt}]}
    if ! is_image ${!img_sm} \
@@ -131,10 +131,10 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
       then
       subroutine              @1.1
       #############################################################
-	   # Obtain the mask over which smoothing is to be applied
-	   # Begin by searching for the subject mask; if this does
-	   # not exist, then search for a mask created by this
-	   # module.
+      # Obtain the mask over which smoothing is to be applied
+      # Begin by searching for the subject mask; if this does
+      # not exist, then search for a mask created by this
+      # module.
       #############################################################
       if is_image ${mask[${subjidx}]}
          then
@@ -149,16 +149,16 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
          mask=${intermediate}_fmask.nii.gz
       fi
       #############################################################
-	   # Prime the inputs to sfilter for SUSAN filtering
+      # Prime the inputs to sfilter for SUSAN filtering
       #############################################################
       if [[ ${aroma_sptf[${cxt}]} == susan ]]
          then
          ##########################################################
-	      # Ensure that an example functional image exists. If it
-	      # does not, then force a switch to uniform smoothing to
-	      # mitigate the catastrophe.
+         # Ensure that an example functional image exists. If it
+         # does not, then force a switch to uniform smoothing to
+         # mitigate the catastrophe.
          ##########################################################
-	      if is_image ${referenceVolumeBrain[${subjidx}]}
+         if is_image ${referenceVolumeBrain[${subjidx}]}
             then
             subroutine        @1.4
             usan="-u ${referenceVolume[${subjidx}]}"
@@ -169,21 +169,21 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
          fi
       fi
       #############################################################
-	   # Engage the sfilter routine to filter the image.
-	   #  * This is essentially a wrapper around the three
-	   #    implemented smoothing routines: gaussian, susan,
-	   #    and uniform.
+      # Engage the sfilter routine to filter the image.
+      #  * This is essentially a wrapper around the three
+      #    implemented smoothing routines: gaussian, susan,
+      #    and uniform.
       #############################################################
       subroutine              @1.6a Filter: ${aroma_sptf[${cxt}]}
       subroutine              @1.6b Smoothing kernel: ${aroma_smo[${cxt}]} mm
-	   exec_xcp sfilter \
-	      -i ${img} \
-	      -o ${!img_sm} \
-	      -s ${aroma_sptf[${cxt}]} \
-	      -k ${aroma_smo[${cxt}]} \
-	      -m ${mask} \
-	      ${usan}
-	fi
+      exec_xcp sfilter \
+         -i ${img} \
+         -o ${!img_sm} \
+         -s ${aroma_sptf[${cxt}]} \
+         -k ${aroma_smo[${cxt}]} \
+         -m ${mask} \
+         ${usan}
+   fi
    ################################################################
    # Update image pointer for the purpose of MELODIC.
    ################################################################
@@ -565,9 +565,9 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
       subroutine              @8.1  Using previously determined mask
       mask_dmdt=${mask[${subjidx}]}
    ################################################################
-	# If no mask has yet been computed for the subject,
-	# then a new mask can be computed quickly using
-	# AFNI's 3dAutomask tool.
+   # If no mask has yet been computed for the subject,
+   # then a new mask can be computed quickly using
+   # AFNI's 3dAutomask tool.
    ################################################################
    else
       subroutine              @8.2  Generating a mask using 3dAutomask
@@ -578,12 +578,12 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
       mask_dmdt=${intermediate}_fmask.nii.gz
    fi
    ################################################################
-	# If the user has requested iterative censoring of
-	# motion-corrupted volumes, then the demean/detrend
-	# step should exclude the corrupted volumes from the
-	# linear model. In this case, a temporal mask is
-	# required for the demean/detrend step.
-	#
+   # If the user has requested iterative censoring of
+   # motion-corrupted volumes, then the demean/detrend
+   # step should exclude the corrupted volumes from the
+   # linear model. In this case, a temporal mask is
+   # required for the demean/detrend step.
+   #
    # If motion correction was run for the first time
    # during this module, then the censoring requested by
    # the user should be defined in censor[cxt]. If it is
@@ -595,9 +595,9 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
       configure               censor      ${censor[${subjidx}]}
    fi
    ################################################################
-	# The temporal mask must be stored either in the
-	# module-specific censor[cxt] variable or in the
-	# subject-specific censor[subjidx] variable.
+   # The temporal mask must be stored either in the
+   # module-specific censor[cxt] variable or in the
+   # subject-specific censor[subjidx] variable.
    ################################################################
    if is_1D ${tmask[${subjidx}]} \
    && [[ ${censor[${cxt}]} == iter ]]
@@ -627,19 +627,19 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
    # number of assumptions in this computation, and it
    # may not always be appropriate.
    ################################################################
-	if ! is+integer ${aroma_dmdt[${cxt}]}
-	   then
+   if ! is+integer ${aroma_dmdt[${cxt}]}
+      then
       subroutine           @8.5.1 Estimating polynomial order
-	   nvol=$(exec_fsl fslnvols ${final[${cxt}]})
+      nvol=$(exec_fsl fslnvols ${final[${cxt}]})
       trep=$(exec_fsl fslval   ${final[${cxt}]} pixdim4)
       dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
-	else
-	   subroutine           @8.5.2
-	   dmdt_order=${aroma_dmdt[${cxt}]}
-	fi
+   else
+      subroutine           @8.5.2
+      dmdt_order=${aroma_dmdt[${cxt}]}
+   fi
    ################################################################
-	# Now, pass the inputs computed above to the detrend
-	# function itself.
+   # Now, pass the inputs computed above to the detrend
+   # function itself.
    ################################################################
    subroutine              @8.6a Applying polynomial detrend
    subroutine              @8.6b Order: ${dmdt_order}

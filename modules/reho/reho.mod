@@ -171,10 +171,10 @@ if ! is_image ${reho[${cxt}]} \
          output_var='reho_sm'${k}'['${cxt}']'
          output_zvar='rehoZ_sm'${k}'['${cxt}']'
          ##########################################################
-	      # Obtain the mask over which smoothing is to be applied
-	      # Begin by searching for the subject mask; if this does
-	      # not exist, then search for a mask created by this
-	      # module.
+         # Obtain the mask over which smoothing is to be applied
+         # Begin by searching for the subject mask; if this does
+         # not exist, then search for a mask created by this
+         # module.
          ##########################################################
          if is_image ${mask[${subjidx}]}
             then
@@ -189,15 +189,15 @@ if ! is_image ${reho[${cxt}]} \
             mask=${intermediate}_fmask.nii.gz
          fi
          ##########################################################
-	      # Prime the inputs to sfilter for SUSAN filtering:  Ensure
-	      # that an example functional image exists. If it does not,
-	      # force a switch to uniform smoothing to mitigate the
-	      # catastrophe.
+         # Prime the inputs to sfilter for SUSAN filtering:  Ensure
+         # that an example functional image exists. If it does not,
+         # force a switch to uniform smoothing to mitigate the
+         # catastrophe.
          ##########################################################
          if [[ ${reho_sptf[${cxt}]} == susan ]]
             then
             subroutine        @2.4
-	         if is_image ${referenceVolumeBrain[${subjidx}]}
+            if is_image ${referenceVolumeBrain[${subjidx}]}
                then
                subroutine     @2.4.1
                usan="-u ${referenceVolume[${subjidx}]}"
@@ -208,25 +208,25 @@ if ! is_image ${reho[${cxt}]} \
             fi
          fi
          ##########################################################
-	      # Engage the sfilter routine to filter the ReHo map.
-	      #  * This is essentially a wrapper around the three
-	      #    implemented smoothing routines: gaussian, susan,
-	      #    and uniform.
+         # Engage the sfilter routine to filter the ReHo map.
+         #  * This is essentially a wrapper around the three
+         #    implemented smoothing routines: gaussian, susan,
+         #    and uniform.
          ##########################################################
-	      exec_xcp sfilter \
-	         -i ${reho[${cxt}]} \
-	         -o ${!output_var} \
-	         -s ${reho_sptf[${cxt}]} \
-	         -k ${k} \
-	         -m ${mask} \
-	         ${usan}
+         exec_xcp sfilter \
+            -i ${reho[${cxt}]} \
+            -o ${!output_var} \
+            -s ${reho_sptf[${cxt}]} \
+            -k ${k} \
+            -m ${mask} \
+            ${usan}
          ##########################################################
          # Convert the raw ReHo output values to standard scores.
          ##########################################################
          subroutine           @2.5  Standardising ReHo values
          zscore_image         ${!output_var} ${!output_zvar}   ${mask[${subjidx}]}
-	   done
-	   routine_end
+      done
+      routine_end
    fi
 fi
 
