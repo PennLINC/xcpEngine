@@ -565,7 +565,7 @@ elif ! is_image ${intermediate}_residuals.nii.gz \
       if contains ${d_type} confound
          then
          locreg_opts="${locreg_opts} -dsort ${d_map}"
-      done
+      fi
    done
    subroutine              @5.6  [Executing detrend]
    exec_afni 3dTproject \

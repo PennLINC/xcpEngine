@@ -455,10 +455,8 @@ fi
 # coregistration quality.
 ###################################################################
 routine                       @7    Coregistration visual aids
-[[ -e ${outdir}/${prefix}_targetVolume.nii.gz ]] \
-   && exec_sys unlink ${outdir}/${prefix}_targetVolume.nii.gz
-exec_sys ln -s ${struct[${subjidx}]} ${outdir}/${prefix}_targetVolume.nii.gz
 subroutine                    @7.1  [Slicewise rendering]
+add_reference   struct[${subjidx}]  ${prefix}_targetVolume
 exec_xcp \
    regslicer \
    -s ${e2simg[${cxt}]} \
