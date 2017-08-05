@@ -56,13 +56,13 @@ configure   confproc                ${confmat[${subjidx}]}
 configure   censor                  ${censor[${subjidx}]}
 configure   kernel                  ${regress_smo[${cxt}]//,/ }
 
-process     final                   ${prefix}_residualised
-
 for k in ${kernel[${cxt}]}
    do
    derivative        img_sm${k}     ${prefix}_sm${k}
    derivative_config img_sm${k}     Type     timeseries
 done
+
+process     final                   ${prefix}_residualised
 
 << DICTIONARY
 
@@ -99,19 +99,6 @@ DICTIONARY
 
 
 
-
-
-
-
-
-###################################################################
-# Read in any local regressors, if they are present.
-###################################################################
-if [[ ! -z "${locregs[${subjidx}]}" ]]
-   then
-   subroutine              @0.1
-   locregs=$(cat ${locregs[${subjidx}]})
-fi
 
 
 
@@ -158,7 +145,7 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       # Derivatives
       #############################################################
       load_derivatives
-      for derivative in ${derivatives}
+      for derivative in ${derivatives[@]}
          do
          derivative_parse ${derivative}
          if contains ${d_type} timeseries
@@ -571,13 +558,16 @@ elif ! is_image ${intermediate}_residuals.nii.gz \
    ################################################################
    # Update paths to any local regressors.
    ################################################################
-   locregs=$(ls -d1 ${outdir}/*filtered_loc* 2>/dev/null)
-   subroutine              @5.6  [Executing detrend]
-   rm -f ${intermediate}_residuals.nii.gz
-   for lr in ${locregs}
+   load_derivatives
+   for derivative in ${derivatives[@]}
       do
-      locreg_opts="${locreg_opts} -dsort ${lr}"
+      derivative_parse ${derivative}
+      if contains ${d_type} confound
+         then
+         locreg_opts="${locreg_opts} -dsort ${d_map}"
+      done
    done
+   subroutine              @5.6  [Executing detrend]
    exec_afni 3dTproject \
       -input ${intermediate}.nii.gz \
       -ort ${confproc[${cxt}]} \

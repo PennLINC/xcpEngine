@@ -257,7 +257,7 @@ while (( ${#rem} > 0 ))
          # module should never enter the conditional block below.
          ##########################################################
          load_derivatives
-         for derivative in ${derivatives}
+         for derivative in ${derivatives[@]}
             do
             derivative_parse ${derivative}
             if contains ${d_type} timeseries

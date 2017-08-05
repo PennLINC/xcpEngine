@@ -387,7 +387,7 @@ gaussian)
    #   * Iterate through all derivative images.
    ################################################################
    exec_sys rm -rf ${out_root}_derivatives
-	for derivative in ${derivatives}
+	for derivative in ${derivatives[@]}
       do
       derivative_parse ${derivative}
       #############################################################
@@ -502,7 +502,7 @@ fft)
    # 3b. Filter any derivative 4D timeseries.
    ################################################################
    exec_sys rm -rf ${out_root}_derivatives
-	for derivative in ${derivatives}
+	for derivative in ${derivatives[@]}
       do
       derivative_parse ${derivative}
       #############################################################
@@ -622,7 +622,7 @@ if (( ${genfilt} == 1 ))
    # Filter any derivative 4D timeseries.
    ################################################################
    rm -rf ${out_root}_derivatives
-   for derivative in ${derivatives}
+   for derivative in ${derivatives[@]}
       do
       derivative_parse ${derivative}
       #############################################################
@@ -753,8 +753,8 @@ if (( ${dvol} > 0 ))
    #  * Iterate through all derivatives, obtain their names, and
    #    again use fslroi.
    ################################################################
-   derivatives=$(cat ${out_root}_derivatives)
-   for derivative in ${derivatives}
+   load_derivatives ${out_root}_derivatives
+   for derivative in ${derivatives[@]}
       do
       subroutine  @u.9.3
       #############################################################

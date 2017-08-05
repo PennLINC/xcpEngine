@@ -46,7 +46,6 @@ completion() {
 ###################################################################
 derivative  e2smask                 ${prefix}_seq2structMask
 
-output      aux_imgs                ${prefix}_derivsNorm
 output      norm_cross_corr         ${prefix}_normCrossCorr.txt
 output      norm_coverage           ${prefix}_normCoverage.txt
 output      norm_jaccard            ${prefix}_normJaccard.txt
@@ -56,9 +55,6 @@ process     std                     ${prefix}_std
 
 << DICTIONARY
 
-aux_imgs
-   An index of derivatives that have been normalised to the
-   template.
 e2smask
    The reference volume from the analyte sequence, aligned into
    structural space and binarised. Used to estimate the quality
@@ -134,9 +130,10 @@ case ${norm_prog[${cxt}]} in
       #############################################################
       load_derivatives
       subroutine           @1.4  [Applying composite diffeomorphism to derivative images:]
-      touch ${aux_imgs[${cxt}]}
-      aux_imgs[${subjidx}]=${aux_imgs[${cxt}]}
-      for derivative in ${derivatives}
+      mv    ${aux_imgs[${subjidx}]} \
+            ${out}/${prefix}_derivatives-${space}.json
+      echo  '{}'     >>        ${aux_imgs[${subjidx}]}
+      for derivative in ${derivatives[@]}
          do
          derivative_parse  ${derivative}
          subroutine        @1.5  [${d_name}]
@@ -165,6 +162,7 @@ case ${norm_prog[${cxt}]} in
                ${interpol}
          fi
          write_derivative        ${d_name}
+         derivative_config       ${d_name}      Space    standard
       done
       routine_end
       #############################################################

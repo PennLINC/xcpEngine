@@ -1,6 +1,4 @@
 set_space() {
-   [[ -e ${aux_imgs[${cxt}]} ]] \
-      && mv ${aux_imgs[${cxt}]} ${out}
    space=${1}
    echo "space=${1}" >> ${design_local}
 }
