@@ -535,11 +535,11 @@ exec_fsl fsl_regfilt \
 if [[ ${aroma_dtype[${cxt}]} == aggr ]]
    then
    subroutine                 @7.3  Using aggressive filter
-   exec_sys immv ${outdir}/${prefix}_icaDenoised_aggr    ${final[${cxt}]}
+   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_aggr    ${final[${cxt}]}
 elif [[ ${aroma_dtype[${cxt}]} == nonaggr ]]
    then
    subroutine                 @7.4  Using non-aggressive filter
-   exec_sys immv ${outdir}/${prefix}_icaDenoised_nonaggr ${final[${cxt}]}
+   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_nonaggr ${final[${cxt}]}
 fi
 routine_end
 
