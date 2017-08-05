@@ -116,7 +116,7 @@ for c in $(eval_echo {0..${#tissue_classes}})
    class_include='locreg_'${class}'['${cxt}']'
    if [[ ${!class_include} == Y ]]
       then
-      routine                 @1    "Including local ${!class_name} signal"
+      routine                 @1    "Including local ${class_name} signal"
       
       class_val='locreg_'${class}'_val['${cxt}']'
       class_ero='locreg_'${class}'_ero['${cxt}']'
@@ -165,7 +165,7 @@ for c in $(eval_echo {0..${#tissue_classes}})
       if ! is_image ${!class_local} \
       || rerun
          then
-         subroutine           @1.3a Computing voxelwise tissue signal
+         subroutine           @1.3a Modelling voxelwise ${class_name} signal
          subroutine           @1.3b Radius of influence: ${locreg_gm_rad[${cxt}]}
          exec_sys rm -f ${!class_local}
          exec_afni 3dLocalstat \
@@ -200,7 +200,7 @@ if [[ ${locreg_lms[${cxt}]} == Y ]]
    || rerun
       then
       routine                 @2    "Including mean local signal in confound model."
-      subroutine              @2.1  "Generating local regressor: All voxels"
+      subroutine              @2.1  "Modelling local signal: All voxels"
       subroutine              @2.2  Radius of influence: ${locreg_lms_rad[${cxt}]}
       exec_sys rm -f ${lmsLoc[${cxt}]}
       exec_afni 3dLocalstat \

@@ -135,13 +135,12 @@ fi
 # be computed as the mean BOLD timeseries over all voxels
 # comprising the tissue class of interest.
 #
-# GREY MATTER
-# First, determine whether to include the mean grey matter
-# timeseries in the confound model. If the grey matter mask is to
+# First, determine whether to include the mean tissue confound
+# timeseries in the confound model. If the tissue mask is to
 # be included, then it must be conformed to user specifications:
-#  * Extract the GM mask from the user-specified segmentation
-#  * Erode the GM mask according to user specifications
-#  * Move the GM mask into the same space as the primary BOLD
+#  * Extract the mask from the user-specified segmentation
+#  * Erode the mask according to user specifications
+#  * Move the mask into the same space as the primary BOLD
 #    timeseries.
 ###################################################################
 tissue_classes=( gm wm csf )
