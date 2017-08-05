@@ -387,7 +387,7 @@ gaussian)
    #   * Iterate through all derivative images.
    ################################################################
    exec_sys rm -rf ${out_root}_derivatives
-	for derivative in ${derivatives[@]}
+   for derivative in ${derivatives[@]}
       do
       derivative_parse ${derivative}
       #############################################################
@@ -397,20 +397,20 @@ gaussian)
       #   linear models do not re-introduce frequencies that were
       #   filtered out of the primary image.
       #############################################################
-	   if contains ${d_type} timeseries
-	      then
+      if contains ${d_type} timeseries
+         then
          subroutine           @u.2.4
-	      exec_fsl \
-	         fslmaths ${d_map} \
+         exec_fsl \
+            fslmaths ${d_map} \
             -bptf ${hpf} ${lpf} \
             ${maskcall} \
             ${out_root}_${d_name}.nii.gz
          derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
-	   else
+      else
          subroutine           @u.2.5
-	   fi
-	done
-	echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
+      fi
+   done
+   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
    ################################################################
    # 4a. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -502,19 +502,19 @@ fft)
    # 3b. Filter any derivative 4D timeseries.
    ################################################################
    exec_sys rm -rf ${out_root}_derivatives
-	for derivative in ${derivatives[@]}
+   for derivative in ${derivatives[@]}
       do
       derivative_parse ${derivative}
       #############################################################
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
       #############################################################
-	   if contains ${d_type} timeseries
-	      then
+      if contains ${d_type} timeseries
+         then
          subroutine           @u.3.2
          exec_sys rm -rf ${out_root}_${d_name}.nii.gz
-	      exec_afni \
-	         3dBandpass \
+         exec_afni \
+            3dBandpass \
             -prefix ${out_root}_${d_name}.nii.gz \
             -nodetrend \
             -quiet \
@@ -528,11 +528,11 @@ fft)
       #   from the primary image, then copy it to the index of
       #   filtered derivatives without making any changes.
       #############################################################
-	   else
+      else
          subroutine           @u.3.3
-	   fi
-	done
-	echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
+      fi
+   done
+   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
    ################################################################
    # 4b. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -629,8 +629,8 @@ if (( ${genfilt} == 1 ))
       # * Only filter the derivative image if it has the same
       #   number of volumes as the primary image.
       #############################################################
-	   if contains ${d_type} timeseries
-	      then
+      if contains ${d_type} timeseries
+         then
          subroutine  @u.8.1
          ##########################################################
          # * Ensure that the ultimate input to genfilter has an
@@ -655,11 +655,11 @@ if (( ${genfilt} == 1 ))
       #   from the primary image, then copy it to the index of
       #   filtered derivatives without making any changes.
       #############################################################
-	   else
+      else
          subroutine  @u.8.2
-	   fi
-	done
-	echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
+      fi
+   done
+   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
    ################################################################
    # Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -760,18 +760,18 @@ if (( ${dvol} > 0 ))
       #############################################################
       # * Parse the derivative image.
       #############################################################
-	   derivative_parse ${derivative}
-	   if contains ${d_type} timeseries
-	      then
+      derivative_parse ${derivative}
+      if contains ${d_type} timeseries
+         then
          subroutine  @u.9.4
-	      fsl_exec \
-	         fslroi ${d_map} ${d_map} \
+         fsl_exec \
+            fslroi ${d_map} ${d_map} \
             0 -1 \
             0 -1 \
             0 -1 \
             ${dvol} ${retain}
-	   fi
-	done
+      fi
+   done
    ################################################################
    # 1D timeseries:
    #---------------------------------------------------------------
