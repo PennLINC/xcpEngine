@@ -1,5 +1,5 @@
 exec_ants() {
-   process_command=${@}
+   local process_command=${@}
    verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
    ${ANTSPATH}/${process_command}
 }

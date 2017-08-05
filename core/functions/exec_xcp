@@ -1,6 +1,6 @@
 exec_xcp() {
-   process_command_abbrev=${@}
-   process_command='${XCPEDIR}/utils/'${process_command_abbrev}
+   local process_command_abbrev=${@}
+   local process_command='${XCPEDIR}/utils/'${process_command_abbrev}
    verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
    ${XCPEDIR}/utils/${process_command_abbrev}
 }
