@@ -127,7 +127,7 @@ for k in ${kernel[${cxt}]}
       subroutine              @1.3
    else
       subroutine              @1.4a Filter: ${alff_sptf[${cxt}]}
-      subroutine              @1.4a Smoothing kernel: ${k} mm
+      subroutine              @1.4b Smoothing kernel: ${k} mm
       #############################################################
       # Obtain the mask over which smoothing is to be applied.
       # Begin by searching for the subject mask; if this does
@@ -295,7 +295,7 @@ for k in ${kernels}
       # Compute ALFF; this is the sum of the amplitudes across all
       # frequencies in the passband
       ################################################################
-      subroutine              @2.8  Computing the amplitude of low-frequency fluctuations (ALFF)
+      subroutine              @2.8  "Computing the amplitude of low-frequency fluctuations (ALFF)"
       exec_fsl fslmaths ${intermediate}PS-SLOW.nii.gz -Tmean -mul ${n2} ${!output_var}
       ################################################################
       # Convert the raw ALFF output values to standard scores.

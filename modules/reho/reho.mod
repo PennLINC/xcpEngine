@@ -135,12 +135,11 @@ if ! is_image ${reho[${cxt}]} \
       zdim=$(arithmetic ${mmrad} / ${zdim})
       nneigh="-neigh_X ${xdim} -neigh_Y ${ydim} -neigh_Z ${zdim}"
    fi
-   subroutine                 @1.3 Computing regional homogeneity (ReHo)
+   subroutine                 @1.3 "Computing regional homogeneity (ReHo)"
    exec_afni 3dReHo \
       -prefix ${reho[${cxt}]} \
       -inset ${img} \
-      ${nneigh} \
-      2>/dev/null
+      ${nneigh}
    ################################################################
    # Convert the raw ReHo output values to standard scores.
    ################################################################
