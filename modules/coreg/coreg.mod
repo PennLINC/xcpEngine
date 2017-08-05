@@ -344,8 +344,8 @@ if [[ ! -e ${quality[${cxt}]} ]] \
    # Determine whether each quality index warrants flagging the
    # coregistration for poor quality.
    ################################################################
-   cc_min=$(return_field   ${coreg_qacut[${cxt}]} 1)
-   co_min=$(return_field   ${coreg_qacut[${cxt}]} 2)
+   cc_min=$(strslice   ${coreg_qacut[${cxt}]} 1)
+   co_min=$(strslice   ${coreg_qacut[${cxt}]} 2)
    cc_flag=$(arithmetic ${registration_quality[0]}'<'${cc_min})
    co_flag=$(arithmetic ${registration_quality[1]}'<'${co_min})
    if (( ${cc_flag} == 1 )) \
