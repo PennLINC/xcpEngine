@@ -57,7 +57,7 @@ derivative_config   gmLocal         Type              timeseries,confound
 derivative_config   wmLocal         Type              timeseries,confound
 derivative_config   csfLocal        Type              timeseries,confound
 derivative_config   lmsLocal        Type              timeseries,confound
-derivative_config   difmoLocal      Type              timeseries,confound
+derivative_config   diffProcLocal   Type              timeseries,confound
 
 <<DICTIONARY
 
