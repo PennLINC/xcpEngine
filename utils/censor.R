@@ -27,9 +27,6 @@ option_list = list(
    make_option(c("-s", "--timeseries"), action="store", default=NA, type='character',
               help="1D timeseries to which the censoring regime should
                   also be applied."),
-   make_option(c("-d", "--derivatives"), action="store", default=NA, type='character',
-              help="A hash-delimited list of derivative images to be
-                  censored"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path")
 )
@@ -86,55 +83,7 @@ rm(imgarray)
 rm(imgarray_censored)
 
 ###################################################################
-# 3. Iterate through any derivative images. If they have the same
-#    number of volumes as the primary BOLD timeseries, then censor
-#    them. Update the paths to derivative images, and write out
-#    a new derivatives index.
-###################################################################
-if (!is.na(derivspath)) {
-   derivsList <- read.table(derivspath,sep='#',comment.char="")
-   numDerivs <- dim(derivsList)[1]
-   for (dindex in 1:numDerivs) {
-      #############################################################
-      # Parse derivative information
-      #############################################################
-      derivName <- as.character(derivsList[dindex,2])
-      derivPath <- as.character(derivsList[dindex,3])
-      #############################################################
-      # Obtain the derivative extension
-      #############################################################
-      derivFull <- system(paste('ls',paste(derivPath)), intern=TRUE)
-      derivExt <- sub('^[^.]*[.]','',derivFull)
-      derivOut <- paste(derivName,derivExt,sep='.')
-      derivOut <- paste(getwd(),derivOut,sep='/')
-      curDeriv <- antsImageRead(derivFull,4)
-      derivArray <- as.array(curDeriv)
-      #############################################################
-      # Determine whether the derivative should be censored
-      #############################################################
-      if (dim(derivArray)[4] == length(tmask)) {
-         cat('Censoring ',derivName,'...\n')
-         derivArray_censored <- derivArray[,,,tmask]
-         curDeriv_censored <- as.antsImage(derivArray_censored)
-         ##########################################################
-         # Write the censored derivative and update its path
-         ##########################################################
-         antsCopyImageInfo(curDeriv,curDeriv_censored)
-         antsImageWrite(curDeriv_censored,derivName)
-         derivPath <- paste(getwd(),derivName,sep='/')
-         derivsList[dindex,3] <- derivPath
-      }
-   }
-   ################################################################
-   # Write out the new derivatives list
-   ################################################################
-   outbase <- sub('[.].*$','',out)
-   dpathout <- paste(outbase,'_derivs',sep='')
-   write.table(derivsList,file=dpathout,quote=FALSE,sep='#',na='',col.names = F,row.names = F)
-}
-
-###################################################################
-# 4. Iterate through all 1D timeseries, then excise time points
+# 3. Iterate through all 1D timeseries, then excise time points
 #    corresponding to censored volumes
 ###################################################################
 if (!is.na(tspath)) {

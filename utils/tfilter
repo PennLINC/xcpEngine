@@ -121,19 +121,6 @@ Optional arguments:
       points.
       (Should not be used for FFT or Gaussian filters)
 
- -x : Index of derivative images
-      Path to a file containing any derivative images
-      generated from the primary BOLD timeseries. The file
-      text should match the format:
-           #NAME_OF_IMAGE1#PATH_TO_IMAGE1
-           #NAME_OF_IMAGE2#PATH_TO_IMAGE2
-           ...
-      If any images in the derivatives file have the same
-      number of volumes as the primary BOLD timeseries,
-      then the same filtering procedure that was applied
-      to the primary BOLD timeseries will be applied to
-      that derivative image.
-
  -1 : 1D timeseries
       A comma separated list of paths to files containing
       one-dimensional timeseries. Each column in the file
@@ -175,7 +162,7 @@ ktrue=-1
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
+while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
    do
    case $OPTION in
    i)
@@ -246,10 +233,6 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
    v)
       dvol=${OPTARG}
       ! is+integer ${dvol} && Usage && exit
-      ;;
-   x)
-      derivsList=${OPTARG}
-      load_derivatives ${derivsList}
       ;;
    1)
       tslist=${OPTARG}
@@ -383,36 +366,7 @@ gaussian)
       ${maskcall} \
       ${out}
    ################################################################
-   # 3a. Filter any derivative 4D timeseries.
-   #   * Iterate through all derivative images.
-   ################################################################
-   exec_sys rm -rf ${out_root}_derivatives
-   for derivative in ${derivatives[@]}
-      do
-      derivative_parse ${derivative}
-      #############################################################
-      # * Only filter the derivative image if it has the same
-      #   number of volumes as the primary image.
-      # * Filtering will ensure that derivative timeseries used in
-      #   linear models do not re-introduce frequencies that were
-      #   filtered out of the primary image.
-      #############################################################
-      if contains ${d_type} timeseries
-         then
-         subroutine           @u.2.4
-         exec_fsl \
-            fslmaths ${d_map} \
-            -bptf ${hpf} ${lpf} \
-            ${maskcall} \
-            ${out_root}_${d_name}.nii.gz
-         derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
-      else
-         subroutine           @u.2.5
-      fi
-   done
-   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives.json
-   ################################################################
-   # 4a. Filter any 1D timeseries specified by the user.
+   # 3a. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
    #   * This is much more complicated than it sounds because
    #     FSL's filter engine will only process NIfTIs.
@@ -499,42 +453,7 @@ fft)
       ${hipass} ${lopass} ${image} \
       2>/dev/null
    ################################################################
-   # 3b. Filter any derivative 4D timeseries.
-   ################################################################
-   exec_sys rm -rf ${out_root}_derivatives
-   for derivative in ${derivatives[@]}
-      do
-      derivative_parse ${derivative}
-      #############################################################
-      # * Only filter the derivative image if it has the same
-      #   number of volumes as the primary image.
-      #############################################################
-      if contains ${d_type} timeseries
-         then
-         subroutine           @u.3.2
-         exec_sys rm -rf ${out_root}_${d_name}.nii.gz
-         exec_afni \
-            3dBandpass \
-            -prefix ${out_root}_${d_name}.nii.gz \
-            -nodetrend \
-            -quiet \
-            ${maskcall} \
-            ${hipass} ${lopass} \
-            ${d_map} \
-            &>/dev/null
-         derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
-      #############################################################
-      # * If the derivative image has a different number of volumes
-      #   from the primary image, then copy it to the index of
-      #   filtered derivatives without making any changes.
-      #############################################################
-      else
-         subroutine           @u.3.3
-      fi
-   done
-   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives.json
-   ################################################################
-   # 4b. Filter any 1D timeseries specified by the user.
+   # 3b. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
    #   * For this purpose, the script uses 1dBandpass.
    #   * Because 1D files do not include a header with timing
@@ -618,48 +537,6 @@ if (( ${genfilt} == 1 ))
       ${dcall} \
       ${rpcall} \
       ${rscall}
-   ################################################################
-   # Filter any derivative 4D timeseries.
-   ################################################################
-   rm -rf ${out_root}_derivatives
-   for derivative in ${derivatives[@]}
-      do
-      derivative_parse ${derivative}
-      #############################################################
-      # * Only filter the derivative image if it has the same
-      #   number of volumes as the primary image.
-      #############################################################
-      if contains ${d_type} timeseries
-         then
-         subroutine  @u.8.1
-         ##########################################################
-         # * Ensure that the ultimate input to genfilter has an
-         #   appropriate extension. Genfilter requires the complete
-         #   file name.
-         ##########################################################
-         exec_xcp \
-            genfilter.R \
-            -i ${d_map} \
-            -o ${out_root}_${d_name}.nii.gz \
-            ${fcall} \
-            ${maskcall} \
-            -c ${hipass} \
-            -l ${lopass} \
-            ${ocall} \
-            ${dcall} \
-            ${rpcall} \
-            ${rscall}
-         derivative_config ${d_name} Map ${out_root}_${d_name}.nii.gz
-      #############################################################
-      # * If the derivative image has a different number of volumes
-      #   from the primary image, then copy it to the index of
-      #   filtered derivatives without making any changes.
-      #############################################################
-      else
-         subroutine  @u.8.2
-      fi
-   done
-   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives.json
    ################################################################
    # Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -745,33 +622,6 @@ if (( ${dvol} > 0 ))
       0 -1 \
       0 -1 \
       ${dvol} ${retain}
-   ################################################################
-   # Derivative 4D timeseries:
-   #---------------------------------------------------------------
-   #  * Update the derivatives list by loading in the new list
-   #    of filtered derivatives.
-   #  * Iterate through all derivatives, obtain their names, and
-   #    again use fslroi.
-   ################################################################
-   load_derivatives ${out_root}_derivatives
-   for derivative in ${derivatives[@]}
-      do
-      subroutine  @u.9.3
-      #############################################################
-      # * Parse the derivative image.
-      #############################################################
-      derivative_parse ${derivative}
-      if contains ${d_type} timeseries
-         then
-         subroutine  @u.9.4
-         fsl_exec \
-            fslroi ${d_map} ${d_map} \
-            0 -1 \
-            0 -1 \
-            0 -1 \
-            ${dvol} ${retain}
-      fi
-   done
    ################################################################
    # 1D timeseries:
    #---------------------------------------------------------------
