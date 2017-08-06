@@ -288,6 +288,7 @@ routine_end
 # specifications.
 ###################################################################
 routine                       @4    Executing affine coregistration
+registered=0
 if [[ ! -e ${e2smat[${cxt}]} ]] \
 || rerun
    then
@@ -308,6 +309,7 @@ if [[ ! -e ${e2smat[${cxt}]} ]] \
       ${refwt} \
       ${inwt} \
       ${wm_mask_cmd}
+   registered=1
 else
    subroutine                 @4.2  [Coregistration already run]
 fi
@@ -321,9 +323,8 @@ routine_end
 # Compute metrics of coregistration quality.
 ###################################################################
 flag=0
-if [[ ! -e ${quality[${cxt}]} ]] \
-|| rerun \
-|| [[ $(tail -n1 ${quality[${cxt}]}) == ',' ]]
+if [[ ! -e ${coreg_dice[${cxt}]} ]] \
+|| rerun
    then
    routine                    @5    Quality assessment
    subroutine                 @5.1
@@ -404,6 +405,7 @@ if (( ${flag} == 1 ))
       -cost ${coreg_cfunc[${cxt}]} \
       ${refwt} \
       ${inwt}
+   registered=1
    ################################################################
    # Compute the quality metrics for the new registration.
    ################################################################
@@ -455,16 +457,19 @@ fi
 # Prepare slice graphics as an additional assessor of
 # coregistration quality.
 ###################################################################
-routine                       @7    Coregistration visual aids
-subroutine                    @7.1  [Slicewise rendering]
-add_reference   struct[${subjidx}]  ${prefix}_targetVolume
-exec_xcp \
-   regslicer \
-   -s ${e2simg[${cxt}]} \
-   -t ${struct[${subjidx}]} \
-   -i ${intermediate} \
-   -o ${outdir}/${prefix}_seq2struct
-routine_end
+if (( ${registered} == 1  ))
+   then
+   routine                    @7    Coregistration visual aids
+   subroutine                 @7.1  [Slicewise rendering]
+   add_reference   struct[${subjidx}]  ${prefix}_targetVolume
+   exec_xcp \
+      regslicer \
+      -s ${e2simg[${cxt}]} \
+      -t ${struct[${subjidx}]} \
+      -i ${intermediate} \
+      -o ${outdir}/${prefix}_seq2struct
+   routine_end
+fi
 
 
 
