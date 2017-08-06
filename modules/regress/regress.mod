@@ -35,6 +35,21 @@ completion() {
       write_derivative  img_sm${k}
    done
    
+   load_derivatives
+   for derivative in ${derivatives[@]}
+      do
+      unset d_map_new
+      derivative_parse ${derivative}
+      if contains ${d_type} timeseries
+         then
+         d_map_new=${d_name}'['${cxt}']'
+         derivative  ${d_name}   ${prefix}_${d_name}
+         exec_fsl    immv        ${d_map}  ${!d_map_new}
+         derivative_config       ${d_name} Type ${d_type}
+         write_derivative        ${d_name}
+      fi
+   done
+   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -406,8 +421,8 @@ No censoring will be performed."
          ${intermediate}_filtered_confmat.1D
       [[ -e ${intermediate}_filtered_tmask.1D ]] \
          && exec_sys mv -f ${intermediate}_filtered_tmask.1D ${tmask[${cxt}]}
-      [[ -e ${intermediate}_filtered_derivs ]] \
-         && exec_sys mv -f ${intermediate}_filtered_derivs ${aux_imgs[${subjidx}]}
+      [[ -e ${intermediate}_filtered_derivatives.json ]] \
+         && exec_sys mv -f ${intermediate}_filtered_derivatives.json ${aux_imgs[${subjidx}]}
    fi
 fi
 ###################################################################
