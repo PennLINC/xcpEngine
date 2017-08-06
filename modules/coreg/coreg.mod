@@ -162,7 +162,7 @@ routine                       @1    Identifying reference volume
 if is_image ${referenceVolumeBrain[${subjidx}]}
    then
    subroutine                 @1.1  [Existing reference image recognised]
-   configure  referenceVolumeBrain  ${referenceVolumeBrain[${subjidx}]}
+   referenceBrain=referenceVolumeBrain[${subjidx}]
 else
    if ! is_image ${referenceVolume[${subjidx}]}
       then
@@ -202,6 +202,7 @@ else
          ${referenceVolumeBrain[${cxt}]} \
          -f $fit[${cxt}]
    fi
+   referenceBrain=referenceVolumeBrain[${cxt}]
 fi
 routine_end
 
@@ -293,12 +294,12 @@ if [[ ! -e ${e2smat[${cxt}]} ]] \
    subroutine                 @4.1a [Cost function]
    subroutine                 @4.1b [${coreg_cfunc[${cxt}]}]
    subroutine                 @4.1c [Input volume]
-   subroutine                 @4.1d [${referenceVolumeBrain[${cxt}]}]
+   subroutine                 @4.1d [${!referenceBrain}]
    subroutine                 @4.1e [Reference volume]
    subroutine                 @4.1f [${struct[${subjidx}]}]
    subroutine                 @4.1g [Output volume]
    subroutine                 @4.1h [${e2simg[${cxt}]}]
-   exec_fsl flirt -in ${referenceVolumeBrain[${cxt}]} \
+   exec_fsl flirt -in ${!referenceBrain} \
       -ref  ${struct[${subjidx}]} \
       -dof  6 \
       -out  ${e2simg[${cxt}]} \
@@ -395,7 +396,7 @@ if (( ${flag} == 1 ))
    # Re-compute coregistration.
    ################################################################
    exec_fsl \
-      flirt -in ${referenceVolumeBrain[${cxt}]} \
+      flirt -in ${!referenceBrain} \
       -ref ${struct[${subjidx}]} \
       -dof 6 \
       -out ${intermediate}_seq2struct_alt \
@@ -497,7 +498,7 @@ if [[ ! -e ${seq2struct[${cxt}]} ]] \
    subroutine                 @8.2  [Converting coregistration .mat to ANTs format]
    exec_c3d \
       c3d_affine_tool \
-      -src ${referenceVolumeBrain[${cxt}]} \
+      -src ${!referenceBrain} \
       -ref ${struct[${subjidx}]} \
       ${e2smat[${cxt}]} \
       -fsl2ras \
@@ -515,7 +516,7 @@ if [[ ! -e ${struct2seq[${cxt}]} ]] \
    exec_c3d \
       c3d_affine_tool \
       -src ${struct[${subjidx}]} \
-      -ref ${referenceVolumeBrain[${cxt}]} \
+      -ref ${!referenceBrain} \
       ${s2emat[${cxt}]} \
       -fsl2ras \
       -oitk ${struct2seq[${cxt}]}
@@ -531,7 +532,7 @@ if [[ ! -e ${s2emask[${cxt}]} ]] \
    exec_ants \
       antsApplyTransforms \
       -e 3 -d 3 \
-      -r ${referenceVolumeBrain[${subjidx}]} \
+      -r ${!referenceBrain} \
       -o ${s2eimg[${cxt}]} \
       -i ${struct[${subjidx}]} \
       -t ${struct2seq[${cxt}]}
