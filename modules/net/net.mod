@@ -255,12 +255,16 @@ for net in ${atlas_names[@]}
    # Compute the mean local timeseries for each node in the
    # network.
    ################################################################
-   subroutine                 @1.3  Computing network timeseries
-   exec_sys rm -f ${ts[${cxt}]}
-   exec_xcp roi2ts.R \
-      -i ${img} \
-      -r ${nodemap[${cxt}]} \
-      >> ${ts[${cxt}]}
+   if [[ ! -s ${ts[${cxt}]} ]] \
+   || rerun
+      then
+      subroutine              @1.3  Computing network timeseries
+      exec_sys rm -f ${ts[${cxt}]}
+      exec_xcp roi2ts.R \
+         -i ${img} \
+         -r ${nodemap[${cxt}]} \
+         >> ${ts[${cxt}]}
+   fi
 
 
 
@@ -271,25 +275,29 @@ for net in ${atlas_names[@]}
    # Compute the adjacency matrix based on the mean local
    # timeseries.
    ################################################################
-   subroutine                 @1.4  Computing adjacency matrix
-   exec_sys rm -f ${adjacency[${cxt}]}
-   exec_sys rm -f ${pajek[${cxt}]}
-   exec_sys rm -f ${missing[${cxt}]}
-   exec_xcp ts2adjmat.R -t ${ts[${cxt}]} >> ${adjacency[${cxt}]}
-   exec_xcp adjmat2pajek.R \
-      -a ${adjacency[${cxt}]} \
-      -t ${net_thr[${cxt}]} \
-      >> ${pajek[${cxt}]}
-   ################################################################
-   # Flag nodes that fail to capture any signal variance.
-   ################################################################
-   subroutine                 @1.5  Determining node coverage
-   unset missing_arg
-   badnodes=$(exec_xcp missingIdx.R -i ${adjacency[${cxt}]})
-   if [[ -n ${badnodes} ]]
+   if [[ ! -s ${pajek[${cxt}]} ]] \
+   || rerun
       then
-      echo "${badnodes}" >> ${missing[${cxt}]} \
-      missing_arg=",'missing','${missing[${cxt}]}'"
+      subroutine              @1.4  Computing adjacency matrix
+      exec_sys rm -f ${adjacency[${cxt}]}
+      exec_sys rm -f ${pajek[${cxt}]}
+      exec_sys rm -f ${missing[${cxt}]}
+      exec_xcp ts2adjmat.R -t ${ts[${cxt}]} >> ${adjacency[${cxt}]}
+      exec_xcp adjmat2pajek.R \
+         -a ${adjacency[${cxt}]} \
+         -t ${net_thr[${cxt}]} \
+         >> ${pajek[${cxt}]}
+      ################################################################
+      # Flag nodes that fail to capture any signal variance.
+      ################################################################
+      subroutine              @1.5  Determining node coverage
+      unset missing_arg
+      badnodes=$(exec_xcp missingIdx.R -i ${adjacency[${cxt}]})
+      if [[ -n ${badnodes} ]]
+         then
+         echo "${badnodes}" >> ${missing[${cxt}]} \
+         missing_arg=",'missing','${missing[${cxt}]}'"
+      fi
    fi
 
 
@@ -333,15 +341,20 @@ for net in ${atlas_names[@]}
       subroutine              @1.7.1
       (( i-- ))
       partition_name=${a_community_names[i]}
-      exec_sys rm -f ${netbase[${cxt}]}_${partition_name}Quality.txt
-      exec_xcp quality.R \
-         -m ${adjacency[${cxt}]} \
-         -c ${a_community[i]} \
-         >> ${netbase[${cxt}]}_${partition_name}quality.txt
-      exec_xcp withinBetween.R \
-         -m ${adjacency[${cxt}]} \
-         -c ${a_community} \
-         -o ${netbase[${cxt}]}_${partition_name}
+      if [[ ! -s ${netbase[${cxt}]}_${partition_name}_wbOverall.csv ]] \
+      ||rerun
+         then
+         subroutine           @1.7.1
+         exec_sys rm -f ${netbase[${cxt}]}_${partition_name}Quality.txt
+         exec_xcp quality.R \
+            -m ${adjacency[${cxt}]} \
+            -c ${a_community[i]} \
+            >> ${netbase[${cxt}]}_${partition_name}Quality.txt
+         exec_xcp withinBetween.R \
+            -m ${adjacency[${cxt}]} \
+            -c ${a_community} \
+            -o ${netbase[${cxt}]}_${partition_name}
+      fi
    done
    update_networks
    routine_end
