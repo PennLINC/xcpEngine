@@ -35,20 +35,10 @@ completion() {
       write_derivative  img_sm${k}
    done
    
-   load_derivatives
-   for derivative in ${derivatives[@]}
-      do
-      unset d_map_new
-      derivative_parse ${derivative}
-      if contains ${d_type} timeseries
-         then
-         d_map_new=${d_name}'['${cxt}']'
-         derivative  ${d_name}   ${prefix}_${d_name}
-         exec_fsl    immv        ${d_map}  ${!d_map_new}
-         derivative_config       ${d_name} Type ${d_type}
-         write_derivative        ${d_name}
-      fi
-   done
+   apply_exec        timeseries              ${prefix}_%NAME \
+      sys            ls %OUTPUT              2>/dev/null
+   apply_exec        timeseries              ${prefix}_%NAME \
+      sys            write_derivative        %NAME
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -149,7 +139,7 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       #############################################################
       # Primary image
       #############################################################
-      subroutine           @1.3
+      subroutine           @1.3  Primary analyte image
       exec_afni 3dDespike \
          -prefix ${intermediate}_despike.nii.gz \
          -nomask \
@@ -159,30 +149,18 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
       #############################################################
       # Derivatives
       #############################################################
-      load_derivatives
-      for derivative in ${derivatives[@]}
-         do
-         derivative_parse ${derivative}
-         if contains ${d_type} timeseries
-            then
-            subroutine     @1.4
-            derivative     ${d_name}   ${prefix}_${d_name}_despike
-            derivative=${d_name}'['${cxt}']'
-            exec_afni 3dDespike \
-               -prefix ${!derivative} \
-               -nomask \
-               -quiet \
-               ${ds_arguments} \
-               ${intermediate}.nii.gz
-            write_derivative  ${d_name}
-         else
-            subroutine     @1.5
-         fi
-      done
+      subroutine           @1.4
+      apply_exec  timeseries  ${intermediate}_%NAME_despike  ECHO:d_name \
+         afni 3dDespike \
+         -prefix %OUTPUT \
+         -nomask \
+         -quiet \
+         ${ds_arguments} \
+         %INPUT
       ##########################################################
       # Confound matrix
       ##########################################################
-      subroutine           @1.6
+      subroutine           @1.5
       exec_xcp 1dDespike \
          -i ${confproc[${cxt}]} \
          -x ${intermediate}_1dDespike \
@@ -194,7 +172,7 @@ if [[ ${regress_despike[${cxt}]} == Y ]]
    ################################################################
    # Update image pointers
    ################################################################
-   subroutine              @1.7
+   subroutine              @1.6
    configure   confproc    ${intermediate}_despike_confmat.1D
    locregs=$(exec_sys ls -d1 ${outdir}/*loc*despike* 2>/dev/null)
    intermediate=${intermediate}_despike
@@ -400,16 +378,17 @@ No censoring will be performed."
          -f ${regress_tmpf[${cxt}]} \
          -h ${regress_hipass[${cxt}]} \
          -l ${regress_lopass[${cxt}]} \
-         ${mask} \
-         ${tmask} \
-         ${tforder} \
-         ${tfdirec} \
-         ${tfprip} \
-         ${tfsrip} \
-         ${tfdvol} \
-         ${derivs} \
-         ${ts1d} \
-         ${trace_prop}
+         ${mask}     ${tmask}    ${tforder}  ${tfdirec} \
+         ${tfprip}   ${tfsrip}   ${tfdvol}   ${ts1d}
+      apply_exec  timeseries  ${intermediate}_%NAME_filtered \
+         xcp tfilter \
+         -i %INPUT \
+         -o %OUTPUT \
+         -f ${regress_tmpf[${cxt}]} \
+         -h ${regress_hipass[${cxt}]} \
+         -l ${regress_lopass[${cxt}]} \
+         ${mask}     ${tmask}    ${tforder}  ${tfdirec} \
+         ${tfprip}   ${tfsrip}   ${tfdvol}
       #############################################################
       # Reorganise outputs
       #############################################################
@@ -421,8 +400,6 @@ No censoring will be performed."
          ${intermediate}_filtered_confmat.1D
       [[ -e ${intermediate}_filtered_tmask.1D ]] \
          && exec_sys mv -f ${intermediate}_filtered_tmask.1D ${tmask[${cxt}]}
-      [[ -e ${intermediate}_filtered_derivatives.json ]] \
-         && exec_sys mv -f ${intermediate}_filtered_derivatives.json ${aux_imgs[${subjidx}]}
    fi
 fi
 ###################################################################
@@ -474,8 +451,8 @@ fi
 if [[ ${censor[${cxt}]} != none ]]
    then
    subroutine              @3.4  [${censor[${cxt}]} censoring]
-   exec_sys imcp ${intermediate}.nii.gz ${outdir}/${prefix}_uncensored.nii.gz
-   exec_sys cp ${confproc[${cxt}]} ${outdir}/${prefix}_confmat_uncensored.1D
+   exec_fsl imcp ${intermediate}.nii.gz ${outdir}/${prefix}_uncensored.nii.gz
+   exec_sys cp   ${confproc[${cxt}]}    ${outdir}/${prefix}_confmat_uncensored.1D
    ################################################################
    # Use the temporal mask to determine which volumes are to be
    # left intact.
@@ -487,17 +464,20 @@ if [[ ${censor[${cxt}]} != none ]]
       -t ${tmaskpath} \
       -i ${intermediate}.nii.gz \
       -o ${intermediate}_censored.nii.gz \
-      -d ${aux_imgs[${subjidx}]} \
       -s ${confproc[${cxt}]}
+   apply_exec  timeseries  ${intermediate}_%NAME_censored \
+      xcp censor.R \
+      -t ${tmaskpath} \
+      -i %INPUT \
+      -o %OUTPUT
    intermediate=${intermediate}_censored
    configure   confproc    ${intermediate}_confmat.1D
-   exec_sys mv ${intermediate}_derivs ${aux_imgs[${subjidx}]}
-   exec_sys mv ${intermediate}*confmat*.1D ${confproc[${cxt}]}
-   nvol_pre=$(exec_fsl fslnvols ${outdir}/${prefix}_uncensored.nii.gz)
-   nvol_post=$(exec_fsl fslnvols ${intermediate}.nii.gz)
-   nvol_censored=$(( ${nvol_pre} - ${nvol_post} ))
+   exec_sys    mv          ${intermediate}*confmat*.1D ${confproc[${cxt}]}
+   nvol_pre=$( exec_fsl          fslnvols ${outdir}/${prefix}_uncensored.nii.gz)
+   nvol_post=$(exec_fsl          fslnvols ${intermediate}.nii.gz)
+   nvol_censored=$((             ${nvol_pre} - ${nvol_post} ))
    subroutine              @3.6  [${nvol_censored} volumes censored]
-   echo ${nvol_censored} >> ${n_volumes_censored[${cxt}]}
+   echo ${nvol_censored}   >>    ${n_volumes_censored[${cxt}]}
    if [[ ${regress_spkreg[${cxt}]} == Y ]]
       then
       subroutine           @3.7  [Censoring executed: deactivating spike regression]
@@ -709,5 +689,8 @@ routine_end
 
 
 
+
+apply_exec        timeseries              ${prefix}_%NAME \
+   fsl            imcp %INPUT %OUTPUT
 exec_fsl immv ${intermediate}.nii.gz ${final[${cxt}]}
 completion

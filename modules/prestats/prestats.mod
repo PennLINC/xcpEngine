@@ -44,6 +44,11 @@ completion() {
       write_config   censored
    fi
    
+   apply_exec        timeseries              ${prefix}_%NAME \
+      sys            ls %OUTPUT              >/dev/null
+   apply_exec        timeseries              ${prefix}_%NAME \
+      sys            write_derivative        %NAME
+   
    quality_metric    relMeanRMSMotion        rel_mean_rms
    quality_metric    relMaxRMSMotion         rel_max_rms
    quality_metric    nFramesHighMotion       motion_vols
@@ -239,9 +244,8 @@ while (( ${#rem} > 0 ))
                ${vol_end}
          fi
          ##########################################################
-         # Repeat for any derivatives of the BOLD timeseries, if
-         # they contain the same number of volumes as the original
-         # timeseries.
+         # Repeat for any derivatives of the BOLD timeseries that
+         # are also timeseries.
          #
          # Why? Unless the number of volumes in the BOLD timeseries
          # and in derivative timeseries -- for instance, local
@@ -256,30 +260,15 @@ while (( ${#rem} > 0 ))
          # the derivatives index will be empty, and the prestats
          # module should never enter the conditional block below.
          ##########################################################
-         load_derivatives
-         for derivative in ${derivatives[@]}
-            do
-            derivative_parse ${derivative}
-            if contains ${d_type} timeseries
-               then
-               subroutine     @1.5  [${d_name}]
-               exec_fsl \
-                  fslroi ${d_map} \
-                  ${outdir}/${prefix}_${d_name} \
-                  ${vol_begin} \
-                  ${vol_end}
-               derivative        ${d_name}   ${prefix}_${d_name}
-               write_derivative  ${d_name}
-            else
-               subroutine     @1.6
-            fi
-         done
+         subroutine           @1.5
+         apply_exec timeseries ${intermediate}_${cur}_%NAME ECHO:d_name \
+            fsl     fslroi     %INPUT %OUTPUT  ${vol_begin} ${vol_end}
          ##########################################################
          # Compute the updated volume count.
          ##########################################################
          intermediate=${intermediate}_${cur}
          nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
-         subroutine           @1.7  [New total volumes = ${nvol}]
+         subroutine           @1.6  [New total volumes = ${nvol}]
          routine_end
          ;;
       
@@ -1119,7 +1108,6 @@ while (( ${#rem} > 0 ))
             # linear models without reintroducing the frequencies
             # removed from the BOLD timeseries.
             #######################################################
-            derivs="-x ${aux_imgs[${subjidx}]}"
             unset ts1d
             #######################################################
             # Realignment parameters...
@@ -1225,16 +1213,17 @@ while (( ${#rem} > 0 ))
                -f ${prestats_tmpf[${cxt}]} \
                -h ${prestats_hipass[${cxt}]} \
                -l ${prestats_lopass[${cxt}]} \
-               ${mask} \
-               ${tmask_tmp} \
-               ${tf_order} \
-               ${tf_direc} \
-               ${tf_p_rip} \
-               ${tf_s_rip} \
-               ${tf_dvol} \
-               ${derivs} \
-               ${ts1d} \
-               ${trace_prop}
+               ${mask}     ${tmask_tmp}   ${tf_order} ${tf_direc} \
+               ${tf_p_rip} ${tf_s_rip}    ${tf_dvol}  ${ts1d}
+            apply_exec  timeseries  ${intermediate}_${cur}_%NAME \
+               xcp tfilter \
+               -i %INPUT \
+               -o %OUTPUT \
+               -f ${prestats_tmpf[${cxt}]} \
+               -h ${prestats_hipass[${cxt}]} \
+               -l ${prestats_lopass[${cxt}]} \
+               ${mask}     ${tmask_tmp}   ${tf_order} ${tf_direc} \
+               ${tf_p_rip} ${tf_s_rip}    ${tf_dvol}
             #######################################################
             # Move outputs to target
             #######################################################
@@ -1282,6 +1271,8 @@ done
 #    module.
 #  * If the expected output is absent, notify the user.
 ###################################################################
+apply_exec        timeseries              ${prefix}_%NAME \
+   fsl            imcp %INPUT %OUTPUT
 if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
