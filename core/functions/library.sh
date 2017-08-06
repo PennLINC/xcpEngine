@@ -10,6 +10,7 @@
 LIBRARY=${XCPEDIR}/core/functions
 
 source ${LIBRARY}/add_reference
+source ${LIBRARY}/apply_exec
 source ${LIBRARY}/arithmetic
 source ${LIBRARY}/atlas_add
 source ${LIBRARY}/atlas_config
