@@ -410,7 +410,7 @@ gaussian)
          subroutine           @u.2.5
       fi
    done
-   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
+   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives.json
    ################################################################
    # 4a. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -532,7 +532,7 @@ fft)
          subroutine           @u.3.3
       fi
    done
-   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
+   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives.json
    ################################################################
    # 4b. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
@@ -659,7 +659,7 @@ if (( ${genfilt} == 1 ))
          subroutine  @u.8.2
       fi
    done
-   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives
+   echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${out_root}_derivatives.json
    ################################################################
    # Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
