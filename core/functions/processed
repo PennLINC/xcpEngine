@@ -1,5 +1,8 @@
 processed() {
-   processed=${1}[${cxt}]
-   rm -f ${out}/${prefix}.nii.gz
-   ln -s ${!processed} ${out}/${prefix}.nii.gz
+   local processed=${1}[${cxt}]
+   if is_image ${!processed}
+      then
+      rm -f ${out}/${prefix}.nii.gz
+      ln -s ${!processed} ${out}/${prefix}.nii.gz
+   fi
 }
