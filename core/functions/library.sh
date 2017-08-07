@@ -57,6 +57,7 @@ source ${LIBRARY}/str2standard
 source ${LIBRARY}/str2structural
 source ${LIBRARY}/strslice
 source ${LIBRARY}/subroutine
+source ${LIBRARY}/subject_parse
 source ${LIBRARY}/verbose
 source ${LIBRARY}/write_atlas
 source ${LIBRARY}/write_config_safe
