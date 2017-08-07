@@ -16,7 +16,7 @@ if [[ -z ${indesign} ]] || [[ ! -s ${indesign} ]]
    usage
    exit 2
 fi
-indesign=$(exec_fsl fsl_abspath ${indesign})
+indesign=$(fsl_abspath ${indesign})
 
 
 

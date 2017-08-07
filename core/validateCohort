@@ -16,7 +16,7 @@ if [[ -z ${incohort} ]] || [[ ! -s ${incohort} ]]
    usage
    exit 3
 fi
-incohort=$(exec_fsl fsl_abspath ${incohort})
+incohort=$(fsl_abspath ${incohort})
 
 
 
