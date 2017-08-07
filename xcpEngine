@@ -61,6 +61,7 @@ XCPENGINE
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/functions/cluster_submit
 
 usage(){
 cat << endstream
@@ -71,14 +72,27 @@ ___________________________________________________________________
 
    Compulsory arguments:
     -d : Primary design file for pipeline:
-         Use xcpConfig for guided creation of a design
-         file.
+         The design file specifies the pipeline modules to
+         be included in the current analysis and configures
+         any parameters necessary to run the modules.
+    -c : Cohort file for pipeline input:
+         A comma-separated catalogue of the analytic sample.
+         Each row corresponds to a subject, and each column
+         corresponds either to an identifier or to an input.
+    -o : Parent directory for pipeline output:
+         A valid path on the current filesystem specifying
+         the directory wherein all output from the current
+         analysis will be written.
 
    Optional arguments:
-    -m : Execution mode
+    -m : Execution mode:
          Input can either be 'c' (for execution on a computing
          cluster) or 's' (for serial execution on a single
          machine)[default]
+    -i : Scratch space for pipeline intermediates:
+         Some systems operate more quickly when temporary
+         files are written in a dedicated scratch space. This
+         argument enables a scratch space for intermediates.
     -t : Trace:
          Integer value ( 0 - 3 ) that indicates the level
          of verbosity during module execution. Higher
@@ -92,34 +106,10 @@ ___________________________________________________________________
             computations.
          3: All commands called by the module and all
             children are traced and explicitly replicated
-            in a log file. This log file can then be used
-            to debug output.
+            in a log file.
 
 
 endstream
-}
-
-cluster_submit(){
-   case ${level} in
-   subject)
-      logfile=${out}/${prefix}_logs/${analysis}_${xcp_date}_${prefix}LOG
-      ;;
-   group)
-      logfile=${out_group}/log/${analysis}_${xcp_date}_log
-      ;;
-   esac
-   [[ ! -e ${logfile} ]] \
-      && eval "echo -e \"${log_head}\"" >> ${logfile}
-   id=$(qsub \
-      -V \
-      -S /bin/bash \
-      -cwd \
-      -j y \
-      -o ${logfile} \
-      ${cspec} \
-      $@)
-   id=$(echo ${id}|tr -dc '0-9')
-   ids="${ids} -e ${id}"
 }
 ###################################################################
 # Set defaults (serial/local run)
@@ -129,11 +119,20 @@ trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "d:m:t:" OPTION
+while getopts "d:i:c:o:m:t:" OPTION
    do
    case $OPTION in
    d)
       indesign=${OPTARG}
+      ;;
+   i)
+      scratch=${OPTARG}
+      ;;
+   c)
+      incohort=${OPTARG}
+      ;;
+   o)
+      out_super=${OPTARG}
       ;;
    m)
       mode=${OPTARG}
@@ -146,7 +145,8 @@ while getopts "d:m:t:" OPTION
    *)
       echo "Option not recognised: ${OPTARG}"
       usage
-      exit
+      exit 1
+      ;;
    esac
 done
 shift $((OPTIND-1))
@@ -159,8 +159,15 @@ shift $((OPTIND-1))
 # Validate and parse the design and cohort files.
 # All pipeline variables are available after validation.
 ###################################################################
-source ${XCPEDIR}/core/validateDesign ${indesign}
-source ${XCPEDIR}/core/validateCohort ${path_cohort}
+echo \
+"
+Constructing a pipeline based on user specifications
+····································································"
+source ${XCPEDIR}/core/validateDesign
+source ${XCPEDIR}/core/validateOutput
+source ${XCPEDIR}/core/validateCohort
+echo \
+"····································································"
 
 
 
@@ -169,12 +176,12 @@ source ${XCPEDIR}/core/validateCohort ${path_cohort}
 ###################################################################
 # Obtain a timestamp for the current deployment of the engine.
 ###################################################################
-xcp_date=$(date +%Y%m%d%H%M)
+export xcp_date=$(date +%Y%m%d%H%M)
 ###################################################################
 # Prepare to analyse the entire pipeline.
 ###################################################################
 analysis_remaining=${pipeline}
-modules=$(echo ${pipeline}|sed s@','@' '@g)
+modules=( ${pipeline//,/ } )
 
 
 
@@ -191,7 +198,7 @@ mkdir -p ${out_group}/dependencies
 # Write version information to the version tracking file.
 ###################################################################
 env_check=$(cat ${XCPEDIR}/core/ENVCHECK)
-versions=${out_group}/dependencies/${analysis}_${xcp_date}_versions
+versions=${out_group}/dependencies/${analysis}_${xcp_date}_pipelineDescription.json
 eval "echo -e \"${env_check}\"" >> ${versions}
 
 
@@ -226,20 +233,18 @@ eval "echo -e \"${mod_head}\""
 for subject in ${cohort}
    do
    ################################################################
-   # Parse subject identifiers, then re-parse the design to
-   # evaluate subject-specific variables.
-   ################################################################
-   source ${XCPEDIR}/core/parseSubject ${subject}
-   ################################################################
    # Run the localiser.
    ################################################################
    mod_cmd="
    ${XCPEDIR}/xcpLocaliser
       -d ${design}
-      -s ${subjidx}
+      -s ${subjidx}:${subject}
+      -o ${out_super}
+      ${scratch}
       ${trace_prop}
       "
-   mkdir -p ${out}/${prefix}_logs
+   subject_parse        ${subject} output
+   mkdir -p             ${out}/${prefix}_logs
    case ${mode} in
    s)
       ${mod_cmd}
@@ -270,7 +275,7 @@ fi
 # Then, iterate through all modules.
 ###################################################################
 cxt=1
-for module in ${modules}
+for module in ${modules[@]}
    do
    ################################################################
    # Obtain paths to the subject- and group-level scripts for
@@ -294,7 +299,7 @@ for module in ${modules}
          # Parse subject identifiers, then re-parse the design to
          # evaluate subject-specific variables.
          ##########################################################
-         source ${XCPEDIR}/core/parseSubject ${subject}
+         subject_parse ${subject} output
          ##########################################################
          # Before running the subject, verify that it has not
          # yielded erroneous output or been labelled for exclusion
@@ -342,6 +347,8 @@ for module in ${modules}
       ${modG} 
          -d ${out_group}/${analysis}.dsn
          -c ${cxt}
+         -o ${out}
+         ${scratch}
          ${trace_prop}
          "
       case ${mode} in
