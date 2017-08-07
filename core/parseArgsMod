@@ -118,10 +118,18 @@ echo \
 [O][${outdir}]"
 ###################################################################
 # * Define the root path to processing intermediates.
+# * If a scratch space has been specified, then write any
+#   intermediates to the scratch space.
 # * Initialise a pointer to the image.
 # * Ensure that the pointer references an image.
 ###################################################################
-intermediate=${outdir}/${prefix}~TEMP~
+if [[ -n ${scratch} ]]
+   then
+   intermediate=${scratch}/${prefix}-${mod_name_short}-$(date +%N)~TEMP~
+   intermediate=${intermediate//\/\//\/}
+else
+   intermediate=${outdir}/${prefix}~TEMP~
+fi
 intermediate_root=${intermediate}
 img_raw=${img}
 img=${out}/${prefix}.nii.gz
