@@ -38,7 +38,7 @@ completion() {
    apply_exec        timeseries              ${prefix}_%NAME \
       sys            ls %OUTPUT              2>/dev/null
    apply_exec        timeseries              ${prefix}_%NAME \
-      sys            write_derivative        %NAME
+      sys            write_derivative        %NAME 2>/dev/null
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -567,14 +567,14 @@ elif ! is_image ${intermediate}_residuals.nii.gz \
       -ort ${confproc[${cxt}]} \
       ${locreg_opts} \
       -prefix ${intermediate}_residuals.nii.gz
-fi
-if is_image ${intermediate}_residuals.nii.gz
-   then
-   subroutine              @5.7
-   intermediate=${intermediate}_residuals
-else
-   subroutine              @5.8  ::XCP-ERROR: The confound regression procedure failed.
-   exit 666
+   if is_image ${intermediate}_residuals.nii.gz
+      then
+      subroutine           @5.7
+      intermediate=${intermediate}_residuals
+   else
+      subroutine           @5.8  ::XCP-ERROR: The confound regression procedure failed.
+      exit 666
+   fi
 fi
 routine_end
 
