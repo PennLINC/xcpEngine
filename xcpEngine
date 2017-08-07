@@ -166,6 +166,7 @@ Constructing a pipeline based on user specifications
 source ${XCPEDIR}/core/validateDesign
 source ${XCPEDIR}/core/validateOutput
 source ${XCPEDIR}/core/validateCohort
+source ${XCPEDIR}/core/validateIntermediate
 echo \
 "····································································"
 
