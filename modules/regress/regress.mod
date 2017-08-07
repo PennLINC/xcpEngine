@@ -63,7 +63,7 @@ configure   kernel                  ${regress_smo[${cxt}]//,/ }
 
 for k in ${kernel[${cxt}]}
    do
-   derivative        img_sm${k}     ${prefix}_sm${k}
+   derivative        img_sm${k}     ${prefix}_img_sm${k}
    derivative_config img_sm${k}     Type     timeseries
 done
 
