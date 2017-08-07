@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Ensure that the optional argument "scratch space" is reasonably
+# defined.
+###################################################################
+if [[ -n ${scratch} ]]
+   then
+   mkdir -p ${scratch}
+   if [[  ! -d ${scratch} ]]
+      then
+      echo \
+"· [I]Invalid scratch space. Ensure that the scratch space
+· [I]path exists, or else do not pass the -i flag.
+· [I]Aborting"
+      usage
+      exit 2
+   fi
+   scratch=$(exec_fsl fsl_abspath ${scratch})
+   echo "· [I][${scratch}]"
+   scratch="-i ${scratch}"
+fi
