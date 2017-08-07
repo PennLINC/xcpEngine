@@ -148,7 +148,6 @@ for net in ${atlas_names[@]}
    # into the BOLD timeseries space.
    ################################################################
    subroutine                 @1.2  Mapping network to image space
-   echo $a_type
    ################################################################
    # If the network map has already been computed in this space,
    # then move on to the next stage.
