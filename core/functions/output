@@ -1,3 +1,10 @@
 output() {
-   eval ${1}[${cxt}]=${outdir}/${2}
+   local path
+   if [[ ${2:0:1} == '/' ]]
+      then
+      path=${2}
+   else
+      path=${outdir}/${2}
+   fi
+   eval ${1}[${cxt}]=${path}
 }
