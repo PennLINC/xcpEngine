@@ -287,7 +287,6 @@ No censoring will be performed."
    ################################################################
    subroutine              @2.6
    unset derivs ts1d
-   derivs="-x ${aux_imgs[${subjidx}]}"
    if is_1D ${confproc[${cxt}]}
       then
       subroutine           @2.7

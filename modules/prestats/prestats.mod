@@ -71,7 +71,6 @@ derivative  meanIntensity           ${prefix}_meanIntensity
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
 
-output      aux_imgs                ${prefix}_derivs
 output      mcdir                   mc
 output      rps                     mc/${prefix}_realignment.1D
 output      abs_rms                 mc/${prefix}_absRMS.1D
@@ -104,10 +103,6 @@ abs_mean_rms
    The absolute RMS displacement, averaged over all volumes.
 abs_rms
    Absolute root mean square displacement.
-aux_imgs
-   A path to an index of derivative images, after they have been
-   processed by this module; this is necessary only if smoothing or
-   temporal filtering is included
 censor
    A set of instructions specifying the type of censoring to be
    performed in the current pipeline: 'none', 'iter[ative]', or
@@ -1239,9 +1234,6 @@ while (( ${#rem} > 0 ))
             is_1D ${intermediate}_${cur}_tmask.1D \
             && mv -f ${intermediate}_${cur}_tmask.1D \
                ${tmask[${cxt}]}
-            [[ -e ${intermediate}_${cur}_derivs ]] \
-            && mv -f ${intermediate}_${cur}_derivs \
-               ${aux_imgs[${subjidx}]}
          fi
          ##########################################################
          # Update image pointer
