@@ -321,10 +321,14 @@ for net in ${atlas_names[@]}
             subroutine        @1.6.2
             community_detection
          fi
-         exec_xcp withinBetween.R \
-            -m ${adjacency[${cxt}]} \
-            -c ${community[${cxt}]} \
-            -o ${com_root[${cxt}]}
+         if [[ ! -s ${com_root[${cxt}]}_wbOverall.csv ]] \
+         || rerun
+            then
+            exec_xcp withinBetween.R \
+               -m ${adjacency[${cxt}]} \
+               -c ${community[${cxt}]} \
+               -o ${com_root[${cxt}]}
+         fi
       done
       ;;
    none)
@@ -341,9 +345,9 @@ for net in ${atlas_names[@]}
       (( i-- ))
       partition_name=${a_community_names[i]}
       if [[ ! -s ${netbase[${cxt}]}_${partition_name}_wbOverall.csv ]] \
-      ||rerun
+      || rerun
          then
-         subroutine           @1.7.1
+         subroutine           @1.7.2
          exec_sys rm -f ${netbase[${cxt}]}_${partition_name}Quality.txt
          exec_xcp quality.R \
             -m ${adjacency[${cxt}]} \
