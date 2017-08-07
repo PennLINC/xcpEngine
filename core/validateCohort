@@ -5,47 +5,31 @@
 ###################################################################
 
 ###################################################################
-# Validate a cohort file that is input to the XCP Engine.
+# Verify that the compulsory argument "analytic cohort" is
+# reasonably defined.
 ###################################################################
-path_cohort=$1
-
-
-
-
-
-###################################################################
-# Verify that the analytic cohort is reasonably defined.
-###################################################################
-if [[ -z ${path_cohort} ]]
+if [[ -z ${incohort} ]] || [[ ! -s ${incohort} ]]
    then
    echo \
-   "
-   ::Missing cohort file
-   ::Aborting
-   "
+"· [C]Missing or empty cohort file
+· [C]Aborting"
    usage
-   exit 2.1
+   exit 3
 fi
+incohort=$(exec_fsl fsl_abspath ${incohort})
+
+
+
+
+
 ###################################################################
 # Remove any duplications from the cohort file.
 ###################################################################
-ogen=$(grep '^out=' ${indesign})
+echo "· [C][${incohort}]"
 ${XCPEDIR}/utils/removeDuplicates.R \
-   -c ${path_cohort} \
-   -o ${ogen}
-unset ogen
+   -c ${incohort} \
+   -o ${out_generic}
 ###################################################################
 # Obtain the subject list.
 ###################################################################
-cohort=$(cat ${path_cohort} 2>/dev/null)
-if [[ -z ${cohort} ]]
-   then
-   echo \
-   "
-   ::Empty cohort file
-   ::Aborting
-   "
-   usage
-   exit 2.2
-fi
-
+cohort=$(cat ${incohort} 2>/dev/null)

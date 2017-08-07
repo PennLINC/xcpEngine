@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Ensure that the compulsory argument "output path" is reasonably
+# defined.
+###################################################################
+[[    -n ${out_super} ]]    &&    mkdir -p ${out_super}
+if [[ -z ${out_super} ]]    ||    [[  ! -d ${out_super} ]]
+   then
+   echo \
+"· [O]Missing or invalid output path
+· [O]Aborting"
+   usage
+   exit 2
+fi
+out_super=$(exec_fsl fsl_abspath ${out_super})
+
+
+
+
+
+###################################################################
+# Set the generic subject-level output directory.
+###################################################################
+echo "· [O][${out_super}]"
+while read -r line
+   do
+   if [[ "$line" =~ 'prefix=' ]]
+      then
+      prefix_generic=${line//prefix=/}
+      break
+   fi
+done < ${design}
+out_generic=${out_super}/${prefix_generic//_/\/}
+out_generic=${out_generic//\/\//\/}
+out_group=${out_super}/group
