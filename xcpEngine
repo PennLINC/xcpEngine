@@ -306,6 +306,7 @@ for module in ${modules[@]}
          # yielded erroneous output or been labelled for exclusion
          # for quality reasons.
          ##########################################################
+         logfile=${out}/${prefix}_logs/${analysis}_${xcp_date}_${prefix}LOG
          ${XCPEDIR}/core/validateSubject ${logfile} ${subject}
          (( $? == 1 )) && continue
          ##########################################################
@@ -348,8 +349,6 @@ for module in ${modules[@]}
       ${modG} 
          -d ${out_group}/${analysis}.dsn
          -c ${cxt}
-         -o ${out}
-         ${scratch}
          ${trace_prop}
          "
       case ${mode} in
