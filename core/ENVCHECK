@@ -1,18 +1,32 @@
-      
-▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤
-▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥
-
-ANALYSIS: ${analysis}
-${ver_AFNI}
-${ver_ANTS}
-${ver_FSL}
-${ver_C3D}
-${ver_R}
-${ver_RSCRIPT}
-${RpackageChk}
-${ver_XCP}
-· FSLDIR=${FSLDIR}
-· ANTSPATH=${ANTSPATH}
-· XCPEDIR=${XCPEDIR}
-${modreqs}
-
+{
+   \"Name\" : \"${analysis}\",
+   \"Design\" : \"${indesign}\",
+   \"Cohort\" : \"${incohort}\",
+   \"Output\" : \"${out_super}\",
+   \"Scratch\" : \"${scratch}\",
+   \"ExecutionMode\" : \"${mode}\",
+   \"Versions\" : {
+      \"Processing\" : \"${ver_XCP}\",
+      \"AFNI\" : \"${ver_AFNI}\",
+      \"ANTs\" : \"${ver_ANTS}\",
+      \"FSL\" : \"${ver_FSL}\",
+      \"C3D\" : \"${ver_C3D}\",
+      \"JQ\" : \"${ver_JQ}\",
+      \"R\" : \"${ver_R}\",
+      \"RScript\" : \"${ver_RSCRIPT}\",
+      \"ANTsR\" : \"${RpackageChk[0]}\",
+      \"optparse\" : \"${RpackageChk[1]}\",
+      \"pracma\" : \"${RpackageChk[2]}\",
+      \"signal\" : \"${RpackageChk[3]}\"
+   },
+   \"Environment\" : {
+      \"Processing\" : \"${XCPEDIR}\",
+      \"AFNI\" : \"${AFNI_PATH}\",
+      \"ANTs\" : \"${ANTSPATH}\",
+      \"C3D\" : \"${C3D_PATH}\",
+      \"FSL\" : \"${FSLDIR}\"
+   },
+   \"CodeURL\" : \"https://github.com/PennBBL/xcpEngine\",
+   \"Citation\" : \"Ciric2017\",
+   \"License\" : \"GPL\"
+}

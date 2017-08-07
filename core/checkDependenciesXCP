@@ -35,8 +35,8 @@ if [[ -z ${ver_AFNI} ]]
    "
    dc_FAIL=1
 else
-   ver_AFNI="· Version AFNI           ${ver_AFNI//Version /}"
-   echo "${ver_AFNI}"
+   ver_AFNI="${ver_AFNI//Version /}"
+   echo "· Version AFNI           ${ver_AFNI}"
 fi
 
 ###################################################################
@@ -52,8 +52,8 @@ if [[ -z ${ver_ANTS} ]]
    "
    dc_FAIL=1
 else
-   ver_ANTS="· Version ANTs           ${ver_ANTS}"
-   echo "${ver_ANTS}"
+   ver_ANTS="${ver_ANTS}"
+   echo "· Version ANTs           ${ver_ANTS}"
 fi
 
 ###################################################################
@@ -69,8 +69,8 @@ if [[ -z ${ver_FSL} ]]
    "
    dc_FAIL=1
 else 
-   ver_FSL="· Version FSL            ${ver_FSL}"
-   echo "${ver_FSL}"
+   ver_FSL="${ver_FSL}"
+   echo "· Version FSL            ${ver_FSL}"
 fi
 
 ###################################################################
@@ -86,8 +86,8 @@ if [[ -z ${ver_C3D} ]]
    "
    dc_FAIL=1
 else
-   ver_C3D="· Version C3D            ${ver_C3D}"
-   echo "${ver_C3D}"
+   ver_C3D="${ver_C3D}"
+   echo "· Version C3D            ${ver_C3D}"
 fi
 
 ###################################################################
@@ -99,15 +99,15 @@ if [[ $(arch) == x86_64 ]]
 else
    export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
 fi
-ver_JQ="· Version JQ             $(${JQ_PATH} --version)"
-echo "${ver_JQ}"
+ver_JQ="$(${JQ_PATH} --version)"
+echo "· Version JQ             ${ver_JQ}"
 
 ###################################################################
 # XCP
 ###################################################################
-ver_XCP="· Version XCP Engine     "$(cat ${XCPEDIR}/core/VERSION \
+ver_XCP=$(cat ${XCPEDIR}/core/VERSION \
    2>/dev/null)
-echo "${ver_XCP}"
+echo "· Version XCP Engine     ${ver_XCP}"
 
 ###################################################################
 # R
@@ -122,8 +122,9 @@ if [[ -z ${ver_R} ]]
    "
    dc_FAIL=1
 else
-   ver_R="· ${ver_R/version/version             }"
-   echo "${ver_R}"
+   ver_R="${ver_R/R version/}"
+   ver_R="${ver_R//\"/}"
+   echo "· R version             ${ver_R}"
 fi
 
 ###################################################################
@@ -139,8 +140,8 @@ if [[ -z ${ver_RSCRIPT} ]]
    "
    dc_FAIL=1
 else
-   ver_RSCRIPT="· ${ver_RSCRIPT/version/}"
-   echo "${ver_RSCRIPT}"
+   ver_RSCRIPT="${ver_RSCRIPT/R scripting front-end version/}"
+   echo "· R scripting front-end ${ver_RSCRIPT}"
 fi
 
 ###################################################################
@@ -159,8 +160,11 @@ fi
 ###################################################################
 # R packages
 ###################################################################
-RpackageChk=$(${XCPEDIR}/core/checkRpackageDependencies.R)
-echo "${RpackageChk}"
+RpackageChk=( $(${XCPEDIR}/core/checkRpackageDependencies.R) )
+echo "· · ANTsR version        ${RpackageChk[0]}"
+echo "· · optparse version     ${RpackageChk[1]}"
+echo "· · pracma version       ${RpackageChk[2]}"
+echo "· · signal version       ${RpackageChk[3]}"
 [[ ! -z $(echo ${RpackageChk}|grep -i failed) ]] \
    && dc_FAIL=1
 
@@ -200,6 +204,19 @@ if [[ -z ${ANTSPATH} ]]
    "
    ::Environment check failed: ANTSPATH not set
    ::Please add ANTSPATH to your environment
+   "
+   ec_FAIL=1
+fi
+
+###################################################################
+# AFNI
+###################################################################
+if [[ -z ${AFNI_PATH} ]]
+   then
+   echo \
+   "
+   ::Environment check failed: AFNI_PATH not set
+   ::Please add AFNI_PATH to your environment
    "
    ec_FAIL=1
 fi
