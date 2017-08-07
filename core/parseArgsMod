@@ -48,6 +48,7 @@ while getopts "d:c:t:" OPTION
    *)
       echo "Option not recognised: ${OPTION} ${OPTARG}"
       usage_flag=1
+      ;;
    esac
 done
 shift $((OPTIND-1))
@@ -75,10 +76,9 @@ case ${trace} in
    ;;
 3)
    set -x
-   export ${SHELLOPTS}
+   export SHELLOPTS
    ;;
 esac
-routine_map='· START'
 ###################################################################
 # Usage and exit
 ###################################################################
@@ -92,8 +92,7 @@ fi
 ###################################################################
 source ${design_local}
 design=${design_local}
-source ${XCPEDIR}/core/parseSubject
-source ${XCPEDIR}/core/getIdentifiers
+subject_parse ${subject}
 ###################################################################
 # Verify that all compulsory inputs are present.
 ###################################################################
@@ -139,7 +138,11 @@ eval "echo -e \"${mod_out}\"" >> ${design_local}
 ###################################################################
 # Prime local derivatives.
 ###################################################################
-derivatives_floating='{}'
+export derivatives_floating='{}'
+###################################################################
+# Begin mapping the module workflow.
+###################################################################
+routine_map='· START'
 ###################################################################
 # Determine whether the user requested the module to be re-run.
 ###################################################################

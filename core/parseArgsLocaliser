@@ -26,14 +26,16 @@ if (( $# < 2 ))
    then
    usage_flag=1
 fi
-while getopts "d:s:t:" OPTION
+while getopts "d:s:t:o:i:" OPTION
    do
    case $OPTION in
    d)
       design=${OPTARG}
       ;;
    s)
-      subjidx=${OPTARG}
+      subjinfo=( ${OPTARG//:/ } )
+      subjidx=${subjinfo[0]}
+      subject=${subjinfo[1]}
       ;;
    t)
       trace=${OPTARG}
@@ -45,9 +47,16 @@ while getopts "d:s:t:" OPTION
          usage_flag=1
       fi
       ;;
+   o)
+      out_super=${OPTARG}
+      ;;
+   i)
+      scratch=${OPTARG}
+      ;;
    *)
       echo "Option not recognised: ${OPTION} ${OPTARG}"
       usage_flag=1
+      ;;
    esac
 done
 shift $((OPTIND-1))
@@ -55,8 +64,8 @@ shift $((OPTIND-1))
 # Ensure that the compulsory design and subject variables have
 # been defined
 ###################################################################
-[[ -z ${design} ]] && usage_flag=1
-[[ -z ${subjidx} ]] && usage_flag=1
+[[ -z ${design}  ]]  && usage_flag=1
+[[ -z ${subjidx} ]]  && usage_flag=1
 ###################################################################
 # Set trace status, if applicable
 ###################################################################
@@ -72,7 +81,7 @@ case ${trace} in
    ;;
 3)
    set -x
-   export ${SHELLOPTS}
+   export SHELLOPTS
    ;;
 esac
 ###################################################################
@@ -87,5 +96,3 @@ fi
 # Initialise the module.
 ###################################################################
 source $design
-subjrow=$(( ${subjidx} - ${idx_offset} ))
-subject=$(sed ${subjrow}'q;d' ${path_cohort})
