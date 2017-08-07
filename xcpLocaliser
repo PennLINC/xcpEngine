@@ -29,7 +29,7 @@ routine                       @1    Localising design file...
 # Parse subject
 ###################################################################
 subroutine                    @1.1  [Parsing subject identifiers]
-   source ${XCPEDIR}/core/parseSubject ${subject}
+   subject_parse                    ${subject} output
    
 ###################################################################
 # Create output directory
@@ -43,10 +43,10 @@ subroutine                    @1.1a [Creating output directory]
 # Evaluate subject-specific variables
 ###################################################################
 subroutine                    @1.2  [Evaluating subject variables]
-   design_local=$(eval "echo -e \"`<${design}`\""\
-      |sed s@img=@img\[${subjidx}\]=@g\
-      |sed s@struct=@struct\[${subjidx}\]=@g)
-      
+   design_local=$(eval "echo -e \"`<${design}`\"")
+   design_local=${design_local//img=/img\[${subjidx}\]=}
+   design_local=${design_local//struct=/struct\[${subjidx}\]=}
+
 ###################################################################
 # Write local design file
 ###################################################################
@@ -58,6 +58,7 @@ subroutine                    @1.3  [Writing localised design]
    eval "echo -e \"${mod_out}\""                >> ${design_local_path}
    echo "subjidx=$subjidx"                      >> ${design_local_path}
    echo "design_local=${design_local_path}"     >> ${design_local_path}
+   echo "out=${out}"                            >> ${design_local_path}
    source ${design_local_path}
 
 ###################################################################
@@ -65,7 +66,7 @@ subroutine                    @1.3  [Writing localised design]
 ###################################################################
 subroutine                    @1.4  [Writing path to derivative map index]
    output                     aux_imgs    ${prefix}_derivatives.json
-   rm -f ${aux_imgs[${cxt}]}
+   rm -f                                  ${aux_imgs[${cxt}]}
    echo '{}'                           >> ${aux_imgs[${cxt}]}
    write_output               aux_imgs
 
