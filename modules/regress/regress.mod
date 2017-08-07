@@ -767,13 +767,13 @@ elif [[ $(imtest "${img}_residuals") != "1" ]] \
       ${locregopt} \
       -prefix ${img}_residuals${ext} \
       2>/dev/null
-fi
-if [[ $(imtest ${img}_residuals) == 1 ]]
-   then
-   img=${img}_residuals
-else
-   echo "::XCP-ERROR: The confound regression procedure failed."
-   exit 666
+   if [[ $(imtest ${img}_residuals) == 1 ]]
+      then
+      img=${img}_residuals
+   else
+      echo "::XCP-ERROR: The confound regression procedure failed."
+      exit 666
+   fi
 fi
 echo "Processing step complete: motion residuals"
 
