@@ -1,4 +1,5 @@
 cluster_submit() {
+   local id logfile
    case ${level} in
    subject)
       logfile=${out}/${prefix}_logs/${analysis}_${xcp_date}_${prefix}LOG

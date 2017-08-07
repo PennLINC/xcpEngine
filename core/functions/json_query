@@ -1,26 +1,27 @@
 json_query() {
-local name=${1}
-local key=${2}
-shift 2
-if [[ ${1} == KEY_NAME ]]
-   then
-   shift 1
+   local key name q
+   name=${1}
+   key=${2}
+   shift 2
+   if [[ ${1} == KEY_NAME ]]
+      then
+      shift 1
+      if [[ -e ${1} ]]
+         then
+         q=$(cat ${1}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key 'keys[]|select(contains($key))')
+      else
+         q=$(echo ${@}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key 'keys[]|select(contains($key))')
+      fi
+      echo $q
+      return
+   fi
    if [[ -e ${1} ]]
       then
-      local q=$(cat ${1}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key 'keys[]|select(contains($key))')
+      q=$(cat ${1}|$JQ_PATH --raw-output '.'"$name"'.'"$key")
+      [[ ${q} == null ]] && q=$(cat ${1}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key '.[keys[]|select(contains($key))]')
    else
-      local q=$(echo ${@}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key 'keys[]|select(contains($key))')
+      q=$(echo ${@}|$JQ_PATH --raw-output '.'"$name"'.'"$key")
+      [[ ${q} == null ]] && q=$(echo ${@}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key '.[keys[]|select(contains($key))]')
    fi
-   echo $q
-   return
-fi
-if [[ -e ${1} ]]
-   then
-   local q=$(cat ${1}|$JQ_PATH --raw-output '.'"$name"'.'"$key")
-   [[ ${q} == null ]] && local q=$(cat ${1}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key '.[keys[]|select(contains($key))]')
-else
-   local q=$(echo ${@}|$JQ_PATH --raw-output '.'"$name"'.'"$key")
-   [[ ${q} == null ]] && local q=$(echo ${@}|$JQ_PATH '.'"$name"|$JQ_PATH --raw-output --arg key $key '.[keys[]|select(contains($key))]')
-fi
-   echo $q
+      echo $q
 }

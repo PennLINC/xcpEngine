@@ -1,5 +1,5 @@
 apply_exec() {
-   local type types output output_long match process_generic process_specific derivative derivatives deriv d_name d_map d_type d_space d_mod d_mod_idx d_mod_stats echo_var final_cmd
+   local deriv derivative derivatives echo_var final_cmd match output output_long type types process_generic process_specific d_map d_mod d_mod_idx d_mod_stats d_name d_space d_type
    types=( ${1//|/ } )
    output=${2}
    if [[ ${output:0:1} == '/' ]]
