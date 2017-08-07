@@ -33,9 +33,8 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=accelerator_$(whoami)
+analysis=acceleratorDERIV_$(whoami)
 design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
-path_cohort=/data/joy/BBL/projects/xcpWorkshop/config/cohort_example.csv
 subjects_ct=5
 img=${subject[2]}
 struct=${subject[3]}/ExtractedBrain0N4.nii.gz
@@ -44,9 +43,6 @@ xfm_warp=${subject[3]}/SubjectToTemplate1Warp.nii.gz
 ixfm_warp=${subject[3]}/TemplateToSubject0Warp.nii.gz
 xfm_affine=${subject[3]}/SubjectToTemplate0GenericAffine.mat
 ixfm_affine=${subject[3]}/TemplateToSubject1GenericAffine.mat
-out_super=/data/joy/BBL/projects/xcpWorkshop/output/${analysis}
-out_group=${out_super}/group
-out=/data/joy/BBL/projects/xcpWorkshop/output/${analysis}/${subject[0]}/${subject[1]}
 space=native
 template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
 
@@ -54,7 +50,7 @@ template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound,regress,net,norm #,seed,reho,alff,roiquant,norm
+pipeline=prestats,coreg,confound,regress,net,reho,alff,norm #,seed,roiquant,norm
 
 ###################################################################
 # GLOBAL VARIABLES
@@ -220,9 +216,9 @@ net_cleanup[5]=Y
 # 10 NORM
 ###################################################################
 
-norm_prog[6]=ants
-norm_warp[6]=${subject[3]}/SubjectToTemplate1Warp.nii.gz
-norm_affine[6]=${subject[3]}/SubjectToTemplate0GenericAffine.mat
-norm_template[6]=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
-norm_rerun[6]=N
-norm_cleanup[6]=Y
+norm_prog[8]=ants
+norm_warp[8]=${subject[3]}/SubjectToTemplate1Warp.nii.gz
+norm_affine[8]=${subject[3]}/SubjectToTemplate0GenericAffine.mat
+norm_template[8]=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
+norm_rerun[8]=N
+norm_cleanup[8]=Y
