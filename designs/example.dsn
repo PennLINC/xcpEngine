@@ -33,7 +33,7 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=acceleratorDERIV_$(whoami)
+analysis=accelerator_$(whoami)
 design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
 subjects_ct=5
 img=${subject[2]}
@@ -50,7 +50,7 @@ template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound,regress,net,reho,alff,norm #,seed,roiquant,norm
+pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,norm #,seed,roiquant,norm
 
 ###################################################################
 # GLOBAL VARIABLES
@@ -155,6 +155,18 @@ regress_usan[4]=${subject[3]}/BrainSegmentation.nii.gz
 regress_usan_space[4]=str
 
 ###################################################################
+# 5 FCON
+###################################################################
+
+fcon_atlas[5]=/home/rciric/xcpAccelerator/xcpEngine/atlas/metadata/TEMPatlas_PNC_std.json
+fcon_metric[5]=corrcoef
+fcon_thr[5]=N
+fcon_window[5]=10
+fcon_pad[5]=FALSE
+fcon_rerun[5]=N
+fcon_cleanup[5]=Y
+
+###################################################################
 # 5 SEED
 ###################################################################
 
@@ -199,26 +211,18 @@ roiquant_rerun[8]=N
 roiquant_cleanup[8]=Y
 
 ###################################################################
-# 9 NET
+# 8 NET
 ###################################################################
-
-net_atlas[5]=/home/rciric/xcpAccelerator/xcpEngine/atlas/metadata/TEMPatlas_PNC_std.json
-net_name[5]=NULL
-net_metric[5]=corrcoef
-net_thr[5]=N
-net_com[5]=genlouvain
-net_gamma[5]=1,7
-net_consensus[5]=1
-net_rerun[5]=N
-net_cleanup[5]=Y
+net_com[8]=genlouvain
+net_gamma[8]=1,7
+net_consensus[8]=1
+net_rerun[8]=N
+net_cleanup[8]=Y
 
 ###################################################################
 # 10 NORM
 ###################################################################
 
-norm_prog[8]=ants
-norm_warp[8]=${subject[3]}/SubjectToTemplate1Warp.nii.gz
-norm_affine[8]=${subject[3]}/SubjectToTemplate0GenericAffine.mat
-norm_template[8]=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
-norm_rerun[8]=N
-norm_cleanup[8]=Y
+norm_prog[9]=ants
+norm_rerun[9]=N
+norm_cleanup[9]=Y
