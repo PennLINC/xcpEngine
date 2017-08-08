@@ -28,6 +28,10 @@ missing = '';
 % now, only the Newman-Girvan is implemented.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 A = dlmread(adjmatpath);
+if size(A,1) == 1 || size(A,2) == 1
+    A = squareform(A);
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parse optional inputs
