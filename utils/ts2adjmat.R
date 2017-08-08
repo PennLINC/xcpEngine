@@ -13,6 +13,7 @@
 # Load required libraries
 ###################################################################
 suppressMessages(require(optparse))
+suppressMessages(require(pracma))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -50,11 +51,11 @@ if (! is.na(tmPath)) {
 ###################################################################
 adjmat <- cor(tc)
 adjmat[is.na(adjmat)] <- NaN
+adjmat <- squareform(adjmat*(matrix(!diag(dim(adjmat)[1]),nrow=dim(adjmat)[1])))
 
 ###################################################################
 # 3. Print the adjacency matrix
 ###################################################################
-for (row in seq(1,dim(adjmat)[1])) {
-   cat(adjmat[row,])
-   cat('\n')
+for (i in 1:length(adjmat)) {
+   cat(adjmat[i],'\n')
 }
