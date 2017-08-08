@@ -8,8 +8,8 @@
 # SPECIFIC MODULE HEADER
 # This module performs elementary network analyses.
 ###################################################################
-mod_name_short=net
-mod_name='NETWORK ANALYSIS MODULE'
+mod_name_short=fcon
+mod_name='FUNCTIONAL CONNECTOME MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
 ###################################################################
@@ -25,16 +25,11 @@ source ${XCPEDIR}/core/parseArgsMod
 update_networks() {
    atlas_add      ${a_name}   Map               ${nodemap[${cxt}]}
    atlas_add      ${a_name}   Timeseries        ${ts[${cxt}]}
-   atlas_add      ${a_name}   Matrix            ${adjacency[${cxt}]}
+   atlas_add      ${a_name}   MatrixFC          ${adjacency[${cxt}]}
    atlas_add      ${a_name}   Pajek             ${pajek[${cxt}]}
    atlas_add      ${a_name}   MissingCoverage   ${missing[${cxt}]}
+   atlas_add      ${a_name}   DynamicFC         ${ts_edge[${cxt}]}
    atlas_config   ${a_name}   Space             ${space}
-   
-   for g in ${gammas[@]}
-      do
-      gf=${g//\./-}
-      atlas_add   ${a_name}   CommunityRes${g}  ${netbase[${cxt}]}_CommunityRes${gf}_community.1D
-   done
 }
 
 completion() {
@@ -45,18 +40,6 @@ completion() {
    source ${XCPEDIR}/core/moduleEnd
 }
 
-community_detection() {
-   echo_cmd "matlab : addpath(genpath('${XCPEDIR}/thirdparty/'))"
-   echo_cmd "matlab : addpath(genpath('${XCPEDIR}/utils/'))"
-   echo_cmd "matlab : glconsensusCL('${adjacency[${cxt}]}','${com_root[${cxt}]}','gamma',${gamma},'nreps',${net_consensus[${cxt}]}${missing_arg})"
-   matlab -nodesktop \
-      -nosplash \
-      -nojvm \
-      -r "addpath(genpath('${XCPEDIR}/thirdparty/')); addpath(genpath('${XCPEDIR}/utils/')); glconsensusCL('${adjacency[${cxt}]}','${com_root[${cxt}]}','gamma',${gamma},'nreps',${net_consensus[${cxt}]}${missing_arg}); exit"\
-      2>/dev/null 1>&2
-   echo_cmd "matlab : exit"
-}
-
 
 
 
@@ -65,16 +48,30 @@ community_detection() {
 # OUTPUTS
 ###################################################################
 configure      mapbase                 ${out}/${prefix}_atlas
-gammas=( ${net_gamma[${cxt}]//,/ } )
 
 << DICTIONARY
 
-gammas
-   Not strictly an output. An array specifying all resolution
-   parameters for the community detection procedure.
+THE OUTPUTS OF FUNCTIONAL CONNECTOME ANALYSIS ARE PRIMARILY
+DEFINED IN THE LOOP OVER NETWORKS.
+
+adjacency
+   The connectivity matrix or functional connectome.
 mapbase
-   Not strictly an output. The base path to any parcellations or
-   ROI atlantes that have been transformed into analyte space.
+   The base path to any parcellations or ROI atlantes that have
+   been transformed into analyte space.
+missing
+   An index of network nodes that are insufficiently covered and
+   consequently do not produce meaningful output.
+nodemap
+   The map of the network's nodes, warped into analyte space.
+pajek
+   A representation of the network as a sparse matrix. Used by
+   some network science software packages.
+ts
+   The mean local timeseries computed in each network node.
+ts_edge
+   The timeseries computed in each network edge using the
+   multiplication of temporal derivatives (MTD).
 
 DICTIONARY
 
@@ -91,17 +88,17 @@ DICTIONARY
 # Retrieve all the networks for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-if [[ -e ${net_atlas[${cxt}]} ]]
+if [[ -e ${fcon_atlas[${cxt}]} ]]
    then
    subroutine                 @0.1
    add_reference     referenceVolume[${subjidx}]   ${prefix}_referenceVolume
-   load_atlas        ${net_atlas[${cxt}]}
+   load_atlas        ${fcon_atlas[${cxt}]}
    load_atlas        ${atlas[${subjidx}]}
    load_transforms
 else
    echo \
 "
-::XCP-WARNING: Network analysis has been requested, 
+::XCP-WARNING: Functional connectome analysis has been requested, 
   but no network maps have been provided.
   
   Skipping module"
@@ -115,32 +112,32 @@ fi
 ###################################################################
 # Iterate through all networks.
 #
-# In brief, the network analysis process consists of the
-# following steps:
+# In brief, the functional connectome analysis process consists of
+# the following steps:
 #  1. Generate a map of the current network if it does not already
 #     exist, and move the map from anatomical space into BOLD
 #     space.
 #  2. Extract mean timeseries from each node of the network.
 #  3. Compute the adjacency matrix from the mean node timeseries.
-#  4. Perform consensus-community detection on the adjacency
-#     matrix to partition it into subgraphs.
+#  4. Compute a mean edge timeseries from the mean node timeseries.
 ###################################################################
 for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
    [[ -z ${a_map} ]] && continue
-   routine                    @1    Network analysis: ${a_name}
+   routine                    @1    Functional connectome: ${a_name}
    ################################################################
    # Define the paths to the potential outputs of the current
    # network analysis.
    ################################################################
-   configure   netdir               ${outdir}/${a_name}
-   configure   netbase              ${netdir[${cxt}]}/${prefix}_${a_name}
+   configure   fcdir                ${outdir}/${a_name}
+   configure   fcbase               ${fcdir[${cxt}]}/${prefix}_${a_name}
    configure   nodemap              ${mapbase[${cxt}]}/${prefix}_${a_name}.nii.gz
-   configure   ts                   ${netbase[${cxt}]}_ts.1D
-   configure   adjacency            ${netbase[${cxt}]}_network.txt
-   configure   pajek                ${netbase[${cxt}]}.net
-   configure   missing              ${netbase[${cxt}]}_missing.txt
+   configure   ts                   ${fcbase[${cxt}]}_ts.1D
+   configure   adjacency            ${fcbase[${cxt}]}_network.txt
+   configure   pajek                ${fcbase[${cxt}]}.net
+   configure   missing              ${fcbase[${cxt}]}_missing.txt
+   configure   ts_edge              ${fcbase[${cxt}]}_tsEdge.1D
    ################################################################
    # [1]
    # Based on the type of network map and the space of the primary
@@ -158,7 +155,7 @@ for net in ${atlas_names[@]}
       subroutine              @1.2.1
       a_type=done
    fi
-   mkdir -p ${netdir[${cxt}]}
+   mkdir -p ${fcdir[${cxt}]}
    case ${a_type} in
    Map)
       subroutine              @1.2.2
@@ -284,7 +281,7 @@ for net in ${atlas_names[@]}
       exec_xcp ts2adjmat.R -t ${ts[${cxt}]} >> ${adjacency[${cxt}]}
       exec_xcp adjmat2pajek.R \
          -a ${adjacency[${cxt}]} \
-         -t ${net_thr[${cxt}]} \
+         -t ${fcon_thr[${cxt}]} \
          >> ${pajek[${cxt}]}
       ################################################################
       # Flag nodes that fail to capture any signal variance.
@@ -305,60 +302,24 @@ for net in ${atlas_names[@]}
 
    ################################################################
    # [4]
-   # Compute the community partition.
+   # Compute the mean timeseries for each edge of the network.
+   # This is also called dynamic connectivity.
    ################################################################
-   case ${net_com[${cxt}]} in
-   genlouvain)
-      subroutine              @1.6.1   Detecting community structure
-      for gamma in ${gammas[@]}
-         do
-         gamma_filename=${gamma//\./-}
-         configure   com_root       ${netbase[${cxt}]}_CommunityRes${gamma_filename}
-         configure   community      ${com_root[${cxt}]}_community.1D
-         if [[ ! -s  ${community[${cxt}]} ]] \
-         || rerun
-            then
-            subroutine        @1.6.2
-            community_detection
-         fi
-         if [[ ! -s ${com_root[${cxt}]}_wbOverall.csv ]] \
-         || rerun
-            then
-            exec_xcp withinBetween.R \
-               -m ${adjacency[${cxt}]} \
-               -c ${community[${cxt}]} \
-               -o ${com_root[${cxt}]}
-         fi
-      done
-      ;;
-   none)
-      subroutine              @1.6.3
-      ;;
-   esac
-   ################################################################
-   # Include a priori partitions if requested.
-   ################################################################
-   subroutine                 @1.7  Computing community statistics
-   for i in $(seq ${#a_community_names[@]})
-      do
-      subroutine              @1.7.1
-      (( i-- ))
-      partition_name=${a_community_names[i]}
-      if [[ ! -s ${netbase[${cxt}]}_${partition_name}_wbOverall.csv ]] \
+   if (( ${fcon_window[${cxt}]} != 0 ))
+      then
+      subroutine              @1.6  Computing dynamic connectome
+      if [[ ! -s ${ts_edge[${cxt}]} ]] \
       || rerun
          then
-         subroutine           @1.7.2
-         exec_sys rm -f ${netbase[${cxt}]}_${partition_name}Quality.txt
-         exec_xcp quality.R \
-            -m ${adjacency[${cxt}]} \
-            -c ${a_community[i]} \
-            >> ${netbase[${cxt}]}_${partition_name}Quality.txt
-         exec_xcp withinBetween.R \
-            -m ${adjacency[${cxt}]} \
-            -c ${a_community} \
-            -o ${netbase[${cxt}]}_${partition_name}
+         subroutine           @1.6.1   Window: ${fcon_window[${cxt}]} TRs
+         exec_sys rm -f ${ts_edge[${cxt}]}
+         exec_xcp mtd.R \
+            -t ${ts[${cxt}]} \
+            -w ${fcon_window[${cxt}]} \
+            -p ${fcon_pad[${cxt}]} \
+            >> ${ts_edge[${cxt}]}
       fi
-   done
+   fi
    update_networks
    routine_end
 done
