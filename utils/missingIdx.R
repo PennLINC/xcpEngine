@@ -36,7 +36,10 @@ if (is.na(opt$input)) {
    quit()
 }
 
-input <- read.table(opt$input,header=F)
+input <- as.matrix(read.table(opt$input,header=F))
+if (dim(input)[1] == 1 || dim(input)[2] == 1) {
+   input <- squareform(as.vector(input))
+}
 
 ###################################################################
 # Create a missing-values mask
