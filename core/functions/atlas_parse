@@ -7,9 +7,11 @@ atlas_parse() {
    a_rois=$(               json_query     ${a_name}   NodeIndex   "${atlas[${cxt}]}")
    a_roinames=$(           json_query     ${a_name}   NodeNames   "${atlas[${cxt}]}")
    a_community=$(          json_query     ${a_name}   Community   "${atlas[${cxt}]}")
+   a_matrix=$(             json_query     ${a_name}   Matrix      "${atlas[${cxt}]}")
    a_community_names=( $(  json_query     ${a_name}   Community   KEY_NAME    "${atlas[${cxt}]}") )
    a_map=$(       ls -d1         $(eval      echo        ${a_map}))
-   a_community=( $(ls -d1        $(eval      echo        ${a_community})) )
+   a_community=($(ls -d1         $(eval      echo        ${a_community})) )
+   a_matrix=(   $(ls -d1         $(eval      echo        ${a_matrix})) )
    a_rois=$(      ls -d1         $(eval      echo        ${a_rois}))
    a_roinames=$(  ls -d1         $(eval      echo        ${a_roinames}))
    if [[ -e ${a_map} ]] && ! is_image ${a_map}
