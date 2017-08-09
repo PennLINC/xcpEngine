@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Generate the space metadata file for the current analysis.
+###################################################################
+
+space_standard=$(abspath ${XCPEDIR}/space/${standard//\%*/}/${standard//\%*/}_space.json)
+[[ -z ${sequence} ]]       && sequence=native
+set_space                  ${prefix}_${sequence}
+template=$(json_query      \"${standard}\"      Map   ${space_standard})
+echo "template=${template}"                     >> ${design_local}
+###################################################################
+# Case 1: ANTsCT directory and template are provided.
+###################################################################
+if [[ -d ${antsct} ]]
+   then
+   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[${cxt}]} \
+      -f ${standard}:${template} \
+      -d ${structural}:${antsct} \
+      -s ${space_standard}
+###################################################################
+# Case 2: Template and structural:template maps are provided.
+###################################################################
+elif is_image ${xfm_warp}
+   then
+   xfms="${xfm_rigid} ${xfm_affine} ${xfm_warp} ${xfm_resample}"
+   ixfms="${ixfm_resample} ${ixfm_warp} ${ixfm_affine} ${ixfm_rigid}"
+   xfms=$( echo ${xfms})
+   ixfms=$(echo ${ixfms})
+   xfms=${xfms// /,}
+   ixfms=${xfms// /,}
+   ${XCPEDIR}/utils/spaceMetadata \
+      -o ${spaces[${cxt}]} \
+      -f ${standard}:${template} \
+      -m ${structural}:${struct[${subjidx}]} \
+      -x ${xfms} \
+      -i ${ixfms} \
+      -s ${space_standard}
+###################################################################
+# Case 3: Nothing is provided. This might be the case for
+# structural analyses, for instance.
+###################################################################
+else
+   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[${subjidx}]} \
+       ${space_standard}
+fi
