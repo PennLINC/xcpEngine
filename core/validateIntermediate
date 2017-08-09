@@ -20,7 +20,7 @@ if [[ -n ${scratch} ]]
       usage
       exit 2
    fi
-   scratch=$(fsl_abspath ${scratch})
+   scratch=$(abspath ${scratch})
    echo "· [I][${scratch}]"
    scratch="-i ${scratch}"
 fi

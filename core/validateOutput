@@ -17,7 +17,7 @@ if [[ -z ${out_super} ]]    ||    [[  ! -d ${out_super} ]]
    usage
    exit 2
 fi
-out_super=$(fsl_abspath ${out_super})
+out_super=$(abspath ${out_super})
 
 
 
