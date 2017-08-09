@@ -17,7 +17,7 @@
 ids=$@
 sleeptime=30
 
-status=$(qstat|grep ${ids})
+status=$(qstat|grep ${ids} 2>/dev/null)
 remain=$(echo "${status}"|wc -l)
 time=$(date '+%H:%M:%S')
 day=$(date '+%d %h %Y')
