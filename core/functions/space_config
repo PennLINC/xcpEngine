@@ -1,0 +1,23 @@
+space_config() {
+   local space_chk space_new space_old spaces_fixed spaces_floating spaces_path
+   spaces_path=${1}
+   shift
+   spaces_fixed=$(cat ${spaces_path})
+   if (( ${#} == 1 ))
+      then
+      space_new=$(cat ${1})
+      spaces_floating="$(echo ${spaces_fixed} ${space_new}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
+   else
+      space_chk=$(echo ${spaces_fixed}|$JQ_PATH '.'\"${1}\")
+      if [[ ${space_chk} == null ]]
+         then
+         spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '. += { "'"${1}"'" : { "'"${2}"'" : "'"${3}"'" } }')
+      else
+         echo 1
+         spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '."'"${1}"'" += { "'"${2}"'" : "'"${3}"'" }')
+      fi
+      #spaces_floating="$(echo ${spaces_fixed} '{ "'"${1}"'" : { "'"${2}"'" : "'"${3}"'" } }'|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
+   fi
+   rm -f ${spaces_path}
+   echo "${spaces_floating}"|${JQ_PATH} '.' >> ${spaces_path}
+}
