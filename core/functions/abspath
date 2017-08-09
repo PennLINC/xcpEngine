@@ -1,0 +1,17 @@
+abspath() {
+   local p path
+   local path=$(ls -d1 ${1} 2>/dev/null)
+   for p in ${path}
+      do
+      if [[ -d ${p} ]]; then
+         (cd "${p}"; pwd)
+      elif [[ -f ${p} ]]; then
+         # file
+         if [[ ${p} == */* ]]; then
+            echo "$(cd "${p%/*}"; pwd)/${p##*/}"
+         else
+            echo "$(pwd)/${p}"
+         fi
+      fi
+   done
+}
