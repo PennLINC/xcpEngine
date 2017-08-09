@@ -94,7 +94,6 @@ if [[ -e ${fcon_atlas[${cxt}]} ]]
    add_reference     referenceVolume[${subjidx}]   ${prefix}_referenceVolume
    load_atlas        ${fcon_atlas[${cxt}]}
    load_atlas        ${atlas[${subjidx}]}
-   load_transforms
 else
    echo \
 "
@@ -170,7 +169,7 @@ for net in ${atlas_names[@]}
          subroutine           @1.2.3   Skipping ${a_name}: Not a well-formed node system
          continue
       fi
-      source ${XCPEDIR}/core/mapToSpace ${a_space}2${space} ${a_map} ${nodemap[${cxt}]} MultiLabel
+      warpspace atlas:${a_name} ${nodemap[${cxt}]} ${space} MultiLabel
       ;;
    Coordinates)
       subroutine              @1.2.4

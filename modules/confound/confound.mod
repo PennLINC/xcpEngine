@@ -104,11 +104,6 @@ DICTIONARY
 
 
 
-###################################################################
-# Pool any transforms necessary for moving between standard and
-# native space.
-###################################################################
-load_transforms
 confmat_path=${outdir}/${prefix}_confmat.1D
 routine                       @0    Generating confound matrix
 
@@ -220,10 +215,10 @@ for c in $(seq 0 ${#tissue_classes})
       # EPI space. If the BOLD timeseries is already standardised,
       # then instead move it to standard space.
       #############################################################
-      source ${XCPEDIR}/core/mapToSpace \
-         str2${space} \
+      warpspace \
          ${mask}.nii.gz \
          ${!class_mask} \
+         ${structural}:${space} \
          NearestNeighbor
       #############################################################
       # Determine whether to extract a mean timecourse or to apply

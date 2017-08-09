@@ -36,7 +36,7 @@ completion() {
    done
    
    apply_exec        timeseries              ${prefix}_%NAME \
-      sys            ls %OUTPUT              2>/dev/null
+      sys            ls %OUTPUT              >/dev/null 2>&1
    apply_exec        timeseries              ${prefix}_%NAME \
       sys            write_derivative        %NAME 2>/dev/null
    
@@ -601,11 +601,10 @@ if [[ ${regress_sptf[${cxt}]} == susan ]] \
    if is_image ${regress_usan[${cxt}]}
       then
       subroutine           @6.2  Warping USAN
-      load_transforms
-      source ${XCPEDIR}/core/mapToSpace \
-         ${regress_usan_space[${cxt}]}2${space} \
+      warpspace \
          ${regress_usan[${cxt}]} \
          ${intermediate}usan.nii.gz \
+         ${regress_usan_space[${cxt}]}:${space} \
          NearestNeighbor
       usan="-u ${intermediate}usan"
       hardseg=-h

@@ -154,11 +154,10 @@ for k in ${kernel[${cxt}]}
          if is_image ${alff_usan[${cxt}]}
             then
             subroutine        @1.7  Warping USAN
-            load_transforms
-            source ${XCPEDIR}/core/mapToSpace \
-               ${alff_usan_space[${cxt}]}2${space} \
+            warpspace \
                ${alff_usan[${cxt}]} \
                ${intermediate}usan.nii.gz \
+               ${alff_usan_space[${cxt}]}:${space} \
                NearestNeighbor
             usan="-u ${intermediate}usan"
             hardseg=-h

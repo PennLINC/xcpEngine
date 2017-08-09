@@ -25,7 +25,7 @@ source ${XCPEDIR}/core/parseArgsMod
 completion() {
    processed         std
    
-   set_space         standard
+   set_space         ${standard}
    
    quality_metric    normCoverage            norm_coverage
    quality_metric    normCrossCorr           norm_cross_corr
@@ -93,36 +93,15 @@ case ${norm_prog[${cxt}]} in
    
    ants)
       routine              @1    Normalising using ANTs
-      #############################################################
-      # Determine which transforms need to be applied.
-      #############################################################
       subroutine           @1.1  [Selecting transforms to apply]
-      load_transforms
-      #############################################################
-      # Apply the transforms to the primary BOLD timeseries.
-      #############################################################
-      case ${space} in
-      native)
-         subroutine        @1.2.1
-         space_code=nat
-         ;;
-      structural)
-         subroutine        @1.2.2
-         space_code=str
-         ;;
-      standard)
-         subroutine        @1.2.3
-         space_code=std
-         ;;
-      esac
       if ! is_image ${std[${cxt}]} \
       || rerun
          then
          subroutine        @1.3  [Applying composite diffeomorphism to primary dataset]
-         source ${XCPEDIR}/core/mapToSpace \
-            ${space_code}2standard \
+         warpspace \
             ${img} \
-            ${std[${cxt}]}
+            ${std[${cxt}]} \
+            ${standard}
       fi
       #############################################################
       # Iterate through all derivative images, and apply
@@ -138,7 +117,6 @@ case ${norm_prog[${cxt}]} in
          derivative_parse  ${derivative}
          subroutine        @1.5  [${d_name}]
          derivative              ${d_name}      ${prefix}_${d_name}Std
-         derivative_config       ${d_name}      Space    standard
          d_call=${d_name}'['${cxt}']'
          ##########################################################
          # If the image is a mask, apply nearest neighbour
@@ -156,12 +134,13 @@ case ${norm_prog[${cxt}]} in
          || rerun
             then
             subroutine     @1.7
-            source ${XCPEDIR}/core/mapToSpace \
-               ${space_code}2standard \
+            warpspace \
                ${d_map} \
                ${!d_call} \
+               ${d_space}:${standard} \
                ${interpol}
          fi
+         derivative_config       ${d_name}      Space    ${standard}
          write_derivative        ${d_name}
       done
       routine_end

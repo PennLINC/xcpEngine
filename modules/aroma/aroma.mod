@@ -297,7 +297,6 @@ routine_end
 # * Obtain all transforms.
 ###################################################################
 routine                       @3    Extracting features: CSF and edge fractions
-load_transforms
 ###################################################################
 # * Move the IC maps into the same space as the edge, CSF, and
 #   background masks.
@@ -309,10 +308,10 @@ if ! is_image ${icmaps_thr_std[${cxt}]} \
    spa=${space:0:3}
    [[ ${spa} == sta ]] && spa=std
    exec_sys rm -f ${ic_maps_thr_std[${cxt}]}
-   source ${XCPEDIR}/core/mapToSpace \
-      ${spa}2standard \
+   warpspace \
       ${ic_maps_thr[${cxt}]} \
-      ${ic_maps_thr_std[${cxt}]}
+      ${ic_maps_thr_std[${cxt}]} \
+      ${standard}
 fi
 ###################################################################
 # TODO (or perhaps not)
