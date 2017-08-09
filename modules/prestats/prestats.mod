@@ -43,6 +43,11 @@ completion() {
       configure      censored       1
       write_config   censored
    fi
+   if is_image ${referenceVolumeBrain[${cxt}]}
+      then
+      space_config   ${spaces[${subjidx}]}   ${space} \
+               Map   ${referenceVolumeBrain[${cxt}]}
+   fi
    
    apply_exec        timeseries              ${prefix}_%NAME \
       sys            ls %OUTPUT              >/dev/null
