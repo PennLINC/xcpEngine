@@ -64,9 +64,19 @@ subroutine                    @1.3  [Writing localised design]
    source ${design_local_path}
 
 ###################################################################
+# Write path to spaces index
+###################################################################
+subroutine                    @1.4  [Initialising space mapping]
+   output                     spaces      ${prefix}_spaces.json
+   rm -f                                  ${spaces[${cxt}]}
+   echo '{}'                           >> ${spaces[${cxt}]}
+   source ${XCPEDIR}/core/initSpace
+   write_output               spaces
+
+###################################################################
 # Write path to derivative image index
 ###################################################################
-subroutine                    @1.4  [Writing path to derivative map index]
+subroutine                    @1.5  [Initialising derivative maps]
    output                     aux_imgs    ${prefix}_derivatives.json
    rm -f                                  ${aux_imgs[${cxt}]}
    echo '{}'                           >> ${aux_imgs[${cxt}]}
@@ -75,7 +85,7 @@ subroutine                    @1.4  [Writing path to derivative map index]
 ###################################################################
 # Write path to network index
 ###################################################################
-subroutine                    @1.5  [Writing path to network index]
+subroutine                    @1.6  [Initialising atlas system]
    mkdir -p                               ${out}/${prefix}_atlas
    output                     atlas       ${prefix}_atlas/${prefix}_atlas.json
    rm -f                                  ${atlas[${cxt}]}
@@ -86,7 +96,7 @@ subroutine                    @1.5  [Writing path to network index]
 # Write path to audit file, and write information
 # to the audit file
 ###################################################################
-subroutine                    @1.6  [Priming analytic audit]
+subroutine                    @1.7  [Priming analytic audit]
    audit=${out}/${prefix}_logs/${prefix}_audit
    rm -f ${audit}
    echo "audit=${audit}"                        >> ${design_local_path}
@@ -111,7 +121,7 @@ subroutine                    @1.6  [Priming analytic audit]
 ###################################################################
 # Write path to index of quality variables
 ###################################################################
-subroutine                    @1.7  [Priming quality assessment]
+subroutine                    @1.8  [Priming quality assessment]
    quality=${out}/${prefix}_quality.csv
    rm -f ${quality}
    echo "quality=${quality}"                    >> ${design_local_path}
