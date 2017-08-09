@@ -9,6 +9,7 @@
 ###################################################################
 LIBRARY=${XCPEDIR}/core/functions
 
+source ${LIBRARY}/abspath
 source ${LIBRARY}/add_reference
 source ${LIBRARY}/apply_exec
 source ${LIBRARY}/arithmetic
@@ -38,9 +39,6 @@ source ${LIBRARY}/json_query
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
 source ${LIBRARY}/load_transforms
-source ${LIBRARY}/nat2native
-source ${LIBRARY}/nat2standard
-source ${LIBRARY}/nat2structural
 source ${LIBRARY}/output
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
@@ -49,16 +47,13 @@ source ${LIBRARY}/rerun
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
 source ${LIBRARY}/set_space
-source ${LIBRARY}/std2native
-source ${LIBRARY}/std2standard
-source ${LIBRARY}/std2structural
-source ${LIBRARY}/str2native
-source ${LIBRARY}/str2standard
-source ${LIBRARY}/str2structural
+source ${LIBRARY}/space_config
 source ${LIBRARY}/strslice
 source ${LIBRARY}/subroutine
 source ${LIBRARY}/subject_parse
+source ${LIBRARY}/transform_config
 source ${LIBRARY}/verbose
+source ${LIBRARY}/warpspace
 source ${LIBRARY}/write_atlas
 source ${LIBRARY}/write_config_safe
 source ${LIBRARY}/write_config
