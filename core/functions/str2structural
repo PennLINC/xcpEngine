@@ -1,7 +1,0 @@
-str2structural() {
-   local i=${1}
-   local o=${2}
-   [[ -n ${3} ]] && local n="-n ${3}"
-   exec_sys rm -f ${o}
-   exec_sys ln -s ${i} ${o}
-}
