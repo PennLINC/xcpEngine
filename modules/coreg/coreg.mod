@@ -36,6 +36,19 @@ completion() {
    quality_metric    coregJaccard            coreg_jaccard
    quality_metric    coregDice               coreg_dice
    
+   transform_config  ${spaces[${subjidx}]} \
+                     itk:${seq2struct[${cxt}]} \
+                     ${space}  ${structural}
+   transform_config  ${spaces[${subjidx}]} \
+                     fsl:${e2smat[${cxt}]} \
+                     ${space}  ${structural}
+   transform_config  ${spaces[${subjidx}]} \
+                     itk:${struct2seq[${cxt}]} \
+                     ${structural}  ${space}
+   transform_config  ${spaces[${subjidx}]} \
+                     fsl:${s2emat[${cxt}]} \
+                     ${structural}  ${space}
+   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
