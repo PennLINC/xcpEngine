@@ -10,14 +10,14 @@
    },
    "MNI:PNC" : {
       "TransformANTs" : [
-         "${XCPEDIR}/space/PNC/transforms/MNI-PNC_0Affine.mat",
-         "${XCPEDIR}/space/PNC/transforms/MNI-PNC_1Warp.nii.gz"
+         "${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat",
+         "${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz"
       ]
    },
    "PNC:MNI" : {
       "TransformANTs" : [
-         "${XCPEDIR}/space/PNC/transforms/PNC-MNI_0Warp.nii.gz",
-         "${XCPEDIR}/space/PNC/transforms/PNC-MNI_1Affine.mat"
+         "${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz",
+         "${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat"
       ]
    }
 }
