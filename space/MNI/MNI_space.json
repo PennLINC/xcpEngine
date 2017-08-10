@@ -1,0 +1,8 @@
+{
+   "MNI%1x1x1" : {
+      "Map" : "${XCPEDIR}/space/MNI/MNI-1x1x1.nii.gz"
+   },
+   "MNI%2x2x2" : {
+      "Map" : "${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz"
+   }
+}

@@ -1,0 +1,23 @@
+{
+   "PNC%9375x9375x1" : {
+      "Map" : "${XCPEDIR}/space/PNC/PNC-9375x9375x1.nii.gz"
+   },
+   "PNC%2x2x2" : {
+      "Map" : "${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz"
+   },
+   "MNI%1x1x1" : {
+      "Map" : "${XCPEDIR}/space/MNI/MNI-1x1x1.nii.gz"
+   },
+   "MNI:PNC" : {
+      "TransformANTs" : [
+         "${XCPEDIR}/space/PNC/transforms/MNI-PNC_0Affine.mat",
+         "${XCPEDIR}/space/PNC/transforms/MNI-PNC_1Warp.nii.gz"
+      ]
+   },
+   "PNC:MNI" : {
+      "TransformANTs" : [
+         "${XCPEDIR}/space/PNC/transforms/PNC-MNI_0Warp.nii.gz",
+         "${XCPEDIR}/space/PNC/transforms/PNC-MNI_1Affine.mat"
+      ]
+   }
+}
