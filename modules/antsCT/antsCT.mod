@@ -128,6 +128,9 @@ corticalThickness[${cxt}]=${outdir}/${prefix}_CorticalThickness
 corticalThicknessNormalizedToTemplate[${cxt}]=${outdir}/${prefix}_CorticalThicknessNormalizedToTemplate
 extractedBrain[${cxt}]=${outdir}/${prefix}_ExtractedBrain0N4
 
+## CortCon OUTPUT ##
+cortConVals[${cxt}]=${outdir}/${prefix}_CortConVals.nii.gz
+
 ## ANTsCT Transofrmations ##
 xfm_warp=${outdir}/${prefix}_SubjectToTemplate1Warp.nii.gz
 ixfm_warp=${outdir}/${prefix}_TemplateToSubject0Warp.nii.gz
@@ -575,6 +578,65 @@ while [[ "${#rem}" -gt "0" ]]
 	immv ${outdir}/${prefix}_mask ${outdir}/${prefix}_BrainExtractionMask
 	buffer=FBE
         echo "done with FSL Brain Extraction"
+        ;;
+    CCC)
+        ###################################################################
+        ###################################################################
+        # * Compute cortical contrast
+        ###################################################################
+        ###################################################################
+        echo ""; echo ""; echo ""
+        echo "Current processing step:"
+        echo "Computing Cortical Contrast"
+        ###################################################################
+        # Now find the latest structural image processed and ensure that
+	# is our input image
+        ###################################################################
+	if [ ${i} -gt 0 ] ; then 
+	  # Find the latest structural image output
+	  if [ ${buffer} == "ACT" ] ; then 
+		img=${outdir}/${prefix}_ExtractedBrain0N4 ; 
+	  fi
+	  if [ ${buffer} == "ABE" ] ; then  
+		img=${outdir}/${prefix}_BrainExtractionBrain ; 
+	  fi 
+	  if [ ${buffer} == "ABF" ] ; then
+		t=`echo "${i} - 1" | bc`
+		img=${outdir}/${prefix}_N4Corrected${t} ; 
+          fi
+	  if [ ${buffer} == "FBE" ] ; then 
+		img=${outdir}/${prefix}_BrainExtractionBrain ;
+          fi
+	fi       
+        ###################################################################
+        # Now create our GM and WM cortcon masks
+        ###################################################################
+	3dresample -dxyz .25 .25 .25 -inset ${brainSegmentation[${cxt}]}.nii.gz -prefix ${outdir}/Upsample~TEMP~.nii.gz
+        fslmaths ${outdir}/Upsample~TEMP~.nii.gz -thr 3 -uthr 3 -edge -uthr 1 -bin ${outdir}/UpsampleWmEdge~TEMP~.nii.gz
+        ImageMath 3 ${outdir}/DistancefromWMEdge~TEMP~.nii.gz MaurerDistance ${outdir}/UpsampleWmEdge~TEMP~.nii.gz
+        fslmaths ${outdir}/DistancefromWMEdge~TEMP~.nii.gz -thr .75 -uthr 1.25 -bin ${outdir}/DistancefromWMEdgeBin~TEMP~.nii.gz
+        ###################################################################
+        # The WM mask is created here
+        ###################################################################
+	fslmaths ${outdir}/Upsample~TEMP~.nii.gz -thr 3 -uthr 3 -mul ${outdir}/DistancefromWMEdgeBin~TEMP~.nii.gz -bin ${outdir}/DistancefromWMEdgeBinWM~TEMP~.nii.gz
+	antsApplyTransforms -e 3 -d 3 -i ${outdir}/DistancefromWMEdgeBinWM~TEMP~.nii.gz \
+		-o ${outdir}/DistancefromWMEdgeBinWMDS~TEMP~.nii.gz -r ${brainSegmentation[${cxt}]}.nii.gz -n Gaussian
+        ###################################################################
+        # The GM mask is created here
+        ###################################################################
+	fslmaths ${outdir}/Upsample~TEMP~.nii.gz -thr 2 -uthr 2 -mul ${outdir}/DistancefromWMEdgeBin~TEMP~.nii.gz -bin ${outdir}/DistancefromWMEdgeBinGM~TEMP~.nii.gz
+	antsApplyTransforms -e 3 -d 3 -i ${outdir}/DistancefromWMEdgeBinGM~TEMP~.nii.gz \
+		-o ${outdir}/DistancefromWMEdgeBinGMDS~TEMP~.nii.gz -r ${brainSegmentation[${cxt}]}.nii.gz -n Gaussian	
+        ###################################################################
+        # Now compute the cortical contrast values here
+        ###################################################################
+	${XCPEDIR}/utils/cortCon.R -w ${outdir}/DistancefromWMEdgeBinWMDS~TEMP~.nii.gz \
+        -g ${outdir}/DistancefromWMEdgeBinGMDS~TEMP~.nii.gz -T ${img}${ext} -o ${cortConVals[${cxt}]}
+        ###################################################################
+        # All done!
+        ###################################################################
+	buffer=CCC
+        echo "done with Cortical Contrast Computation"
         ;;	
     esac
     i=`echo "${i} + 1" | bc` 
@@ -682,6 +744,16 @@ if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == "1" ]]
    echo "referenceVolumeBrain[${subjidx}]=${referenceVolumeBrain[${cxt}]}" \
       >> $design_local
    echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" \
+      >> ${auxImgs[${subjidx}]}
+fi
+################################################################
+# OUTPUT: Cortical contrast values
+################################################################
+if [[ $(imtest ${cortCOnVals[${cxt}]}) == "1" ]]
+   then
+   echo "cortConVals[${subjidx}]=${cortConVals[${cxt}]}" \
+      >> $design_local
+   echo "#cortConVals#${cortConVals[${cxt}]}#antsCT,${cxt}" \
       >> ${auxImgs[${subjidx}]}
 fi
 ################################################################
