@@ -108,6 +108,7 @@ echo "Output directory is $outdir"
 #
 ###################################################################
 labelImage[${cxt}]=${outdir}/${prefix}_Labels.nii.gz
+labelImageIntersect[${cxt}]=${outdir}/${prefix}_LabelsAntsCTIntersect.nii.gz
 intensityImage[${cxt}]=${outdir}/${prefix}_Intensity.nii.gz
 ###################################################################
 # * Initialise a pointer to the image.
@@ -257,6 +258,15 @@ ${jlfCMD}
 export ANTSPATH=${antsOrig}
 
 ###################################################################
+# Now apply the intersection between the ANTsCT segmentation
+# and the output of JLF if a brain segmentation image exists
+###################################################################
+if [[ -f ${brainSegmentation[${subjidx}]}.nii.gz ]] ; then 
+  $XCEPDIR/modules/jlf/antsCTIntersect.sh ${labelImage[${cxt}]} \
+        ${brainSegmentation[${subjidx}]}.nii.gz ${labelImageIntersect[${cxt}]} ; 
+fi
+
+###################################################################
 # Write any remaining output paths to local design file so that
 # they may be used further along the pipeline.
 ###################################################################
@@ -271,6 +281,19 @@ if [[ $(imtest "${labelImage[${cxt}]}") == "1" ]]
   echo "labelImage[${subjidx}]=${labelImage[${cxt}]}" \ 
     >> $design_local
   echo "#labelImage#${labelImage[${cxt}]}#jlf,${cxt}" \ 
+    >> ${auxImgs[${subjidx}]}
+fi
+###################################################################
+# OUTPUT: Label image Intersect
+# Test whether the JLF intersect label image was created.
+# If it does exist then add it to the index of derivatives and 
+# to the localised design file
+###################################################################
+if [[ $(imtest "${labelImageIntersect[${cxt}]}") == "1" ]] 
+  then
+  echo "labelImageIntersect[${subjidx}]=${labelImageIntersect[${cxt}]}" \ 
+    >> $design_local
+  echo "#labelImageIntersect#${labelImageIntersect[${cxt}]}#jlf,${cxt}" \ 
     >> ${auxImgs[${subjidx}]}
 fi
 ###################################################################
