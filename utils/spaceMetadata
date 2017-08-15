@@ -93,7 +93,6 @@ endstream
 # Parse arguments
 ###################################################################
 combine_only=0
-echo $trace
 while getopts "o:d:m:f:x:i:s:t" OPTION
    do
    case $OPTION in
@@ -131,7 +130,6 @@ while getopts "o:d:m:f:x:i:s:t" OPTION
       exit
    esac
 done
-echo $trace
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
