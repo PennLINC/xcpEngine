@@ -89,116 +89,89 @@ DICTIONARY
 #    tested, and the remaining options are no longer supported.
 ###################################################################
 add_reference        template       template
-case ${norm_prog[${cxt}]} in
-   
-   ants)
-      routine              @1    Normalising using ANTs
-      subroutine           @1.1  [Selecting transforms to apply]
-      if ! is_image ${std[${cxt}]} \
-      || rerun
-         then
-         subroutine        @1.3  [Applying composite diffeomorphism to primary dataset]
-         warpspace \
-            ${img} \
-            ${std[${cxt}]} \
-            ${standard}
-      fi
-      #############################################################
-      # Iterate through all derivative images, and apply
-      # the computed transforms to each.
-      #############################################################
-      load_derivatives
-      subroutine           @1.4  [Applying composite diffeomorphism to derivative images:]
-      mv    ${aux_imgs[${subjidx}]} \
-            ${out}/${prefix}_derivatives-${space}.json
-      echo  '{}'     >>        ${aux_imgs[${subjidx}]}
-      for derivative in ${derivatives[@]}
-         do
-         derivative_parse  ${derivative}
-         subroutine        @1.5  [${d_name}]
-         derivative              ${d_name}      ${prefix}_${d_name}Std
-         d_call=${d_name}'['${cxt}']'
-         ##########################################################
-         # If the image is a mask, apply nearest neighbour
-         # interpolation to prevent introduction of intermediate
-         # values
-         ##########################################################
-         unset interpol
-         if [[ ${d_name} != ${d_name//mask} ]] \
-         || [[ ${d_name} != ${d_name//Mask} ]]
-            then
-            subroutine     @1.6
-            interpol=NearestNeighbor
-         fi
-         if ! is_image ${!d_call} \
-         || rerun
-            then
-            subroutine     @1.7
-            warpspace \
-               ${d_map} \
-               ${!d_call} \
-               ${d_space}:${standard} \
-               ${interpol}
-         fi
-         derivative_config       ${d_name}      Space    ${standard}
-         write_derivative        ${d_name}
-      done
-      routine_end
-      #############################################################
-      # Prepare quality variables and a cross-sectional view for
-      # the example functional brain
-      #############################################################
-      if is_image ${referenceVolumeBrain[${cxt}]} \
+
+routine                    @1    Normalising using ANTs
+subroutine                 @1.1  [Selecting transforms to apply]
+if ! is_image ${std[${cxt}]} \
+|| rerun
+   then
+   subroutine              @1.3  [Applying composite diffeomorphism to primary dataset]
+   warpspace \
+      ${img} \
+      ${std[${cxt}]} \
+      ${standard}
+fi
+###################################################################
+# Iterate through all derivative images, and apply the computed
+# transforms to each.
+###################################################################
+load_derivatives
+subroutine                 @1.4  [Applying composite diffeomorphism to derivative images:]
+mv    ${aux_imgs[${subjidx}]} \
+      ${out}/${prefix}_derivatives-${space}.json
+echo  '{}'     >>        ${aux_imgs[${subjidx}]}
+for derivative in ${derivatives[@]}
+   do
+   derivative_parse        ${derivative}
+   subroutine              @1.5  [${d_name}]
+   derivative              ${d_name}      ${prefix}_${d_name}Std
+   d_call=${d_name}'['${cxt}']'
+   ################################################################
+   # If the image is a mask, apply nearest neighbour interpolation
+   # to prevent introduction of intermediate values
+   ################################################################
+   unset interpol
+   if [[ ${d_name} != ${d_name//mask} ]] \
+   || [[ ${d_name} != ${d_name//Mask} ]]
+      then
+      subroutine           @1.6
+      interpol=NearestNeighbor
+   fi
+   if ! is_image ${!d_call} \
       || rerun
       then
-      subroutine           @2.0
-      if [[ ! -e ${outdir}/${prefix}_ep2std.png ]] \
-      || rerun
-         then
-         routine           @2    Quality assessment
-         exec_fsl fslmaths ${referenceVolumeBrain[${cxt}]} -bin ${e2smask[${cxt}]}
-         subroutine        @2.1  [Computing registration quality metrics]
-         registration_quality=( $(exec_xcp \
-            maskOverlap.R \
-            -m ${e2smask[${cxt}]} \
-            -r ${template}) )
-         echo  ${registration_quality[0]} > ${norm_cross_corr[${cxt}]}
-         echo  ${registration_quality[1]} > ${norm_coverage[${cxt}]}
-         echo  ${registration_quality[2]} > ${norm_jaccard[${cxt}]}
-         echo  ${registration_quality[3]} > ${norm_dice[${cxt}]}
-         subroutine        @2.2  [Preparing slicewise rendering]
-         exec_xcp \
-            regslicer \
-            -s ${referenceVolumeBrain[${cxt}]} \
-            -t ${template} \
-            -i ${intermediate} \
-            -o ${outdir}/${prefix}_ep2std
-         routine_end
-      fi
-      fi
-      ;;
-      
-   dramms)
-      echo \
-"
-
-
-DRAMMS-based normalisation is not supported at this
-time. Please use ANTs-based normalisation instead.
-"
-      ;;
-      
-   fnirt)
-      echo \
-"
-
-
-FNIRT-based normalisation is not supported at this
-time. Please use ANTs-based normalisation instead.
-"
-      ;;
-      
-esac
+      subroutine           @1.7
+      warpspace \
+         ${d_map} \
+         ${!d_call} \
+         ${d_space}:${standard} \
+         ${interpol}
+   fi
+   derivative_config       ${d_name}      Space    ${standard}
+   write_derivative        ${d_name}
+done
+routine_end
+###################################################################
+# Prepare quality variables and a cross-sectional view for the
+# reference volume
+###################################################################
+if is_image ${referenceVolumeBrain[${cxt}]} \
+|| rerun
+then
+subroutine                 @2.0
+if [[ ! -e ${outdir}/${prefix}_ep2std.png ]] \
+|| rerun
+   then
+   routine                 @2    Quality assessment
+   exec_fsl fslmaths ${referenceVolumeBrain[${cxt}]} -bin ${e2smask[${cxt}]}
+   subroutine              @2.1  [Computing registration quality metrics]
+   registration_quality=( $(exec_xcp \
+      maskOverlap.R \
+      -m ${e2smask[${cxt}]} \
+      -r ${template}) )
+   echo  ${registration_quality[0]} > ${norm_cross_corr[${cxt}]}
+   echo  ${registration_quality[1]} > ${norm_coverage[${cxt}]}
+   echo  ${registration_quality[2]} > ${norm_jaccard[${cxt}]}
+   echo  ${registration_quality[3]} > ${norm_dice[${cxt}]}
+   subroutine              @2.2  [Preparing slicewise rendering]
+   exec_xcp regslicer \
+      -s ${referenceVolumeBrain[${cxt}]} \
+      -t ${template} \
+      -i ${intermediate} \
+      -o ${outdir}/${prefix}_ep2std
+   routine_end
+fi
+fi
 
 
 
