@@ -12,7 +12,7 @@ apply_exec() {
       then
       property=$(strslice  "${1}" 1 :)
       values=$(  strslice  "${1}" 2 :)
-      values=( ${types//|/ } )
+      values=( ${values//|/ } )
    else
       property=Type
       values=( ${1//|/ }     )
@@ -30,7 +30,6 @@ apply_exec() {
       echo_var=${1//ECHO:/}
       shift
    fi
-   echo ${echo_var}
    process_generic=${@}
    load_derivatives
    for derivative in ${derivatives[@]}
