@@ -38,7 +38,6 @@ warpspace() {
       source=${space}
    fi
    i=$(eval echo ${i})
-   echo $source; echo $target; echo $i
    ################################################################
    # Parse available spaces (nodes) and transforms (edges)
    ################################################################
@@ -78,7 +77,6 @@ warpspace() {
    edges=$(echo $edges)
    nodes=${nodes// /,}
    edges=${edges// /,}
-   echo $nodes; echo $edges
    route=( $(${XCPEDIR}/utils/warprouter.R \
       -n ${nodes} \
       -e ${edges} \

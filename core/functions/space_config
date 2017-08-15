@@ -13,7 +13,6 @@ space_config() {
          then
          spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '. += { "'"${1}"'" : { "'"${2}"'" : "'"${3}"'" } }')
       else
-         echo 1
          spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '."'"${1}"'" += { "'"${2}"'" : "'"${3}"'" }')
       fi
       #spaces_floating="$(echo ${spaces_fixed} '{ "'"${1}"'" : { "'"${2}"'" : "'"${3}"'" } }'|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"

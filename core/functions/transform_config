@@ -8,11 +8,9 @@ transform_config() {
    spaces_fixed=$(cat ${spaces_path})
    transform=( $(echo ${1/:/ }) )
    transform[1]=\"${transform[1]//\,/\"\, \"}\"
-   echo "${transform[1]}"
    source=${2//\%*/}
    target=${3//\%*/}
    transform_chk=$(echo ${spaces_fixed}|$JQ_PATH '.'\"${source}\:${target}\")
-   echo ${transform_chk}
    if [[ ${transform_chk} == null ]]
       then
       spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '. += {'\"${source}\:${target}\"': { "'"${!transform[0]}"'" : [ '"${transform[1]}"' ] } }')
