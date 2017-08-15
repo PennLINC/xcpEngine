@@ -12,6 +12,8 @@ space_standard=$(abspath ${XCPEDIR}/space/${standard//\%*/}/${standard//\%*/}_sp
 [[ -z ${sequence} ]]       && sequence=native
 set_space                  ${prefix}_${sequence}
 template=$(json_query      \"${standard}\"      Map   ${space_standard})
+template=$(eval echo ${template})
+antsct=$(  eval echo ${antsct})
 echo "template=${template}"                     >> ${design_local}
 ###################################################################
 # Case 1: ANTsCT directory and template are provided.
