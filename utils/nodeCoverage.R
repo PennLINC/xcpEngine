@@ -31,7 +31,10 @@ option_list = list(
                   to be included."),
    make_option(c("-x", "--idx"), action="store", default=NA, type='character',
               help="A list of indices corresponding to relevant regions
-                  in the r argument.")
+                  in the r argument."),
+   make_option(c("-n", "--names"), action="store", default=NA, type='character',
+              help="A list of names corresponding to the regions passed to
+                  argument i.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -54,6 +57,11 @@ if (!is.na(opt$idx)) {
 } else {
    labs <- NaN
 }
+if (!is.na(opt$names)) {
+   name <- as.vector(unlist(read.table(opt$names,header=F)))
+} else {
+   name <- NaN
+}
 ###################################################################
 # 1. Load in the image.
 ###################################################################
@@ -72,9 +80,11 @@ net <- antsImageRead(roipath,3)
 #
 # First, obtain all unique nonzero values in the mask.
 ###################################################################
+options(warn=-1)
 if (is.nan(labs)) {
    labs <- sort(unique(net[net > 0]))
 }
+options(warn=0)
 ###################################################################
 # Create a logical over all voxels, indicating whether each
 # voxel has a nonzero mask value.
@@ -133,9 +143,12 @@ if (length(labs) == 1) {
    }
 }
 mthr <- labs[which(mmat > thr)]
+name <- name[which(mmat > thr)]
 
 ###################################################################
 # 4. Write the output.
 ###################################################################
 
-cat(mthr,'\n')
+cat(mthr,sep=',')
+cat('\n')
+cat(name,sep=',')
