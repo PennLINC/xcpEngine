@@ -19,7 +19,7 @@ source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
 source ${XCPEDIR}/core/parseArgsMod
 
-#################################################################f##
+###################################################################
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
