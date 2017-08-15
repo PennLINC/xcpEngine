@@ -22,16 +22,16 @@ suppressMessages(require(pracma))
 ###################################################################
 option_list = list(
    make_option(c("-i", "--img"), action="store", default=NA, type='character',
-              help="Path to the 3D image from which the timeseries
-                  will be extracted."),
+              help="A 3D image specifying the extent of the brain."),
    make_option(c("-r", "--roi"), action="store", default=NA, type='character',
               help="A 3D image specifying the nodes or regions of interest
                   from which timeseries are to be extracted."),
    make_option(c("-t", "--thr"), action="store", default=0.5, type='numeric',
               help="The minimum coverage required for an RoI-wise value
                   to be included."),
-   make_option(c("-v", "--val"), action="store", default=NA, type='character',
-              help="A list of RoI-wise values.")
+   make_option(c("-x", "--idx"), action="store", default=NA, type='character',
+              help="A list of indices corresponding to relevant regions
+                  in the r argument.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -49,8 +49,11 @@ if (is.na(opt$roi)) {
 impath <- opt$img
 roipath <- opt$roi
 thr <- opt$thr
-valpath <- opt$val
-
+if (!is.na(opt$idx)) {
+   labs <- as.vector(unlist(read.table(opt$idx,header=F)))
+} else {
+   labs <- NaN
+}
 ###################################################################
 # 1. Load in the image.
 ###################################################################
@@ -69,7 +72,9 @@ net <- antsImageRead(roipath,3)
 #
 # First, obtain all unique nonzero values in the mask.
 ###################################################################
-labs <- sort(unique(net[net > 0]))
+if (is.nan(labs)) {
+   labs <- sort(unique(net[net > 0]))
+}
 ###################################################################
 # Create a logical over all voxels, indicating whether each
 # voxel has a nonzero mask value.
@@ -95,7 +100,7 @@ mat <- t(mat)
 if (length(labs) == 1) {
    mmat <- 1 - sum(mat==0)/length(mat)
 } else {
-   mmat <- zeros(dim(mat)[1],max(labs))
+   mmat <- zeros(dim(mat)[1],length(labs))
    ################################################################
    # If the script enters this statement, then there are multiple
    # unique values in the map, indicating multiple mask RoIs: a
@@ -115,7 +120,7 @@ if (length(labs) == 1) {
    if (length(voxelwise) == 1) {
       warning(paste("Warning: node ", labs[1], " contains one voxel\n"))
    }
-   mmat[,labs[1]] <- 1 - sum(voxelwise==0)/length(voxelwise)
+   mmat[,1] <- 1 - sum(voxelwise==0)/length(voxelwise)
    ################################################################
    # Repeat for all remaining RoIs.
    ################################################################
@@ -124,26 +129,13 @@ if (length(labs) == 1) {
       if (length(voxelwise) == 1) {
          warning(paste("Warning: node ", labs[i], " contains one voxel\n"))
       }
-      mmat[,labs[i]] <- 1 - sum(voxelwise==0)/length(voxelwise)
+      mmat[,i] <- 1 - sum(voxelwise==0)/length(voxelwise)
    }
-   colnames(mmat) <- paste("L", 1:max(labs))
 }
+mthr <- labs[which(mmat > thr)]
 
 ###################################################################
 # 4. Write the output.
 ###################################################################
 
-for (row in seq(1,dim(mmat)[1])) {
-   cat(mmat[row,])
-   cat('\n')
-}
-
-###################################################################
-# TODO
-# 5. Substitute out the bad values.
-###################################################################
-
-#if (!is.na(valpath)) {
-#   vals <- read.table(valpath, header=TRUE, sep='\t')
-#   
-#}
+cat(mthr,'\n')
