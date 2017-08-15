@@ -1,4 +1,14 @@
 {
+   "abspath" : {
+      "Description" : "Given a relative path to (a) file(s), return the absolute path.",
+      "Input" : {
+         "1" : "The relative path to (a) file(s)"
+      },
+      "Output" : {
+         "STDOUT" : "The absolute path to the input file(s)"
+      },
+      "Keywords" : [ "filesystem" ]
+   },
    "add_reference" : {
       "Description" : "Adds a reference image (not produced by the current module) to the current module's output directory",
       "Input" : {
@@ -89,7 +99,7 @@
          "2" : "The value to be assigned to the context-level variable; this should be a path relative to the module output directory and should not include any extensions"
       },
       "Output" : {
-         "derivatives_floating" : "A catalogue of any derivative images that have been declared but are not yet indexed. (Use derivative_write to index the derivative after ensuring that its map exists on the filesystem.)",
+         "derivatives_floating" : "A catalogue of any derivative images that have been declared but are not yet indexed. (Use derivative_write to index the derivative after ensuring that its map exists on the filesystem.) Derivative metadata are stored in this variable. When a new derivative is initialised, its metadata are assigned the following values: Map = the second input above, Type = map, Space = the space of the analyte image, Statistic = null, ProvenanceName = the short name of the module of origin, ProvenanceIndex = the contextual index of the module of origin. Use derivative_config to change these default values.",
          "<1[cxt]>" : "The new derivative that has been declared. Its value is stored in an array variable indexed at the contextual index of the declaring module."
       },
       "Keywords" : [ "declare", "context", "image" ]
@@ -117,13 +127,11 @@
          "d_map" : "The location of the derivative image on the file system",
          "d_mod" : "The provenance of the derivative: the name of the module that created it",
          "d_mod_idx" : "The provenance of the derivative: the contextual index of the module that created it",
-         "d_mod_stats" : {
+         "d_stat" : {
             "Description" : "The summary statistic(s) that should be computed over any groupings of voxels from the current derivative",
             "Values" : {
                "mean" : "The arithmetic mean",
-               "null" : "No appropriate statistic",
-               "kw" : "Kendall's coefficient of concordance",
-               "vol" : "The volume"
+               "null" : "No appropriate statistic"
             }
          },
          "d_type" : {
@@ -151,6 +159,55 @@
       },
       "Keywords" : [ "load", "image", "interface" ]
    },
+   "rerun" : {
+      "Description" : "Tests whether the design file specifies that the current module should be rerun from the start, regardless of completion stage",
+      "Return" : {
+         "0" : "Indicates that the current module should be rerun",
+         "1" : "Indicates that the current module should not be rerun"
+      },
+      "Keywords" : [ "test" ]
+   },
+   "routine" : {
+      "Description" : "Creates a signpost for a processing routine, and prints the start-of-routine message to the console",
+      "Input" : {
+         "1" : "A signpost identifying the current routine",
+         "2" : "A description of the current routine"
+      },
+      "Output" : {
+         "routine_map" : "The sequence of all signposts visited by the current module",
+         "STDOUT" : "The routine description, (if verbose) the signpost identifying the current routine"
+      },
+      "Keywords" : [ "signpost", "workflow" ]
+   },
+   "routine_end" : {
+      "Description" : "Prints a message terminating the current processing routine",
+      "Output" : {
+         "STDOUT" : "A message announcing the end of the routine"
+      },
+      "Keywords" : [ "workflow" ]
+   },
+   "set_space" : {
+      "Description" : "Sets the coordinate space of the analyte image, and writes the space to the design file. Does not perform registration.",
+      "Input" : {
+         "1" : "The coordinate space of the analyte image"
+      },
+      "Output" : {
+         "space" : "The coordinate space of the analyte image"
+      }
+   },
+   "space_config" : {
+      "Description" : "Defines a new space, or adds a property to an existing space.",
+      "Input" : {
+         "1" : "The space metadata file to be modified.",
+         "2" : "Can either be a path to a space metadata file or the name of the space to be added or modified.",
+         "3" : "(if 1 is a space) The name of the property to be configured for the provided space",
+         "4" : "(if 1 is a space) The value to be assigned to the specified property."
+      },
+      "Output" : {
+         "spaceMetadataFile" : "An updated metadata file that includes either (a) the metadata loaded from input 1 or (b) the new or modified space."
+      },
+      "Keywords" : [ "space", "interface" ]
+   },
    "subject_parse" : {
       "Description" : "Parses a line from a cohort file to produce an indexed array variable representing the corresponding subject",
       "Input" : {
@@ -164,6 +221,18 @@
          "Any number of design variables" : "Returned if the string `design` is supplied to the second input argument."
       }
    },
+   "subroutine" : {
+      "Description" : "Creates a signpost for a processing subroutine, and prints the subroutine description to the console",
+      "Input" : {
+         "1" : "A signpost identifying the current subroutine",
+         "2" : "A description of the current subroutine"
+      },
+      "Output" : {
+         "routine_map" : "The sequence of all signposts visited by the current module",
+         "STDOUT" : "The subroutine description, (if verbose) the signpost identifying the current subroutine"
+      },
+      "Keywords" : [ "signpost", "workflow" ]
+   },
    "strslice" : {
       "Description" : "Slices a string and returns the requested slices.",
       "Input" : {
@@ -174,6 +243,32 @@
          "STDOUT" : "The requested slices of the string"
       },
       "Keywords" : [ "string" ]
+   },
+   "transform_config" : {
+      "Description" : "Defines a new transform, or adds a property to an existing transform.",
+      "Input" : {
+         "1" : "The space metadata file to be modified.",
+         "2" : "The path(s) to the files that represent the transform to be added. If the transform consists of multiple files (e.g., one for the affine component and one for the diffeomorphic warp), then the paths should be separated by a comma and provided in the order that they are to be applied. (For ANTsCT, this is often affine,warp for forward transformations.) The transform paths should be prefixed by the format of the transforms (either itk, fsl, or dramms) and a colon. Use itk for ANTs transforms.",
+         "3" : "The source space of the provided transform or transform series.",
+         "4" : "The target space of the provided transform or transform series."
+      },
+      "Output" : {
+         "spaceMetadataFile" : "An updated metadata file that includes the newly provided transform."
+      },
+      "Keywords" : [ "space", "interface", "transform" ]
+   },
+   "warpspace" : {
+      "Description" : "Warps an image into a target space.",
+      "Input" : {
+         "1" : "The image to be warped",
+         "2" : "The output path for the warped image",
+         "3" : "The name of the target space, as defined in the space metadata file",
+         "4" : "(optional) The interpolation scheme to use in the warp"
+      },
+      "Output" : {
+         "fileSystem" : "The warped image"
+      },
+      "Keywords" : [ "transform" ]
    },
    "write_derivative" : {
       "Description" : "Writes a derivative that has been declared at the module/context level into the design file as a subject-level variable accessible by all modules. Also indexes the derivative in the derivatives catalogue.",
