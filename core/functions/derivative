@@ -6,6 +6,6 @@ derivative() {
    else
       path=${outdir}/${2}.nii.gz
    fi
-   eval ${1}[${cxt}]=${path}
+   eval ${1}[${cxt}]=\${path}
    export derivatives_floating=$(echo ${derivatives_floating}|${JQ_PATH} '.'${1}' += {Map:"'"${path}"'", Space:"'"${space}"'", ProvenanceName:"'"${mod_name_short}"'", ProvenanceIndex:"'"${cxt}"'", Statistic:"null", Type:"map"}')
 }

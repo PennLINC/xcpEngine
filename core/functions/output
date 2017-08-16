@@ -6,5 +6,5 @@ output() {
    else
       path=${outdir}/${2}
    fi
-   eval ${1}[${cxt}]=${path}
+   eval ${1}[${cxt}]=\${path}
 }
