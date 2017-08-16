@@ -20,7 +20,7 @@ usage_flag=0
 # Trace status is, by default, set to 0 (no trace)
 ###################################################################
 eval "echo -e \"$(<${mod_head})\""
-trace=0
+export trace=0
 idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
 if (( $# < 2 ))
    then
