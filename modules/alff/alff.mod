@@ -140,11 +140,11 @@ for k in ${kernel[${cxt}]}
          mask=${mask[${subjidx}]}
       else
          subroutine           @1.6b Generating a mask using 3dAutomask
-         exec_afni 3dAutomask -prefix ${outbase}_fmask${ext} \
+         exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
             -dilate 3 \
             -q \
-            ${img}${ext}
-         mask=${outbase}_fmask${ext}
+            ${img}
+         mask=${intermediate}_fmask.nii.gz
       fi
       #############################################################
       # Prime the inputs to sfilter for SUSAN filtering
@@ -159,7 +159,7 @@ for k in ${kernel[${cxt}]}
                ${intermediate}usan.nii.gz \
                ${alff_usan_space[${cxt}]}:${space} \
                NearestNeighbor
-            usan="-u ${intermediate}usan"
+            usan="-u ${intermediate}usan.nii.gz"
             hardseg=-h
          ##########################################################
          # Ensure that an example functional image exists.
@@ -192,8 +192,7 @@ for k in ${kernel[${cxt}]}
          -s ${alff_sptf[${cxt}]} \
          -k ${alff_smo[${cxt}]} \
          -m ${mask} \
-         ${usan} \
-         ${trace_prop}
+         ${usan}
       #############################################################
       # Update image pointer, and write the smoothed image path to
       # the design file and derivatives index so that it may be used
