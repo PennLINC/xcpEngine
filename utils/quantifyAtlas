@@ -173,7 +173,7 @@ rargs="
    -mask          ${atlas}"
 case $stats in
 mean)
-   subroutine                 @u.1  Mean ${dname//_/} over ${aname}
+   subroutine                 @u.1  Mean ${dname//_/ } over ${aname}
    exec_afni 3dROIstats \
       ${rargs}    \
       -nzmean     \
@@ -181,7 +181,7 @@ mean)
       >> ${oroot}_${aname}_${stats}.1D
    ;;
 median)
-   subroutine                 @u.2  Median ${dname//_/} over ${aname}
+   subroutine                 @u.2  Median ${dname//_/ } over ${aname}
    exec_afni 3dROIstats \
       ${rargs}    \
       -nzmedian   \
@@ -189,7 +189,7 @@ median)
       >> ${oroot}_${aname}_${stats}.1D
    ;;
 mode)
-   subroutine                 @u.3  Modal ${dname//_/} over ${aname}
+   subroutine                 @u.3  Modal ${dname//_/ } over ${aname}
    exec_afni 3dROIstats \
       ${rargs}    \
       -nzmode     \
@@ -197,7 +197,7 @@ mode)
       >> ${oroot}_${aname}_${stats}.1D
    ;;
 minmax)
-   subroutine                 @u.4  Min/Max ${dname//_/} over ${aname}
+   subroutine                 @u.4  Min/Max ${dname//_/ } over ${aname}
    exec_afni 3dROIstats \
       ${rargs}    \
       -nzminmax   \
@@ -205,7 +205,7 @@ minmax)
       >> ${oroot}_${aname}_${stats}.1D
    ;;
 stdev)
-   subroutine                 @u.5  Standard deviation ${dname//_/} over ${aname}
+   subroutine                 @u.5  Standard deviation ${dname//_/ } over ${aname}
    exec_afni 3dROIstats \
       ${rargs}    \
       -nzsigma    \
@@ -213,7 +213,7 @@ stdev)
       >> ${oroot}_${aname}_${stats}.1D
    ;;
 vol)
-   subroutine                 @u.6  Volume ${dname//_/} over ${aname}
+   subroutine                 @u.6  Volume ${dname//_/ } over ${aname}
    exec_afni 3dROIstats \
       ${rargs}    \
       -nzvoxels   \
