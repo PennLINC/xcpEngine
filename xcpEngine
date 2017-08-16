@@ -112,10 +112,10 @@ ___________________________________________________________________
 endstream
 }
 ###################################################################
-# Set defaults (serial/local run)
+# Set defaults (serial/local run), quiet
 ###################################################################
 mode=s
-trace=0
+export trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
@@ -139,7 +139,6 @@ while getopts "d:i:c:o:m:t:" OPTION
       ;;
    t)
       trace=${OPTARG}
-      trace_prop="-t ${trace}"
       (( ${trace} > 3 )) && trace=3
       ;;
    *)
@@ -242,7 +241,7 @@ for subject in ${cohort}
       -s ${subjidx}:${subject}
       -o ${out_super}
       ${scratch}
-      ${trace_prop}
+      -t ${trace}
       "
    subject_parse        ${subject} output
    mkdir -p             ${out}/${prefix}_logs
@@ -316,7 +315,7 @@ for module in ${modules[@]}
          ${modS}
             -d ${out}/${prefix}.dsn
             -c ${cxt}
-            ${trace_prop}
+            -t ${trace}
             "
          case ${mode} in
          s)
@@ -349,7 +348,7 @@ for module in ${modules[@]}
       ${modG} 
          -d ${out_group}/${analysis}.dsn
          -c ${cxt}
-         ${trace_prop}
+         -t ${trace}
          "
       case ${mode} in
       s)
