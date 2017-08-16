@@ -7,6 +7,6 @@ routine() {
    verbose && local vid="${routine_id} "
    if [[ -n ${routine_description} ]]
       then
-      eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_BEGIN)\""
+      (>&2 eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_BEGIN)\"")
    fi
 }

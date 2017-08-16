@@ -7,9 +7,9 @@ subroutine() {
    verbose && local vid="${subroutine_id} "
    if [[ -n ${subroutine_description} ]]
       then
-      echo "· ${vid}${subroutine_description}"
+      (>&2 echo "· ${vid}${subroutine_description}")
    elif verbose
       then
-      echo "· ${vid}"
+      (>&2 echo "· ${vid}")
    fi
 }
