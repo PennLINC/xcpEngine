@@ -621,17 +621,19 @@ while [[ "${#rem}" -gt "0" ]]
 	fslmaths ${outdir}/Upsample~TEMP~.nii.gz -thr 3 -uthr 3 -mul ${outdir}/DistancefromWMEdgeBin~TEMP~.nii.gz -bin ${outdir}/DistancefromWMEdgeBinWM~TEMP~.nii.gz
 	antsApplyTransforms -e 3 -d 3 -i ${outdir}/DistancefromWMEdgeBinWM~TEMP~.nii.gz \
 		-o ${outdir}/DistancefromWMEdgeBinWMDS~TEMP~.nii.gz -r ${brainSegmentation[${cxt}]}.nii.gz -n Gaussian
+	fslmaths ${outdir}/DistancefromWMEdgeBinWMDS~TEMP~.nii.gz -thr .05 -bin ${outdir}/DistancefromWMEdgeBinWMDSBIN~TEMP~.nii.gz
         ###################################################################
         # The GM mask is created here
         ###################################################################
 	fslmaths ${outdir}/Upsample~TEMP~.nii.gz -thr 2 -uthr 2 -mul ${outdir}/DistancefromWMEdgeBin~TEMP~.nii.gz -bin ${outdir}/DistancefromWMEdgeBinGM~TEMP~.nii.gz
 	antsApplyTransforms -e 3 -d 3 -i ${outdir}/DistancefromWMEdgeBinGM~TEMP~.nii.gz \
-		-o ${outdir}/DistancefromWMEdgeBinGMDS~TEMP~.nii.gz -r ${brainSegmentation[${cxt}]}.nii.gz -n Gaussian	
+		-o ${outdir}/DistancefromWMEdgeBinGMDS~TEMP~.nii.gz -r ${brainSegmentation[${cxt}]}.nii.gz -n Gaussian
+	fslmaths ${outdir}/DistancefromWMEdgeBinGMDS~TEMP~.nii.gz -thr .05 -bin ${outdir}/DistancefromWMEdgeBinGMDSBIN~TEMP~.nii.gz	
         ###################################################################
         # Now compute the cortical contrast values here
         ###################################################################
-	${XCPEDIR}/utils/cortCon.R -w ${outdir}/DistancefromWMEdgeBinWMDS~TEMP~.nii.gz \
-        -g ${outdir}/DistancefromWMEdgeBinGMDS~TEMP~.nii.gz -T ${img}${ext} -o ${cortConVals[${cxt}]}
+	${XCPEDIR}/utils/cortCon.R -w ${outdir}/DistancefromWMEdgeBinWMDSBIN~TEMP~.nii.gz \
+        -g ${outdir}/DistancefromWMEdgeBinGMDSBIN~TEMP~.nii.gz -T ${img}${ext} -o ${cortConVals[${cxt}]}
         ###################################################################
         # All done!
         ###################################################################
