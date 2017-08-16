@@ -6,7 +6,7 @@
 
 ###################################################################
 # SPECIFIC MODULE HEADER
-# This module performs elementary network analyses.
+# This module performs functional connectivity analyses.
 ###################################################################
 mod_name_short=fcon
 mod_name='FUNCTIONAL CONNECTOME MODULE'

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 ###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
 # SPECIFIC MODULE HEADER
 # This module aligns the analyte image to a high-resolution target.
 ###################################################################
@@ -44,24 +48,9 @@ configure      mapbase                 ${out}/${prefix}_atlas
 THE OUTPUTS OF ATLAS-DERIVED QUANTIFICATION ARE PRIMARILY DEFINED
 IN THE LOOP OVER NETWORKS.
 
-adjacency
-   The connectivity matrix or functional connectome.
 mapbase
    The base path to any parcellations or ROI atlantes that have
    been transformed into analyte space.
-missing
-   An index of network nodes that are insufficiently covered and
-   consequently do not produce meaningful output.
-nodemap
-   The map of the network's nodes, warped into analyte space.
-pajek
-   A representation of the network as a sparse matrix. Used by
-   some network science software packages.
-ts
-   The mean local timeseries computed in each network node.
-ts_edge
-   The timeseries computed in each network edge using the
-   multiplication of temporal derivatives (MTD).
 
 DICTIONARY
 
@@ -85,6 +74,7 @@ if [[ -s ${roiquant_atlas[${cxt}]} ]]
    load_atlas        ${roiquant_atlas[${cxt}]}
    load_atlas        ${atlas[${subjidx}]}
    load_derivatives
+   [[ -n ${sequence} ]] && sequence=${sequence}_
 else
    echo \
 "
@@ -255,7 +245,6 @@ for map in ${atlas_names[@]}
       #############################################################
       echo ${cover[0]//,/ } >> ${intermediate}_${a_name}_idx.1D
       echo ${cover[1]//,/ } >> ${intermediate}_${a_name}_names.1D
-      [[ -n ${sequence} ]]  && sequence=${sequence}_
       unset qargs
       qargs="
          -a       ${a_map}
