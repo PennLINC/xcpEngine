@@ -124,17 +124,15 @@ z_sign='-'
 # Obtain conversion factors for radii: mm to vox
 ###################################################################
 subroutine                    @u.3
-xvox=$(exec_fsl fslval $template pixdim1)
-yvox=$(exec_fsl fslval $template pixdim2)
-zvox=$(exec_fsl fslval $template pixdim3)
+res[0]=$(exec_fsl fslval $template pixdim1)
+res[1]=$(exec_fsl fslval $template pixdim2)
+res[2]=$(exec_fsl fslval $template pixdim3)
 
 
 
 
 
-load_atlas ${sclib}
-
-space=$(echo ${atlas_space}|cut -d':' -f5)
+atlas=($(grep -i '^#' ${sclib}) )
 
 nodeidx=1
 mapidx=0
@@ -142,78 +140,48 @@ for node in ${atlas[@]}
    do
    ################################################################
    # Parse node information
+   # node[0] : name
+   # node[1] : coordinates
+   # node[2] : radius
    ################################################################
    subroutine                 @u.4
-   atlas_parse ${node}
-   ################################################################
-   # Move to voxel coordinates
-   #
-   # TODO
-   # Some redundant calculations here are (rather insignificantly)
-   # slowing the computation
-   ################################################################
-   if [[ -z ${res} ]]
-      then
-      subroutine              @u.5
-      a_coor=$(echo ${a_coor//,/ }\
-            |exec_fsl std2imgcoord -img ${space} -std ${space} -vox)
-      xres=$(exec_fsl fslval $space pixdim1)
-      yres=$(exec_fsl fslval $space pixdim2)
-      zres=$(exec_fsl fslval $space pixdim3)
-      res=(${xres} ${yres} ${zres})
-   fi
-   if [[ ${space} == "MNI152" ]]
-      then
-      subroutine              @u.6
-      a_coor=$(exec_fsl mni2vox ${a_coor} 1)
-      res=(1 1 1)
-   fi
-   subroutine                 @u.7
-   xres=${res[0]}
-   yres=${res[1]}
-   zres=${res[2]}
-   x2res=$(arithmetic ${xvox}/${xres})
-   y2res=$(arithmetic ${yvox}/${yres})
-   z2res=$(arithmetic ${zvox}/${zres})
+   node=( ${node//#/ } )
+
    ################################################################
    # Determine radius: Order of precedence is:
    #  (1) User input
    #  (2) sclib file
    #  (3) default value
    ################################################################
-   rad=${radius}
-   if [[ -z ${rad} ]]
+   if [[ -z ${radius} ]]
       then
-      subroutine              @u.8
-      rad=${a_radius}
+      subroutine              @u.5
+      radius=${node[2]}
    fi
-   if [[ -z ${rad} ]]
+   if [[ -z ${radius} ]]
       then
-      subroutine              @u.9
-      rad=${radius_default}
+      subroutine              @u.6
+      radius=${radius_default}
    fi
+   
+   ################################################################
+   # Scale radius to the coordinate space
+   ################################################################
+   subroutine                 @u.7
+   rad[0]=$(arithmetic ${radius}/${res[0]})
+   rad[1]=$(arithmetic ${radius}/${res[1]})
+   rad[2]=$(arithmetic ${radius}/${res[2]})
+   radsq[0]=$(arithmetic ${rad[0]}^2)
+   radsq[1]=$(arithmetic ${rad[1]}^2)
+   radsq[2]=$(arithmetic ${rad[2]}^2)
 
    ################################################################
    # Add ROI to network
    # Any previous, overlapping ROIs will be overwritten; only a
    # hard parcellation is supported
    ################################################################
-   subroutine                 @u.10
-   coor=(${a_coor//,/ })
-   xcoor=$(arithmetic ${coor[0]}/${x2res})
-   ycoor=$(arithmetic ${coor[1]}/${y2res})
-   zcoor=$(arithmetic ${coor[2]}/${z2res})
-   
-   ################################################################
-   # Scale radius to the coordinate space
-   ################################################################
-   subroutine                 @u.11
-   xrad=$(arithmetic ${rad}/${xvox})
-   yrad=$(arithmetic ${rad}/${yvox})
-   zrad=$(arithmetic ${rad}/${zvox})
-   xradsq=$(arithmetic ${xrad}^2)
-   yradsq=$(arithmetic ${yrad}^2)
-   zradsq=$(arithmetic ${zrad}^2)
+   subroutine                 @u.8
+   coor=(${node[1]//,/ })
    
    ################################################################
    # Generate a solid ellipsoid (a sphere in true physical space)
@@ -223,14 +191,14 @@ for node in ${atlas[@]}
    #    will result in a much slower module, but is necessary to
    #    ensure that there is no overlap.
    ################################################################
-   subroutine                 @u.12
-   nodeexpr="step(1-(i${x_sign}${xcoor})*(i${x_sign}${xcoor})/${xradsq}-(j${y_sign}${ycoor})*(j${y_sign}${ycoor})/${yradsq}-(k${z_sign}${zcoor})*(k${z_sign}${zcoor})/${yradsq})"
+   subroutine                 @u.9
+   nodeexpr="step(1-(i-${coor[0]})*(i-${coor[0]})/${radsq[0]}-(j-${coor[1]})*(j-${coor[1]})/${radsq[1]}-(k-${coor[2]})*(k-${coor[2]})/${radsq[2]})"
    if [[ -z ${netexpr} ]]
       then
-      subroutine              @u.13.1
+      subroutine              @u.10.1
       netexpr=${nodeexpr}
    else
-      subroutine              @u.13.2
+      subroutine              @u.10.2
       netexpr="(-1*${nodeexpr}+1)*(${netexpr})+${nodeidx}*${nodeexpr}"
    fi
    
@@ -242,7 +210,7 @@ for node in ${atlas[@]}
    ################################################################
    if (( $(( ${nodeidx} % 10 )) == 0 ))
       then
-      subroutine              @u.14
+      subroutine              @u.11
       cmd[mapidx]="exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}"
       imgpath=${out}
       netexpr=a
@@ -256,7 +224,7 @@ done
 ###################################################################
 # Collate all subnetwork maps
 ###################################################################
-subroutine                    @u.15
+subroutine                    @u.12
 ctemp=$(date +%N)coor2map
 [[ -z ${TMPDIR} ]] && ctemp=${TEMPDIR}/${ctemp}
 cmd[mapidx]="exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}"
