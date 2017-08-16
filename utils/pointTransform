@@ -72,6 +72,7 @@ template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain
 reference=${FSLDIR}/data/standard/MNI152_T1_2mm_brain
 sclib=0
 VOXEL=0
+VOXIN=0
 ###################################################################
 # Parse arguments
 ###################################################################
@@ -132,7 +133,16 @@ if [[ -s ${coors} ]]
    subroutine                 @u.1
    sclib=1
    sclibpath=${coors}
-   load_atlas ${coors}
+   atlas_raw=$(cat ${coors})
+   for c in ${atlas_raw}
+      do
+      c=( ${c//\#/ } )
+      names="${names} ${c[0]}"
+      atlas="${atlas} ${c[1]}"
+      radii="${names} ${c[2]}"
+   done
+   names=( ${names} )
+   radii=( ${radii} )
 else
    subroutine                 @u.2
    atlas=( ${coors//#/ } )
@@ -172,7 +182,7 @@ yorient=${orient:1:1}
 zorient=${orient:2:1}
 rxorient=${ORIENTATION_ITK:0:1}
 ryorient=${ORIENTATION_ITK:1:1}
-rzorient=${ORIENTATION_ITK:2:2}
+rzorient=${ORIENTATION_ITK:2:1}
 [[ ${xorient} != ${rxorient} ]] \
    && x_sign=-1
 [[ ${yorient} != ${ryorient} ]] \
@@ -205,18 +215,17 @@ echo x,y,z,t >> ${ctemp}.csv
 for coor in ${coors[@]}
    do
    subroutine                 @u.6
-   (( ${sclib} == 1 )) && atlas_parse ${coor} && coor=${a_coor}
    ################################################################
    # Move out of voxel space
    ################################################################
    coor=${coor//,/ }
-   if [[ ${space} == VOXEL ]] || (( ${VOXIN} == 1 ))
+   if (( ${VOXIN} == 1 ))
       then
       subroutine              @u.7
       coor=$(echo ${coor}|\
          exec_fsl img2stdcoord \
-         -img ${template} \
-         -std ${template})
+         -img     ${template} \
+         -std     ${template})
    fi
    subroutine                 @u.8
    coor=( ${coor} )
@@ -255,7 +264,7 @@ done
 # Transform all coordinates
 ###################################################################
 subroutine                    @u.10
-${ANTSPATH}/antsApplyTransformsToPoints \
+exec_ants antsApplyTransformsToPoints \
    -d 3 \
    -i ${ctemp}.csv \
    ${antsXFM} \
@@ -278,24 +287,22 @@ if (( ${VOXEL} == 1 ))
    xres=$(exec_fsl fslval ${reference} pixdim1)
    yres=$(exec_fsl fslval ${reference} pixdim2)
    zres=$(exec_fsl fslval ${reference} pixdim3)
-   space="${reference}::VOXEL"
 else
    subroutine                 @u.13
-   space=${reference}
 fi
-echo "SPACE::${space}"
-for ((i=0;i<${#coorsxfm[@]};i++))
+echo "SPACE::${reference}"
+for (( i=0; i<"${#coorsxfm[@]}"; i++ ))
    do
    subroutine                 @u.14
-   coor=${coors[i]}
-   coor_xfm=${coorsxfm[i]}
-   unset a_name a_radius a_coor a_type
+   coor=${coors[i]//,/ }
+   coor_xfm=( ${coorsxfm[i]//,/ } )
+   unset a_name a_radius
    if (( ${sclib} == 1 ))
       then
       subroutine              @u.15
-      atlas_parse ${coor}
+      a_name=${names[i]}
+      a_radius=${radii[i]}
    fi
-   coor_xfm=( ${coor_xfm//,/ } )
    xcoor=${coor_xfm[0]}
    ycoor=${coor_xfm[1]}
    zcoor=${coor_xfm[2]}
@@ -325,7 +332,7 @@ for ((i=0;i<${#coorsxfm[@]};i++))
       then
       subroutine              @u.17
       coor=$(echo ${coor//,/ }|\
-            ${FSLDIR}/bin/std2imgcoord \
+            exec_fsl std2imgcoord \
             -img ${reference} \
             -std ${reference} \
             -vox)
@@ -333,8 +340,9 @@ for ((i=0;i<${#coorsxfm[@]};i++))
    ################################################################
    # Print the output
    ################################################################
+   coor=$(echo ${coor})
    [[ -z ${a_name} ]] && a_name=Region$(($i + 1))
-   echo '#'${a_name}'#'${coor}'#'${a_radius}
+   echo '#'${a_name}'#'${coor// /,}'#'${a_radius}
 done
 
 
