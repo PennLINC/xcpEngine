@@ -88,10 +88,15 @@ echo \
 ###################################################################
 
 ###################################################################
+# Pre-clear any globals to ensure the correct settings are applied.
+###################################################################
+unset XCPEDIR RPATH FSLDIR ANTSPATH AFNI_PATH C3D_PATH NUMOUT
+
+###################################################################
 # XCPEDIR stores a path to the top-level directory containing all
 # of the ingredients necessary to configure and execute functional
 # connectivity pipelines using the XCP Engine.
-XCPEDIR=$(pwd)
+export XCPEDIR=${XCPEDIR}
 ###################################################################
 
 ###################################################################
@@ -101,59 +106,33 @@ XCPEDIR=$(pwd)
 #  * pracma
 #  * signal
 #  * optparse
-RPATH=$(which R)
+export RPATH=$(which R)
 ###################################################################
 
 ###################################################################
 # FSLDIR stores a path to the local installation of FSL.
-FSLDIR=$(echo ${FSLDIR})
+export FSLDIR=${FSLDIR}
 ###################################################################
 
 ###################################################################
 # ANTSPATH stores a path to the local installation of ANTs.
-ANTSPATH=$(echo ${ANTSPATH})
+export ANTSPATH=${ANTSPATH}
 ###################################################################
 
 ###################################################################
 # AFNI_PATH stores a path to the local installation of AFNI.
-AFNI_PATH=$(echo ${AFNI_PATH})
+export AFNI_PATH=${AFNI_PATH}
 ###################################################################
 
 ###################################################################
 # C3D_PATH stores a path to the local installation of C3D.
-C3D_PATH=$(echo ${C3D_PATH})
-###################################################################
-
-###################################################################
-# When subject-specific paths are generalised by utils/genpath,
-# the value of KEEPNUM determines whether leading numeric values
-# not matching subject identifiers are retained.
-KEEPNUM=1
-###################################################################
-
-###################################################################
-# The default value of the starting directory is stored here.
-# Editing this will change where the XCP configuration script
-# searches by default.
-startdir=$(pwd)
+export C3D_PATH=${C3D_PATH}
 ###################################################################
 
 ###################################################################
 # Outputs of modules may be prepended with an integer indicating
 # their context in the pipeline. Set NUMOUT to 1 to enable this.
-NUMOUT=0
-###################################################################
-
-###################################################################
-# Design files and analysis names will be timestamped to the
-# minute if TIMESTAMP is set to 1.
-TIMESTAMP=1
-###################################################################
-
-###################################################################
-# The default pipeline is stored here. Edit this to change the
-# default pipeline.
-pipeline=
+export NUMOUT=0
 ###################################################################
 " >> ${XCPEDIR}/core/global
 
