@@ -24,17 +24,7 @@ out_super=$(abspath ${out_super})
 
 
 ###################################################################
-# Set the generic subject-level output directory.
+# Set the group-level output directory.
 ###################################################################
 echo "· [O][${out_super}]"
-while read -r line
-   do
-   if [[ "$line" =~ 'prefix=' ]]
-      then
-      prefix_generic=${line//prefix=/}
-      break
-   fi
-done < ${design}
-out_generic=${out_super}/${prefix_generic//_/\/}
-out_generic=${out_generic//\/\//\/}
 out_group=${out_super}/group
