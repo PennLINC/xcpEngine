@@ -26,7 +26,8 @@ indesign=$(abspath ${indesign})
 # Load the design file.
 ###################################################################
 echo "· [D][${indesign}]"
-source ${indesign} 2>/dev/null
+source ${XCPEDIR}/core/global 2>/dev/null
+source ${indesign}            2>/dev/null
 ###################################################################
 # Verify that the design variable specified in the design file
 # points to the design file. If it does not, then overwrite it.
