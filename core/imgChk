@@ -11,34 +11,10 @@
 
 err=0
 
-if ! is_image ${img[${subjidx}]} 
+if ! is_image ${img[sub]} 
    then
-   echo "::XCP-ERROR: Unable to locate functional timeseries."
+   echo "[::XCP-ERROR: Unable to locate analyte image.]"
    err=1
-fi
-
-if [[ ${space} == native ]]
-   then
-   if ! is_image ${struct[${subjidx}]}
-      then
-      echo "::XCP-ERROR: Unable to locate structural image."
-      err=1
-   fi
-   if ! is_image ${template}
-      then
-      echo "::XCP-ERROR: Unable to locate template."
-      err=1
-   fi
-   if ! is_image ${xfm_warp}
-      then
-      echo "::XCP-ERROR: Unable to locate warp."
-      err=1
-   fi
-   if ! is_image ${ixfm_warp}
-      then
-      echo "::XCP-ERROR: Unable to locate inverse warp."
-      err=1
-   fi
 fi
 
 (( ${err} == 1 )) && exit 666

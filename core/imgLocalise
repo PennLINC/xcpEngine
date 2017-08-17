@@ -9,50 +9,50 @@
 # Convert the input image to a form suitable for processing by
 # the pipeline.
 ###################################################################
-img=${out}/${prefix}.nii.gz
+img=${out[sub]}/${prefix[sub]}.nii.gz
 rm -f ${img}
 
 ###################################################################
 # Test #1:
 # Is the image formatted as a gzipped NIfTI?
 ###################################################################
-[[ ${img[${subjidx}]} == *".nii.gz" ]]
+contains ${img[sub]} '.nii.gz$'
 flag_imtype=$?
 
 ###################################################################
 # Test #2:
 # Is the image in RPI orientation?
 ###################################################################
-[[ $($AFNI_PATH/@GetAfniOrient ${img[${subjidx}]}) == RPI ]]
+[[ $($AFNI_PATH/@GetAfniOrient ${img[sub]}) == RPI ]]
 flag_orient=$?
 
 ###################################################################
-# Based on the outcomes of all test, perform the appropriate
+# Based on the outcomes of all tests, perform the appropriate
 # operation to localise the image.
 ###################################################################
 case ${flag_imtype}${flag_orient} in
    00)
-      ln -s ${img[${subjidx}]} ${img}
+      ln -s ${img[sub]} ${img}
       ;;
    01)
       $AFNI_PATH/3dresample \
-         -orient RPI \
-         -inset ${img[${subjidx}]} \
-         -prefix ${img}
+         -orient  RPI \
+         -inset   ${img[sub]} \
+         -prefix  ${img}
       ;;
    10)
       $FSLDIR/bin/fslchfiletype NIFTI_GZ \
-         ${img[${subjidx}]} \
+         ${img[sub]} \
          ${img}
       ;;
    11)
       $FSLDIR/bin/fslchfiletype NIFTI_GZ \
-         ${img[${subjidx}]} \
+         ${img[sub]} \
          ${img}
       $AFNI_PATH/3dresample \
          -overwrite \
-         -orient RPI \
-         -inset ${img} \
-         -prefix ${img}
+         -orient  RPI \
+         -inset   ${img} \
+         -prefix  ${img}
       ;;
 esac
