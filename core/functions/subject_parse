@@ -1,23 +1,25 @@
 subject_parse() {
-   local prefix_generic out_generic
-   subject=( ${1//,/ } )
-   if contains ${2} design
-      then
-      source ${design}
-   fi
-   if contains ${2} output
-      then
-      while read -r line
-         do
-         if [[ "$line" =~ 'prefix=' ]]
-            then
-            prefix_generic=${line//prefix=/}
-            out_generic=${out_super}/${prefix_generic//_/\/}
-            out_generic=${out_generic//\/\//\/}
-            break
-         fi
-      done < ${design}
-      eval prefix=${prefix_generic}
-      eval out=${out_generic}
-   fi
+   local i idx subject_vals subject_vars v
+   unset subject prefix[sub] out[sub]
+   cohort_vars=()
+   subject_vals=( ${1//,/ } )
+   # Faster this way than using IFS=','
+   read -r subject_vars < ${2}
+   subject_vars=( ${subject_vars//,/ } )
+   i=0
+   for v in "${subject_vars[@]}"
+      do
+      if contains ${v} '^id[0-9]*$'
+         then
+         idx=${v//id/}
+         eval subject[idx]=\${subject_vals[i]}
+      else
+         cohort_vars+=(${v}[${sub}])
+         eval ${v}[${sub}]=\${subject_vals[i]}
+      fi
+      (( i++ ))
+   done
+   i=$(echo ${subject[@]})
+   prefix[sub]=${i// /_}
+   out[sub]=${out_super}/${i// /\/}
 }
