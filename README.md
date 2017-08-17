@@ -1,10 +1,11 @@
 # new home directory for the XCP Engine
 
 ##### Change log
-v0.6.0 2017.07 (target)
-* Operational modules (18): alff, benchmark, antsCT, confound, dynamics, coreg, gmd, jlf, locreg, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
+v0.6.0 2017.08 (target)
+* Operational modules (17): alff, benchmark, antsCT, confound, coreg, fcon, gmd, jlf, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
 * Internal-only modules (3): asl, dico, dti2xcp
-* Modules added (1): dynamics
+* Modules added (1): fcon
+* Modules assimilated (1): locreg (into confound)
 * Development for the XCP system is now easier. The generalised module header (and other cumbersome code) has been encapsulated in a new directory for core scripts, functions, and text blocks.
 * The code has been extensively rewritten. 
 
