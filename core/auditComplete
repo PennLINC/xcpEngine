@@ -9,6 +9,7 @@
 # module.
 ###################################################################
 
+id_var=( ${prefix[sub]//_/ } )
 modaudit=$(( ${#id_var[@]} + ${cxt} + 1 ))
 subjaudit=$(tail -n1 ${audit})
 replacement=$(echo ${subjaudit}\
