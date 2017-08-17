@@ -86,9 +86,11 @@ ___________________________________________________________________
 
    Optional arguments:
     -m : Execution mode:
-         Input can either be 'c' (for execution on a computing
-         cluster) or 's' (for serial execution on a single
-         machine)[default]
+         Input can either be 's' (for serial execution on a
+         single machine)[default], 'c' (for execution on a
+         computing cluster) or a path to a file (for execution
+         on a computing cluster, subject to the specifications
+         defined in the file).
     -i : Scratch space for pipeline intermediates:
          Some systems operate more quickly when temporary
          files are written in a dedicated scratch space. This
@@ -119,6 +121,7 @@ export trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
+((      $# < 6      ))                             && usage && exit
 while getopts "d:i:c:o:m:t:" OPTION
    do
    case $OPTION in
@@ -139,7 +142,7 @@ while getopts "d:i:c:o:m:t:" OPTION
       ;;
    t)
       trace=${OPTARG}
-      (( ${trace} > 3 )) && trace=3
+      (( trace > 3 )) && trace=3
       ;;
    *)
       echo "Option not recognised: ${OPTARG}"
@@ -166,6 +169,7 @@ source ${XCPEDIR}/core/validateDesign
 source ${XCPEDIR}/core/validateOutput
 source ${XCPEDIR}/core/validateCohort
 source ${XCPEDIR}/core/validateIntermediate
+source ${XCPEDIR}/core/validateMode
 echo \
 "····································································"
 
@@ -180,7 +184,6 @@ export xcp_date=$(date +%Y%m%d%H%M)
 ###################################################################
 # Prepare to analyse the entire pipeline.
 ###################################################################
-analysis_remaining=${pipeline}
 modules=( ${pipeline//,/ } )
 
 
@@ -192,14 +195,14 @@ modules=( ${pipeline//,/ } )
 # Obtain version information for all general and specific
 # dependencies.
 ###################################################################
-source ${XCPEDIR}/core/checkDependenciesXCP
-mkdir -p ${out_group}/dependencies
+source      ${XCPEDIR}/core/checkDependenciesXCP
+mkdir -p    ${out_group}/dependencies
 ###################################################################
 # Write version information to the version tracking file.
 ###################################################################
 env_check=$(cat ${XCPEDIR}/core/ENVCHECK)
 versions=${out_group}/dependencies/${analysis}_${xcp_date}_pipelineDescription.json
-eval "echo -e \"${env_check}\"" >> ${versions}
+printx  "${env_check}" >> ${versions}
 
 
 
@@ -212,12 +215,12 @@ eval "echo -e \"${env_check}\"" >> ${versions}
 #
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
-pipe_start=$(cat ${XCPEDIR}/core/CONSOLE_HEADER)
-pipe_end=$(cat ${XCPEDIR}/core/CONSOLE_FOOTER)
-mod_head=$(cat ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT)
-log_head=$(cat ${XCPEDIR}/core/LOG_HEADER)
-idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
-eval "echo -e \"${pipe_start}\""
+pipe_start=$(  cat ${XCPEDIR}/core/CONSOLE_HEADER)
+pipe_end=$(    cat ${XCPEDIR}/core/CONSOLE_FOOTER)
+mod_head=$(    cat ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT)
+log_head=$(    cat ${XCPEDIR}/core/LOG_HEADER)
+idx_offset=$(  cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+printx         "${pipe_start}"
 
 
 
@@ -226,10 +229,10 @@ eval "echo -e \"${pipe_start}\""
 ###################################################################
 # Run the XCP Localiser first.
 ###################################################################
-subjidx=$(( 1 + ${idx_offset} ))
+subjidx=$(( 1 + idx_offset ))
 module=LOCALISER
-unset ids
-eval "echo -e \"${mod_head}\""
+unset       ids
+printx      "${mod_head}"
 for subject in ${cohort}
    do
    ################################################################
@@ -250,9 +253,6 @@ for subject in ${cohort}
       ${mod_cmd}
       ;;
    c)
-      #############################################################
-      # Initialise the subject's processing log before submitting.
-      #############################################################
       cluster_submit ${mod_cmd}
       ;;
    esac
@@ -281,9 +281,9 @@ for module in ${modules[@]}
    # Obtain paths to the subject- and group-level scripts for
    # the current module, if each exists.
    ################################################################
-   eval "echo -e \"${mod_head}\""
-   modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod 2>/dev/null)
-   modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod 2>/dev/null)
+   printx       "${mod_head}"
+   modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod    2>/dev/null)
+   modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod  2>/dev/null)
    ################################################################
    # SUBJECT-LEVEL PROCESSING
    #---------------------------------------------------------------
@@ -293,7 +293,7 @@ for module in ${modules[@]}
    if [[ -n ${modS} ]]
       then
       unset ids
-      for subject in ${cohort}
+      for   subject in ${cohort}
          do
          ##########################################################
          # Parse subject identifiers, then re-parse the design to
