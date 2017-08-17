@@ -9,20 +9,19 @@
 ###################################################################
 
 space_standard=$(abspath ${XCPEDIR}/space/${standard//\%*/}/${standard//\%*/}_space.json)
-[[ -z ${sequence} ]]       && sequence=native
-set_space                  ${prefix}_${sequence}
+[[ -z ${sequence} ]]       && sequence=native   \
+&& echo "sequence=native"  >> ${design_local_path}
 template=$(json_query      \"${standard}\"      Map   ${space_standard})
 template=$(eval echo ${template})
-antsct=$(  eval echo ${antsct})
-echo "template=${template}"                     >> ${design_local}
+echo "template=${template}"                     >> ${design_local_path}
 ###################################################################
 # Case 1: ANTsCT directory and template are provided.
 ###################################################################
-if [[ -d ${antsct} ]]
+if [[ -d ${antsct[sub]} ]]
    then
-   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[${cxt}]} \
+   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
       -f ${standard}:${template} \
-      -d ${structural}:${antsct} \
+      -d ${structural[sub]}:${antsct[sub]} \
       -s ${space_standard}
 ###################################################################
 # Case 2: Template and structural:template maps are provided.
@@ -36,9 +35,9 @@ elif is_image ${xfm_warp}
    xfms=${xfms// /,}
    ixfms=${xfms// /,}
    ${XCPEDIR}/utils/spaceMetadata \
-      -o ${spaces[${cxt}]} \
+      -o ${spaces[cxt]} \
       -f ${standard}:${template} \
-      -m ${structural}:${struct[${subjidx}]} \
+      -m ${structural[sub]}:${struct[sub]} \
       -x ${xfms} \
       -i ${ixfms} \
       -s ${space_standard}
@@ -47,6 +46,6 @@ elif is_image ${xfm_warp}
 # structural analyses, for instance.
 ###################################################################
 else
-   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[${subjidx}]} \
-       ${space_standard}
+   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
+       -s ${space_standard}
 fi
