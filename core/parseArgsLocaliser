@@ -19,10 +19,10 @@ usage_flag=0
 #  * whether to explicitly trace all commands
 # Trace status is, by default, set to 0 (no trace)
 ###################################################################
-eval "echo -e \"$(<${mod_head})\""
-export trace=0
+printx      ${mod_head}
+export      trace=0
 idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
-if (( $# < 2 ))
+if (( $# < 6 ))
    then
    usage_flag=1
 fi
@@ -33,9 +33,13 @@ while getopts "d:s:t:o:i:" OPTION
       design=${OPTARG}
       ;;
    s)
+      #############################################################
+      # Parse the subject.
+      #############################################################
       subjinfo=( ${OPTARG//:/ } )
-      subjidx=${subjinfo[0]}
-      subject=${subjinfo[1]}
+      sub=${subjinfo[0]}
+      line=$((    sub - idx_offset  ))
+      mapfile     -s    ${line}     -n 1 subject < ${subjinfo[1]}
       ;;
    t)
       trace=${OPTARG}
@@ -65,7 +69,7 @@ shift $((OPTIND-1))
 # been defined
 ###################################################################
 [[ -z ${design}  ]]  && usage_flag=1
-[[ -z ${subjidx} ]]  && usage_flag=1
+[[ -z ${sub} ]]      && usage_flag=1
 ###################################################################
 # Set trace status, if applicable
 ###################################################################
@@ -95,4 +99,5 @@ fi
 ###################################################################
 # Initialise the module.
 ###################################################################
+subject_parse     ${subject}  ${subjinfo[1]}
 source $design
