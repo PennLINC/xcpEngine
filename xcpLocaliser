@@ -29,69 +29,69 @@ routine                       @1    Localising design file...
 # Parse subject
 ###################################################################
 subroutine                    @1.1  [Parsing subject identifiers]
-   subject_dlm=${subject}
-   subject_parse                    ${subject} output
    
 ###################################################################
 # Create output directory
 ###################################################################
 subroutine                    @1.1a [Creating output directory]
-   subroutine                 @1.1b [${out}]
-   outdir=${out}
-   mkdir -p $out
-
-###################################################################
-# Evaluate subject-specific variables
-###################################################################
-subroutine                    @1.2  [Evaluating subject variables]
-   design_local=$(eval "echo -e \"`<${design}`\"")
-   design_local=${design_local//img=/img\[${subjidx}\]=}
-   design_local=${design_local//struct=/struct\[${subjidx}\]=}
+   subroutine                 @1.1b [${out[sub]}]
+   outdir=${out[sub]}
+   mkdir -p $outdir
 
 ###################################################################
 # Write local design file
 ###################################################################
-subroutine                    @1.3  [Writing localised design]
-   design_local_path=${out}/${prefix}.dsn
-   rm -f $design_local_path
-   echo "${design_local}"                       >> ${design_local_path}
-   cat ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT    >> ${design_local_path}
-   eval "echo -e \"${mod_out}\""                >> ${design_local_path}
-   echo "subjidx=$subjidx"                      >> ${design_local_path}
-   echo "subject="${subject_dlm}                >> ${design_local_path}
-   echo "design_local=${design_local_path}"     >> ${design_local_path}
-   echo "out=${out}"                            >> ${design_local_path}
-   [[ -n ${scratch} ]] \
+subroutine                    @1.2  [Writing localised design]
+   design_local_path=${out[sub]}/${prefix[sub]}.dsn
+   rm -f  $design_local_path
+   printx ${design}                             >> ${design_local_path}
+
+###################################################################
+# Evaluate subject-specific variables
+###################################################################
+subroutine                    @1.3  [Evaluating subject variables]
+   cat    ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT >> ${design_local_path}
+   printx ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT  >> ${design_local_path}
+   echo   "sub=$sub"                            >> ${design_local_path}
+   echo   "design_local=${design_local_path}"   >> ${design_local_path}
+   echo   "prefix[$sub]=${prefix[sub]}"         >> ${design_local_path}
+   echo   "out[$sub]=${out[sub]}"               >> ${design_local_path}
+   [[ -n  ${scratch} ]] \
    && echo "scratch=${scratch}"                 >> ${design_local_path}
+   for v in "${cohort_vars[@]}"
+      do
+      echo "${v}=${!v}"                         >> ${design_local_path}
+   done
    source ${design_local_path}
 
 ###################################################################
 # Write path to spaces index
 ###################################################################
 subroutine                    @1.4  [Initialising space mapping]
-   output                     spaces      ${prefix}_spaces.json
-   rm -f                                  ${spaces[${cxt}]}
-   echo '{}'                           >> ${spaces[${cxt}]}
-   source ${XCPEDIR}/core/initSpace
+   output                     spaces      ${prefix[sub]}_spaces.json
+   rm -f                                  ${spaces[cxt]}
+   echo '{}'                           >> ${spaces[cxt]}
+   set_space                  ${prefix[sub]}_${sequence}
+   [[ $space != $standard ]]  && source ${XCPEDIR}/core/initSpace
    write_output               spaces
 
 ###################################################################
 # Write path to derivative image index
 ###################################################################
 subroutine                    @1.5  [Initialising derivative maps]
-   output                     aux_imgs    ${prefix}_derivatives.json
-   rm -f                                  ${aux_imgs[${cxt}]}
-   echo '{}'                           >> ${aux_imgs[${cxt}]}
+   output                     aux_imgs    ${prefix[sub]}_derivatives.json
+   rm -f                                  ${aux_imgs[cxt]}
+   echo '{}'                           >> ${aux_imgs[cxt]}
    write_output               aux_imgs
 
 ###################################################################
 # Write path to network index
 ###################################################################
 subroutine                    @1.6  [Initialising atlas system]
-   mkdir -p                               ${out}/${prefix}_atlas
-   output                     atlas       ${prefix}_atlas/${prefix}_atlas.json
-   rm -f                                  ${atlas[${cxt}]}
-   echo '{}'                           >> ${atlas[${cxt}]}
+   mkdir -p                               ${out[sub]}/${prefix[sub]}_atlas
+   output                     atlas       ${prefix[sub]}_atlas/${prefix[sub]}_atlas.json
+   rm -f                                  ${atlas[cxt]}
+   echo '{}'                           >> ${atlas[cxt]}
    write_output               atlas
 
 ###################################################################
@@ -99,23 +99,23 @@ subroutine                    @1.6  [Initialising atlas system]
 # to the audit file
 ###################################################################
 subroutine                    @1.7  [Priming analytic audit]
-   audit=${out}/${prefix}_logs/${prefix}_audit
+   audit=${out[sub]}/${prefix[sub]}_logs/${prefix[sub]}_audit
    rm -f ${audit}
-   echo "audit=${audit}"                        >> ${design_local_path}
+   echo "audit[sub]=${audit}"                  >> ${design_local_path}
    
    ################################################################
    # Prepare the audit header, which will contain information
    # about the processing status of the current subject
    ################################################################
-   source ${XCPEDIR}/core/getIdentifiers
-   id_vals=$(echo ${id_val[@]}|sed s@' '@','@g)
-   id_vars=$(echo ${id_var[@]}|sed s@' '@','@g)
+   id_vals=${prefix[sub]//_/,}
+   id_vars=$(echo    ${!subject[@]})
+   id_vars=$(echo    id${id_vars// /,id})
    audit_var=${id_vars},localiser,${pipeline}
    
    ################################################################
    # Write the contents of the audit file.
    ################################################################
-   num_mods=$(( $(${XCPEDIR}/core/numInstances ',' ${pipeline}) + 2 ))
+   num_mods=$(( $(ninstances , ${pipeline}) + 2 ))
    audit_val=${id_vals}$(printf ',0%.0s' $(seq 1 ${num_mods}))
    echo "${audit_var}"                          >> ${audit}
    echo "${audit_val}"                          >> ${audit}
@@ -124,9 +124,9 @@ subroutine                    @1.7  [Priming analytic audit]
 # Write path to index of quality variables
 ###################################################################
 subroutine                    @1.8  [Priming quality assessment]
-   quality=${out}/${prefix}_quality.csv
+   quality=${out[sub]}/${prefix[sub]}_quality.csv
    rm -f ${quality}
-   echo "quality=${quality}"                    >> ${design_local_path}
+   echo "quality[sub]=${quality}"               >> ${design_local_path}
    echo "${id_vars}"                            >> ${quality}
    echo "${id_vals}"                            >> ${quality}
 routine_end
