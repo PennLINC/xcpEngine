@@ -166,9 +166,9 @@ echo \
 Constructing a pipeline based on user specifications
 ····································································"
 source ${XCPEDIR}/core/validateDesign
-source ${XCPEDIR}/core/validateOutput
-source ${XCPEDIR}/core/validateCohort
 source ${XCPEDIR}/core/validateIntermediate
+source ${XCPEDIR}/core/validateCohort
+source ${XCPEDIR}/core/validateOutput
 source ${XCPEDIR}/core/validateMode
 echo \
 "····································································"
@@ -195,14 +195,13 @@ modules=( ${pipeline//,/ } )
 # Obtain version information for all general and specific
 # dependencies.
 ###################################################################
-source      ${XCPEDIR}/core/checkDependenciesXCP
-mkdir -p    ${out_group}/dependencies
+source         ${XCPEDIR}/core/checkDependenciesXCP
+mkdir -p       ${out_group}/dependencies
 ###################################################################
 # Write version information to the version tracking file.
 ###################################################################
-env_check=$(cat ${XCPEDIR}/core/ENVCHECK)
 versions=${out_group}/dependencies/${analysis}_${xcp_date}_pipelineDescription.json
-printx  "${env_check}" >> ${versions}
+printx         ${XCPEDIR}/core/ENVCHECK >> ${versions}
 
 
 
@@ -215,12 +214,7 @@ printx  "${env_check}" >> ${versions}
 #
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
-pipe_start=$(  cat ${XCPEDIR}/core/CONSOLE_HEADER)
-pipe_end=$(    cat ${XCPEDIR}/core/CONSOLE_FOOTER)
-mod_head=$(    cat ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT)
-log_head=$(    cat ${XCPEDIR}/core/LOG_HEADER)
-idx_offset=$(  cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
-printx         "${pipe_start}"
+printx         ${XCPEDIR}/core/CONSOLE_HEADER
 
 
 
@@ -229,11 +223,13 @@ printx         "${pipe_start}"
 ###################################################################
 # Run the XCP Localiser first.
 ###################################################################
-subjidx=$(( 1 + idx_offset ))
+cxt=0
+sub=$(( 1 + idx_offset ))
+substart=${sub}
 module=LOCALISER
 unset       ids
-printx      "${mod_head}"
-for subject in ${cohort}
+printx      ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT
+for subject in ${cohort[@]:substart}
    do
    ################################################################
    # Run the localiser.
@@ -241,13 +237,13 @@ for subject in ${cohort}
    mod_cmd="
    ${XCPEDIR}/xcpLocaliser
       -d ${design}
-      -s ${subjidx}:${subject}
+      -s ${sub}:${incohort}
       -o ${out_super}
       ${scratch}
       -t ${trace}
       "
-   subject_parse        ${subject} output
-   mkdir -p             ${out}/${prefix}_logs
+   subject_parse        ${subject} ${incohort}
+   mkdir -p             ${out[sub]}/${prefix[sub]}_logs
    case ${mode} in
    s)
       ${mod_cmd}
@@ -256,7 +252,7 @@ for subject in ${cohort}
       cluster_submit ${mod_cmd}
       ;;
    esac
-   (( subjidx++ ))
+   (( sub++ ))
 done
 ###################################################################
 # Wait for the localiser to run to completion. (cluster mode)
@@ -266,6 +262,7 @@ if [[ ${mode} == c ]]
    sleep 5
    ${XCPEDIR}/utils/qstatus ${ids}
 fi
+(( cxt++ ))
 
 
 
@@ -274,14 +271,13 @@ fi
 ###################################################################
 # Then, iterate through all modules.
 ###################################################################
-cxt=1
 for module in ${modules[@]}
    do
    ################################################################
    # Obtain paths to the subject- and group-level scripts for
    # the current module, if each exists.
    ################################################################
-   printx       "${mod_head}"
+   printx        ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT
    modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod    2>/dev/null)
    modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod  2>/dev/null)
    ################################################################
@@ -293,19 +289,15 @@ for module in ${modules[@]}
    if [[ -n ${modS} ]]
       then
       unset ids
-      for   subject in ${cohort}
+      sub=${substart}
+      for   subject in ${cohort[@]:substart}
          do
-         ##########################################################
-         # Parse subject identifiers, then re-parse the design to
-         # evaluate subject-specific variables.
-         ##########################################################
-         subject_parse ${subject} output
          ##########################################################
          # Before running the subject, verify that it has not
          # yielded erroneous output or been labelled for exclusion
          # for quality reasons.
          ##########################################################
-         logfile=${out}/${prefix}_logs/${analysis}_${xcp_date}_${prefix}LOG
+         logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
          ${XCPEDIR}/core/validateSubject ${logfile} ${subject}
          (( $? == 1 )) && continue
          ##########################################################
@@ -313,7 +305,7 @@ for module in ${modules[@]}
          ##########################################################
          mod_cmd="
          ${modS}
-            -d ${out}/${prefix}.dsn
+            -d ${out[sub]}/${prefix[sub]}.dsn
             -c ${cxt}
             -t ${trace}
             "
@@ -325,6 +317,7 @@ for module in ${modules[@]}
             cluster_submit ${mod_cmd}
             ;;
          esac
+         (( sub++ ))
       done
       #############################################################
       # Wait for all subject-level routines to run to completion.
@@ -374,4 +367,4 @@ done
 ###################################################################
 # Conclude the analysis.
 ###################################################################
-eval "echo -e \"${pipe_end}\""
+printx         ${XCPEDIR}/core/CONSOLE_FOOTER
