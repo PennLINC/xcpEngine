@@ -26,10 +26,9 @@ incohort=$(abspath ${incohort})
 # Remove any duplications from the cohort file.
 ###################################################################
 echo "· [C][${incohort}]"
-${XCPEDIR}/utils/removeDuplicates.R \
-   -c ${incohort} \
-   -o ${out_generic}
+${XCPEDIR}/utils/removeDuplicates.R -c ${incohort}
 ###################################################################
 # Obtain the subject list.
 ###################################################################
-cohort=$(cat ${incohort} 2>/dev/null)
+idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+mapfile -O ${idx_offset} cohort < ${incohort}
