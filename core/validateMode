@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Ensure that the optional argument "execution mode" is reasonably
+# defined.
+###################################################################
+case ${mode} in
+s)
+   echo "· [M][Executing serially]"
+   ;;
+c)
+   echo "· [M][Executing in cluster mode]"
+   ;;
+*)
+   if [[ -s ${mode} ]]
+      then
+      source ${mode}
+      mode=c
+      echo "· [M][Executing in cluster mode]"
+   else
+      echo \
+"· [M]Invalid execution mode: ${mode}
+· [M]Aborting"
+      usage
+      exit 2
+   fi
+   ;;
+esac
