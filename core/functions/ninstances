@@ -1,0 +1,6 @@
+ninstances() {
+   char=$1
+   shift
+   reduced="${@//[^${char}]}"
+   printf ${#reduced}
+}
