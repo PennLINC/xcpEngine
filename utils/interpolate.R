@@ -80,11 +80,17 @@ trep <- as.numeric(system(syscom,intern=TRUE))
 suppressMessages(require(ANTsR))
 img <- antsImageRead(impath,4)
 if (!is.na(maskpath)){
-   mask <- antsImageRead(maskpath,4)
-   imgmat <- timeseries2matrix(img,mask)
+   mask                 <- antsImageRead(maskpath,4)
+   logmask              <- (mask == 1)
+   imgmat               <- as.array(img)[logmask]
+   dim(imgmat)          <- c(sum(logmask),dim(img)[4])
+   imgmat               <- t(imgmat)
 } else {
-   imgmat <- img[img > -Inf]
+   imgmat               <- as.array(img)
+   dim(imgmat)          <- c(prod(dim(img)[c(1,2,3)]),dim(img)[4])
+   imgmat               <- t(imgmat)
 }
+sink(NULL)
 nvol_total <- dim(imgmat)[1]
 nvox <- dim(imgmat)[2]
 
@@ -261,14 +267,18 @@ for (curbin in 1:nbins){
 ###################################################################
 # 11. Save out image
 ###################################################################
+img_interpol                <- as.array(img)
 if (!is.na(maskpath)){
-   img_interpol <- matrix2timeseries(img,mask,imgmat_interpol)
+   for (i in 1:nvol) {
+      img_interpol[,,,i][logmask] <- imgmat_interpol[i,]
+   }
 } else {
-   img_interpol <- img
-   imgmat_interpol <- t(imgmat_interpol)
-   dim(imgmat_interpol) <- NULL
-   img_interpol[img > -Inf] <- imgmat_interpol
+   for (i in 1:nvol) {
+      img_interpol[img > -Inf] <- t(imgmat_interpol)
+   }
 }
+img_interpol                <- as.antsImage(img_interpol)
+sink("/dev/null")
+antsCopyImageInfo(img,img_interpol)
 antsImageWrite(img_interpol,out)
 sink(NULL)
-
