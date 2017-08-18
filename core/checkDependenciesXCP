@@ -30,7 +30,7 @@ ver_AFNI=$(${AFNI_PATH}/afni -ver 2>/dev/null|head -n1)
 if [[ -z ${ver_AFNI} ]]
    then
    echo \
-   "[Warning: AFNI version unknown]"
+   "· [Warning: AFNI version unknown]"
    ver_AFNI=unknown
 else
    ver_AFNI="${ver_AFNI//Version /}"
@@ -44,7 +44,7 @@ ver_ANTS=$(grep -ir _GIT_VERSION_HASH ${ANTSPATH}/../ANTS-build/*.cmake 2>/dev/n
 if [[ -z ${ver_ANTS} ]]
    then
    echo \
-   "[Warning: ANTs version unknown]"
+   "· [Warning: ANTs version unknown]"
    ver_ANTS=unknown
 else
    ver_ANTS="${ver_ANTS}"
@@ -58,7 +58,7 @@ ver_FSL=$(command -v ${FSLDIR}/bin/fsl 2>/dev/null|rev|cut -d"/" -f3|rev)
 if [[ -z ${ver_FSL} ]]
    then
    echo \
-   "[Warning: FSL version unknown]"
+   "· [Warning: FSL version unknown]"
    ver_FSL=unknown
 else 
    ver_FSL="${ver_FSL}"
@@ -72,7 +72,7 @@ ver_C3D=$(${C3D_PATH}/c3d -version 2>/dev/null|awk '{print $2}')
 if [[ -z ${ver_C3D} ]]
    then
    echo \
-   "[Warning: Convert3D version unknown]"
+   "· [Warning: Convert3D version unknown]"
    ver_C3D=unknown
 else
    ver_C3D="${ver_C3D}"
