@@ -1,3 +1,4 @@
 printx() {
-   eval "echo -e \"$(<${@})\""
+   local file=$(<${@})
+   eval "echo -e \"${file//\"/\\\"}\""
 }
