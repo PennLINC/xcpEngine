@@ -11,8 +11,8 @@
 
 id_var=( ${prefix[sub]//_/ } )
 modaudit=$(( ${#id_var[@]} + ${cxt} + 1 ))
-subjaudit=$(tail -n1 ${audit})
+subjaudit=$(tail -n1 ${audit[sub]})
 replacement=$(echo ${subjaudit}\
    |sed s@[^,]*@@${modaudit}\
    |sed s@',,'@',1,'@)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
+sed -i s@${subjaudit}@${replacement}@g ${audit[sub]}

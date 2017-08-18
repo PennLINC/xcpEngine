@@ -96,9 +96,9 @@ subroutine                    @1.6  [Initialising atlas system]
 # to the audit file
 ###################################################################
 subroutine                    @1.7  [Priming analytic audit]
-   audit=${out[sub]}/${prefix[sub]}_logs/${prefix[sub]}_audit
-   rm -f ${audit}
-   echo "audit[$sub]=${audit}"                 >> ${design[sub]}
+   audit[sub]=${out[sub]}/${prefix[sub]}_logs/${prefix[sub]}_audit.csv
+   rm -f ${audit[sub]}
+   echo "audit[$sub]=${audit[sub]}"             >> ${design[sub]}
    
    ################################################################
    # Prepare the audit header, which will contain information
@@ -114,8 +114,8 @@ subroutine                    @1.7  [Priming analytic audit]
    ################################################################
    num_mods=$(( $(ninstances , ${pipeline}) + 2 ))
    audit_val=${id_vals}$(printf ',0%.0s' $(seq 1 ${num_mods}))
-   echo "${audit_var}"                          >> ${audit}
-   echo "${audit_val}"                          >> ${audit}
+   echo "${audit_var}"                          >> ${audit[sub]}
+   echo "${audit_val}"                          >> ${audit[sub]}
 
 ###################################################################
 # Write path to index of quality variables
