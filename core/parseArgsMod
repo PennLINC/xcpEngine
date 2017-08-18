@@ -19,9 +19,9 @@ usage_flag=0
 #  * whether to explicitly trace all commands
 # Trace status is, by default, set to 0 (no trace)
 ###################################################################
-eval "echo -e \"$(<${mod_head})\""
-export trace=0
-if (( $# < 2 ))
+printx      ${mod_head}
+trace=0
+if (( $# < 4 ))
    then
    usage_flag=1
 fi
@@ -92,7 +92,6 @@ fi
 ###################################################################
 source ${design_local}
 design=${design_local}
-subject_parse ${subject}
 ###################################################################
 # Verify that all compulsory inputs are present.
 ###################################################################
