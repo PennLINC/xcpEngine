@@ -101,7 +101,7 @@ subroutine                    @1.6  [Initialising atlas system]
 subroutine                    @1.7  [Priming analytic audit]
    audit=${out[sub]}/${prefix[sub]}_logs/${prefix[sub]}_audit
    rm -f ${audit}
-   echo "audit[sub]=${audit}"                  >> ${design_local_path}
+   echo "audit[$sub]=${audit}"                 >> ${design_local_path}
    
    ################################################################
    # Prepare the audit header, which will contain information
@@ -126,7 +126,7 @@ subroutine                    @1.7  [Priming analytic audit]
 subroutine                    @1.8  [Priming quality assessment]
    quality=${out[sub]}/${prefix[sub]}_quality.csv
    rm -f ${quality}
-   echo "quality[sub]=${quality}"               >> ${design_local_path}
+   echo "quality[$sub]=${quality}"              >> ${design_local_path}
    echo "${id_vars}"                            >> ${quality}
    echo "${id_vals}"                            >> ${quality}
 routine_end
