@@ -3,7 +3,7 @@
    \"Design\" : \"${indesign}\",
    \"Cohort\" : \"${incohort}\",
    \"Output\" : \"${out_super}\",
-   \"Scratch\" : \"${scratch}\",
+   \"Scratch\" : \"${scratch//\-i /}\",
    \"ExecutionMode\" : \"${mode}\",
    \"Versions\" : {
       \"Processing\" : \"${ver_XCP}\",
