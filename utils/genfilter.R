@@ -91,7 +91,6 @@ hpf <- opt$hipass
 lpf <- opt$lopass
 ripple <- opt$rpass
 ripple2 <- opt$rstop
-sink("/dev/null")
 
 ###################################################################
 # Compute the sequence's repetition time
@@ -144,18 +143,23 @@ if (type=='butterworth'){
 ###################################################################
 # 2. Load in the image
 ###################################################################
+sink("/dev/null")
 suppressMessages(require(ANTsR))
 img <- antsImageRead(impath,4)
 if (!is.na(maskpath)){
-   mask <- antsImageRead(maskpath,4)
-   imgmat <- timeseries2matrix(img,mask)
+   mask                 <- antsImageRead(maskpath,4)
+   logmask              <- (mask == 1)
+   imgmat               <- as.array(img)[logmask]
+   dim(imgmat)          <- c(sum(logmask),dim(img)[4])
+   imgmat               <- t(imgmat)
 } else {
-   imgmat <- as.array(img)
-   dim(imgmat) <- c(prod(dim(img)[c(1,2,3)]),dim(img)[4])
-   imgmat <- t(imgmat)
+   imgmat               <- as.array(img)
+   dim(imgmat)          <- c(prod(dim(img)[c(1,2,3)]),dim(img)[4])
+   imgmat               <- t(imgmat)
 }
 nvol <- dim(imgmat)[1]
 nvox <- dim(imgmat)[2]
+sink(NULL)
 
 ###################################################################
 # 3. Apply the filter
@@ -174,13 +178,18 @@ for (vox in 1:nvox){
 ###################################################################
 # 4. Write out the image
 ###################################################################
+img_filt                <- as.array(img)
 if (!is.na(maskpath)){
-   img_filt <- matrix2timeseries(img,mask,imgmat_filt)
+   for (i in 1:nvol) {
+      img_filt[,,,i][logmask] <- imgmat_filt[i,]
+   }
 } else {
-   img_filt <- img
-   imgmat_filt <- t(imgmat_filt)
-   dim(imgmat_filt) <- NULL
-   img_filt[img > -Inf] <- imgmat_filt
+   for (i in 1:nvol) {
+      img_filt[img > -Inf] <- t(imgmat_filt)
+   }
 }
+img_filt                <- as.antsImage(img_filt)
+sink("/dev/null")
+antsCopyImageInfo(img,img_filt)
 antsImageWrite(img_filt,out)
 sink(NULL)
