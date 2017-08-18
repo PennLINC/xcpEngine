@@ -8,6 +8,6 @@ write_derivative() {
       local deriv="$(echo ${deriv} ${deriv_cur}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
       rm -f ${aux_imgs[${sub}]}
       echo "${deriv}"|$JQ_PATH --sort-keys . >> ${aux_imgs[${sub}]}
-      echo "${1}[${sub}]=${!derivative}" >> ${design_local}
+      echo "${1}[${sub}]=${!derivative}" >> ${design[sub]}
    fi
 }

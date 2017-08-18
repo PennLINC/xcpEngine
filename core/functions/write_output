@@ -2,6 +2,6 @@ write_output() {
    local output=${1}[${cxt}]
    if [[ -e ${!output} ]]
       then
-      echo "${1}[${sub}]=${!output}" >> ${design_local}
+      echo "${1}[${sub}]=${!output}" >> ${design[sub]}
    fi
 }

@@ -3,6 +3,6 @@ write_config_safe() {
    local config_check=${1}[${sub}]
    if [[ -z ${!config_check} ]]
       then
-      echo "${1}[${sub}]=${!config}" >> ${design_local}
+      echo "${1}[${sub}]=${!config}" >> ${design[sub]}
    fi
 }
