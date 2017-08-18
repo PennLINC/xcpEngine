@@ -1,13 +1,5 @@
 apply_exec() {
-   local deriv derivative derivatives echo_var final_cmd match output output_long property properties value values process_generic process_specific d_map d_mod d_mod_idx d_stat d_name d_space d_type
-   declare -A properties=(
-      ["Map"]="d_map"
-      ["ProvenanceIndex"]="d_mod_idx"
-      ["ProvenanceName"]="d_mod_name"
-      ["Space"]="d_space"
-      ["Statistic"]="d_stat"
-      ["Type"]="d_type"
-   )
+   local deriv derivative derivatives echo_var final_cmd match output output_long property value values process_generic process_specific d
    if contains ${1} ":"
       then
       property=$(strslice  "${1}" 1 :)
@@ -38,23 +30,23 @@ apply_exec() {
       derivative_parse ${derivative}
       for value in "${values[@]}"
          do
-         [[ ${value} == all ]]                        && match=1 && break
-         contains ${!properties[$property]} ${value}  && match=1 && break
+         [[ ${value} == all ]]               && match=1 && break
+         contains ${d[${property}]} ${value} && match=1 && break
       done
       if (( ${match} == 1 ))
          then
-         [[ -n ${echo_var} ]] && echo "· [${!echo_var}]"
-         process_specific=${process_generic//%INPUT/${d_map}}
+         [[ -n ${echo_var} ]] && echo "· [${d[${echo_var}]}]"
+         process_specific=${process_generic//%INPUT/${d[Map]}}
          process_specific=${process_specific//%OUTPUT/${output_long}}
-         process_specific=${process_specific//%NAME/${d_name}}
+         process_specific=${process_specific//%NAME/${d[Name]}}
          exec_${process_specific}
          if is_image ${output_long}
             then
             output_long=${output_long//.nii.gz/}
-            derivative        ${d_name}            ${output_long//%NAME/${d_name}}
-            derivative_config ${d_name} Type       ${d_type}
-            derivative_config ${d_name} Space      ${d_space}
-            derivative_config ${d_name} Statistic  ${d_stat}
+            derivative        ${d[Name]}              ${output_long//%NAME/${d[Name]}}
+            derivative_config ${d[Name]}  Type        ${d[Type]}
+            derivative_config ${d[Name]}  Space       ${d[Space]}
+            derivative_config ${d[Name]}  Statistic   ${d[Statistic]}
          fi
       fi
    done
