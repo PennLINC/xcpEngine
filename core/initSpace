@@ -53,7 +53,9 @@ fi
 configure         structural        ${prefix[sub]}_anatomical
 write_config      structural
 ###################################################################
-#     Case 1: ANTsCT directory and template are provided.
+#     Case 1: ANTsCT directory and template are provided. In this
+#             case, the anatomical map should be added to the
+#             design to support coregistration.
 ###################################################################
 if [[ -d ${antsct[sub]} ]]
    then
@@ -62,6 +64,9 @@ if [[ -d ${antsct[sub]} ]]
       -f ${standard}:${template} \
       -d ${structural[cxt]}:${antsct[sub]} \
       -s ${spaces[cxt]}
+   struct[$sub]=$(abspath     $(eval      echo $(cat ${spaces[cxt]}\
+              |$JQ_PATH       --raw-output '.'\"${structural[cxt]}\"'.Map')))
+   echo "struct[$sub]=${struct[sub]}"     >> ${design[sub]}
 ###################################################################
 #     Case 2: Template and structural:template maps are provided.
 ###################################################################
