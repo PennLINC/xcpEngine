@@ -6,28 +6,68 @@
 
 ###################################################################
 # Generate the space metadata file for the current analysis.
+# Up to three spaces must be configured:
+# (1) Native space:     the coordinate space of the analyte
+# (2) Standard space:   a common space for group comparisons
+# (3) Anatomical space: the maximal-resolution space available for
+#                       the current subject
 ###################################################################
 
-space_standard=$(abspath ${XCPEDIR}/space/${standard//\%*/}/${standard//\%*/}_space.json)
-[[ -z ${sequence} ]]       && sequence=native   \
-&& echo "sequence=native"  >> ${design_local_path}
-template=$(json_query      \"${standard}\"      Map   ${space_standard})
-template=$(eval echo ${template})
-echo "template=${template}"                     >> ${design_local_path}
 ###################################################################
-# Case 1: ANTsCT directory and template are provided.
+# (1) NATIVE SPACE.
+#     For this one, we only need to decide what to call the space,
+#     since no metadata exist for it until processing.
+###################################################################
+[[ -z ${sequence} ]]       && sequence=native   \
+&& echo "sequence=native"  >> ${design[sub]}
+set_space                     ${prefix[sub]}_${sequence}
+subroutine                    @1.4.1   [Native space: ${space[sub]}]
+
+###################################################################
+# (2) STANDARD SPACE.
+#     Standard space attempts to match an appropriate definition
+#     stored in the `space` subdirectory of the processing system.
+#     If no definition is found, then it is assumed that the user
+#     does not intend to standardise.
+###################################################################
+space_standard=$(abspath ${XCPEDIR}/space/${standard//\%*/}/${standard//\%*/}_space.json)
+if [[ -s ${space_standard} ]]
+   then
+   subroutine                 @1.4.2a     [Standard space: ${standard//\%*/}]
+   printx ${space_standard}   >>          ${spaces[cxt]}
+   template=$(abspath         $(eval      echo $(cat ${spaces[cxt]}\
+              |$JQ_PATH       --raw-output '.'\"${standard}\"'.Map')))
+   echo "template=${template}"            >> ${design[sub]}
+else
+   subroutine                 @1.4.2b     [No standard space]
+   echo '{}'                  >>          ${spaces[cxt]}
+fi
+
+###################################################################
+# (3) ANATOMICAL SPACE.
+#     This one is more complicated, since there isn't necessarily
+#     an existing metadata file for the anatomical space
+#     definition. The work of assembling a metadata file is
+#     delegated to a utility script if necessary.
+###################################################################
+configure         structural        ${prefix[sub]}_anatomical
+write_config      structural
+###################################################################
+#     Case 1: ANTsCT directory and template are provided.
 ###################################################################
 if [[ -d ${antsct[sub]} ]]
    then
+   subroutine                 @1.4.3a     [Anatomical space: ${structural[cxt]//\%*/}]
    ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
       -f ${standard}:${template} \
-      -d ${structural[sub]}:${antsct[sub]} \
-      -s ${space_standard}
+      -d ${structural[cxt]}:${antsct[sub]} \
+      -s ${spaces[cxt]}
 ###################################################################
-# Case 2: Template and structural:template maps are provided.
+#     Case 2: Template and structural:template maps are provided.
 ###################################################################
 elif is_image ${xfm_warp}
    then
+   subroutine                 @1.4.3b     [Anatomical space: ${structural[cxt]//\%*/}]
    xfms="${xfm_rigid} ${xfm_affine} ${xfm_warp} ${xfm_resample}"
    ixfms="${ixfm_resample} ${ixfm_warp} ${ixfm_affine} ${ixfm_rigid}"
    xfms=$( echo ${xfms})
@@ -37,15 +77,14 @@ elif is_image ${xfm_warp}
    ${XCPEDIR}/utils/spaceMetadata \
       -o ${spaces[cxt]} \
       -f ${standard}:${template} \
-      -m ${structural[sub]}:${struct[sub]} \
+      -m ${structural[cxt]}:${struct[sub]} \
       -x ${xfms} \
       -i ${ixfms} \
-      -s ${space_standard}
+      -s ${spaces[cxt]}
 ###################################################################
-# Case 3: Nothing is provided. This might be the case for
-# structural analyses, for instance.
+#     Case 3: Nothing is provided. This might be the case for
+#     structural analyses, for instance.
 ###################################################################
 else
-   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
-       -s ${space_standard}
+   subroutine                 @1.4.3c
 fi
