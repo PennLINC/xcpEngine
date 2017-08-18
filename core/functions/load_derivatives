@@ -1,6 +1,6 @@
 load_derivatives() {
    local derivative deriv_json d_map d_name dfloat_names
-   deriv_json=${aux_imgs[${subjidx}]}
+   deriv_json=${aux_imgs[sub]}
    [[ -n ${1} ]] && deriv_json=${1}
    deriv[${cxt}]=$(cat ${deriv_json} 2>/dev/null)
    dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )

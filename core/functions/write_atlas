@@ -1,9 +1,9 @@
 write_atlas() {
-   local path=${atlas[${subjidx}]}
+   local path=${atlas[sub]}
    if [[ -n ${1} ]]
       then
       local path=${1}
    fi
    rm -f ${path}
-   echo ${atlas[${cxt}]}|$JQ_PATH --sort-keys . >> ${path}
+   echo ${atlas[cxt]}|$JQ_PATH --sort-keys . >> ${path}
 }

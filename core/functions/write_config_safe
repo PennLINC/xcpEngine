@@ -1,8 +1,8 @@
 write_config_safe() {
    local config=${1}[${cxt}]
-   local config_check=${1}[${subjidx}]
+   local config_check=${1}[${sub}]
    if [[ -z ${!config_check} ]]
       then
-      echo "${1}[${subjidx}]=${!config}" >> ${design_local}
+      echo "${1}[${sub}]=${!config}" >> ${design_local}
    fi
 }

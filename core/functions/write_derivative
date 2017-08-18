@@ -4,10 +4,10 @@ write_derivative() {
       then
       local d_name=${1}
       local deriv_cur=$(echo ${derivatives_floating}|$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
-      local deriv=$(cat ${aux_imgs[${subjidx}]} 2>/dev/null)
+      local deriv=$(cat ${aux_imgs[${sub}]} 2>/dev/null)
       local deriv="$(echo ${deriv} ${deriv_cur}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
-      rm -f ${aux_imgs[${subjidx}]}
-      echo "${deriv}"|$JQ_PATH --sort-keys . >> ${aux_imgs[${subjidx}]}
-      echo "${1}[${subjidx}]=${!derivative}" >> ${design_local}
+      rm -f ${aux_imgs[${sub}]}
+      echo "${deriv}"|$JQ_PATH --sort-keys . >> ${aux_imgs[${sub}]}
+      echo "${1}[${sub}]=${!derivative}" >> ${design_local}
    fi
 }
