@@ -93,11 +93,6 @@ fi
 source ${design_local}
 design=${design_local}
 ###################################################################
-# Prime space, derivative, and atlas arrays. (bash v<4.2)
-###################################################################
-unset       s d a
-declare  -A s d a
-###################################################################
 # Verify that all compulsory inputs are present.
 ###################################################################
 if ! is_image ${out}/${prefix}.nii.gz

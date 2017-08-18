@@ -14,3 +14,9 @@ readonly SIGMA=2.35482004503
 readonly PI=3.14159265359
 readonly NBASE=2.71828182846
 readonly PHI=1.61803398875
+
+###################################################################
+# Prime space, derivative, and atlas arrays. (bash v<4.2)
+###################################################################
+unset       s d a
+declare  -A s d a
