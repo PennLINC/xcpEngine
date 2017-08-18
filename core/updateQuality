@@ -9,5 +9,5 @@
 # course of processing.
 ###################################################################
 rm -f ${quality}
-echo ${qvars} >> ${quality}
-echo ${qvals} >> ${quality}
+echo ${qvars} >> ${quality[sub]}
+echo ${qvals} >> ${quality[sub]}
