@@ -1,20 +1,10 @@
 derivative_parse() {
-   unset d_map d_mod d_mod_idx d_mod_stats d_name d_space d_type
-   d_name=${1}
-   if [[ ${2} == floating ]]
-      then
-      d_map=$(       json_query  ${d_name}   Map               "${derivatives_floating}")
-      d_type=$(      json_query  ${d_name}   Type              "${derivatives_floating}")
-      d_space=$(     json_query  ${d_name}   Space             "${derivatives_floating}")
-      d_mod=$(       json_query  ${d_name}   ProvenanceName    "${derivatives_floating}")
-      d_mod_idx=$(   json_query  ${d_name}   ProvenanceIndex   "${derivatives_floating}")
-      d_stat=$(      json_query  ${d_name}   Statistic         "${derivatives_floating}")
-   else
-      d_map=$(       json_query  ${d_name}   Map               "${deriv[${cxt}]}")
-      d_type=$(      json_query  ${d_name}   Type              "${deriv[${cxt}]}")
-      d_space=$(     json_query  ${d_name}   Space             "${deriv[${cxt}]}")
-      d_mod=$(       json_query  ${d_name}   ProvenanceName    "${deriv[${cxt}]}")
-      d_mod_idx=$(   json_query  ${d_name}   ProvenanceIndex   "${deriv[${cxt}]}")
-      d_stat=$(      json_query  ${d_name}   Statistic         "${deriv[${cxt}]}")
-   fi
+   local key keys
+   d=()
+   d[name]=${1}
+   keys=$(echo "${deriv[${cxt}]}"|$JQ_PATH --raw-output '.'${d[name]}'|keys[]')
+   for key in $keys
+      do
+      d[${key}]=$(eval echo $(json_query ${d[name]} ${key} "${deriv[${cxt}]}"))
+   done
 }
