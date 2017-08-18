@@ -1,5 +1,6 @@
 apply_exec() {
-   local deriv derivative derivatives echo_var final_cmd match output output_long property value values process_generic process_specific d
+   local deriv derivative derivatives echo_var final_cmd match output output_long property value values process_generic process_specific
+   declare -A d
    if contains ${1} ":"
       then
       property=$(strslice  "${1}" 1 :)
