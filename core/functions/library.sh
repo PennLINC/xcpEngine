@@ -42,6 +42,7 @@ source ${LIBRARY}/load_transforms
 source ${LIBRARY}/ninstances
 source ${LIBRARY}/output
 source ${LIBRARY}/printx
+source ${LIBRARY}/proc_afni
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
 source ${LIBRARY}/quality_metric
