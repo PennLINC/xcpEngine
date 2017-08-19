@@ -178,14 +178,14 @@ unset buffer
 subroutine                    @0.1
 
 ###################################################################
-# Parse the processing code to determine what analysis to run next.
-# Current options include:
+# Parse the control sequence to determine what routine to run next.
+# Available routines include:
 #  * DVO: discard volumes
 #  * MPR: compute motion-related variables, including RPs
 #  * MCO: correct for subject motion
 #  * STM: slice timing correction
 #  * BXT: brain extraction
-#  * DMT: demean and detrend timeseries
+#  * DMT: demean and detrend time series
 #  * DSP: despike timeseries
 #  * SPT: spatial filter
 #  * TMP: temporal filter
@@ -214,9 +214,9 @@ while (( ${#rem} > 0 ))
          # specified by user input.
          #
          # If dvols is positive, discard the first n volumes
-         # from the BOLD timeseries.
+         # from the BOLD time series.
          # If dvols is negative, discard the last n volumes
-         # from the BOLD timeseries.
+         # from the BOLD time series.
          ##########################################################
          routine              @1    Discarding ${prestats_dvols[cxt]} volumes
          if ! is_image ${intermediate}_${cur}.nii.gz \
@@ -243,16 +243,16 @@ while (( ${#rem} > 0 ))
                ${vol_end}
          fi
          ##########################################################
-         # Repeat for any derivatives of the BOLD timeseries that
-         # are also timeseries.
+         # Repeat for any derivatives of the BOLD time series that
+         # are also time series.
          #
-         # Why? Unless the number of volumes in the BOLD timeseries
-         # and in derivative timeseries -- for instance, local
-         # regressors -- is identical, any linear model
+         # Why? Unless the number of volumes in the BOLD time
+         # series and in derivative time series -- for instance,
+         # local regressors -- is identical, any linear model
          # incorporating the derivatives as predictors would
          # introduce a frameshift error; this may result in
-         # incorrect estimates or even a failure to compute parameter
-         # estimates for the model.
+         # incorrect estimates or even a failure to compute
+         # parameter estimates for the model.
          #
          # In many cases, discarding of initial volumes represents
          # the first stage of fMRI processing. In these cases,
@@ -260,7 +260,7 @@ while (( ${#rem} > 0 ))
          # module should never enter the conditional block below.
          ##########################################################
          subroutine           @1.5
-         apply_exec timeseries ${intermediate}_${cur}_%NAME ECHO:d_name \
+         apply_exec timeseries ${intermediate}_${cur}_%NAME ECHO:Name \
             fsl     fslroi     %INPUT %OUTPUT  ${vol_begin} ${vol_end}
          ##########################################################
          # Compute the updated volume count.
@@ -347,28 +347,27 @@ while (( ${#rem} > 0 ))
             # this must be changed.
             #######################################################
             subroutine        @2.3
-            exec_sys rm -rf ${mcdir[cxt]}
+            exec_sys rm -rf   ${mcdir[cxt]}
             exec_sys mkdir -p ${mcdir[cxt]}
-            exec_sys mv -f ${intermediate}_mc.par \
-               ${rps[cxt]}
-            exec_sys mv -f ${intermediate}_mc_abs_mean.rms \
-               ${abs_mean_rms[cxt]}
-            exec_sys mv -f ${intermediate}_mc_abs.rms \
-               ${abs_rms[cxt]}
-            exec_sys mv -f ${intermediate}_mc_rel_mean.rms \
-               ${rel_mean_rms[cxt]}
-            exec_sys rm -f ${relrms[cxt]}
-            exec_sys echo 0                         >> ${rel_rms[cxt]}
+            exec_sys mv -f    ${intermediate}_mc.par \
+                              ${rps[cxt]}
+            exec_sys mv -f    ${intermediate}_mc_abs_mean.rms \
+                              ${abs_mean_rms[cxt]}
+            exec_sys mv -f    ${intermediate}_mc_abs.rms \
+                              ${abs_rms[cxt]}
+            exec_sys mv -f    ${intermediate}_mc_rel_mean.rms \
+                              ${rel_mean_rms[cxt]}
+            exec_sys rm -f    ${relrms[cxt]}
+            exec_sys echo     0                     >> ${rel_rms[cxt]}
             exec_sys cat ${intermediate}_mc_rel.rms >> ${rel_rms[cxt]}
             #######################################################
             # Compute the maximum value of motion.
             #######################################################
             subroutine        @2.4
-            exec_xcp \
-               1dTool.R \
-               -i ${rel_rms[cxt]} \
-               -o max \
-               -f ${rel_max_rms[cxt]}
+            exec_xcp 1dTool.R \
+               -i    ${rel_rms[cxt]} \
+               -o    max \
+               -f    ${rel_max_rms[cxt]}
             #######################################################
             # Generate summary plots for motion correction.
             #######################################################
@@ -404,8 +403,8 @@ while (( ${#rem} > 0 ))
             #######################################################
             subroutine        @2.6  [Computing framewise displacement]
             exec_xcp fd.R \
-               -r ${rps[cxt]} \
-               -o ${fd[cxt]}
+               -r    ${rps[cxt]} \
+               -o    ${fd[cxt]}
             if [[ ${prestats_censor_cr[cxt]} == fd ]]
                then
                subroutine     @2.7  [Quality criterion: FD]
@@ -439,22 +438,19 @@ while (( ${#rem} > 0 ))
                # specified by the user to determine whether each
                # volume should be masked out.
                ####################################################
-               exec_xcp \
-                  tmask.R \
-                  -s ${!censor_criterion} \
-                  -t ${censor_threshold} \
-                  -o ${tmask[cxt]} \
-                  -m ${prestats_censor_contig[cxt]}
+               exec_xcp tmask.R \
+                  -s    ${!censor_criterion} \
+                  -t    ${censor_threshold} \
+                  -o    ${tmask[cxt]} \
+                  -m    ${prestats_censor_contig[cxt]}
                configure      censored    1
                ####################################################
                # Determine the number of volumes that fail the
                # motion criterion and print this.
                ####################################################
                subroutine        @2.10 [Evaluating data quality]
-               num_censor=$(exec_sys cat ${tmask[cxt]} \
-                  |grep -o 0 \
-                  |wc -l)
-               echo ${num_censor} >> ${motion_vols[cxt]}
+               censor_ts=$(  echo               $(<${tmask[cxt]}))
+               ninstances 0 ${censor_ts// /} >> ${motion_vols[cxt]}
             fi
             exec_sys rm -f ${referenceVolume[cxt]}
          fi # run check statement
