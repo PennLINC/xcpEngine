@@ -315,10 +315,10 @@ for class in "${!tissue_classes[@]}"
                -mask          ${!class_mask} \
                -use_nonmask \
                ${img}
-            ##########################################################
+            #######################################################
             # . . . and confine the nuisance signal to the existing
             # brain mask.
-            ##########################################################
+            #######################################################
             exec_fsl fslmaths ${!class_local} \
                -mul ${mask[sub]} \
                ${!class_local}
@@ -391,10 +391,10 @@ if [[ ${confound_gsr[cxt]} != N ]]
             -mask             ${mask[sub]} \
             -use_nonmask \
             ${img}
-         #############################################################
+         ##########################################################
          # . . . and confine the nuisance signal to the existing
          # brain mask.
-         #############################################################
+         ##########################################################
          exec_fsl fslmaths ${lmsLocal[cxt]} \
             -mul  ${mask[sub]} \
             ${lmsLocal[cxt]}

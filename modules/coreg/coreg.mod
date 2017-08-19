@@ -530,7 +530,7 @@ fi
 # Compute the structural image in analytic space, and generate
 # a mask for that image.
 ###################################################################
-if [[ ! -e ${s2emask[cxt]} ]] \
+if ! is_image ${s2emask[cxt]} \
 || rerun
    then
    subroutine                 @8.4  [Preparing inverse mask]
