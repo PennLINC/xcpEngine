@@ -2,6 +2,7 @@ processed() {
    local processed=${1}[${cxt}]
    if is_image ${!processed}
       then
+      echo "${1}[${sub}]=${!processed}" >> ${design[sub]}
       rm -f ${out}/${prefix}.nii.gz
       ln -s ${!processed} ${out}/${prefix}.nii.gz
    fi
