@@ -3,6 +3,6 @@ quality_metric() {
    if [[ -e ${!quality_value_file} ]]
       then
       qvars=${qvars},${1}
-      qvals=${qvals},$(cat ${!quality_value_file})
+      qvals=${qvals},$(<${!quality_value_file})
    fi
 }

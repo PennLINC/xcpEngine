@@ -20,32 +20,32 @@ warpspace() {
    else
       target=${target[0]}
       #############################################################
-      # Determine the coordinate space of origin, if it has not
-      # been passed explicitly.
+      #     Determine the coordinate space of origin, if it has not
+      #     been passed explicitly.
       #
-      # Case 1: The input is the analyte.
+      #     Case 1: The input is the analyte.
       #############################################################
       if [[ ${i} == ${img} ]]
          then
          source=${space}
       #############################################################
-      # Case 2: The input is an atlas.
+      #     Case 2: The input is an atlas.
       #############################################################
       elif contains ${i} "atlas:"
          then
          i=${i//atlas:/}
-         source=$(   json_query  ${i}  Space    "${atlas[${cxt}]}")
-         i=$(        json_query  ${i}  Map      "${atlas[${cxt}]}")
+         source=$(   json_query  ${i}  Space    "${atlas[cxt]}")
+         i=$(        json_query  ${i}  Map      "${atlas[cxt]}")
       #############################################################
-      # Case 3: The input is a derivative.
+      #     Case 3: The input is a derivative.
       #############################################################
       elif ! is_image ${i}
          then
          source=$(   json_query  ${i}  Space    "${aux_imgs[sub]}")
          i=$(        json_query  ${i}  Map      "${aux_imgs[sub]}")
       #############################################################
-      # Case 4: The source is otherwise unspecified. Default to
-      # analyte space.
+      #     Case 4: The source is otherwise unspecified. Default to
+      #     analyte space.
       #############################################################
       else
          source=${space}
@@ -60,36 +60,36 @@ warpspace() {
    ################################################################
    # [2] PARSE SPATIAL METADATA
    #---------------------------------------------------------------
-   # Parse available spaces (nodes) and transforms (edges)
+   #        Parse available spaces (nodes) and transforms (edges)
    ################################################################
    objects=$(cat  ${spaces[sub]}   |$JQ_PATH      'keys[]')
    for k    in    $objects
       do
       #############################################################
-      # Determine whether each object in the spatial metadata is
-      # a space or a transform. Spaces include the 'Map' property,
-      # while transforms do not.
+      #     Determine whether each object in the spatial metadata
+      #     is a space or a transform. Spaces include the 'Map'
+      #     property, while transforms do not.
       #############################################################
       node_chk=$( json_query  ${k}  Map               ${spaces[sub]})
       k=${k//\"/}
       #############################################################
-      # Add spaces to the list of available nodes.
-      # FIrst ensure that the space is not already listed.
+      #     Add spaces to the list of available nodes.
+      #     First ensure that the space is not already listed.
       #############################################################
       if [[       -n ${node_chk} ]]
          then
          k=${k//\%*/}
          [[ ${nodes//${k}/} == ${nodes} ]] && nodes="${nodes} ${k}"
       #############################################################
-      # Add transforms to the list of available (directed) edges.
-      # First ensure that the transform is not already listed.
+      #     Add transforms to the list of available edges.
+      #     First ensure that the transform is not already listed.
       #############################################################
       else
          [[ ${edges//${k}/} == ${edges} ]] && edges="${edges} ${k}" || continue
          ##########################################################
-         # TODO
-         # Multilayer matrix support. Transforms contributed by
-         # different programs should be routed differently.
+         #  TODO
+         #  Multilayer matrix support. Transforms contributed by
+         #  different programs should be routed differently.
          ##########################################################
          a_chk=$( json_query  \"${k}\"  TransformANTs     ${spaces[sub]})
          f_chk=$( json_query  \"${k}\"  TransformFSL      ${spaces[sub]})
@@ -111,19 +111,19 @@ warpspace() {
    ################################################################
    # [3] ROUTE TRANSFORM
    #---------------------------------------------------------------
-   # Determine the shortest route from the source space to the
-   # target space.
+   #        Determine the shortest route from the source space to
+   #        the target space.
    #
-   # This routing uses Dijkstra's algorithm on the graph defined
-   # from the metadata above.
+   #        This routing uses Dijkstra's algorithm on the graph
+   #        defined from the metadata above.
    ################################################################
    nodes=$(echo $nodes)
    edges=$(echo $edges)
    nodes=${nodes// /,}
    edges=${edges// /,}
    ################################################################
-   # Determine whether the input is an image or a coordinate.
-   # If it's an image, use the forward transforms.
+   #        Determine whether the input is an image or a coordinate
+   #        If it's an image, use the forward transforms.
    ################################################################
    if is_image ${i}
       then
@@ -133,7 +133,7 @@ warpspace() {
          -s ${source//\%*/} \
          -t ${target//\%*/}) )
    ################################################################
-   # If it's a coordinate, use the inverse transforms.
+   #        If it's a coordinate, use the inverse transforms.
    ################################################################
    else
       route=( $(${XCPEDIR}/utils/warprouter.R \
@@ -145,15 +145,15 @@ warpspace() {
    ################################################################
    # [4] EXECUTE TRANSFORM
    #---------------------------------------------------------------
-   # Obtain the target reference and perform the warp.
+   #        Obtain the target reference and perform the warp.
    ################################################################
    target=$(json_query \"${target}\" Map ${spaces[sub]})
    target=$(eval echo ${target})
    layer=${route[0]}
    route=( "${route[@]:1}" )
    ################################################################
-   # Determine whether the input is an image or a coordinate.
-   # If it's an image, use antsApplyTransforms.
+   #        Determine whether the input is an image or a coordinate.
+   #        If it's an image, use antsApplyTransforms.
    ################################################################
    if is_image ${i}
       then
@@ -171,9 +171,10 @@ warpspace() {
          -i ${i}  -r    ${target} \
          -o ${o}  ${n}  ${xfm}
    ################################################################
-   # If it's a coordinate, use pointTransform.
-   # Note that this is routed backwards.
-   # Also note that a reference image is required for the source.
+   #        If it's a coordinate, use pointTransform.
+   #        Note that this is routed backwards.
+   #        Also note that a reference image is required for the
+   #        source.
    ################################################################
    else
       source=$(json_query \"${source}\" Map ${spaces[sub]})

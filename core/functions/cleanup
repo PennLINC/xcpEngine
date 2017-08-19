@@ -1,4 +1,4 @@
 cleanup() {
    local cleanup=${mod_name_short}_cleanup[${cxt}]
-   [[ ${!cleanup} == Y ]]
+   (( ${!cleanup} == 1 ))
 }
