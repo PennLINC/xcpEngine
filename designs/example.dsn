@@ -7,22 +7,21 @@
 
 ###################################################################
 # This design file stores the values of all variables required to
-# execute a complete task-free functional connectivity pipeline.
-# You may execute the analysis specified in this design file by
-# calling (in any bash terminal):
+# execute a complete neuroimage processing pipeline. You may
+# execute the analysis specified in this design file by calling
+# (in any bash terminal):
 #
 # xcpEngine example.dsn
 #
 # Variables fall into five general categories:
 # * ANALYSIS VARIABLES are used at all stages of this analysis.
 # * PIPELINE specifies the modules that comprise the analysis.
-# * GLOBAL VARIABLES are used at all stages of all analyses.
 # * MODULE VARIABLES are used during one stage of the analysis.
 #                  These are typically array variables with array
-#                  indices equal to the index of the analysis
-#                  stage during which they are used.
+#                  indices equal to the index of the module that
+#                  calls them.
 # * OUTPUT VARIABLES may be used at all stages of the analysis.
-#                  These are sometimes array variables with array
+#                  These are typically array variables with array
 #                  indices equal to the value of the primary
 #                  subject identifier. They will appear only in
 #                  localised design files.
@@ -35,36 +34,16 @@
 
 analysis=accelerator_$(whoami)
 design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
-subjects_ct=5
-img=${subject[2]}
-struct=${subject[3]}/ExtractedBrain0N4.nii.gz
-prefix=${subject[0]}_${subject[1]}
-xfm_warp=${subject[3]}/SubjectToTemplate1Warp.nii.gz
-ixfm_warp=${subject[3]}/TemplateToSubject0Warp.nii.gz
-xfm_affine=${subject[3]}/SubjectToTemplate0GenericAffine.mat
-ixfm_affine=${subject[3]}/TemplateToSubject1GenericAffine.mat
-space=native
-template=/data/joy/BBL/projects/xcpWorkshop/input/template/PNCtemplate2mm.nii.gz
+struct[sub]=${antsct[sub]}/ExtractedBrain0N4.nii.gz
+sequence=rest
+structural[sub]=${prefix[sub]}_anatomical
+standard=PNC%2x2x2
 
 ###################################################################
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,norm #,seed,roiquant,norm
-
-###################################################################
-# GLOBAL VARIABLES
-###################################################################
-
-export XCPEDIR=${XCPEDIR}
-export RPATH=/share/apps/R/R-3.1.1/bin/R
-export FSLDIR=/share/apps/fsl/5.0.8
-export AFNI_PATH=/share/apps/afni/linux_xorg7_64_2014_06_16
-export ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin/
-export C3D_PATH=/share/apps/c3d/c3d-1.0.0-Linux-x86_64/bin
-KEEPNUM=1
-NUMOUT=0
-TIMESTAMP=1
+pipeline=prestats,coreg,confound #,regress,fcon,reho,alff,net,roiquant,seed,norm
 
 ###################################################################
 # 1 PRESTATS
@@ -80,7 +59,6 @@ prestats_tmpf_order[1]=1
 prestats_tmpf_pass[1]=2
 prestats_tmpf_ripple[1]=0.5
 prestats_tmpf_ripple2[1]=20
-prestats_tmpf_dvols[1]=2
 prestats_hipass[1]=0.01
 prestats_lopass[1]=0.08
 prestats_fit[1]=0.3
@@ -89,49 +67,50 @@ prestats_dmdt[1]=auto
 prestats_censor[1]=none,0.25
 prestats_censor_cr[1]=rms
 prestats_censor_contig[1]=0
-prestats_rerun[1]=N
-prestats_cleanup[1]=Y
-prestats_process[1]=DVOMPRMCOBXTDSPDMT
+prestats_rerun[1]=0
+prestats_cleanup[1]=1
+prestats_process[1]=DVO-MPR-MCO-BXT-DSP-DMT
 
 ###################################################################
 # 2 COREG
 ###################################################################
 
 coreg_cfunc[2]=bbr
-coreg_seg[2]=${subject[3]}/BrainSegmentation.nii.gz
+coreg_seg[2]=${antsct[sub]}/BrainSegmentation.nii.gz
 coreg_wm[2]=3
 coreg_refwt[2]=NULL
 coreg_inwt[2]=NULL
-coreg_qacut[2]=0.8,0.9
-coreg_rerun[2]=N
-coreg_cleanup[2]=Y
+coreg_qacut[2]=0.8,0.9,0.7,0.8
+coreg_decide[2]=1
+coreg_rerun[2]=0
+coreg_cleanup[2]=1
 
 ###################################################################
 # 3 CONFOUND
 ###################################################################
 
-confound_rp[3]=Y
-confound_rms[3]=N
+confound_rp[3]=1
+confound_rms[3]=0
 confound_gm[3]=N
-confound_gm_path[3]=${subject[3]}/BrainSegmentation.nii.gz
+confound_gm_path[3]=${antsct[sub]}/BrainSegmentation.nii.gz
 confound_gm_val[3]=2,4
 confound_gm_ero[3]=0
-confound_wm[3]=Y
-confound_wm_path[3]=${subject[3]}/BrainSegmentation.nii.gz
+confound_wm[3]=mean
+confound_wm_path[3]=${antsct[sub]}/BrainSegmentation.nii.gz
 confound_wm_val[3]=3
 confound_wm_ero[3]=2
-confound_csf[3]=Y
-confound_csf_path[3]=${subject[3]}/BrainSegmentation.nii.gz
+confound_csf[3]=mean
+confound_csf_path[3]=${antsct[sub]}/BrainSegmentation.nii.gz
 confound_csf_val[3]=1
 confound_csf_ero[3]=1
-confound_gsr[3]=Y
+confound_gsr[3]=mean
 confound_cc[3]=0
 confound_past[3]=0
 confound_dx[3]=1
 confound_sq[3]=2
 confound_custom[3]=
-confound_rerun[3]=N
-confound_cleanup[3]=Y
+confound_rerun[3]=0
+confound_cleanup[3]=1
 
 ###################################################################
 # 4 REGRESS
@@ -140,75 +119,54 @@ confound_cleanup[3]=Y
 regress_tmpf[4]=butterworth
 regress_hipass[4]=0.01
 regress_lopass[4]=0.08
-regress_rerun[4]=N
-regress_cleanup[4]=Y
 regress_despike[4]=Y
 regress_spkreg[4]=Y
 regress_tmpf_order[4]=1
 regress_tmpf_pass[4]=2
 regress_tmpf_ripple[4]=0.5
 regress_tmpf_ripple2[4]=20
-regress_tmpf_dvols[4]=0
 regress_smo[4]=6
 regress_sptf[4]=susan
-regress_usan[4]=${subject[3]}/BrainSegmentation.nii.gz
-regress_usan_space[4]=str
+regress_usan[4]=${antsct[sub]}/BrainSegmentation.nii.gz
+regress_usan_space[4]=structural
+regress_rerun[4]=0
+regress_cleanup[4]=1
+regress_process[4]=DSP-SPR-TMP-CEN-REG-SMO
 
 ###################################################################
 # 5 FCON
 ###################################################################
 
-fcon_atlas[5]=/home/rciric/xcpAccelerator/xcpEngine/atlas/metadata/TEMPatlas_PNC_std.json
+fcon_atlas[5]=${XCPEDIR}/space/PNC/PNC_atlas.json
 fcon_metric[5]=corrcoef
 fcon_thr[5]=N
 fcon_window[5]=10
 fcon_pad[5]=FALSE
-fcon_rerun[5]=N
-fcon_cleanup[5]=Y
-
-###################################################################
-# 5 SEED
-###################################################################
-
-sca_lib[5]=/data/joy/BBL/projects/xcpWorkshop/config/example.sclib
-sca_metric[5]=corrcoef
-sca_sptf[5]=susan
-sca_smo[5]=6
-sca_rerun[5]=N
-sca_cleanup[5]=Y
+fcon_rerun[5]=0
+fcon_cleanup[5]=1
 
 ###################################################################
 # 6 REHO
 ###################################################################
 
-reho_roi[6]=
 reho_nhood[6]=vertices
 reho_roimean[6]=Y
 reho_roikw[6]=N
 reho_sptf[6]=susan
 reho_smo[6]=6
-reho_rerun[6]=N
-reho_cleanup[6]=Y
+reho_rerun[6]=0
+reho_cleanup[6]=1
 
 ###################################################################
 # 7 ALFF
 ###################################################################
 
-alff_roi[7]=
 alff_hipass[7]=0.01
 alff_lopass[7]=0.08
 alff_sptf[7]=susan
 alff_smo[7]=6
-alff_rerun[7]=N
-alff_cleanup[7]=Y
-
-###################################################################
-# 8 ROIQUANT
-###################################################################
-
-roiquant_roi[8]=/data/joy/BBL/projects/xcpWorkshop/config/example.parc
-roiquant_rerun[8]=N
-roiquant_cleanup[8]=Y
+alff_rerun[7]=0
+alff_cleanup[7]=1
 
 ###################################################################
 # 8 NET
@@ -216,13 +174,33 @@ roiquant_cleanup[8]=Y
 net_com[8]=genlouvain
 net_gamma[8]=1,7
 net_consensus[8]=1
-net_rerun[8]=N
-net_cleanup[8]=Y
+net_rerun[8]=0
+net_cleanup[8]=1
 
 ###################################################################
-# 10 NORM
+# 9 ROIQUANT
 ###################################################################
 
-norm_prog[9]=ants
-norm_rerun[9]=N
-norm_cleanup[9]=Y
+roiquant_atlas[9]=${XCPEDIR}/space/PNC/PNC_atlas.json
+roiquant_vol[9]=1
+roiquant_rerun[9]=0
+roiquant_cleanup[9]=1
+
+###################################################################
+# 10 SEED
+###################################################################
+
+seed_lib[10]=/home/rciric/xcpAccelerator/xcpEngine/00TEST/examplePNC.sclib
+seed_smo[10]=6
+seed_sptf[10]=susan
+seed_usan[10]=${antsct[sub]}/BrainSegmentation.nii.gz
+seed_usan_space[10]=structural
+seed_rerun[10]=0
+seed_cleanup[10]=1
+
+###################################################################
+# 11 NORM
+###################################################################
+
+norm_rerun[11]=0
+norm_cleanup[11]=1
