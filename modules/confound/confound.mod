@@ -117,12 +117,12 @@ routine                       @0    Generating confound matrix
 # subroutine of the prestats module prior to their use in the
 # confound matrix here.
 ###################################################################
-if [[ ${confound_rp[${cxt}]} == Y ]]
+if (( ${confound_rp[cxt]} == 1 ))
    then
    subroutine                 @1    [Including realignment parameters]
    exec_xcp mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${rps[${subjidx}]} \
+      -x ${confmat[cxt]} \
+      -y ${rps[sub]} \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
@@ -136,12 +136,12 @@ fi
 # Relative RMS motion should have been computed during the MPR
 # subroutine of the prestats module prior to its use here.
 ###################################################################
-if [[ ${confound_rms[${cxt}]} == Y ]]
+if (( ${confound_rms[cxt]} == 1 ))
    then
    subroutine                 @2    Including relative RMS displacement
    exec_xcp mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${relrms[${subjidx}]} \
+      -x ${confmat[cxt]} \
+      -y ${relrms[sub]} \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
@@ -164,13 +164,14 @@ fi
 #  * Move the mask into the same space as the primary BOLD
 #    timeseries.
 ###################################################################
-tissue_classes=( gm wm csf )
-tissue_classes_long=( 'grey matter' 'white matter' 'cerebrospinal fluid' )
+declare           -A tissue_classes
+tissue_classes=(  [gm]="grey matter"
+                  [wm]="white matter"
+                 [csf]="cerebrospinal fluid" )
 cc_components=0
-for c in $(seq 0 ${#tissue_classes})
+for class in "${!tissue_classes[@]}"
    do
-   class=${tissue_classes[${c}]}
-   class_name=${tissue_classes_long[${c}]}
+   class_name=${tissue_classes[$class]}
    class_include='confound_'${class}'['${cxt}']'
    
    if [[ ${!class_include} != N ]]
@@ -218,7 +219,7 @@ for c in $(seq 0 ${#tissue_classes})
       warpspace \
          ${mask}.nii.gz \
          ${!class_mask} \
-         ${structural}:${space} \
+         ${structural[sub]}:${space[sub]} \
          NearestNeighbor
       #############################################################
       # Determine whether to extract a mean timecourse or to apply
@@ -226,7 +227,7 @@ for c in $(seq 0 ${#tissue_classes})
       #############################################################
       ts=${intermediate}_phys_${class}
       eval  "${class}=${ts}.1D"
-      if [[ ${!class_include} == Y ]]
+      if [[ ${!class_include} == mean ]]
          then
          ##########################################################
          # Extract the mean timecourse from the eroded and
@@ -238,7 +239,7 @@ for c in $(seq 0 ${#tissue_classes})
             -o          ${ts}.1D \
             -m          ${!class_mask}
          exec_xcp mbind.R \
-            -x    ${confmat[${cxt}]} \
+            -x    ${confmat[cxt]} \
             -y    ${ts}.1D \
             -o    ${confmat_path}
          output   confmat        ${prefix}_confmat.1D
@@ -319,7 +320,7 @@ for c in $(seq 0 ${#tissue_classes})
             # brain mask.
             ##########################################################
             exec_fsl fslmaths ${!class_local} \
-               -mul ${mask[${subjidx}]} \
+               -mul ${mask[sub]} \
                ${!class_local}
          fi
       fi
@@ -335,7 +336,7 @@ done
 ###################################################################
 # MEAN GLOBAL SIGNAL
 ###################################################################
-if [[ ${confound_gsr[${cxt}]} != N ]]
+if [[ ${confound_gsr[cxt]} != N ]]
    then
    subroutine                 @4    [Global/local signals]
    ################################################################
@@ -346,10 +347,10 @@ if [[ ${confound_gsr[${cxt}]} != N ]]
    #    utility. This may yield unexpected results if data has
    #    been demeaned or standard-scored.
    ################################################################
-   if is_image ${mask[${subjidx}]}
+   if is_image ${mask[sub]}
       then
       subroutine              @4.1
-      maskpath=${mask[${subjidx}]}
+      maskpath=${mask[sub]}
    else
       subroutine              @4.2a Unable to identify mask
       subroutine              @4.2b Generating a mask using 3dAutomask
@@ -358,45 +359,45 @@ if [[ ${confound_gsr[${cxt}]} != N ]]
          -prefix  ${maskpath} \
          -dilate  3 \
          -q \
-         ${referenceVolume[${subjidx}]}
+         ${referenceVolume[sub]}
    fi
    ################################################################
    # Extract the mean timecourse from the global (whole-brain)
    # mask, and catenate it into the confound matrix.
    ################################################################
-   if [[ ${confound_gsr[${cxt}]} == Y ]]
+   if [[ ${confound_gsr[cxt]}   ==  mean ]]
       then
       subroutine              @4.3  Including mean global signal
       ts=${intermediate}_phys_gsr
       exec_fsl fslmeants   -i ${img} -o ${ts} -m ${maskpath}
       exec_xcp mbind.R \
-         -x    ${confmat[${cxt}]} \
+         -x    ${confmat[cxt]} \
          -y    ${ts} \
          -o    ${confmat_path}
       output   confmat                 ${prefix}_confmat.1D
-   elif [[ ${confound_gsr[${cxt}]} ==  "local" ]]
+   elif [[ ${confound_gsr[cxt]} ==  local ]]
       then
       routine                 @4.4  "Including mean local signal in confound model."
-      if ! is_image ${lmsLocal[${cxt}]} \
+      if ! is_image ${lmsLocal[cxt]} \
       || rerun
          then
          subroutine           @4.5  "Modelling local signal: All voxels"
-         subroutine           @4.6  Radius of influence: ${confound_gsr_rad[${cxt}]}
-         exec_sys             rm -f ${lmsLocal[${cxt}]}
+         subroutine           @4.6  Radius of influence: ${confound_gsr_rad[cxt]}
+         exec_sys             rm -f ${lmsLocal[cxt]}
          exec_afni            3dLocalstat \
-            -prefix           ${lmsLocal[${cxt}]} \
-            -nbhd             'SPHERE('"${confound_lms_rad[${cxt}]}"')' \
+            -prefix           ${lmsLocal[cxt]} \
+            -nbhd             'SPHERE('"${confound_lms_rad[cxt]}"')' \
             -stat             mean \
-            -mask             ${mask[${subjidx}]} \
+            -mask             ${mask[sub]} \
             -use_nonmask \
             ${img}
          #############################################################
          # . . . and confine the nuisance signal to the existing
          # brain mask.
          #############################################################
-         exec_fsl fslmaths ${lmsLocal[${cxt}]} \
-            -mul  ${mask[${subjidx}]} \
-            ${lmsLocal[${cxt}]}
+         exec_fsl fslmaths ${lmsLocal[cxt]} \
+            -mul  ${mask[sub]} \
+            ${lmsLocal[cxt]}
          routine_end
       fi
    fi
@@ -421,12 +422,12 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if (( ${confound_past[${cxt}]} > 0 ))
+if (( ${confound_past[cxt]} > 0 ))
    then
-   subroutine                 @5    "Including ${confound_past[${cxt}]} prior time point(s)"
+   subroutine                 @5    "Including ${confound_past[cxt]} prior time point(s)"
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
-      -y    OPprev${confound_past[${cxt}]} \
+      -x    ${confmat[cxt]} \
+      -y    OPprev${confound_past[cxt]} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
@@ -450,12 +451,12 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if (( ${confound_dx[${cxt}]} > 0 ))
+if (( ${confound_dx[cxt]} > 0 ))
    then
-   subroutine                 @6    "[Including ${confound_dx[${cxt}]} derivative(s)]"
+   subroutine                 @6    "[Including ${confound_dx[cxt]} derivative(s)]"
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
-      -y    OPdx${confound_dx[${cxt}]} \
+      -x    ${confmat[cxt]} \
+      -y    OPdx${confound_dx[cxt]} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
@@ -479,12 +480,12 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if (( ${confound_sq[${cxt}]} > 1 ))
+if (( ${confound_sq[cxt]} > 1 ))
    then
-   subroutine                 @7    "[Including ${confound_sq[${cxt}]} power(s)]"
+   subroutine                 @7    "[Including ${confound_sq[cxt]} power(s)]"
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
-      -y    OPpower${confound_sq[${cxt}]} \
+      -x    ${confmat[cxt]} \
+      -y    OPpower${confound_sq[cxt]} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
@@ -496,9 +497,9 @@ fi
 ###################################################################
 # COMPONENT CORRECTION (COMPCOR)
 ###################################################################
-if (( ${confound_cc[${cxt}]} > 0 ))
+if (( ${confound_cc[cxt]} > 0 ))
    then
-   subroutine                 @8    "[Including ${confound_cc[${cxt}]} CompCor signal(s)]"
+   subroutine                 @8    "[Including ${confound_cc[cxt]} CompCor signal(s)]"
    ################################################################
    # Determine whether a brain mask exists for the current subject.
    #  * If one does, use it as the basis for computing nuisance
@@ -507,10 +508,10 @@ if (( ${confound_cc[${cxt}]} > 0 ))
    #    utility. This may yield unexpected results if data has
    #    been demeaned or standard-scored.
    ################################################################
-   if is_image ${mask[${subjidx}]}
+   if is_image ${mask[sub]}
       then
       subroutine              @8.1
-      maskpath=${mask[${subjidx}]}
+      maskpath=${mask[sub]}
    elif ! is_image ${maskpath}
       then
       subroutine              @8.2  Unable to identify mask.
@@ -520,7 +521,7 @@ if (( ${confound_cc[${cxt}]} > 0 ))
          -prefix  ${maskpath} \
          -dilate  3 \
          -q \
-         ${referenceVolume[${subjidx}]}
+         ${referenceVolume[sub]}
    fi
    ################################################################
    # Perform CompCor using the ANTs ImageMath utility.
@@ -535,7 +536,7 @@ if (( ${confound_cc[${cxt}]} > 0 ))
    exec_ants         ImageMath 4 ${intermediate}_confound.nii.gz \
       CompCorrAuto   ${img} \
       ${maskpath} \
-      ${confound_cc[${cxt}]}
+      ${confound_cc[cxt]}
    readarray      ccdata   <  ${intermediate}_confound_compcorr.csv
    for (( cidx=1; ${cidx}  <= $(( ${#ccdata[@]} - 1));   cidx++ ))
       do
@@ -547,7 +548,7 @@ if (( ${confound_cc[${cxt}]} > 0 ))
    # Add the component timeseries to the confound matrix.
    ################################################################
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
+      -x    ${confmat[cxt]} \
       -y    ${cc} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
@@ -565,29 +566,29 @@ fi
 # The limited customisability here will need to be
 # addressed in the near future.
 ###################################################################
-if is+numeric ${confound_gm[${cxt}]}
+if is+numeric ${confound_gm[cxt]}
    then
-   subroutine                 @9.1  "[Including ${confound_gm[${cxt}]} GM aCompCor signal(s)]"
+   subroutine                 @9.1  "[Including ${confound_gm[cxt]} GM aCompCor signal(s)]"
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
+      -x    ${confmat[cxt]} \
       -y    ${gm} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
-if is+numeric ${confound_wm[${cxt}]}
+if is+numeric ${confound_wm[cxt]}
    then
-   subroutine                 @9.2  "[Including ${confound_wm[${cxt}]} WM aCompCor signal(s)]"
+   subroutine                 @9.2  "[Including ${confound_wm[cxt]} WM aCompCor signal(s)]"
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
+      -x    ${confmat[cxt]} \
       -y    ${wm} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
-if is+numeric ${confound_csf[${cxt}]}
+if is+numeric ${confound_csf[cxt]}
    then
-   subroutine                 @9.3  "Including ${confound_csf[${cxt}]} CSF aCompCor signal(s)"
+   subroutine                 @9.3  "Including ${confound_csf[cxt]} CSF aCompCor signal(s)"
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
+      -x    ${confmat[cxt]} \
       -y    ${csf} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
@@ -610,7 +611,7 @@ fi
 #   time points of custom timeseries should be included as custom
 #   timeseries.
 ###################################################################
-confound_custom_ts=${confound_custom[${cxt}]//,/ }
+confound_custom_ts=${confound_custom[cxt]//,/ }
 nvol=$(  exec_fsl             fslnvols ${img})
 for cts  in ${confound_custom_ts}
    do
@@ -640,7 +641,7 @@ for cts  in ${confound_custom_ts}
    # begins if the input is an FSL-style design matrix.
    ################################################################
    exec_xcp mbind.R \
-      -x    ${confmat[${cxt}]} \
+      -x    ${confmat[cxt]} \
       -y    ${cts} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
@@ -656,25 +657,25 @@ routine                       @11   Validating confound model
 # Verify that the confound matrix produced by the confound module
 # contains the expected number of time series.
 ###################################################################
-read -ra    obs      < ${confmat[${cxt}]}
+read -ra    obs      < ${confmat[cxt]}
 obs=${#obs[@]}
 exp=0
-[[ ${confound_rp[${cxt}]}  == Y ]] && exp=$(( ${exp} + 6 ))
-[[ ${confound_rms[${cxt}]} == Y ]] && exp=$(( ${exp} + 1 ))
-[[ ${confound_gm[${cxt}]}  == Y ]] && exp=$(( ${exp} + 1 ))
-[[ ${confound_wm[${cxt}]}  == Y ]] && exp=$(( ${exp} + 1 ))
-[[ ${confound_csf[${cxt}]} == Y ]] && exp=$(( ${exp} + 1 ))
-[[ ${confound_gsr[${cxt}]} == Y ]] && exp=$(( ${exp} + 1 ))
+(( ${confound_rp[cxt]}  == 1     )) && exp=$(( ${exp} + 6 ))
+(( ${confound_rms[cxt]} == 1     )) && exp=$(( ${exp} + 1 ))
+[[ ${confound_gm[cxt]}  == mean  ]] && exp=$(( ${exp} + 1 ))
+[[ ${confound_wm[cxt]}  == mean  ]] && exp=$(( ${exp} + 1 ))
+[[ ${confound_csf[cxt]} == mean  ]] && exp=$(( ${exp} + 1 ))
+[[ ${confound_gsr[cxt]} == mean  ]] && exp=$(( ${exp} + 1 ))
 
-past=$((    ${confound_past[${cxt}]}   + 1 ))
-dx=$((      ${confound_dx[${cxt}]}     + 1 ))
-exp=$((     ${exp} * ${past} * ${dx}   * ${confound_sq[${cxt}]} ))
-exp=$((     ${exp} + ${confound_cc[${cxt}]} ))
+past=$((    ${confound_past[cxt]}      + 1 ))
+dx=$((      ${confound_dx[cxt]}        + 1 ))
+exp=$((     ${exp} * ${past} * ${dx}   * ${confound_sq[cxt]} ))
+exp=$((     ${exp} + ${confound_cc[cxt]} ))
 exp=$((     ${exp} + ${cc_components} ))
 for cts in ${confound_custom_ts}
    do
-   read -ra ctsn     < ${cts}
-   exp=$(( ${exp} +  ${#ctsn[@]} ))
+   read     -ra ctsn       < ${cts}
+   exp=$((  ${exp} +       ${#ctsn[@]} ))
 done
 subroutine                    @11.1a   [Expected confounds: ${exp}]
 subroutine                    @11.1b   [Observed confounds: ${obs}]
