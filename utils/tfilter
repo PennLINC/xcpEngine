@@ -74,12 +74,6 @@ Optional arguments:
       the influence of masked-out time points on the processed
       timeseries (following Power et al., 2014).
 
- -k : Temporal mask without interpolation
-      Discard volumes from the temporal mask, but do not
-      interpolate over volumes to be censored. Use this option
-      if, for instance, you are using an old scrubbing-based
-      processing pipeline.
-
  -r : Filter order [default 1]
       The filter order indicates the number of input samples
       taken under consideration when generating an output
@@ -114,13 +108,13 @@ Optional arguments:
       (Affects only Chebyshev II and elliptic filters)
 
  -1 : 1D timeseries
-      A comma separated list of paths to files containing
-      one-dimensional timeseries. Each column in the file
-      should represent a separate timeseries, and each row
-      should represent a separate time point; the number of
-      rows must equal the number of volumes present in the
-      primary BOLD timeseries. The same filtering regime
-      that was applied to the primary BOLD timeseries will
+      A comma separated list of names and paths to files containing
+      one-dimensional timeseries, formatted name1:path1,name2:path2
+      Each column in the file should represent a separate
+      timeseries, and each row should represent a separate time
+      point; the number of rows must equal the number of volumes
+      present in the primary BOLD timeseries. The same filtering
+      regime that was applied to the primary BOLD timeseries will
       be applied to each column of each 1D file
 
  -t : Trace
@@ -147,9 +141,6 @@ pass=2
 rpass=1
 rstop=1
 tmask=ones
-tmaskcut=ones
-ntrue=0
-ktrue=-1
 ###################################################################
 # Parse arguments
 ###################################################################
@@ -195,12 +186,7 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
       ;;
    n)
       tmask=${OPTARG}
-      tmaskcut=${OPTARG}
-      ntrue=1
-      ;;
-   k)
-      tmaskcut=${OPTARG}
-      ktrue=1
+      ! is_1D ${tmask}  && Usage && exit
       ;;
    r)
       order=${OPTARG}
@@ -239,11 +225,6 @@ done
 [[ -z ${image} ]]  && Usage && exit
 [[ -z ${out} ]]    && Usage && exit
 [[ -z ${filter} ]] && Usage && exit
-if (( ${ntrue} == ${ktrue} ))
-   then
-   echo "You may only specify one of -n and -k"
-   exit
-fi
 ###################################################################
 # Ensure that all 1D timeseries (including the temporal mask) have
 # the same number of volumes as the primary BOLD timeseries
@@ -261,9 +242,13 @@ if (( ${nvol} != ${cvol} ))
    exit
 fi
 [[ -n ${tslist} ]] && tslist=${tslist//,/ }
+declare -A ts1d
 for ts in ${tslist}
    do
-   cvol=$(wc -l < ${ts})
+   ts_name=$(strslice ${ts} 1 :)
+   ts_path=$(strslice ${ts} 2 :)
+   ts1d[$ts_name]=${ts_path}
+   cvol=$(wc -l < ${ts_path})
    if (( ${nvol} != ${cvol} ))
       then
       echo "Volume mismatch: ${ts}"
@@ -360,10 +345,10 @@ gaussian)
    #   * So, the information in each 1D timeseries must be written
    #     into a (hopefully compact) NIfTI.
    ################################################################
-   for ts in ${tslist}
+   for tsname in "${!ts1d[@]}"
       do
       subroutine              @u.2.6
-      tsname=$(strslice ${ts} -1 '/' 1 '.')
+      ts=${ts1d[$tsname]}
       #############################################################
       # * Determine the number of timeseries in the 1D timeseries
       #   file by dividing the total number of words in the file
@@ -448,9 +433,9 @@ fft)
    #     the program can convert cutoff frequencies to units of
    #     sampling intervals.
    ################################################################
-   for ts in ${tslist}
+   for tsname in "${!ts1d[@]}"
       do
-      tsname=$(strslice ${ts} -1 '/' 2 '.')
+      ts=${ts1d[$tsname]}
       exec_sys rm -rf ${out_root}_${tsname}.1D
       exec_afni \
          1dBandpass \
@@ -533,10 +518,10 @@ if (( ${genfilt} == 1 ))
    #     the program can convert cutoff frequencies to units of
    #     sampling intervals.
    ################################################################
-   for ts in ${tslist}
+   for tsname in "${!ts1d[@]}"
       do
       subroutine  @u.8.3
-      tsname=$(strslice ${ts} -1 '/' 1 '.')
+      ts=${ts1d[$tsname]}
       exec_sys rm -rf ${out_root}_${tsname}.1D
       exec_xcp \
          1dGenfilter.R \
