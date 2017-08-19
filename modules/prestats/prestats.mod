@@ -86,7 +86,7 @@ output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt
 output      rmat                    mc/${prefix}.mat
 output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
-output      motion_vols             mc/${prefix}_${prestats_censor_cr[cxt]}_nvolFailQA.txt
+output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 
 configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
 configure   censored                0
@@ -450,7 +450,13 @@ while (( ${#rem} > 0 ))
                ####################################################
                subroutine        @2.10 [Evaluating data quality]
                censor_ts=$(  echo               $(<${tmask[cxt]}))
-               ninstances 0 ${censor_ts// /} >> ${motion_vols[cxt]}
+               n_spikes=$(ninstances 0             ${censor_ts// /})
+               echo  ${n_spikes}             >> ${motion_vols[cxt]}
+               if (( ${n_spikes} ==  0 ))
+                  then
+                  subroutine     @2.11 [Data is spike-free: deactivating censor]
+                  configure      censor         none
+               fi
             fi
             exec_sys rm -f ${referenceVolume[cxt]}
          fi # run check statement
@@ -1008,8 +1014,7 @@ while (( ${#rem} > 0 ))
                -s ${prestats_sptf[cxt]} \
                -k ${prestats_smo[cxt]} \
                -m ${mask_spt} \
-               ${usan} \
-               ${trace_prop}
+               ${usan}
          fi
          intermediate=${intermediate}_${cur}
          routine_end
@@ -1248,9 +1253,6 @@ done
 #  * Test for the expected output. This should be the initial
 #    image name with any routine suffixes appended.
 #  * If the expected output is present, move it to the target path.
-#  * Remove any temporary files if cleanup is enabled.
-#  * Update the audit file to reflect successful completion of the
-#    module.
 #  * If the expected output is absent, notify the user.
 ###################################################################
 apply_exec        timeseries              ${prefix}_%NAME \
@@ -1258,7 +1260,7 @@ apply_exec        timeseries              ${prefix}_%NAME \
 if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
-   processed=$(readlink -f ${intermediate}.nii.gz)
+   processed=$(readlink -f    ${intermediate}.nii.gz)
    exec_fsl immv ${processed} ${preprocessed[cxt]}
    completion
 else
