@@ -36,18 +36,18 @@ completion() {
    quality_metric    coregJaccard            coreg_jaccard
    quality_metric    coregDice               coreg_dice
    
-   transform_config  ${spaces[${subjidx}]} \
-                     itk:${seq2struct[${cxt}]} \
-                     ${space}  ${structural}
-   transform_config  ${spaces[${subjidx}]} \
-                     fsl:${e2smat[${cxt}]} \
-                     ${space}  ${structural}
-   transform_config  ${spaces[${subjidx}]} \
-                     itk:${struct2seq[${cxt}]} \
-                     ${structural}  ${space}
-   transform_config  ${spaces[${subjidx}]} \
-                     fsl:${s2emat[${cxt}]} \
-                     ${structural}  ${space}
+   transform_config  ${spaces[sub]} \
+                     itk:${seq2struct[cxt]} \
+                     ${space[sub]}  ${structural[sub]}
+   transform_config  ${spaces[sub]} \
+                     fsl:${e2smat[cxt]} \
+                     ${space[sub]}  ${structural[sub]}
+   transform_config  ${spaces[sub]} \
+                     itk:${struct2seq[cxt]} \
+                     ${structural[sub]}  ${space[sub]}
+   transform_config  ${spaces[sub]} \
+                     fsl:${s2emat[cxt]} \
+                     ${structural[sub]}  ${space[sub]}
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -64,7 +64,6 @@ completion() {
 configure   fit                     0.3
 configure   altreg1                 corratio
 configure   altreg2                 mutualinfo
-configure   qa_decide               1
 
 derivative  referenceVolume         ${prefix}_referenceVolume
 derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
@@ -115,12 +114,6 @@ e2smat
 fit
    The fractional intensity threshold. Used only in the unlikely
    event that brain extraction has not already been run.
-qa_decide
-   In the event that the first round of coregistration fails to
-   satisfy the user criteria, a second round will be performed.
-   Only the coregistration that scores better according to the
-   metric defined in this variable will be retained.
-   (0 = cross-correlation, 1 = coverage, 2 = jaccard, 3 = dice)
 referenceVolume
    An exemplar volume from the subject's 4D timeseries that is
    used to compute the coregistration. If this has already been
@@ -172,12 +165,12 @@ routine                       @1    Identifying reference volume
 # Determine whether a brain-extracted version of the source
 # reference volume already exists.
 ###################################################################
-if is_image ${referenceVolumeBrain[${subjidx}]}
+if is_image ${referenceVolumeBrain[sub]}
    then
    subroutine                 @1.1  [Existing reference image recognised]
-   referenceBrain=referenceVolumeBrain[${subjidx}]
+   referenceBrain=referenceVolumeBrain[sub]
 else
-   if ! is_image ${referenceVolume[${subjidx}]}
+   if ! is_image ${referenceVolume[sub]}
       then
       #############################################################
       # * If the source volume does not exist, this reflects an
@@ -198,9 +191,9 @@ else
       midpt=$(arithmetic ${nvol}/2)
       exec_fsl \
          fslroi ${out}/${prefix}.nii.gz \
-         ${referenceVolume[${cxt}]} ${midpt} 1
+         ${referenceVolume[cxt]} ${midpt} 1
    fi
-   if ! is_image ${referenceVolumeBrain[${cxt}]} \
+   if ! is_image ${referenceVolumeBrain[cxt]} \
    || rerun
       then
       #############################################################
@@ -211,11 +204,11 @@ else
       #############################################################
       subroutine              @1.3a No brain-extracted reference volume detected.
       subroutine              @1.3b Extracting brain from reference volume
-      exec_fsl bet ${referenceVolume[${subjidx}]} \
-         ${referenceVolumeBrain[${cxt}]} \
-         -f $fit[${cxt}]
+      exec_fsl bet ${referenceVolume[sub]} \
+         ${referenceVolumeBrain[cxt]} \
+         -f ${coreg_fit[cxt]}
    fi
-   referenceBrain=referenceVolumeBrain[${cxt}]
+   referenceBrain=referenceVolumeBrain[cxt]
 fi
 routine_end
 
@@ -227,8 +220,8 @@ routine_end
 # If BBR is the cost function being used, a white matter mask
 # must be extracted from the user-specified tissue segmentation.
 ###################################################################
-if [[ ${coreg_cfunc[${cxt}]} == bbr ]]; then
-if [[ ! -e ${e2smat[${cxt}]} ]] \
+if [[ ${coreg_cfunc[cxt]} == bbr ]]; then
+if [[ ! -e ${e2smat[cxt]} ]] \
 || rerun
    then
    wm_mask=${intermediate}_t1wm.nii.gz
@@ -236,19 +229,19 @@ if [[ ! -e ${e2smat[${cxt}]} ]] \
    || rerun
       then
       routine                 @2    Preparing white matter mask
-      case ${coreg_wm[${cxt}]} in
+      case ${coreg_wm[cxt]} in
       all)
          subroutine           @2.1a All nonzero voxels correspond to white matter.
          subroutine           @2.1b Binarising image
-         exec_fsl fslmaths ${coreg_seg[${cxt}]} -bin ${wm_mask}
+         exec_fsl fslmaths ${coreg_seg[cxt]} -bin ${wm_mask}
          ;;
       *)
-         subroutine           @2.2a [Voxels with value ${coreg_wm[${cxt}]} correspond to white matter]
+         subroutine           @2.2a [Voxels with value ${coreg_wm[cxt]} correspond to white matter]
          subroutine           @2.2b [Thresholding out all other voxels and binarising image]
          exec_xcp \
             val2mask.R \
-            -i ${coreg_seg[${cxt}]} \
-            -v ${coreg_wm[${cxt}]} \
+            -i ${coreg_seg[cxt]} \
+            -v ${coreg_wm[cxt]} \
             -o ${wm_mask}
          ;;
       esac
@@ -274,18 +267,18 @@ fi; fi
 # * inwt : weights in the input/registrand/analyte space
 ###################################################################
 routine                       @3    Obtaining voxelwise weights
-if is_image ${coreg_refwt[${cxt}]}
+if is_image ${coreg_refwt[cxt]}
    then
    subroutine                 @3.1  Reading structural weights
-   refwt="-refweight ${coreg_refwt[${cxt}]}"
+   refwt="-refweight ${coreg_refwt[cxt]}"
 else
    subroutine                 @3.2  [Structural: all voxels weighted uniformly]
    unset refwt
 fi
-if is_image ${coreg_inwt[${cxt}]}
+if is_image ${coreg_inwt[cxt]}
    then
    subroutine                 @3.3  Reading input weights
-   inwt="-inweight ${coreg_inwt[${cxt}]}"
+   inwt="-inweight ${coreg_inwt[cxt]}"
 else
    subroutine                 @3.4  [Input: all voxels weighted uniformly]
    unset inwt
@@ -302,23 +295,23 @@ routine_end
 ###################################################################
 routine                       @4    Executing affine coregistration
 registered=0
-if [[ ! -e ${e2smat[${cxt}]} ]] \
+if [[ ! -e ${e2smat[cxt]} ]] \
 || rerun
    then
    subroutine                 @4.1a [Cost function]
-   subroutine                 @4.1b [${coreg_cfunc[${cxt}]}]
+   subroutine                 @4.1b [${coreg_cfunc[cxt]}]
    subroutine                 @4.1c [Input volume]
    subroutine                 @4.1d [${!referenceBrain}]
    subroutine                 @4.1e [Reference volume]
-   subroutine                 @4.1f [${struct[${subjidx}]}]
+   subroutine                 @4.1f [${struct[sub]}]
    subroutine                 @4.1g [Output volume]
-   subroutine                 @4.1h [${e2simg[${cxt}]}]
+   subroutine                 @4.1h [${e2simg[cxt]}]
    exec_fsl flirt -in ${!referenceBrain} \
-      -ref  ${struct[${subjidx}]} \
+      -ref  ${struct[sub]} \
       -dof  6 \
-      -out  ${e2simg[${cxt}]} \
-      -omat ${e2smat[${cxt}]} \
-      -cost ${coreg_cfunc[${cxt}]} \
+      -out  ${e2simg[cxt]} \
+      -omat ${e2smat[cxt]} \
+      -cost ${coreg_cfunc[cxt]} \
       ${refwt} \
       ${inwt} \
       ${wm_mask_cmd}
@@ -336,20 +329,20 @@ routine_end
 # Compute metrics of coregistration quality.
 ###################################################################
 flag=0
-if [[ ! -e ${coreg_dice[${cxt}]} ]] \
+if [[ ! -e ${coreg_dice[cxt]} ]] \
 || rerun
    then
    routine                    @5    Quality assessment
    subroutine                 @5.1
-   exec_fsl fslmaths ${e2simg[${cxt}]} -bin ${e2smask[${cxt}]}
+   exec_fsl fslmaths ${e2simg[cxt]} -bin ${e2smask[cxt]}
    registration_quality=( $(exec_xcp \
       maskOverlap.R \
-      -m ${e2smask[${cxt}]} \
-      -r ${struct[${subjidx}]}) )
-   echo  ${registration_quality[0]} > ${coreg_cross_corr[${cxt}]}
-   echo  ${registration_quality[1]} > ${coreg_coverage[${cxt}]}
-   echo  ${registration_quality[2]} > ${coreg_jaccard[${cxt}]}
-   echo  ${registration_quality[3]} > ${coreg_dice[${cxt}]}
+      -m ${e2smask[cxt]} \
+      -r ${struct[sub]}) )
+   echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
+   echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
+   echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
+   echo  ${registration_quality[3]} > ${coreg_dice[cxt]}
    ################################################################
    # If the subject fails quality control, then repeat
    # coregistration using an alternative metric: crosscorrelation.
@@ -359,26 +352,27 @@ if [[ ! -e ${coreg_dice[${cxt}]} ]] \
    # Determine whether each quality index warrants flagging the
    # coregistration for poor quality.
    ################################################################
-   cc_min=$(strslice   ${coreg_qacut[${cxt}]} 1)
-   co_min=$(strslice   ${coreg_qacut[${cxt}]} 2)
+   cc_min=$(strslice    ${coreg_qacut[cxt]} 1)
+   co_min=$(strslice    ${coreg_qacut[cxt]} 2)
+   jc_min=$(strslice    ${coreg_qacut[cxt]} 3)
+   dc_min=$(strslice    ${coreg_qacut[cxt]} 4)
    cc_flag=$(arithmetic ${registration_quality[0]}'<'${cc_min})
    co_flag=$(arithmetic ${registration_quality[1]}'<'${co_min})
-   if (( ${cc_flag} == 1 )) \
-   && is+numeric ${cc_min}
-      then
-      subroutine              @5.2  [Cross-correlation flagged]
-      flag=1
-   fi
-   if (( ${co_flag} == 1 )) \
-   && is+numeric ${co_min}
-      then
-      subroutine              @5.3  [Coverage flagged]
-      flag=1
-   fi
-   if (( ${flag} != 1 ))
-      then
-      subroutine              @5.4  [Coregistration quality meets standards]
-   fi
+   jc_flag=$(arithmetic ${registration_quality[2]}'<'${jc_min})
+   dc_flag=$(arithmetic ${registration_quality[3]}'<'${dc_min})
+   declare  -A  flags
+   flags=(  [cc_flag]="Cross-correlation"
+            [co_flag]="Target coverage"
+            [jc_flag]="Jaccard coefficient"
+            [dc_flag]="Dice coefficient"     )
+   for f in "${!flags[@]}"
+      do
+      if (( ${!f} == 1 ))
+         then
+         subroutine           @5.2  [${flags[$f]} flagged]
+         flag=1
+      fi
+   done
    routine_end
 fi
 
@@ -396,26 +390,25 @@ if (( ${flag} == 1 ))
    ################################################################
    # First, determine what cost function to use.
    ################################################################
-   if [[ ${coreg_cfunc[${cxt}]} == ${altreg1[${cxt}]} ]]
+   if [[ ${coreg_cfunc[cxt]} == ${altreg1[cxt]} ]]
       then
       subroutine              @6.2
-      configure               coreg_cfunc  ${altreg2[${cxt}]}
+      configure               coreg_cfunc  ${altreg2[cxt]}
    else
       subroutine              @6.3
-      configure               coreg_cfunc  ${altreg1[${cxt}]}
+      configure               coreg_cfunc  ${altreg1[cxt]}
    fi
-   subroutine                 @6.4a [Coregistration will be repeated using cost ${coreg_cfunc[${cxt}]}]
+   subroutine                 @6.4a [Coregistration will be repeated using cost ${coreg_cfunc[cxt]}]
    subroutine                 @6.4 
    ################################################################
    # Re-compute coregistration.
    ################################################################
-   exec_fsl \
-      flirt -in ${!referenceBrain} \
-      -ref ${struct[${subjidx}]} \
-      -dof 6 \
-      -out ${intermediate}_seq2struct_alt \
+   exec_fsl flirt -in ${!referenceBrain} \
+      -ref  ${struct[sub]} \
+      -dof  6 \
+      -out  ${intermediate}_seq2struct_alt \
       -omat ${intermediate}_seq2struct_alt.mat \
-      -cost ${coreg_cfunc[${cxt}]} \
+      -cost ${coreg_cfunc[cxt]} \
       ${refwt} \
       ${inwt}
    registered=1
@@ -424,36 +417,37 @@ if (( ${flag} == 1 ))
    ################################################################
    exec_fsl \
       fslmaths ${intermediate}_seq2struct_alt.nii.gz \
-      -bin ${intermediate}_seq2struct_alt_mask.nii.gz
+      -bin     ${intermediate}_seq2struct_alt_mask.nii.gz
    registration_quality_alt=( $(exec_xcp \
       maskOverlap.R \
-      -m ${intermediate}_seq2struct_alt_mask.nii.gz \
-      -r ${struct[${subjidx}]}) )
+      -m       ${intermediate}_seq2struct_alt_mask.nii.gz \
+      -r       ${struct[sub]}) )
    ################################################################
    # Compare the metrics to the old ones. The decision is made
-   # based on the QADECIDE constant if coregistration is repeated
-   # due to failing quality control.
+   # based on the `decide` configuration if coregistration is
+   # repeated due to quality control failure.
    ################################################################
-   decision=$(arithmetic ${registration_quality_alt[${qa_decide}]}'>'${registration_quality[${qa_decide}]})
+   decision=$(arithmetic ${registration_quality_alt[${coreg_decide[cxt]}]}'>'\
+                             ${registration_quality[${coreg_decide[cxt]}]})
    if (( ${decision} == 1 ))
       then
       subroutine              @6.5a [The coregistration result improved. However, you]
       subroutine              @6.5b [are encouraged to verify the results]
-      exec_sys mv ${intermediate}_seq2struct_alt.mat ${e2smat[${cxt}]}
-      exec_fsl immv ${intermediate}_seq2struct_alt ${e2simg[${cxt}]}
-      exec_fsl immv ${intermediate}_seq2struct_alt_mask ${e2smask[${cxt}]}
-      exec_sys rm -f ${s2emat[${cxt}]}
-      exec_sys rm -f ${seq2struct[${cxt}]}
-      exec_sys rm -f ${struct2seq[${cxt}]}
-      exec_sys rm -f ${s2eimg[${cxt}]}
-      exec_sys rm -f ${coreg_cross_corr[${cxt}]}
-      exec_sys rm -f ${coreg_coverage[${cxt}]}
-      exec_sys rm -f ${coreg_jaccard[${cxt}]}
-      exec_sys rm -f ${coreg_dice[${cxt}]}
-      echo     ${registration_quality_alt[0]} >> ${coreg_cross_corr[${cxt}]}
-      echo     ${registration_quality_alt[1]} >> ${coreg_coverage[${cxt}]}
-      echo     ${registration_quality_alt[2]} >> ${coreg_jaccard[${cxt}]}
-      echo     ${registration_quality_alt[3]} >> ${coreg_dice[${cxt}]}
+      exec_sys mv    ${intermediate}_seq2struct_alt.mat  ${e2smat[cxt]}
+      exec_fsl immv  ${intermediate}_seq2struct_alt      ${e2simg[cxt]}
+      exec_fsl immv  ${intermediate}_seq2struct_alt_mask ${e2smask[cxt]}
+      exec_sys rm -f ${s2emat[cxt]}
+      exec_sys rm -f ${seq2struct[cxt]}
+      exec_sys rm -f ${struct2seq[cxt]}
+      exec_sys rm -f ${s2eimg[cxt]}
+      exec_sys rm -f ${coreg_cross_corr[cxt]}
+      exec_sys rm -f ${coreg_coverage[cxt]}
+      exec_sys rm -f ${coreg_jaccard[cxt]}
+      exec_sys rm -f ${coreg_dice[cxt]}
+      echo     ${registration_quality_alt[0]} >> ${coreg_cross_corr[cxt]}
+      echo     ${registration_quality_alt[1]} >> ${coreg_coverage[cxt]}
+      echo     ${registration_quality_alt[2]} >> ${coreg_jaccard[cxt]}
+      echo     ${registration_quality_alt[3]} >> ${coreg_dice[cxt]}
       write_config            coreg_cfunc
    else
       subroutine              @6.6a [Coregistration failed to improve. This may be]
@@ -474,13 +468,12 @@ if (( ${registered} == 1  ))
    then
    routine                    @7    Coregistration visual aids
    subroutine                 @7.1  [Slicewise rendering]
-   add_reference   struct[${subjidx}]  ${prefix}_targetVolume
-   exec_xcp \
-      regslicer \
-      -s ${e2simg[${cxt}]} \
-      -t ${struct[${subjidx}]} \
-      -i ${intermediate} \
-      -o ${outdir}/${prefix}_seq2struct
+   add_reference   struct[sub]      ${prefix}_targetVolume
+   exec_xcp regslicer \
+      -s    ${e2simg[cxt]} \
+      -t    ${struct[sub]} \
+      -i    ${intermediate} \
+      -o    ${outdir}/${prefix}_seq2struct
    routine_end
 fi
 
@@ -496,54 +489,48 @@ fi
 # pipelines and reduced disk usage.
 ###################################################################
 routine                       @8    Derivative transformations
-if [[ ! -e ${s2emat[${cxt}]} ]] \
+if [[ ! -e ${s2emat[cxt]} ]] \
 || rerun
    then
    subroutine                 @8.1  [Computing inverse transformation]
-   exec_fsl \
-      convert_xfm \
-      -omat ${s2emat[${cxt}]} \
-      -inverse ${e2smat[${cxt}]}
+   exec_fsl    convert_xfm \
+      -omat    ${s2emat[cxt]} \
+      -inverse ${e2smat[cxt]}
 fi
 ###################################################################
-# The XCP Engine uses ANTs-based registration; the
-# coregistration module uses an ITK-based helper script to 
+# The coregistration module uses an ITK-based helper script to
 # convert the FSL output into a format that can be read by ANTs.
 ###################################################################
-if [[ ! -e ${seq2struct[${cxt}]} ]] \
+if [[ ! -e ${seq2struct[cxt]} ]] \
 || rerun
    then
    subroutine                 @8.2  [Converting coregistration .mat to ANTs format]
-   exec_c3d \
-      c3d_affine_tool \
-      -src ${!referenceBrain} \
-      -ref ${struct[${subjidx}]} \
-      ${e2smat[${cxt}]} \
+   exec_c3d c3d_affine_tool \
+      -src  ${!referenceBrain} \
+      -ref  ${struct[sub]} \
+      ${e2smat[cxt]} \
       -fsl2ras \
-      -oitk ${seq2struct[${cxt}]}
+      -oitk ${seq2struct[cxt]}
 fi
 ###################################################################
-# The XCP Engine uses ANTs-based registration; the
-# coregistration module uses an ITK-based helper script to 
-# convert the FSL output into a format that can be read by ANTs.
+# ...and again for the inverse transform.
 ###################################################################
-if [[ ! -e ${struct2seq[${cxt}]} ]] \
+if [[ ! -e ${struct2seq[cxt]} ]] \
 || rerun
    then
    subroutine                 @8.3  [Converting inverse coregistration .mat to ANTs format]
-   exec_c3d \
-      c3d_affine_tool \
-      -src ${struct[${subjidx}]} \
-      -ref ${!referenceBrain} \
-      ${s2emat[${cxt}]} \
+   exec_c3d c3d_affine_tool \
+      -src  ${struct[sub]} \
+      -ref  ${!referenceBrain} \
+      ${s2emat[cxt]} \
       -fsl2ras \
-      -oitk ${struct2seq[${cxt}]}
+      -oitk ${struct2seq[cxt]}
 fi
 ###################################################################
 # Compute the structural image in analytic space, and generate
 # a mask for that image.
 ###################################################################
-if [[ ! -e ${s2emask[${cxt}]} ]] \
+if [[ ! -e ${s2emask[cxt]} ]] \
 || rerun
    then
    subroutine                 @8.4  [Preparing inverse mask]
@@ -551,10 +538,10 @@ if [[ ! -e ${s2emask[${cxt}]} ]] \
       antsApplyTransforms \
       -e 3 -d 3 \
       -r ${!referenceBrain} \
-      -o ${s2eimg[${cxt}]} \
-      -i ${struct[${subjidx}]} \
-      -t ${struct2seq[${cxt}]}
-   exec_fsl fslmaths ${s2eimg[${cxt}]} -bin ${s2emask[${cxt}]}
+      -o ${s2eimg[cxt]} \
+      -i ${struct[sub]} \
+      -t ${struct2seq[cxt]}
+   exec_fsl fslmaths ${s2eimg[cxt]} -bin ${s2emask[cxt]}
 fi
 routine_end
 
