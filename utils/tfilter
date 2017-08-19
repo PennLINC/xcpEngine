@@ -113,14 +113,6 @@ Optional arguments:
       stop-band frequencies.
       (Affects only Chebyshev II and elliptic filters)
 
- -v : Discard volumes [default 0]
-      Application of certain filters may result in extreme
-      values at the beginnings and ends of timeseries; these
-      values may be removed by discarding initial (for all
-      filters) and final (for forward-reverse filters) time
-      points.
-      (Should not be used for FFT or Gaussian filters)
-
  -1 : 1D timeseries
       A comma separated list of paths to files containing
       one-dimensional timeseries. Each column in the file
@@ -154,7 +146,6 @@ order=1
 pass=2
 rpass=1
 rstop=1
-dvol=0
 tmask=ones
 tmaskcut=ones
 ntrue=0
@@ -229,10 +220,6 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
    s)
       rstop=${OPTARG}
       ! is+numeric ${rstop} && Usage && exit
-      ;;
-   v)
-      dvol=${OPTARG}
-      ! is+integer ${dvol} && Usage && exit
       ;;
    1)
       tslist=${OPTARG}
@@ -564,98 +551,4 @@ if (( ${genfilt} == 1 ))
          ${rpcall} \
          ${rscall}
    done
-fi
-
-
-
-
-
-###################################################################
-# 5. Finally, it is time to discard volumes from the limits of all
-#    timeseries, as specified by the user.
-#  * If the number of volumes to be discarded is 0 (default
-#    behaviour), then the script will never enter the conditional
-#    statement below.
-#  * For a forward-only filter, volumes are discarded only from the
-#    beginning of each timeseries.
-#  * For a forward/reverse filter, volumes are discarded from the
-#    beginning and end of each timeseries.
-###################################################################
-if (( ${dvol} > 0 ))
-   then
-   subroutine     @u.9
-   ################################################################
-   # Compute the number of volumes to be retained following
-   # timeseries truncation.
-   #  * For forward filters, this is equal to the difference
-   #    between the number of initial volumes and the number of
-   #    volumes to be discarded.
-   #  * For forward/reverse filters, this is equal to the
-   #    difference between the number of initial volumes and
-   #    twice the number of volumes to be discarded, since
-   #    that many volumes are to be discarded from both the
-   #    beginning and end of the timeseries.
-   ################################################################
-   case ${pass} in
-   1)
-      subroutine  @u.9.1
-      retain=$(( ${nvol} - ${dvol}))
-      echo "Discarding ${dvol} volumes from beginning of"
-      echo "  timeseries"
-      ;;
-   2)
-      subroutine  @u.9.2
-      retain=$(( ${nvol} - 2*${dvol} ))
-      echo "Discarding ${dvol} volumes from beginning and end"
-      echo "  of timeseries"
-      ;;
-   esac
-   ################################################################
-   # Primary BOLD timeseries:
-   #---------------------------------------------------------------
-   # Use fslroi to remove the first $dvol volumes and retain
-   # the next $retain volumes.
-   ################################################################
-   exec_fsl \
-      fslroi ${out} ${out} \
-      0 -1 \
-      0 -1 \
-      0 -1 \
-      ${dvol} ${retain}
-   ################################################################
-   # 1D timeseries:
-   #---------------------------------------------------------------
-   #  * First, update the pointer to indicate the filtered
-   #    version of each timeseries.
-   ################################################################
-   for ts in ${tslist}
-      do
-      subroutine  @u.9.5
-      #############################################################
-      # * Obtain the base name of the old 1D timeseries file; use
-      #   this to find the path to the filtered version of
-      #   the same timeseries.
-      # * Discard volumes from the timeseries limits.
-      #############################################################
-      tsname=$(strslice ${ts} -1 '/' 1 '.')
-      ts=${out_root}_${tsname}.1D
-      exec_sys tail -n +${dvol} ${ts} >> ${out_root}_TEMP_ts
-      exec_sys rm -f ${ts}
-      exec_sys head -n ${retain} ${out_root}_TEMP_ts >> ${ts}
-      exec_sys rm -f ${out_root}_TEMP_ts
-   done
-   ################################################################
-   # Temporal mask:
-   #---------------------------------------------------------------
-   #  * The temporal mask, too, must be truncated so that its
-   #    indices correctly match up with any new volumes.
-   ################################################################
-   tmask=${tmaskcut}
-   if [[ ${tmask} != "ones" ]]
-      then
-      subroutine  @u.9.6
-      tail -n +${dvol} ${tmask} >> ${out_root}_TEMP_tmask
-      head -n ${retain} ${out_root}_TEMP_tmask >> ${out_root}_tmask.1D
-      rm -f ${out_root}_TEMP_tmask
-   fi
 fi
