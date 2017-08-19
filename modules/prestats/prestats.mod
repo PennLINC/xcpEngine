@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         final
+   processed         preprocessed
    
    write_derivative  meanIntensity
    write_derivative  meanIntensityBrain
@@ -100,7 +100,7 @@ if [[ -n    ${censored[sub]} ]]
    configure   censored             ${censored[sub]}
 fi
 
-process     final                   ${prefix}_preprocessed
+process     preprocessed            ${prefix}_preprocessed
 
 << DICTIONARY
 
@@ -119,9 +119,6 @@ censored
 fd
    Framewise displacement values, computed as the absolute sum of
    realignment parameter first derivatives.
-final
-   The final output of the module, indicating its successful
-   completion.
 mcdir
    The directory containing motion realignment output.
 mask
@@ -136,6 +133,9 @@ motion_vols
    exceeded the maximum motion criterion. If censoring is enabled,
    then this will be the same number of volumes that are to be
    censored.
+preprocessed
+   The final output of the module, indicating its successful
+   completion.
 referenceVolume
    An example volume extracted from EPI data, typically one of the
    middle volumes, though another may be selected if the middle
@@ -1107,38 +1107,38 @@ while (( ${#rem} > 0 ))
             #######################################################
             # Realignment parameters...
             #######################################################
-            if is_1D ${rps[sub]}
+            if is_1D    ${rps[sub]}
                then
                subroutine     @9.8.1
-               ts1d="${ts1d} ${rps[sub]}"
-            elif is_1D ${rps[cxt]}
+               ts1d="${ts1d}  realignment:${rps[sub]}"
+            elif is_1D  ${rps[cxt]}
                then
                subroutine     @9.8.2
-               ts1d="${ts1d} ${rps[cxt]}"
+               ts1d="${ts1d}  realignment:${rps[cxt]}"
             fi
             #######################################################
             # Relative RMS motion...
             #######################################################
-            if is_1D ${rel_rms[sub]}
+            if is_1D    ${rel_rms[sub]}
                then
                subroutine     @9.9.1
-               ts1d="${ts1d} ${rel_rms[sub]}"
-            elif is_1D ${rel_rms[cxt]}
+               ts1d="${ts1d}  rel_rms:${rel_rms[sub]}"
+            elif is_1D  ${rel_rms[cxt]}
                then
                subroutine     @9.9.2
-               ts1d="${ts1d} ${rel_rms[cxt]}"
+               ts1d="${ts1d}  rel_rms:${rel_rms[cxt]}"
             fi
             #######################################################
             # Absolute RMS motion...
             #######################################################
-            if is_1D ${abs_rms[sub]}
+            if is_1D    ${abs_rms[sub]}
                then
                subroutine     @9.10.1
-               ts1d="${ts1d} ${abs_rms[sub]}"
-            elif is_1D ${abs_rms[cxt]}
+               ts1d="${ts1d} abs_rms:${abs_rms[sub]}"
+            elif is_1D  ${abs_rms[cxt]}
                then
                subroutine     @9.10.2
-               ts1d="${ts1d} ${abs_rms[cxt]}"
+               ts1d="${ts1d} abs_rms:${abs_rms[cxt]}"
             fi
             #######################################################
             # Replace any whitespace characters in the 1D
@@ -1148,6 +1148,7 @@ while (( ${#rem} > 0 ))
             if [[ ! -z ${ts1d} ]]
                then
                subroutine     @9.11
+               ts1d=$(echo ${ts1d})
                ts1d="-1 ${ts1d// /,}"
             fi
             #######################################################
@@ -1212,13 +1213,13 @@ while (( ${#rem} > 0 ))
             # Move outputs to target
             #######################################################
             is_1D ${intermediate}_${cur}_realignment.1D \
-            && mv -f ${intermediate}_${cur}_${prefix}_realignment.1D \
+            && mv -f ${intermediate}_${cur}_realignment.1D \
                ${rps[cxt]}
             is_1D ${intermediate}_${cur}_abs_rms.1D \
-            && mv -f ${intermediate}_${cur}_${prefix}_abs_rms.1D \
+            && mv -f ${intermediate}_${cur}_abs_rms.1D \
                ${absrms[cxt]}
             is_1D ${intermediate}_${cur}_rel_rms.1D \
-            && mv -f ${intermediate}_${cur}_${prefix}_rel_rms.1D \
+            && mv -f ${intermediate}_${cur}_rel_rms.1D \
                ${relrms[cxt]}
             is_1D ${intermediate}_${cur}_tmask.1D \
             && mv -f ${intermediate}_${cur}_tmask.1D \
@@ -1258,7 +1259,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${final[cxt]}
+   exec_fsl immv ${processed} ${preprocessed[cxt]}
    completion
 else
    subroutine                 @0.3
