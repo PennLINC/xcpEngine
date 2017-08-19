@@ -38,15 +38,15 @@ completion() {
    write_output      tmask
    
    write_config_safe censor
-   if is_1D ${tmask[${cxt}]}
+   if is_1D ${tmask[cxt]}
       then
       configure      censored       1
       write_config   censored
    fi
-   if is_image ${referenceVolumeBrain[${cxt}]}
+   if is_image ${referenceVolumeBrain[cxt]}
       then
-      space_config   ${spaces[${subjidx}]}   ${space} \
-               Map   ${referenceVolumeBrain[${cxt}]}
+      space_config   ${spaces[sub]}   ${space[sub]} \
+               Map   ${referenceVolumeBrain[cxt]}
    fi
    
    apply_exec        timeseries              ${prefix}_%NAME \
@@ -86,18 +86,18 @@ output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt
 output      rmat                    mc/${prefix}.mat
 output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
-output      motion_vols             mc/${prefix}_${prestats_censor_cr[${cxt}]}_nvolFailQA.txt
+output      motion_vols             mc/${prefix}_${prestats_censor_cr[cxt]}_nvolFailQA.txt
 
-configure   censor                  $(strslice ${prestats_censor[${cxt}]} 1)
+configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
 configure   censored                0
 
-if [[ -n    ${censor[${subjidx}]} ]]
+if [[ -n    ${censor[sub]} ]]
    then
-   configure   censor               ${censor[${subjidx}]}
+   configure   censor               ${censor[sub]}
 fi
-if [[ -n    ${censored[${subjidx}]} ]]
+if [[ -n    ${censored[sub]} ]]
    then
-   configure   censored             ${censored[${subjidx}]}
+   configure   censored             ${censored[sub]}
 fi
 
 process     final                   ${prefix}_preprocessed
@@ -190,18 +190,17 @@ subroutine                    @0.1
 #  * SPT: spatial filter
 #  * TMP: temporal filter
 ###################################################################
-rem=${prestats_process[${cxt}]}
+rem=${prestats_process[cxt]}
 while (( ${#rem} > 0 ))
    do
    ################################################################
-   # * Extract the first three letters from the user-specified
-   #   processing command. 
-   # * This three-letter code determines what analysis is run
-   #   next.
-   # * Remove them from the list of remaining analyses.
+   # * Extract the three-letter routine code from the user-
+   #   specified control sequence.
+   # * This three-letter code determines what routine is run next.
+   # * Remove the code from the remaining control sequence.
    ################################################################
    cur=${rem:0:3}
-   rem=${rem:3:${#rem}}
+   rem=${rem:4:${#rem}}
    buffer=${buffer}_${cur}
    case ${cur} in
       
@@ -219,22 +218,22 @@ while (( ${#rem} > 0 ))
          # If dvols is negative, discard the last n volumes
          # from the BOLD timeseries.
          ##########################################################
-         routine              @1    Discarding ${prestats_dvols[${cxt}]} volumes
+         routine              @1    Discarding ${prestats_dvols[cxt]} volumes
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
             nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
             subroutine        @1.1  [Total original volumes = ${nvol}]
-            if is+integer ${prestats_dvols[${cxt}]}
+            if is+integer ${prestats_dvols[cxt]}
                then
                subroutine     @1.2  [Discarding initial volumes]
-               vol_begin=${prestats_dvols[${cxt}]}
-               vol_end=$(( ${nvol} - ${prestats_dvols[${cxt}]} ))
-            elif is_integer ${prestats_dvols[${cxt}]}
+               vol_begin=${prestats_dvols[cxt]}
+               vol_end=$(( ${nvol} - ${prestats_dvols[cxt]} ))
+            elif is_integer ${prestats_dvols[cxt]}
                then
                subroutine     @1.3  [Discarding final volumes]
                vol_begin=0
-               vol_end=$(( ${nvol} + ${prestats_dvols[${cxt}]} ))
+               vol_end=$(( ${nvol} + ${prestats_dvols[cxt]} ))
             fi
             subroutine        @1.4  [Primary analyte image]
             exec_fsl \
@@ -306,7 +305,7 @@ while (( ${#rem} > 0 ))
          # exists. If it does not, extract it from the timeseries
          # midpoint for use as a reference in realignment.
          ##########################################################
-         if ! is_image ${referenceVolume[${cxt}]} \
+         if ! is_image ${referenceVolume[cxt]} \
          || rerun
             then
             subroutine        @2.1  [Extracting reference volume]
@@ -314,7 +313,7 @@ while (( ${#rem} > 0 ))
             midpt=$(( ${nvol} / 2))
             exec_fsl \
                fslroi ${intermediate}.nii.gz \
-               ${referenceVolume[${cxt}]} \
+               ${referenceVolume[cxt]} \
                ${midpt} 1
          fi
          if ! is_image ${intermediate}_${cur}.nii.gz \
@@ -333,7 +332,7 @@ while (( ${#rem} > 0 ))
                mcflirt -in ${intermediate}.nii.gz \
                -out ${intermediate}_mc \
                -plots \
-               -reffile ${referenceVolume[${cxt}]} \
+               -reffile ${referenceVolume[cxt]} \
                -rmsrel \
                -rmsabs \
                -spline_final
@@ -348,70 +347,70 @@ while (( ${#rem} > 0 ))
             # this must be changed.
             #######################################################
             subroutine        @2.3
-            exec_sys rm -rf ${mcdir[${cxt}]}
-            exec_sys mkdir -p ${mcdir[${cxt}]}
+            exec_sys rm -rf ${mcdir[cxt]}
+            exec_sys mkdir -p ${mcdir[cxt]}
             exec_sys mv -f ${intermediate}_mc.par \
-               ${rps[${cxt}]}
+               ${rps[cxt]}
             exec_sys mv -f ${intermediate}_mc_abs_mean.rms \
-               ${abs_mean_rms[${cxt}]}
+               ${abs_mean_rms[cxt]}
             exec_sys mv -f ${intermediate}_mc_abs.rms \
-               ${abs_rms[${cxt}]}
+               ${abs_rms[cxt]}
             exec_sys mv -f ${intermediate}_mc_rel_mean.rms \
-               ${rel_mean_rms[${cxt}]}
-            exec_sys rm -f ${relrms[${cxt}]}
-            exec_sys echo 0                         >> ${rel_rms[${cxt}]}
-            exec_sys cat ${intermediate}_mc_rel.rms >> ${rel_rms[${cxt}]}
+               ${rel_mean_rms[cxt]}
+            exec_sys rm -f ${relrms[cxt]}
+            exec_sys echo 0                         >> ${rel_rms[cxt]}
+            exec_sys cat ${intermediate}_mc_rel.rms >> ${rel_rms[cxt]}
             #######################################################
             # Compute the maximum value of motion.
             #######################################################
             subroutine        @2.4
             exec_xcp \
                1dTool.R \
-               -i ${rel_rms[${cxt}]} \
+               -i ${rel_rms[cxt]} \
                -o max \
-               -f ${rel_max_rms[${cxt}]}
+               -f ${rel_max_rms[cxt]}
             #######################################################
             # Generate summary plots for motion correction.
             #######################################################
             subroutine        @2.5  [Preparing summary plots]
             subroutine      @2.5.1  [1/3]
-            exec_fsl fsl_tsplot -i ${rps[${cxt}]} \
+            exec_fsl fsl_tsplot -i ${rps[cxt]} \
                -t 'MCFLIRT_estimated_rotations_(radians)' \
                -u 1 --start=1 --finish=3 \
                -a x,y,z \
                -w 640 \
                -h 144 \
-               -o ${mcdir[${cxt}]}/rot.png
+               -o ${mcdir[cxt]}/rot.png
             subroutine      @2.5.2  [2/3]
-            exec_fsl fsl_tsplot -i ${rps[${cxt}]} \
+            exec_fsl fsl_tsplot -i ${rps[cxt]} \
                -t 'MCFLIRT_estimated_translations_(mm)' \
                -u 1 --start=4 --finish=6 \
                -a x,y,z \
                -w 640 \
                -h 144 \
-               -o ${mcdir[${cxt}]}/trans.png
+               -o ${mcdir[cxt]}/trans.png
             subroutine      @2.5.3  [3/3]
             exec_fsl fsl_tsplot \
-               -i "${abs_rms[${cxt}]},${rel_rms[${cxt}]}" \
+               -i "${abs_rms[cxt]},${rel_rms[cxt]}" \
                -t 'MCFLIRT_estimated_mean_displacement_(mm)' \
                -u 1 \
                -w 640 \
                -h 144 \
                -a 'absolute,relative' \
-               -o ${mcdir[${cxt}]}/disp.png
+               -o ${mcdir[cxt]}/disp.png
             #######################################################
             # Compute framewise displacement using the realignment
             # parameters.
             #######################################################
             subroutine        @2.6  [Computing framewise displacement]
             exec_xcp fd.R \
-               -r ${rps[${cxt}]} \
-               -o ${fd[${cxt}]}
-            if [[ ${prestats_censor_cr[${cxt}]} == fd ]]
+               -r ${rps[cxt]} \
+               -o ${fd[cxt]}
+            if [[ ${prestats_censor_cr[cxt]} == fd ]]
                then
                subroutine     @2.7  [Quality criterion: FD]
                censor_criterion='fd['${cxt}']'
-            elif [[ ${prestats_censor_cr[${cxt}]} == rms ]]
+            elif [[ ${prestats_censor_cr[cxt]} == rms ]]
                then
                subroutine     @2.8  [Quality criterion: RMS]
                censor_criterion='rel_rms['${cxt}']'
@@ -430,8 +429,8 @@ while (( ${#rem} > 0 ))
             #    type of censoring requested will be stored in one
             #    of the variables: censor[cxt] or censor[subjidx]
             #######################################################
-            censor_threshold=$(strslice ${prestats_censor[${cxt}]} 2)
-            if (( ${censored[${cxt}]} != 1 ))
+            censor_threshold=$(strslice ${prestats_censor[cxt]} 2)
+            if (( ${censored[cxt]} != 1 ))
                then
                subroutine     @2.9  [Applying motion threshold to volumes]
                ####################################################
@@ -444,20 +443,20 @@ while (( ${#rem} > 0 ))
                   tmask.R \
                   -s ${!censor_criterion} \
                   -t ${censor_threshold} \
-                  -o ${tmask[${cxt}]} \
-                  -m ${prestats_censor_contig[${cxt}]}
+                  -o ${tmask[cxt]} \
+                  -m ${prestats_censor_contig[cxt]}
                configure      censored    1
                ####################################################
                # Determine the number of volumes that fail the
                # motion criterion and print this.
                ####################################################
                subroutine        @2.10 [Evaluating data quality]
-               num_censor=$(exec_sys cat ${tmask[${cxt}]} \
+               num_censor=$(exec_sys cat ${tmask[cxt]} \
                   |grep -o 0 \
                   |wc -l)
-               echo ${num_censor} >> ${motion_vols[${cxt}]}
+               echo ${num_censor} >> ${motion_vols[cxt]}
             fi
-            exec_sys rm -f ${referenceVolume[${cxt}]}
+            exec_sys rm -f ${referenceVolume[cxt]}
          fi # run check statement
          ##########################################################
          # * Remove the motion corrected image: this step should
@@ -489,7 +488,7 @@ while (( ${#rem} > 0 ))
          # correction, and MCO after slice timing correction.
          ##########################################################
          routine              @3    Realigning functional volumes
-         if ! is_image ${referenceVolume[${cxt}]} \
+         if ! is_image ${referenceVolume[cxt]} \
          || rerun
             then
             subroutine        @3.1  [Extracting reference volume]
@@ -499,13 +498,13 @@ while (( ${#rem} > 0 ))
             # calculated, then use the timeseries midpoint as the
             # reference volume.
             #######################################################
-            if ! is_1D ${fd[${cxt}]}
+            if ! is_1D ${fd[cxt]}
                then
                subroutine     @3.2
                midpt=$(( ${nvol} / 2 ))
                exec_fsl \
                   fslroi ${intermediate}.nii.gz \
-                  ${referenceVolume[${cxt}]} \
+                  ${referenceVolume[cxt]} \
                   ${midpt} 1
             #######################################################
             # Otherwise, use the volume with minimal framewise
@@ -514,10 +513,10 @@ while (( ${#rem} > 0 ))
             else
                subroutine     @3.3
                vol_min_fd=$(exec_xcp \
-                  1dTool.R -i ${fd[${cxt}]} -o which_min -r T)
+                  1dTool.R -i ${fd[cxt]} -o which_min -r T)
                exec_fsl \
                   fslroi ${intermediate}.nii.gz \
-                  ${referenceVolume[${cxt}]} \
+                  ${referenceVolume[cxt]} \
                   ${vol_min_fd} 1
             fi
          fi
@@ -525,8 +524,8 @@ while (( ${#rem} > 0 ))
          # Create the motion correction directory if it does not
          # already exist.
          ##########################################################
-         exec_sys mkdir -p ${mcdir[${cxt}]}
-         exec_sys mkdir -p ${rmat[${cxt}]}
+         exec_sys mkdir -p ${mcdir[cxt]}
+         exec_sys mkdir -p ${rmat[cxt]}
          ##########################################################
          # Verify that this step has not already completed; if it
          # has, then an associated image should exist.
@@ -539,7 +538,7 @@ while (( ${#rem} > 0 ))
                mcflirt -in ${intermediate}.nii.gz \
                -out ${intermediate}_mc \
                -mats \
-               -reffile ${referenceVolume[${cxt}]} \
+               -reffile ${referenceVolume[cxt]} \
                -spline_final
          fi
          ##########################################################
@@ -548,7 +547,7 @@ while (( ${#rem} > 0 ))
          ##########################################################
          [[ -e ${intermediate}_mc*.mat ]] && exec_sys \
             mv -f ${intermediate}_mc*.mat \
-            ${rmat[${cxt}]}
+            ${rmat[cxt]}
          ##########################################################
          # Update image pointer
          ##########################################################
@@ -567,8 +566,8 @@ while (( ${#rem} > 0 ))
          # based upon user input.
          ##########################################################
          routine              @4    Slice timing correction
-         subroutine           @4.1a Acquisition: ${prestats_stime[${cxt}]}
-         subroutine           @4.1b Acquisition axis: ${prestats_sdir[${cxt}]}
+         subroutine           @4.1a Acquisition: ${prestats_stime[cxt]}
+         subroutine           @4.1b Acquisition axis: ${prestats_sdir[cxt]}
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
@@ -577,7 +576,7 @@ while (( ${#rem} > 0 ))
             # Read in the acquisition axis; translate axes from
             # common names to FSL terminology.
             #######################################################
-            case "${prestats_sdir[${cxt}]}" in 
+            case "${prestats_sdir[cxt]}" in 
             X)
                subroutine     @4.2a
                sdir=1
@@ -594,7 +593,7 @@ while (( ${#rem} > 0 ))
                sdir=3 # set default so as to prevent errors
                subroutine     @4.2d Slice timing correction:
                subroutine     @4.2e Unrecognised acquisition axis/direction:
-               subroutine     @4.2f ${prestats_sdir[${cxt}]}
+               subroutine     @4.2f ${prestats_sdir[cxt]}
                ;;
             esac
             #######################################################
@@ -602,7 +601,7 @@ while (( ${#rem} > 0 ))
             # the order in which slices were acquired.
             #######################################################
             unset st_arguments
-            case "${prestats_stime[${cxt}]}" in
+            case "${prestats_stime[cxt]}" in
             up)
                subroutine     @4.3
                ;;
@@ -616,8 +615,8 @@ while (( ${#rem} > 0 ))
                ;;
             custom)
                subroutine     @4.6
-               st_custom_time=${prestats_stime_tpath[${cxt}]}
-               st_custom_order=${prestats_stime_opath[${cxt}]}
+               st_custom_time=${prestats_stime_tpath[cxt]}
+               st_custom_order=${prestats_stime_opath[cxt]}
                ####################################################
                # If you are using both a custom order file and a
                # custom timing file, then congratulations -- you've
@@ -626,12 +625,12 @@ while (( ${#rem} > 0 ))
                # The call is still here, but should it become
                # active, the very fabric of the world will unravel.
                ####################################################
-               if [[ "${prestats_stime_order[${cxt}]}" == "true" ]]
+               if [[ "${prestats_stime_order[cxt]}" == "true" ]]
                   then
                   subroutine  @4.6.1
                   st_arguments="${st_arguments} -ocustom ${st_custom_order}"
                fi
-               if [[ "${prestats_stime_timing[${cxt}]}" == "true" ]]
+               if [[ "${prestats_stime_timing[cxt]}" == "true" ]]
                   then
                   subroutine  @4.6.2
                   st_arguments="${st_arguments} -tcustom ${st_custom_time}"
@@ -646,7 +645,7 @@ while (( ${#rem} > 0 ))
                st_perform=0
                ;;
             *)
-               subroutine     @4.7  Unrecognised option ${prestats_stime[${cxt}]}
+               subroutine     @4.7  Unrecognised option ${prestats_stime[cxt]}
                st_perform=0
                ;;
             esac
@@ -685,42 +684,42 @@ while (( ${#rem} > 0 ))
          # used as the primary reference for establishing the
          # boundary between brain and background.
          ##########################################################
-         exec_fsl fslmaths ${intermediate}.nii.gz -Tmean ${meanIntensity[${cxt}]}
+         exec_fsl fslmaths ${intermediate}.nii.gz -Tmean ${meanIntensity[cxt]}
          if ! is_image ${intermediate}_${cur}_1.nii.gz \
          || rerun
             then
             subroutine        @5.2a [Initialising brain extraction]
             subroutine        @5.2b [Fractional intensity threshold:]
-            subroutine        @5.2c [${prestats_fit[${cxt}]}]
+            subroutine        @5.2c [${prestats_fit[cxt]}]
             #######################################################
             # Use BET to generate a preliminary mask. This should
             # be written out to the mask[cxt] variable.
             #######################################################
             exec_fsl \
-               bet ${meanIntensity[${cxt}]} \
+               bet ${meanIntensity[cxt]} \
                ${outdir}/${prefix} \
-               -f ${prestats_fit[${cxt}]} \
+               -f ${prestats_fit[cxt]} \
                -n \
                -m \
                -R
-            exec_fsl immv ${outdir}/${prefix}.nii.gz ${meanIntensityBrain[${cxt}]}
+            exec_fsl immv ${outdir}/${prefix}.nii.gz ${meanIntensityBrain[cxt]}
             #######################################################
             # Additionally, prepare a brain-extracted version of
             # the example functional image; this will later be
             # necessary for coregistration of functional and
             # structural acquisitions.
             #######################################################
-            if is_image ${referenceVolume[${subjidx}]}
+            if is_image ${referenceVolume[sub]}
                then
                subroutine     @5.3a
-               bet ${referenceVolume[${subjidx}]} \
-                  ${referenceVolumeBrain[${cxt}]} \
-                  -f ${prestats_fit[${cxt}]}
+               bet ${referenceVolume[sub]} \
+                  ${referenceVolumeBrain[cxt]} \
+                  -f ${prestats_fit[cxt]}
             else
                subroutine     @5.3b
-               bet ${referenceVolume[${cxt}]} \
-                  ${referenceVolumeBrain[${cxt}]} \
-                  -f ${prestats_fit[${cxt}]}
+               bet ${referenceVolume[cxt]} \
+                  ${referenceVolumeBrain[cxt]} \
+                  -f ${prestats_fit[cxt]}
             fi
             subroutine        @5.4  [Initial estimate]
             #######################################################
@@ -728,7 +727,7 @@ while (( ${#rem} > 0 ))
             #######################################################
             exec_fsl \
                fslmaths ${intermediate}.nii.gz \
-               -mas ${mask[${cxt}]} \
+               -mas ${mask[cxt]} \
                ${intermediate}_${cur}_1.nii.gz
          fi
          if ! is_image ${intermediate}_${cur}_2 \
@@ -736,7 +735,7 @@ while (( ${#rem} > 0 ))
             then
             subroutine        @5.5a [Thresholding and dilating image]
             subroutine        @5.5b [Brain-background threshold:]
-            subroutine        @5.5c [${prestats_bbgthr[${cxt}]}]
+            subroutine        @5.5c [${prestats_bbgthr[cxt]}]
             #######################################################
             # Use the user-specified brain-background threshold
             # to determine what parts of the image to count as
@@ -752,19 +751,19 @@ while (( ${#rem} > 0 ))
             #    pass of brain extraction.
             #######################################################
             perc_98=$(exec_fsl fslstats ${intermediate}.nii.gz -p 98)
-            new_thresh=$(arithmetic ${perc_98}\*${prestats_bbgthr[${cxt}]})
+            new_thresh=$(arithmetic ${perc_98}\*${prestats_bbgthr[cxt]})
             exec_fsl \
                fslmaths ${intermediate}_${cur}_1.nii.gz \
                -thr ${new_thresh} \
                -Tmin \
                -bin \
-               ${mask[${cxt}]} \
+               ${mask[cxt]} \
                -odt char
             subroutine        @5.6
-            exec_fsl fslmaths ${mask[${cxt}]} -dilF ${mask[${cxt}]}
+            exec_fsl fslmaths ${mask[cxt]} -dilF ${mask[cxt]}
             exec_fsl \
                fslmaths ${intermediate}.nii.gz \
-               -mas ${mask[${cxt}]} \
+               -mas ${mask[cxt]} \
                ${intermediate}_${cur}.nii.gz
          fi
          intermediate=${intermediate}_${cur}
@@ -800,14 +799,14 @@ while (( ${#rem} > 0 ))
             # then a new mask can be computed quickly using
             # AFNI's 3dAutomask tool.
             #######################################################
-            if is_image ${mask[${subjidx}]}
+            if is_image ${mask[sub]}
                then
                subroutine     @6.1a [Using previously determined mask]
-               mask_dmdt=${mask[${subjidx}]}
-            elif is_image ${mask[${cxt}]}
+               mask_dmdt=${mask[sub]}
+            elif is_image ${mask[cxt]}
                then
                subroutine     @6.1b [Using mask from this preprocessing run]
-               mask_dmdt=${mask[${cxt}]}
+               mask_dmdt=${mask[cxt]}
             else
                subroutine     @6.2  [Generating a mask using 3dAutomask]
                exec_afni \
@@ -829,11 +828,11 @@ while (( ${#rem} > 0 ))
             # points must be used in the linear model.
             #######################################################
             subroutine        @6.3
-            if is_1D ${tmask[${cxt}]} \
-            && [[ ${censor[${cxt}]} == iter ]]
+            if is_1D ${tmask[cxt]} \
+            && [[ ${censor[cxt]} == iter ]]
                then
                subroutine     @6.3.1
-               tmask_dmdt=${tmask[${cxt}]}
+               tmask_dmdt=${tmask[cxt]}
             else
                subroutine     @6.3.2
                tmask_dmdt=ones
@@ -848,7 +847,7 @@ while (( ${#rem} > 0 ))
             # In summary, the detrend order is based upon the
             # overall duration of the scan.
             #######################################################
-            if ! is+integer ${prestats_dmdt[${cxt}]}
+            if ! is+integer ${prestats_dmdt[cxt]}
                then
                subroutine     @6.4  [Estimating polynomial order]
                nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
@@ -856,7 +855,7 @@ while (( ${#rem} > 0 ))
                dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
                dmdt_order=$(strslice ${dmdt_order} 1 '.')
             else
-               dmdt_order=${prestats_dmdt[${cxt}]}
+               dmdt_order=${prestats_dmdt[cxt]}
             fi
             subroutine        @6.5  [Applying polynomial detrend]
             subroutine        @6.6  [Order: ${dmdt_order}]
@@ -931,7 +930,7 @@ while (( ${#rem} > 0 ))
          # If no spatial filtering has been specified by the user,
          # then bypass this step.
          ##########################################################
-         if [[ ${prestats_sptf[${cxt}]} == none ]]
+         if [[ ${prestats_sptf[cxt]} == none ]]
             then
             subroutine        @8.1
             exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
@@ -953,14 +952,14 @@ while (( ${#rem} > 0 ))
             # particularly well if the BOLD timeseries has already
             # been demeaned or detrended.
             #######################################################
-            if is_image ${mask[${subjidx}]}
+            if is_image ${mask[sub]}
                then
                subroutine     @8.2
-               mask_spt=${mask[${subjidx}]}
-            elif is_image ${mask[${cxt}]}
+               mask_spt=${mask[sub]}
+            elif is_image ${mask[cxt]}
                then
                subroutine     @8.3
-               mask_spt=${mask[${cxt}]}
+               mask_spt=${mask[cxt]}
             else
                subroutine     @8.4  Generating a mask using 3dAutomask
                exec_afni \
@@ -973,28 +972,28 @@ while (( ${#rem} > 0 ))
             #######################################################
             # Prime the inputs to sfilter for SUSAN filtering
             #######################################################
-            if [[ "${prestats_sptf[${cxt}]}" == susan ]]
+            if [[ "${prestats_sptf[cxt]}" == susan ]]
                then
-               if is_image ${referenceVolumeBrain[${subjidx}]}
+               if is_image ${referenceVolumeBrain[sub]}
                   then
                   subroutine  @8.5.1
-                  usan="-u ${referenceVolumeBrain[${subjidx}]}"
-               elif is_image ${referenceVolumeBrain[${cxt}]}
+                  usan="-u ${referenceVolumeBrain[sub]}"
+               elif is_image ${referenceVolumeBrain[cxt]}
                   then
                   subroutine  @8.5.2
-                  usan="-u ${referenceVolumeBrain[${cxt}]}"
-               elif is_image ${referenceVolume[${subjidx}]}
+                  usan="-u ${referenceVolumeBrain[cxt]}"
+               elif is_image ${referenceVolume[sub]}
                   then
                   subroutine  @8.5.3
-                  usan="-u ${referenceVolume[${subjidx}]}"
-               elif is_image ${referenceVolume[${cxt}]}
+                  usan="-u ${referenceVolume[sub]}"
+               elif is_image ${referenceVolume[cxt]}
                   then
                   subroutine  @8.5.4
-                  usan="-u ${referenceVolume[${cxt}]}"
+                  usan="-u ${referenceVolume[cxt]}"
                else
                   subroutine  @8.6a SUSAN requires a reference volume, and none
                   subroutine  @8.6b was located. Switching to UNIFORM smoothing.
-                  ${prestats_sptf[${cxt}]}=uniform
+                  ${prestats_sptf[cxt]}=uniform
                   write_output   prestats_sptf
                fi
             fi
@@ -1004,14 +1003,14 @@ while (( ${#rem} > 0 ))
             #    implemented smoothing routines: gaussian, susan,
             #    and uniform.
             #######################################################
-            subroutine        @8.7a [Filter: ${prestats_sptf[${cxt}]}]
-            subroutine        @8.7b [Smoothing kernel: ${prestats_smo[${cxt}]} mm]
+            subroutine        @8.7a [Filter: ${prestats_sptf[cxt]}]
+            subroutine        @8.7b [Smoothing kernel: ${prestats_smo[cxt]} mm]
             exec_xcp \
                sfilter \
                -i ${intermediate}.nii.gz \
                -o ${intermediate}_${cur}.nii.gz \
-               -s ${prestats_sptf[${cxt}]} \
-               -k ${prestats_smo[${cxt}]} \
+               -s ${prestats_sptf[cxt]} \
+               -k ${prestats_smo[cxt]} \
                -m ${mask_spt} \
                ${usan} \
                ${trace_prop}
@@ -1041,7 +1040,7 @@ while (( ${#rem} > 0 ))
          # If no temporal filtering has been specified by the user,
          # then bypass this step.
          ##########################################################
-         if [[ ${prestats_tmpf[${cxt}]} == none ]]
+         if [[ ${prestats_tmpf[cxt]} == none ]]
             then
             subroutine        @9.1
             ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
@@ -1051,14 +1050,14 @@ while (( ${#rem} > 0 ))
             #######################################################
             # OBTAIN MASKS: SPATIAL
             #######################################################
-            if is_image ${mask[${subjidx}]}
+            if is_image ${mask[sub]}
                then
                subroutine     @9.2.1
-               mask="-m ${mask[${subjidx}]}"
-            elif is_image ${mask[${cxt}]}
+               mask="-m ${mask[sub]}"
+            elif is_image ${mask[cxt]}
                then
                subroutine     @9.2.2
-               mask="-m ${mask[${cxt}]}"
+               mask="-m ${mask[cxt]}"
             else
                subroutine     @9.3
                mask=''
@@ -1066,15 +1065,15 @@ while (( ${#rem} > 0 ))
             #######################################################
             # OBTAIN MASKS: TEMPORAL
             #######################################################
-            censor_type=${censor[${cxt}]}
-            if is_1D ${tmask[${subjidx}]}
+            censor_type=${censor[cxt]}
+            if is_1D ${tmask[sub]}
                then
                subroutine     @9.4.1
-               tmask_tmp=${tmask[${subjidx}]}
-            elif is_1D ${tmask[${cxt}]}
+               tmask_tmp=${tmask[sub]}
+            elif is_1D ${tmask[cxt]}
                then
                subroutine     @9.4.2
-               tmask_tmp=${tmask[${cxt}]}
+               tmask_tmp=${tmask[cxt]}
             else
                subroutine     @9.5
                tmask_tmp=ones
@@ -1112,38 +1111,38 @@ while (( ${#rem} > 0 ))
             #######################################################
             # Realignment parameters...
             #######################################################
-            if is_1D ${rps[${subjidx}]}
+            if is_1D ${rps[sub]}
                then
                subroutine     @9.8.1
-               ts1d="${ts1d} ${rps[${subjidx}]}"
-            elif is_1D ${rps[${cxt}]}
+               ts1d="${ts1d} ${rps[sub]}"
+            elif is_1D ${rps[cxt]}
                then
                subroutine     @9.8.2
-               ts1d="${ts1d} ${rps[${cxt}]}"
+               ts1d="${ts1d} ${rps[cxt]}"
             fi
             #######################################################
             # Relative RMS motion...
             #######################################################
-            if is_1D ${rel_rms[${subjidx}]}
+            if is_1D ${rel_rms[sub]}
                then
                subroutine     @9.9.1
-               ts1d="${ts1d} ${rel_rms[${subjidx}]}"
-            elif is_1D ${rel_rms[${cxt}]}
+               ts1d="${ts1d} ${rel_rms[sub]}"
+            elif is_1D ${rel_rms[cxt]}
                then
                subroutine     @9.9.2
-               ts1d="${ts1d} ${rel_rms[${cxt}]}"
+               ts1d="${ts1d} ${rel_rms[cxt]}"
             fi
             #######################################################
             # Absolute RMS motion...
             #######################################################
-            if is_1D ${abs_rms[${subjidx}]}
+            if is_1D ${abs_rms[sub]}
                then
                subroutine     @9.10.1
-               ts1d="${ts1d} ${abs_rms[${subjidx}]}"
-            elif is_1D ${abs_rms[${cxt}]}
+               ts1d="${ts1d} ${abs_rms[sub]}"
+            elif is_1D ${abs_rms[cxt]}
                then
                subroutine     @9.10.2
-               ts1d="${ts1d} ${abs_rms[${cxt}]}"
+               ts1d="${ts1d} ${abs_rms[cxt]}"
             fi
             #######################################################
             # Replace any whitespace characters in the 1D
@@ -1160,85 +1159,74 @@ while (( ${#rem} > 0 ))
             # Next, set arguments specific to each filter class.
             #######################################################
             unset tf_order tf_direc tf_p_rip tf_s_rip
-            case ${prestats_tmpf[${cxt}]} in
+            case ${prestats_tmpf[cxt]} in
             butterworth)
                subroutine     @9.12
-               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
-               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
+               tf_order="-r ${prestats_tmpf_order[cxt]}"
+               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
                ;;
             chebyshev1)
                subroutine     @9.13
-               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
-               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
-               tf_p_rip="-p ${prestats_tmpf_ripple[${cxt}]}"
+               tf_order="-r ${prestats_tmpf_order[cxt]}"
+               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
+               tf_p_rip="-p ${prestats_tmpf_ripple[cxt]}"
                ;;
             chebyshev2)
                subroutine     @9.14
-               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
-               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
-               tf_s_rip="-s ${prestats_tmpf_ripple2[${cxt}]}"
+               tf_order="-r ${prestats_tmpf_order[cxt]}"
+               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
+               tf_s_rip="-s ${prestats_tmpf_ripple2[cxt]}"
                ;;
             elliptic)
                subroutine     @9.15
-               tf_order="-r ${prestats_tmpf_order[${cxt}]}"
-               tf_direc="-d ${prestats_tmpf_pass[${cxt}]}"
-               tf_p_rip="-p ${prestats_tmpf_ripple[${cxt}]}"
-               tf_s_rip="-s ${prestats_tmpf_ripple2[${cxt}]}"
+               tf_order="-r ${prestats_tmpf_order[cxt]}"
+               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
+               tf_p_rip="-p ${prestats_tmpf_ripple[cxt]}"
+               tf_s_rip="-s ${prestats_tmpf_ripple2[cxt]}"
                ;;
             esac
-            #######################################################
-            # If the user has requested discarding of initial
-            # and/or final volumes from the filtered timeseries,
-            # the request should be passed to tfilter.
-            #######################################################
-            unset tf_dvol
-            if [[ -n ${prestats_tmpf_dvols[${cxt}]} ]]
-               then
-               subroutine     @9.16
-               tf_dvol="-v ${prestats_tmpf_dvols[${cxt}]}"
-            fi
             #######################################################
             # Engage the tfilter routine to filter the image.
             #  * This is essentially a wrapper around the three
             #    implemented filtering routines: fslmaths,
             #    3dBandpass, and genfilter
             #######################################################
-            subroutine        @9.17a   ${prestats_tmpf[${cxt}]} filter
-            subroutine        @9.17b   High pass frequency: ${prestats_hipass[${cxt}]}
-            subroutine        @9.17c   Low pass frequency: ${prestats_lopass[${cxt}]}
+            subroutine        @9.17a   ${prestats_tmpf[cxt]} filter
+            subroutine        @9.17b   High pass frequency: ${prestats_hipass[cxt]}
+            subroutine        @9.17c   Low pass frequency: ${prestats_lopass[cxt]}
             exec_xcp \
                tfilter \
                -i ${intermediate}.nii.gz \
                -o ${intermediate}_${cur}.nii.gz \
-               -f ${prestats_tmpf[${cxt}]} \
-               -h ${prestats_hipass[${cxt}]} \
-               -l ${prestats_lopass[${cxt}]} \
+               -f ${prestats_tmpf[cxt]} \
+               -h ${prestats_hipass[cxt]} \
+               -l ${prestats_lopass[cxt]} \
                ${mask}     ${tmask_tmp}   ${tf_order} ${tf_direc} \
-               ${tf_p_rip} ${tf_s_rip}    ${tf_dvol}  ${ts1d}
+               ${tf_p_rip} ${tf_s_rip}    ${ts1d}
             apply_exec  timeseries  ${intermediate}_${cur}_%NAME \
                xcp tfilter \
                -i %INPUT \
                -o %OUTPUT \
-               -f ${prestats_tmpf[${cxt}]} \
-               -h ${prestats_hipass[${cxt}]} \
-               -l ${prestats_lopass[${cxt}]} \
+               -f ${prestats_tmpf[cxt]} \
+               -h ${prestats_hipass[cxt]} \
+               -l ${prestats_lopass[cxt]} \
                ${mask}     ${tmask_tmp}   ${tf_order} ${tf_direc} \
-               ${tf_p_rip} ${tf_s_rip}    ${tf_dvol}
+               ${tf_p_rip} ${tf_s_rip}
             #######################################################
             # Move outputs to target
             #######################################################
             is_1D ${intermediate}_${cur}_realignment.1D \
             && mv -f ${intermediate}_${cur}_${prefix}_realignment.1D \
-               ${rps[${cxt}]}
+               ${rps[cxt]}
             is_1D ${intermediate}_${cur}_abs_rms.1D \
             && mv -f ${intermediate}_${cur}_${prefix}_abs_rms.1D \
-               ${absrms[${cxt}]}
+               ${absrms[cxt]}
             is_1D ${intermediate}_${cur}_rel_rms.1D \
             && mv -f ${intermediate}_${cur}_${prefix}_rel_rms.1D \
-               ${relrms[${cxt}]}
+               ${relrms[cxt]}
             is_1D ${intermediate}_${cur}_tmask.1D \
             && mv -f ${intermediate}_${cur}_tmask.1D \
-               ${tmask[${cxt}]}
+               ${tmask[cxt]}
          fi
          ##########################################################
          # Update image pointer
@@ -1274,7 +1262,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${final[${cxt}]}
+   exec_fsl immv ${processed} ${final[cxt]}
    completion
 else
    subroutine                 @0.3
