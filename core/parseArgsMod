@@ -105,7 +105,7 @@ fi
 # Create the primary module output directory.
 ###################################################################
 (( ${NUMOUT} == 1 )) && prep=${cxt}_
-outdir=${out[sub]}/${prep}${mod_name_short}
+outdir=${out}/${prep}${mod_name_short}
 if [[ ! -e ${outdir} ]]
    then
    mkdir -p ${outdir}
@@ -132,7 +132,7 @@ else
 fi
 intermediate_root=${intermediate}
 img_raw=${img}
-img=${out[sub]}/${prefix}.nii.gz
+img=${out}/${prefix}.nii.gz
 ###################################################################
 # Parse quality variables.
 ###################################################################
