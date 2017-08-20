@@ -888,30 +888,14 @@ while (( ${#rem} > 0 ))
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
             then
-            subroutine        @7.1
+            subroutine        @7.1  [Executing despike]
             exec_sys rm -rf ${intermediate}_${cur}.nii.gz
-            unset ds_arguments
-            #######################################################
-            # Determine whether to run new or old 3dDespike.
-            # This is based on the number of volumes.
-            # If the timeseries has more than 200 volumes,
-            # the old method will be incredibly slow, so the
-            # new method should be run.
-            #######################################################
-            nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
-            if (( ${nvol} >= 200 ))
-               then
-               subroutine     @7.2  [Long timeseries configuration]
-               ds_arguments='-NEW'
-            else
-               subroutine     @7.3  [Short timeseries configuration]
-            fi
             exec_afni \
                3dDespike \
                -prefix ${intermediate}_${cur}.nii.gz \
                -nomask \
                -quiet \
-               ${ds_arguments} \
+               -NEW \
                ${intermediate}.nii.gz
          fi
          intermediate=${intermediate}_${cur}
