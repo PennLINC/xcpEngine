@@ -6,7 +6,7 @@
 
 ###################################################################
 # SPECIFIC MODULE HEADER
-# ICA-AROMA-like denoising procedure without MNI-space requirement.
+# This module implements an ICA-AROMA-inspired denoising procedure.
 ###################################################################
 mod_name_short=aroma
 mod_name='ICA-AROMA DENOISING MODULE'
@@ -23,11 +23,11 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         final
+   processed         icaDenoised
    
    write_derivative  ic_maps
    write_derivative  ic_maps_thr
-   write_derivative  ic_maps_thr_std
+   write_derivative  ic_maps_thr_mni
    
    write_output      melodir
    write_output      ic_class
@@ -49,8 +49,8 @@ completion() {
 ###################################################################
 derivative  ic_maps                 melodic/melodic_IC
 derivative  ic_maps_thr             melodic/melodic_IC_thr
-derivative  ic_maps_thr_std         melodic/melodic_IC_thr_std
-derivative  sm${aroma_smo[${cxt}]}  ${prefix}_sm${aroma_smo[${cxt}]}
+derivative  ic_maps_thr_mni         melodic/melodic_IC_thr_mni
+derivative  sm${aroma_smo[cxt]}     ${prefix}_sm${aroma_smo[cxt]}
 
 output      melodir                 melodic
 output      ic_mix                  melodic/melodic_mix
@@ -62,20 +62,18 @@ output      ic_noise                ${prefix}_nICsNoise.txt
 
 derivative_config   ic_maps         Type              maps
 derivative_config   ic_maps_thr     Type              maps
-derivative_config   ic_maps_thr_std Type              maps
+derivative_config   ic_maps_thr_mni Type              maps
+derivative_config   ic_maps_thr_mni Space             MNI
 
-process     final                   ${prefix}_icaDenoised
+process     icaDenoised             ${prefix}_icaDenoised
 
 << DICTIONARY
 
-final
-   The final output of the module, indicating its successful
-   completion.
 ic_class
    A matrix cataloguing the features used to classify MELODIC
    components as signal or noise.
 ic_confmat
-   A matrix of realignment parameter time courses. Includes
+   A matrix of 72 realignment parameter time courses. Includes
    6 realignment parameters, 6 temporal derivatives, 12 forward-
    shifted versions of the previous, 12 reverse-shifted versions
    of the previous, and 36 squared versions of all the previous.
@@ -89,9 +87,9 @@ ic_maps
 ic_maps_thr
    Spatial maps of all components identified by the MELODIC
    decomposition, thresholded.
-ic_maps_thr_std
+ic_maps_thr_mni
    Spatial maps of all components identified by the MELODIC
-   decomposition, thresholded and normalised to a template.
+   decomposition, thresholded and normalised to the MNI template.
 ic_mix
    The time domain of the IC time series. Also called the MELODIC
    mixing matrix.
@@ -99,7 +97,11 @@ ic_noise
    The number of MELODIC components classified as noise.
 ic_ts
    The time domain of the IC time series, along with the squares
-   of the IC time series. The correlation between these 
+   of the IC time series. The correlation between these and the
+   realignment parameter time courses is used as an input to the
+   classifier.
+icaDenoised
+   The denoised map. The final output of the module.
 melodir
    The MELODIC output directory.
 
@@ -115,17 +117,21 @@ DICTIONARY
 
 
 ###################################################################
-# Apply the desired smoothing kernel to the BOLD timeseries.
+# Apply the desired smoothing kernel to the BOLD timeseries. If
+# smoothing is performed in the module, it is also contained in
+# the module: the smoothed image is used to obtain the MELODIC
+# components, but de-noising is performed on the unsmoothed data,
+# and the unsmoothed data is propagated to the primary analyte.
 ###################################################################
-if [[ -n ${aroma_smo[${cxt}]} ]] \
-&& (( ${aroma_smo[${cxt}]} != 0 ))
+if [[ -n ${aroma_smo[cxt]} ]] \
+&& (( ${aroma_smo[cxt]} != 0 ))
    then
    routine                    @1    Spatially filtering image
    ################################################################
    # Ensure that this step has not already run to completion
    # by checking for the existence of a smoothed image.
    ################################################################
-   img_sm=sm${aroma_smo[${cxt}]}
+   img_sm=sm${aroma_smo[cxt]}
    if ! is_image ${!img_sm} \
    || rerun
       then
@@ -136,10 +142,10 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
       # not exist, then search for a mask created by this
       # module.
       #############################################################
-      if is_image ${mask[${subjidx}]}
+      if is_image ${mask[sub]}
          then
          subroutine           @1.2
-         mask=${mask[${subjidx}]}
+         mask=${mask[sub]}
       else
          subroutine           @1.3  Generating a mask using 3dAutomask
          exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
@@ -151,19 +157,18 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
       #############################################################
       # Prime the inputs to sfilter for SUSAN filtering
       #############################################################
-      if [[ ${aroma_sptf[${cxt}]} == susan ]]
+      if [[ ${aroma_sptf[cxt]} == susan ]]
          then
          ##########################################################
          # Ensure that an example functional image exists. If it
-         # does not, then force a switch to uniform smoothing to
-         # mitigate the catastrophe.
+         # does not, then force a switch to uniform smoothing.
          ##########################################################
-         if is_image ${referenceVolumeBrain[${subjidx}]}
+         if is_image ${referenceVolumeBrain[sub]}
             then
             subroutine        @1.4
-            usan="-u ${referenceVolume[${subjidx}]}"
+            usan="-u ${referenceVolume[sub]}"
          else
-            subroutine        @1.5
+            subroutine        @1.5  No USAN available -- applying uniform filter
             configure         aroma_sptf        uniform
             write_config      aroma_aptf
          fi
@@ -174,13 +179,13 @@ if [[ -n ${aroma_smo[${cxt}]} ]] \
       #    implemented smoothing routines: gaussian, susan,
       #    and uniform.
       #############################################################
-      subroutine              @1.6a Filter: ${aroma_sptf[${cxt}]}
-      subroutine              @1.6b Smoothing kernel: ${aroma_smo[${cxt}]} mm
+      subroutine              @1.6a Filter: ${aroma_sptf[cxt]}
+      subroutine              @1.6b Smoothing kernel: ${aroma_smo[cxt]} mm
       exec_xcp sfilter \
          -i ${img} \
          -o ${!img_sm} \
-         -s ${aroma_sptf[${cxt}]} \
-         -k ${aroma_smo[${cxt}]} \
+         -s ${aroma_sptf[cxt]} \
+         -k ${aroma_smo[cxt]} \
          -m ${mask} \
          ${usan}
    fi
@@ -203,10 +208,10 @@ fi
 # If not, then MELODIC will automatically estimate it.
 ###################################################################
 routine                       @2    "ICA decomposition (MELODIC)"
-if [[ ${aroma_dim[${cxt}]} != auto ]]
+if [[ ${aroma_dim[cxt]} != auto ]]
    then
    subroutine                 @2.1
-   melodim="--dim=${aroma_dim[${cxt}]}"
+   melodim="--dim=${aroma_dim[cxt]}"
 fi
 ###################################################################
 # Obtain the repetition time.
@@ -215,11 +220,11 @@ trep=$(exec_fsl fslval ${img} pixdim4)
 ###################################################################
 # Determine whether it is necessary to run MELODIC.
 ###################################################################
-if ! is_image ${ic_maps[${cxt}]} \
-|| [[ ! -e ${ic_mix[${cxt}]} ]] \
+if ! is_image ${ic_maps[cxt]} \
+|| [[ ! -e ${ic_mix[cxt]} ]] \
 || rerun
    then
-   subroutine                 @2.2  Model order: ${aroma_dim[${cxt}]}
+   subroutine                 @2.2  Model order: ${aroma_dim[cxt]}
    ################################################################
    # Preclude autosubmission to the grid, MELODIC may be
    # configured for autosubmission
@@ -228,8 +233,8 @@ if ! is_image ${ic_maps[${cxt}]} \
    unset SGE_ROOT
    exec_fsl melodic \
       --in=${img_in} \
-      --outdir=${melodir[${cxt}]} \
-      --mask=${mask[${subjidx}]} \
+      --outdir=${melodir[cxt]} \
+      --mask=${mask[sub]} \
       ${melodim} \
       --Ostats \
       --nobet \
@@ -238,12 +243,12 @@ if ! is_image ${ic_maps[${cxt}]} \
       --tr=${trep}
    SGE_ROOT=${buffer}
 fi
-exec_sys mv -f ${outdir}/*.ica ${melodir[${cxt}]} 2>/dev/null
+exec_sys mv -f ${outdir}/*.ica ${melodir[cxt]} 2>/dev/null
 ###################################################################
 # Read in the dimension of the results (number of components
 # obtained).
 ###################################################################
-icdim=$(exec_fsl fslval ${ic_maps[${cxt}]} dim4)
+icdim=$(exec_fsl fslval ${ic_maps[cxt]} dim4)
 ###################################################################
 # Concatenate the mixture-modelled, thresholded spatial maps of
 # the independent components.
@@ -263,8 +268,8 @@ while (( ${curidx} <= ${icdim} ))
    #   to converge.
    ################################################################
    padidx=$(exec_fsl zeropad ${curidx} 4)
-   zmapIn=${melodir[${cxt}]}/stats/thresh_zstat${curidx}
-   zmapOut=${melodir[${cxt}]}/stats/thresh_zstat_${padidx}
+   zmapIn=${melodir[cxt]}/stats/thresh_zstat${curidx}
+   zmapOut=${melodir[cxt]}/stats/thresh_zstat_${padidx}
    iclength=$(exec_fsl fslval ${zmapIn} dim4)
    finalMapIdx=$(( ${iclength} - 1 ))
    exec_fsl fslroi ${zmapIn} ${zmapOut} ${finalMapIdx} 1
@@ -278,14 +283,14 @@ done
 ###################################################################
 # Concatenate and delete temporary files.
 ###################################################################
-exec_fsl fslmerge -t ${ic_maps_thr[${cxt}]} ${toMerge}
-cleanup && exec_sys rm -f ${toMerge}
+exec_fsl fslmerge    -t ${ic_maps_thr[cxt]} ${toMerge}
+cleanup  && exec_sys rm -f ${toMerge}
 ###################################################################
 # Mask the thresholded component maps.
 ###################################################################
-exec_fsl fslmaths ${ic_maps_thr[${cxt}]} \
-   -mas ${mask[${subjidx}]} \
-   ${ic_maps_thr[${cxt}]}
+exec_fsl fslmaths    ${ic_maps_thr[cxt]} \
+   -mas  ${mask[sub]} \
+   ${ic_maps_thr[cxt]}
 routine_end
 
 
@@ -298,40 +303,24 @@ routine_end
 ###################################################################
 routine                       @3    Extracting features: CSF and edge fractions
 ###################################################################
-# * Move the IC maps into the same space as the edge, CSF, and
-#   background masks.
+# * Move the IC maps into MNI space.
 ###################################################################
-if ! is_image ${icmaps_thr_std[${cxt}]} \
+if ! is_image ${ic_maps_thr_mni[cxt]} \
 || rerun
    then
    subroutine                 @3.1  Standardising component maps
-   spa=${space:0:3}
-   [[ ${spa} == sta ]] && spa=std
-   exec_sys rm -f ${ic_maps_thr_std[${cxt}]}
+   exec_sys rm -f ${ic_maps_thr_mni[cxt]}
    warpspace \
-      ${ic_maps_thr[${cxt}]} \
-      ${ic_maps_thr_std[${cxt}]} \
-      ${standard}
+      ${ic_maps_thr[cxt]} \
+      ${ic_maps_thr_mni[cxt]} \
+      ${space[sub]}:MNI
 fi
 ###################################################################
-# TODO (or perhaps not)
-# Subject-specific mask generation. Absolutely not validated,
-# and no a priori evidence that this is a good idea, so I may not
-# come back to it. The following steps are listed here as a vague
-# guideline for how this might be done.
-# * Generate the CSF mask. Restrict this to the ventricles by
-#   intersecting it with an eroded whole-brain mask. Dilate to
-#   smooth the surface. Or perhaps simply erode then dilate to
-#   trim periphery.
-# * Subtract the CSF mask from a conservative whole-brain mask as
-#   the initial basis for an edge mask.
-# * Erode the edge mask precursor.
-# * Subtract the eroded precursor from the preliminary precursor
-#   to obtain a finalised edge mask.
+# Import the edge, CSF, and background masks.
 ###################################################################
-configure                     csf      ${aroma_csf[${cxt}]}
-configure                     edge     ${aroma_edge[${cxt}]}
-configure                     bg       ${aroma_bg[${cxt}]}
+configure                     csf      ${XCPEDIR}/thirdparty/aroma/mask_csf.nii.gz
+configure                     edge     ${XCPEDIR}/thirdparty/aroma/mask_edge.nii.gz
+configure                     bg       ${XCPEDIR}/thirdparty/aroma/mask_bg.nii.gz
 ###################################################################
 # Obtain the CSF and edge fraction features for each IC.
 ###################################################################
@@ -342,7 +331,7 @@ while (( ${i} < ${icdim} ))
    ################################################################
    # * Extract the current z-scored IC.
    ################################################################
-   exec_fsl fslroi ${ic_maps_thr_std[${cxt}]} ${intermediate}IC ${i} 1
+   exec_fsl fslroi ${ic_maps_thr_mni[cxt]} ${intermediate}IC ${i} 1
    ################################################################
    # * Change to absolute value of z-score.
    ################################################################
@@ -358,22 +347,22 @@ while (( ${i} < ${icdim} ))
    # * Obtain the total z-score within the CSF compartment.
    ################################################################
    csfMean=0
-   csfVox=($( exec_fsl fslstats ${intermediate}IC -k ${csf[${cxt}]} -V) )
-   csfMean=$( exec_fsl fslstats ${intermediate}IC -k ${csf[${cxt}]} -M)
+   csfVox=($( exec_fsl fslstats ${intermediate}IC -k ${csf[cxt]} -V) )
+   csfMean=$( exec_fsl fslstats ${intermediate}IC -k ${csf[cxt]} -M)
    csfSum=$(arithmetic   ${csfVox[0]}*${csfMean})
    ################################################################
    # * Obtain the total z-score within the edge mask.
    ################################################################
    edgeMean=0
-   edgeVox=($( exec_fsl fslstats ${intermediate}IC -k ${edge[${cxt}]} -V) )
-   edgeMean=$( exec_fsl fslstats ${intermediate}IC -k ${edge[${cxt}]} -M)
+   edgeVox=($( exec_fsl fslstats ${intermediate}IC -k ${edge[cxt]} -V) )
+   edgeMean=$( exec_fsl fslstats ${intermediate}IC -k ${edge[cxt]} -M)
    edgeSum=$(arithmetic ${edgeVox[0]}*${edgeMean})
    ################################################################
    # * Obtain the total z-score located in the background mask.
    ################################################################
    bgMean=0
-   bgVox=($( exec_fsl fslstats ${intermediate}IC -k ${bg[${cxt}]} -V) )
-   bgMean=$( exec_fsl fslstats ${intermediate}IC -k ${bg[${cxt}]} -M)
+   bgVox=($( exec_fsl fslstats ${intermediate}IC -k ${bg[cxt]} -V) )
+   bgMean=$( exec_fsl fslstats ${intermediate}IC -k ${bg[cxt]} -M)
    bgSum=$(arithmetic     ${bgVox[0]}*${bgMean})
    ################################################################
    # * Obtain the fractional z-score with CSF and edge/out masks.
@@ -415,29 +404,29 @@ routine                       @4    Extracting feature: maximum correlation with
 subroutine                    @4.1  Generating 72-parameter RP model
 exec_xcp mbind.R \
    -x 'null' \
-   -y ${rps[${subjidx}]} \
-   -o ${ic_confmat[${cxt}]}
+   -y ${rps[sub]} \
+   -o ${ic_confmat[cxt]}
 exec_xcp mbind.R \
-   -x ${ic_confmat[${cxt}]} \
+   -x ${ic_confmat[cxt]} \
    -y OPdx1 \
-   -o ${ic_confmat[${cxt}]}
+   -o ${ic_confmat[cxt]}
 exec_xcp mbind.R \
-   -x ${ic_confmat[${cxt}]} \
+   -x ${ic_confmat[cxt]} \
    -y OPprev1,-1 \
-   -o ${ic_confmat[${cxt}]}
+   -o ${ic_confmat[cxt]}
 exec_xcp mbind.R \
-   -x ${ic_confmat[${cxt}]} \
+   -x ${ic_confmat[cxt]} \
    -y OPpower2 \
-   -o ${ic_confmat[${cxt}]}
+   -o ${ic_confmat[cxt]}
 ###################################################################
 # * Assemble IC timeseries.
 #   Also obtain the square of each.
 ###################################################################
 subroutine                    @4.2  Obtaining IC timeseries and squares
 exec_xcp mbind.R \
-   -x ${ic_mix[${cxt}]} \
+   -x ${ic_mix[cxt]} \
    -y OPpower2 \
-   -o ${ic_ts[${cxt}]}
+   -o ${ic_ts[cxt]}
 ###################################################################
 # * Obtain the maximum absolute correlation between each IC
 #   timeseries and the realignment parameters. Squared realignment
@@ -448,11 +437,11 @@ exec_xcp mbind.R \
 ###################################################################
 subroutine                    @4.3  Computing IC-RP correlations
 echo_cmd ${XCPEDIR}/modules/aroma/aromaRPCOR.R \
-   -i ${ic_ts[${cxt}]} \
-   -r ${ic_confmat[${cxt}]}
+   -i ${ic_ts[cxt]} \
+   -r ${ic_confmat[cxt]}
 classRPCOR=($(${XCPEDIR}/modules/aroma/aromaRPCOR.R \
-   -i ${ic_ts[${cxt}]} \
-   -r ${ic_confmat[${cxt}]}))
+   -i ${ic_ts[cxt]} \
+   -r ${ic_confmat[cxt]}))
 routine_end
 
 
@@ -471,12 +460,12 @@ routine                       @5    Extracting feature: high-frequency content
 subroutine                    @5.1a Computing midpoints of IC power spectra
 subroutine                    @5.1b Ensure that you have not performed any filtering,
 subroutine                    @5.1c as filtering will cause incorrect classifications
-exec_sys ln -s ${melodir[${cxt}]}/melodic_FTmix ${ic_ft[${cxt}]}
+exec_sys ln -s ${melodir[cxt]}/melodic_FTmix ${ic_ft[cxt]}
 echo_cmd ${XCPEDIR}/modules/aroma/aromaHIFRQ.R \
-   -i ${ic_ft[${cxt}]} \
+   -i ${ic_ft[cxt]} \
    -t ${trep}
 classHIFRQ=($(${XCPEDIR}/modules/aroma/aromaHIFRQ.R \
-   -i ${ic_ft[${cxt}]} \
+   -i ${ic_ft[cxt]} \
    -t ${trep}))
 routine_end
 
@@ -490,11 +479,11 @@ routine_end
 routine                       @6    Component classification
 subroutine                    @6.1  Assembling feature table
 i=0
-echo "ICID,RPCOR,FEDGE,FCSF,HFC" >> ${ic_class[${cxt}]}
+echo "ICID,RPCOR,FEDGE,FCSF,HFC" >> ${ic_class[cxt]}
 while (( ${i} < ${icdim} ))
    do
    subroutine                 @6.2
-   echo ${i},${classRPCOR[${i}]},${classFEDGE[${i}]},${classFCSF[${i}]},${classHIFRQ[${i}]} >> ${ic_class[${cxt}]}
+   echo ${i},${classRPCOR[${i}]},${classFEDGE[${i}]},${classFCSF[${i}]},${classHIFRQ[${i}]} >> ${ic_class[cxt]}
    (( i++ ))
 done
 ###################################################################
@@ -502,11 +491,11 @@ done
 ###################################################################
 subroutine                    @6.3  Applying the classifier
 echo_cmd ${XCPEDIR}/modules/aroma/aromaCLASS.R \
-   -m ${ic_class[${cxt}]}
+   -m ${ic_class[cxt]}
 noiseIdx=$(${XCPEDIR}/modules/aroma/aromaCLASS.R \
-   -m ${ic_class[${cxt}]})
+   -m ${ic_class[cxt]})
 noiseComponents=( ${noiseIdx} )
-echo ${#noiseComponents[@]} >> ${ic_noise[${cxt}]}
+echo ${#noiseComponents[@]} >> ${ic_noise[cxt]}
 routine_end
 
 
@@ -521,24 +510,24 @@ noiseIdx=${noiseIdx// /,}
 subroutine                    @7.1  Non-aggressive filter
 exec_fsl fsl_regfilt \
    --in=${img} \
-   --design=${ic_mix[${cxt}]} \
+   --design=${ic_mix[cxt]} \
    --filter=${noiseIdx} \
    --out=${outdir}/${prefix}_icaDenoised_nonaggr
 subroutine                    @7.2  Aggressive filter
 exec_fsl fsl_regfilt \
    --in=${img} \
-   --design=${ic_mix[${cxt}]} \
+   --design=${ic_mix[cxt]} \
    --filter=${noiseIdx} \
    -a \
    --out=${outdir}/${prefix}_icaDenoised_aggr
-if [[ ${aroma_dtype[${cxt}]} == aggr ]]
+if [[ ${aroma_dtype[cxt]} == aggr ]]
    then
    subroutine                 @7.3  Using aggressive filter
-   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_aggr    ${final[${cxt}]}
-elif [[ ${aroma_dtype[${cxt}]} == nonaggr ]]
+   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_aggr    ${icaDenoised[cxt]}
+elif [[ ${aroma_dtype[cxt]} == nonaggr ]]
    then
    subroutine                 @7.4  Using non-aggressive filter
-   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_nonaggr ${final[${cxt}]}
+   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_nonaggr ${icaDenoised[cxt]}
 fi
 routine_end
 
@@ -553,16 +542,16 @@ routine_end
 # sensitive to such things.
 ###################################################################
 routine                       @8    Demeaning and detrending BOLD timeseries
-if [[ ${aroma_dmdt[${cxt}]} != N ]]
+if [[ ${aroma_dmdt[cxt]} != N ]]
    then
    ################################################################
    # A spatial mask of the brain is necessary for ANTsR to read
    # the image.
    ################################################################
-   if is_image ${mask[${subjidx}]}
+   if is_image ${mask[sub]}
       then
       subroutine              @8.1  Using previously determined mask
-      mask_dmdt=${mask[${subjidx}]}
+      mask_dmdt=${mask[sub]}
    ################################################################
    # If no mask has yet been computed for the subject,
    # then a new mask can be computed quickly using
@@ -573,7 +562,7 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
       exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
          -dilate 3 \
          -q \
-         ${final[${cxt}]}
+         ${icaDenoised[cxt]}
       mask_dmdt=${intermediate}_fmask.nii.gz
    fi
    ################################################################
@@ -588,21 +577,21 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
    # the user should be defined in censor[cxt]. If it is
    # not, then set it to the global subject value.
    ################################################################
-   if [[ -z ${censor[${cxt}]} ]]
+   if [[ -z ${censor[cxt]} ]]
       then
       subroutine              @8.3
-      configure               censor      ${censor[${subjidx}]}
+      configure               censor      ${censor[sub]}
    fi
    ################################################################
    # The temporal mask must be stored either in the
    # module-specific censor[cxt] variable or in the
    # subject-specific censor[subjidx] variable.
    ################################################################
-   if is_1D ${tmask[${subjidx}]} \
-   && [[ ${censor[${cxt}]} == iter ]]
+   if is_1D ${tmask[sub]} \
+   && [[ ${censor[cxt]} == iter ]]
       then
       subroutine              @8.4.1
-      tmask_dmdt=${tmask[${subjidx}]}
+      tmask_dmdt=${tmask[sub]}
    ################################################################
    # If iterative censoring has not been specified or
    # if no temporal mask exists yet, then all time
@@ -626,15 +615,15 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
    # number of assumptions in this computation, and it
    # may not always be appropriate.
    ################################################################
-   if ! is+integer ${aroma_dmdt[${cxt}]}
+   if ! is+integer ${aroma_dmdt[cxt]}
       then
       subroutine           @8.5.1 Estimating polynomial order
-      nvol=$(exec_fsl fslnvols ${final[${cxt}]})
-      trep=$(exec_fsl fslval   ${final[${cxt}]} pixdim4)
+      nvol=$(exec_fsl fslnvols ${icaDenoised[cxt]})
+      trep=$(exec_fsl fslval   ${icaDenoised[cxt]} pixdim4)
       dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
    else
       subroutine           @8.5.2
-      dmdt_order=${aroma_dmdt[${cxt}]}
+      dmdt_order=${aroma_dmdt[cxt]}
    fi
    ################################################################
    # Now, pass the inputs computed above to the detrend
@@ -644,10 +633,10 @@ if [[ ${aroma_dmdt[${cxt}]} != N ]]
    subroutine              @8.6b Order: ${dmdt_order}
    exec_xcp dmdt.R \
       -d ${dmdt_order} \
-      -i ${final[${cxt}]} \
+      -i ${icaDenoised[cxt]} \
       -m ${mask_dmdt} \
       -t ${tmask_dmdt} \
-      -o ${final[${cxt}]}
+      -o ${icaDenoised[cxt]}
 fi
 ###################################################################
 # Update image pointer
