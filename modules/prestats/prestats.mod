@@ -189,6 +189,7 @@ subroutine                    @0.1
 #  * DSP: despike timeseries
 #  * SPT: spatial filter
 #  * TMP: temporal filter
+#  * REF: obtain references, but don't do any processing
 ###################################################################
 rem=${prestats_process[cxt]}
 while (( ${#rem} > 0 ))
@@ -1234,6 +1235,36 @@ while (( ${#rem} > 0 ))
          # Update image pointer
          ##########################################################
          intermediate=${intermediate}_${cur}
+         routine_end
+         ;;
+
+
+
+
+
+      REF)
+         ##########################################################
+         # REF assumes that the data have already been minimally
+         # preprocessed and uses them to generate a reference
+         # volume, a mean image, and a brain mask so that these
+         # can be used by downstream modules.
+         ##########################################################
+         routine              @10   Importing references
+         subroutine           @10.0 [Assuming data are already processed]
+         subroutine           @10.1 [Selecting reference volume]
+         nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
+         midpt=$(( ${nvol} / 2))
+         exec_fsl \
+            fslroi   ${intermediate}.nii.gz \
+            ${referenceVolume[cxt]} \
+            ${midpt} 1
+         subroutine           @10.2 [Computing mean volume]
+         exec_fsl fslmaths ${intermediate}.nii.gz  -Tmean ${meanIntensity[cxt]}
+         subroutine           @10.3 [Computing mask]
+         exec_fsl fslmaths ${meanIntensity[cxt]}   -bin ${mask[cxt]}
+         subroutine           @10.4 [Adding link references]
+         exec_sys ln -s    ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
+         exec_sys ln -s    ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
          routine_end
          ;;
       
