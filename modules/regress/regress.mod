@@ -122,6 +122,9 @@ DICTIONARY
 # image name and is used to verify that prestats has completed
 # successfully.
 ###################################################################
+if ! is_image ${residualised[cxt]} \
+|| rerun
+then
 unset buffer
 
 subroutine                    @0.1
@@ -301,7 +304,7 @@ No censoring will be performed."
          if is_1D ${confproc[cxt]}
             then
             subroutine        @2.6
-            ts1d="confmat:${confproc[cxt]}"
+            ts1d="-1 confmat:${confproc[cxt]}"
          fi
          ##########################################################
          # FILTER-SPECIFIC ARGUMENTS
@@ -511,7 +514,7 @@ No censoring will be performed."
    *)
       subroutine              @E.1     Invalid option detected: ${cur}
       ;;
-         
+      
    esac
 done
 
@@ -545,6 +548,7 @@ Check the log to verify that processing
 completed as intended.
 "
    exit 1
+fi
 fi
 
 
@@ -603,15 +607,11 @@ for k in ${kernel[cxt]}
    subroutine                 @6.5
    img_sm_name=sm${k}
    smoothed='img_sm'${k}'['${cxt}']'
-   if is_image ${!smoothed}
-      then
-      subroutine              @6.7
-      write_derivative        img_sm${ker}
    ################################################################
    # If no spatial filtering has been specified by the user, then
    # bypass this step.
    ################################################################
-   elif [[ ${regress_sptf[cxt]} == none ]] \
+   if [[ ${regress_sptf[cxt]} == none ]] \
    || [[ ${k} == 0 ]]
       then
       subroutine              @6.8
@@ -641,7 +641,7 @@ for k in ${kernel[cxt]}
             mask=${intermediate}_fmask.nii.gz
          fi
          exec_xcp sfilter \
-            -i    ${intermediate}.nii.gz \
+            -i    ${residualised[cxt]} \
             -o    ${!smoothed} \
             -s    ${regress_sptf[cxt]} \
             -k    ${k} \
