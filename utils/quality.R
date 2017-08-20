@@ -52,6 +52,9 @@ gamma <- opt$gamma
 # 1. Load in the adjacency matrix.
 ###################################################################
 adjmat <- as.matrix(read.table(matpath,header=F))
+if (dim(adjmat)[1] == 1 || dim(adjmat)[2] == 1) {
+   adjmat <- squareform(as.vector(adjmat))
+}
 #adjmat <- adjmat - diag(diag(adjmat))
 Apos <- adjmat
 Aneg <- -1 * adjmat
