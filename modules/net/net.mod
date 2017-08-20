@@ -101,13 +101,14 @@ load_atlas                    ${atlas[sub]}
 for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
+   unset matrix communities
    matrix=(    $(matching Matrix    ${!a[@]}) )
-   community=( $(matching Community ${!a[@]}) )
+   communities=( $(matching Community ${!a[@]}) )
    [[ -z ${matrix} ]] && continue
    routine                    @1    Network analysis: ${a[Name]}
    configure   netdir               ${outdir}/${a[Name]}
    configure   netbase              ${netdir[cxt]}/${prefix}_${a[Name]}
-   mkdir -p    ${netdir[cxt]}
+   exec_sys    mkdir -p             ${netdir[cxt]}
 
 
 
@@ -151,10 +152,9 @@ for net in ${atlas_names[@]}
       # Include a priori partitions if requested.
       #############################################################
       subroutine              @1.2  Computing community statistics
-      for com in ${community[@]}
+      for com in ${communities[@]}
          do
          subroutine           @1.2.1
-         (( i-- ))
          if [[ ! -s ${netbase[cxt]}_${com}_wbOverall.csv ]] \
          || rerun
             then
