@@ -23,13 +23,13 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_add      ${a_name}   Map               ${nodemap[${cxt}]}
-   atlas_add      ${a_name}   Timeseries        ${ts[${cxt}]}
-   atlas_add      ${a_name}   MatrixFC          ${adjacency[${cxt}]}
-   atlas_add      ${a_name}   Pajek             ${pajek[${cxt}]}
-   atlas_add      ${a_name}   MissingCoverage   ${missing[${cxt}]}
-   atlas_add      ${a_name}   DynamicFC         ${ts_edge[${cxt}]}
-   atlas_config   ${a_name}   Space             ${space}
+   atlas_add      ${a[Name]}   Map               ${nodemap[cxt]}
+   atlas_add      ${a[Name]}   Timeseries        ${ts[cxt]}
+   atlas_add      ${a[Name]}   MatrixFC          ${adjacency[cxt]}
+   atlas_add      ${a[Name]}   Pajek             ${pajek[cxt]}
+   atlas_add      ${a[Name]}   MissingCoverage   ${missing[cxt]}
+   atlas_add      ${a[Name]}   DynamicFC         ${ts_edge[cxt]}
+   atlas_config   ${a[Name]}   Space             ${space[sub]}
 }
 
 completion() {
@@ -88,12 +88,12 @@ DICTIONARY
 # Retrieve all the networks for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-if [[ -e ${fcon_atlas[${cxt}]} ]]
+if [[ -e ${fcon_atlas[cxt]} ]]
    then
    subroutine                 @0.1
-   add_reference     referenceVolume[${subjidx}]   ${prefix}_referenceVolume
-   load_atlas        ${fcon_atlas[${cxt}]}
-   load_atlas        ${atlas[${subjidx}]}
+   add_reference     referenceVolume[sub]   ${prefix}_referenceVolume
+   load_atlas        ${fcon_atlas[cxt]}
+   load_atlas        ${atlas[sub]}
 else
    echo \
 "
@@ -123,20 +123,20 @@ fi
 for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
-   [[ -z ${a_map} ]] && continue
-   routine                    @1    Functional connectome: ${a_name}
+   [[ -z ${a[Map]} ]] && continue
+   routine                    @1    Functional connectome: ${a[Name]}
    ################################################################
    # Define the paths to the potential outputs of the current
    # network analysis.
    ################################################################
-   configure   fcdir                ${outdir}/${a_name}
-   configure   fcbase               ${fcdir[${cxt}]}/${prefix}_${a_name}
-   configure   nodemap              ${mapbase[${cxt}]}/${prefix}_${a_name}.nii.gz
-   configure   ts                   ${fcbase[${cxt}]}_ts.1D
-   configure   adjacency            ${fcbase[${cxt}]}_network.txt
-   configure   pajek                ${fcbase[${cxt}]}.net
-   configure   missing              ${fcbase[${cxt}]}_missing.txt
-   configure   ts_edge              ${fcbase[${cxt}]}_tsEdge.1D
+   configure   fcdir                ${outdir}/${a[Name]}
+   configure   fcbase               ${fcdir[cxt]}/${prefix}_${a[Name]}
+   configure   nodemap              ${mapbase[cxt]}/${prefix}_${a[Name]}.nii.gz
+   configure   ts                   ${fcbase[cxt]}_ts.1D
+   configure   adjacency            ${fcbase[cxt]}_network.txt
+   configure   pajek                ${fcbase[cxt]}.net
+   configure   missing              ${fcbase[cxt]}_missing.txt
+   configure   ts_edge              ${fcbase[cxt]}_tsEdge.1D
    ################################################################
    # [1]
    # Based on the type of network map and the space of the primary
@@ -148,33 +148,33 @@ for net in ${atlas_names[@]}
    # If the network map has already been computed in this space,
    # then move on to the next stage.
    ################################################################
-   if is_image ${nodemap[${cxt}]} \
+   if is_image ${nodemap[cxt]} \
    && ! rerun
       then
       subroutine              @1.2.1
-      a_type=done
+      a[Type]=done
    fi
-   mkdir -p ${fcdir[${cxt}]}
-   case ${a_type} in
+   mkdir -p ${fcdir[cxt]}
+   case  ${a[Type]} in
    Map)
       subroutine              @1.2.2
       #############################################################
       # Ensure that the network has more than one node, then map
       # it into the analyte space.
       #############################################################
-      rm -f ${nodemap[${cxt}]}
-      range=( $(exec_fsl fslstats ${a_map} -R) )
+      rm -f ${nodemap[cxt]}
+      range=( $(exec_fsl fslstats ${a[Map]} -R) )
       if (( $(arithmetic ${range[1]}\<=1) == 1 ))
          then
-         subroutine           @1.2.3   Skipping ${a_name}: Not a well-formed node system
+         subroutine           @1.2.3   Skipping ${a[Name]}: Not a well-formed node system
          continue
       fi
-      warpspace atlas:${a_name} ${nodemap[${cxt}]} ${space} MultiLabel
+      warpspace atlas:${a[Name]} ${nodemap[cxt]} ${space[sub]} MultiLabel
       ;;
    Coordinates)
       subroutine              @1.2.4
-      output      node_sclib           ${mapbase[${cxt}]}${a_name}.sclib
-      if (( ${a_nodes} <= 1 ))
+      output      node_sclib           ${mapbase[cxt]}${a[Name]}.sclib
+      if (( ${a[NodeCount]} <= 1 ))
          then
          subroutine           @1.2.5
          continue
@@ -184,81 +184,51 @@ for net in ${atlas_names[@]}
       # ANTs to transform spatial coordinates into native space.
       # This process is much less intuitive than it sounds,
       # largely because of the stringent orientation requirements
-      # within ANTs, and it is cleverly tucked away behind a
-      # utility script called pointTransform.
-      #
-      # Also, note that antsApplyTransformsToPoints (and
-      # consequently pointTransform) requires the inverse of the
-      # transforms that you would intuitively expect it to
-      # require.
+      # within ANTs, and it is wrapped in the warpspace function.
       #############################################################
-      case std2${space} in
-      std2native)
-         subroutine           @1.2.6
-         ##########################################################
-         # Apply the required transforms.
-         ##########################################################
-         rm -f ${node_sclib[${cxt}]}
-         exec_xcp pointTransform \
-            -v \
-            -i ${a_map} \
-            -s ${template} \
-            -r ${referenceVolume[${subjidx}]} \
-            $coreg \
-            $rigid \
-            $affine \
-            $warp \
-            $resample \
-            $trace_prop \
-            >> ${node_sclib[${cxt}]}
-         ;;
-      #############################################################
-      # Coordinates are always in standard space, so if the
-      # primary BOLD timeseries has already been normalised, then
-      # there is no need for any further manipulations.
-      #############################################################
-      std2standard)
-         subroutine           @1.2.7
-         ;;
-      esac
+      subroutine              @1.2.6
+      warpspace \
+         ${a[Map]} \
+         ${node_sclib[cxt]} \
+         ${a[Space]}:${space[sub]} \
+         ${a[VoxelCoordinates]}
       #############################################################
       # Use the (warped) coordinates and radius to generate a map
       # of the network.
       #############################################################
-      subroutine              @1.2.8
+      subroutine              @1.2.7
       exec_xcp coor2map \
-         ${traceprop} \
-         -i ${node_sclib[${cxt}]} \
-         -t ${referenceVolumeBrain[${subjidx}]} \
-         -o ${nodemap[${cxt}]}
+         -i    ${node_sclib[cxt]} \
+         -t    ${referenceVolumeBrain[sub]} \
+         -o    ${nodemap[cxt]}
       ;;
    done)
-      subroutine              @1.2.9
+      subroutine              @1.2.8
       ;;
    esac
    ################################################################
    # Update the path to the network map
    ################################################################
-   add_reference nodemap[${cxt}] ${a_name}/${prefix}_${a_name}
-   
-   
-   
-   
-   
+   add_reference nodemap[$cxt] ${a[Name]}/${prefix}_${a[Name]}
+
+
+
+
+
    ################################################################
    # [2]
    # Compute the mean local timeseries for each node in the
    # network.
    ################################################################
-   if [[ ! -s ${ts[${cxt}]} ]] \
+   if [[ ! -s ${ts[cxt]} ]] \
    || rerun
       then
       subroutine              @1.3  Computing network timeseries
-      exec_sys rm -f ${ts[${cxt}]}
+      exec_sys rm -f ${ts[cxt]}
       exec_xcp roi2ts.R \
-         -i ${img} \
-         -r ${nodemap[${cxt}]} \
-         >> ${ts[${cxt}]}
+         -i    ${img} \
+         -r    ${nodemap[cxt]} \
+         >>    ${ts[cxt]}
    fi
 
 
@@ -270,28 +240,28 @@ for net in ${atlas_names[@]}
    # Compute the adjacency matrix based on the mean local
    # timeseries.
    ################################################################
-   if [[ ! -s ${pajek[${cxt}]} ]] \
+   if [[ ! -s ${pajek[cxt]} ]] \
    || rerun
       then
       subroutine              @1.4  Computing adjacency matrix
-      exec_sys rm -f ${adjacency[${cxt}]}
-      exec_sys rm -f ${pajek[${cxt}]}
-      exec_sys rm -f ${missing[${cxt}]}
-      exec_xcp ts2adjmat.R -t ${ts[${cxt}]} >> ${adjacency[${cxt}]}
+      exec_sys rm -f ${adjacency[cxt]}
+      exec_sys rm -f ${pajek[cxt]}
+      exec_sys rm -f ${missing[cxt]}
+      exec_xcp ts2adjmat.R -t ${ts[cxt]} >> ${adjacency[cxt]}
       exec_xcp adjmat2pajek.R \
-         -a ${adjacency[${cxt}]} \
-         -t ${fcon_thr[${cxt}]} \
-         >> ${pajek[${cxt}]}
+         -a    ${adjacency[cxt]} \
+         -t    ${fcon_thr[cxt]} \
+         >>    ${pajek[cxt]}
       ################################################################
       # Flag nodes that fail to capture any signal variance.
       ################################################################
       subroutine              @1.5  Determining node coverage
       unset missing_arg
-      badnodes=$(exec_xcp missingIdx.R -i ${adjacency[${cxt}]})
+      badnodes=$(exec_xcp missingIdx.R -i ${adjacency[cxt]})
       if [[ -n ${badnodes} ]]
          then
-         echo "${badnodes}" >> ${missing[${cxt}]} \
-         missing_arg=",'missing','${missing[${cxt}]}'"
+         echo "${badnodes}" >> ${missing[cxt]} \
+         missing_arg=",'missing','${missing[cxt]}'"
       fi
    fi
 
@@ -304,19 +274,19 @@ for net in ${atlas_names[@]}
    # Compute the mean timeseries for each edge of the network.
    # This is also called dynamic connectivity.
    ################################################################
-   if (( ${fcon_window[${cxt}]} != 0 ))
+   if (( ${fcon_window[cxt]} != 0 ))
       then
       subroutine              @1.6  Computing dynamic connectome
-      if [[ ! -s ${ts_edge[${cxt}]} ]] \
+      if [[ ! -s ${ts_edge[cxt]} ]] \
       || rerun
          then
-         subroutine           @1.6.1   Window: ${fcon_window[${cxt}]} TRs
-         exec_sys rm -f ${ts_edge[${cxt}]}
+         subroutine           @1.6.1   Window: ${fcon_window[cxt]} TRs
+         exec_sys rm -f ${ts_edge[cxt]}
          exec_xcp mtd.R \
-            -t ${ts[${cxt}]} \
-            -w ${fcon_window[${cxt}]} \
-            -p ${fcon_pad[${cxt}]} \
-            >> ${ts_edge[${cxt}]}
+            -t    ${ts[cxt]} \
+            -w    ${fcon_window[cxt]} \
+            -p    ${fcon_pad[cxt]} \
+            >>    ${ts_edge[cxt]}
       fi
    fi
    update_networks
