@@ -27,7 +27,7 @@ completion() {
    write_derivative  reho
    write_derivative  rehoZ
    
-   for k in ${kernel[${cxt}]}
+   for k in ${kernel[cxt]}
       do
       write_derivative  reho_sm${k}
       write_derivative  rehoZ_sm${k}
@@ -48,34 +48,18 @@ completion() {
 derivative  reho                    ${prefix}_reho
 derivative  rehoZ                   ${prefix}_rehoZ
 
-configure   kernel                  ${reho_smo[${cxt}]//,/ }
+configure   kernel                  ${reho_smo[cxt]//,/ }
 
-for k in ${kernel[${cxt}]}
+for k in ${kernel[cxt]}
    do
-   derivative  reho_sm${k}          ${prefix}_reho_sm${k}
-   derivative  rehoZ_sm${k}         ${prefix}_rehoZ_sm${k}
+   derivative     reho_sm${k}       ${prefix}_reho_sm${k}
+   derivative     rehoZ_sm${k}      ${prefix}_rehoZ_sm${k}
 done
 
-add_reference        referenceVolume[${subjidx}]   ${prefix}_referenceVolume
+add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
 
-case ${reho_roimean[${cxt}]}${reho_roikw[${cxt}]} in
-YY)
-   derivative_config reho           Statistic         mean,kw
-   derivative_config rehoZ          Statistic         mean,kw
-   ;;
-YN)
-   derivative_config reho           Statistic         mean
-   derivative_config rehoZ          Statistic         mean
-   ;;
-NY)
-   derivative_config reho           Statistic         kw
-   derivative_config rehoZ          Statistic         kw
-   ;;
-NN)
-   derivative_config reho           Statistic         null
-   derivative_config rehoZ          Statistic         null
-   ;;
-esac
+derivative_config reho              Statistic         mean
+derivative_config rehoZ             Statistic         mean
 
 << DICTIONARY
 
@@ -101,7 +85,7 @@ DICTIONARY
 ###################################################################
 # Determine whether the voxelwise ReHo map needs to be computed
 ###################################################################
-if ! is_image ${reho[${cxt}]} \
+if ! is_image ${reho[cxt]} \
 || rerun
    then
    routine                    @1    Computing voxelwise ReHo
@@ -109,7 +93,7 @@ if ! is_image ${reho[${cxt}]} \
    # Translate from neighbourhood type to number of neighbours
    ################################################################
    subroutine                 @1.1  Determining voxel neighbourhood
-   case ${reho_nhood[${cxt}]} in
+   case ${reho_nhood[cxt]} in
    faces)
       subroutine              @1.2a Faces
       nneigh='-nneigh 7'
@@ -123,28 +107,28 @@ if ! is_image ${reho[${cxt}]} \
       nneigh='-nneigh 27'
       ;;
    esac
-   if [[ ${reho_nhood[${cxt}]} != ${reho_nhood[${cxt}]//sphere/} ]]
+   if contains ${reho_nhood[cxt]} sphere
       then
-      mmrad=$(strslice ${reho_nhood[${cxt}]} 2)
+      mmrad=$(strslice  ${reho_nhood[cxt]} 2)
       subroutine              @1.2d Sphere of radius ${mmrad}
-      xdim=$(exec_fsl fslval ${img} pixdim1)
-      ydim=$(exec_fsl fslval ${img} pixdim2)
-      zdim=$(exec_fsl fslval ${img} pixdim3)
-      xdim=$(arithmetic ${mmrad} / ${xdim})
-      ydim=$(arithmetic ${mmrad} / ${ydim})
-      zdim=$(arithmetic ${mmrad} / ${zdim})
+      xdim=$(exec_fsl   fslval      ${img} pixdim1)
+      ydim=$(exec_fsl   fslval      ${img} pixdim2)
+      zdim=$(exec_fsl   fslval      ${img} pixdim3)
+      xdim=$(arithmetic ${mmrad} /  ${xdim})
+      ydim=$(arithmetic ${mmrad} /  ${ydim})
+      zdim=$(arithmetic ${mmrad} /  ${zdim})
       nneigh="-neigh_X ${xdim} -neigh_Y ${ydim} -neigh_Z ${zdim}"
    fi
    subroutine                 @1.3 "Computing regional homogeneity (ReHo)"
    exec_afni 3dReHo \
-      -prefix ${reho[${cxt}]} \
+      -prefix ${reho[cxt]} \
       -inset ${img} \
       ${nneigh}
    ################################################################
    # Convert the raw ReHo output values to standard scores.
    ################################################################
    subroutine              @1.4  Standardising ReHo values
-   zscore_image            ${reho[${cxt}]}   ${rehoZ[${cxt}]}  ${mask[${subjidx}]}
+   zscore_image            ${reho[cxt]}   ${rehoZ[cxt]}  ${mask[sub]}
    routine_end
    
    
@@ -157,15 +141,15 @@ if ! is_image ${reho[${cxt}]} \
    # If no spatial filtering has been specified by the user, then
    # bypass this step.
    ################################################################
-   if [[ ${reho_sptf[${cxt}]} == none ]] \
-   || (( ${reho_smo[${cxt}]} == 0 ))
+   if [[ ${reho_sptf[cxt]} == none ]] \
+   || (( ${reho_smo[cxt]} == 0 ))
       then
       subroutine              @2.0
    else
       routine                 @2    Spatially filtering ReHo map
-      for k in ${kernel[${cxt}]}
+      for k in ${kernel[cxt]}
          do
-         subroutine           @2.1a Filter: ${reho_sptf[${cxt}]}
+         subroutine           @2.1a Filter: ${reho_sptf[cxt]}
          subroutine           @2.2b Smoothing kernel: ${k} mm
          output_var='reho_sm'${k}'['${cxt}']'
          output_zvar='rehoZ_sm'${k}'['${cxt}']'
@@ -175,10 +159,10 @@ if ! is_image ${reho[${cxt}]} \
          # not exist, then search for a mask created by this
          # module.
          ##########################################################
-         if is_image ${mask[${subjidx}]}
+         if is_image ${mask[sub]}
             then
             subroutine        @2.2
-            mask=${mask[${subjidx}]}
+            mask=${mask[sub]}
          else
             subroutine        @2.3  Generating a mask using 3dAutomask
             exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
@@ -193,15 +177,26 @@ if ! is_image ${reho[${cxt}]} \
          # force a switch to uniform smoothing to mitigate the
          # catastrophe.
          ##########################################################
-         if [[ ${reho_sptf[${cxt}]} == susan ]]
+         if [[ ${reho_sptf[cxt]} == susan ]] \
+         && [[ -z ${usan} ]]
             then
             subroutine        @2.4
-            if is_image ${referenceVolumeBrain[${subjidx}]}
+            if is_image ${reho_usan[cxt]}
                then
-               subroutine     @2.4.1
-               usan="-u ${referenceVolume[${subjidx}]}"
-            else
+               subroutine     @2.4.1  Warping USAN
+               warpspace \
+                  ${reho_usan[cxt]} \
+                  ${intermediate}usan.nii.gz \
+                  ${reho_usan_space[cxt]}:${space[sub]} \
+                  NearestNeighbor
+               usan="-u ${intermediate}usan.nii.gz"
+               hardseg=-h
+            if is_image ${referenceVolumeBrain[sub]}
+               then
                subroutine     @2.4.2
+               usan="-u ${referenceVolume[sub]}"
+            else
+               subroutine     @2.4.3
                configure      reho_sptf      uniform
                write_config   reho_sptf
             fi
@@ -213,17 +208,17 @@ if ! is_image ${reho[${cxt}]} \
          #    and uniform.
          ##########################################################
          exec_xcp sfilter \
-            -i ${reho[${cxt}]} \
-            -o ${!output_var} \
-            -s ${reho_sptf[${cxt}]} \
-            -k ${k} \
-            -m ${mask} \
-            ${usan}
+            -i    ${reho[cxt]} \
+            -o    ${!output_var} \
+            -s    ${reho_sptf[cxt]} \
+            -k    ${k} \
+            -m    ${mask} \
+            ${usan} ${hardseg}
          ##########################################################
          # Convert the raw ReHo output values to standard scores.
          ##########################################################
          subroutine           @2.5  Standardising ReHo values
-         zscore_image         ${!output_var} ${!output_zvar}   ${mask[${subjidx}]}
+         zscore_image         ${!output_var} ${!output_zvar}   ${mask[sub]}
       done
       routine_end
    fi
