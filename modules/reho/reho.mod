@@ -141,11 +141,9 @@ if ! is_image ${reho[cxt]} \
    # If no spatial filtering has been specified by the user, then
    # bypass this step.
    ################################################################
-   if [[ ${reho_sptf[cxt]} == none ]] \
-   || (( ${reho_smo[cxt]} == 0 ))
+   if [[ ${reho_sptf[cxt]} != none ]] \
+   && (( ${reho_smo[cxt]}  != 0 ))
       then
-      subroutine              @2.0
-   else
       routine                 @2    Spatially filtering ReHo map
       for k in ${kernel[cxt]}
          do
@@ -191,6 +189,7 @@ if ! is_image ${reho[cxt]} \
                   NearestNeighbor
                usan="-u ${intermediate}usan.nii.gz"
                hardseg=-h
+            fi
             if is_image ${referenceVolumeBrain[sub]}
                then
                subroutine     @2.4.2
