@@ -286,20 +286,16 @@ No censoring will be performed."
             configure            censor   none
             write_output         censor
             unset tmask
-         elif (( ${regress_spkreg[cxt]} == 0 ))
-            then
-            subroutine        @2.4.4
-            unset tmask
          fi
-         ################################################################
+         ##########################################################
          # DERIVATIVE IMAGES AND TIMESERIES
          # (CONFOUND MATRIX AND LOCAL REGRESSORS)
          # Prime the index of derivative images, as well as any 1D
          # timeseries (e.g. realignment parameters) that should be
-         # filtered so that they can be used in linear models without
-         # reintroducing the frequencies removed from the primary BOLD
-         # timeseries.
-         ################################################################
+         # filtered so that they can be used in linear models
+         # without reintroducing the frequencies removed from the
+         # primary BOLD timseries.
+         ##########################################################
          subroutine           @2.5
          unset derivs ts1d
          if is_1D ${confproc[cxt]}
@@ -307,10 +303,10 @@ No censoring will be performed."
             subroutine        @2.6
             ts1d="confmat:${confproc[cxt]}"
          fi
-         ################################################################
+         ##########################################################
          # FILTER-SPECIFIC ARGUMENTS
          # Next, set arguments specific to each filter class.
-         ################################################################
+         ##########################################################
          unset tforder tfdirec tfprip tfsrip
          case ${regress_tmpf[cxt]} in
          butterworth)
@@ -420,17 +416,17 @@ No censoring will be performed."
             subroutine        @4.4
             configure         confproc   ${confmat[sub]}
          fi
-         ################################################################
+         ##########################################################
          # Compute the internal correlations within the confound
          # matrix.
-         ################################################################
+         ##########################################################
          subroutine           @4.5  [Computing confound correlations]
          exec_xcp ts2adjmat.R \
             -t    ${confproc[cxt]} ${cormask} \
             >>    ${confcor[cxt]}
-         ################################################################
+         ##########################################################
          # Update paths to any local regressors.
-         ################################################################
+         ##########################################################
          load_derivatives
          for derivative in    ${derivatives[@]}
             do
@@ -450,9 +446,9 @@ No censoring will be performed."
          intermediate=${intermediate}_${cur}
       fi
       routine_end
-      ###################################################################
-      # Next, verify that the temporal mask exists before censoring.
-      ###################################################################
+      #############################################################
+      # Next, verify that the temporal mask exists before censoring
+      #############################################################
       if [[ ${censor[cxt]} != none ]]
          then
          routine              @5    Censoring BOLD timeseries
@@ -475,23 +471,23 @@ No censoring will be performed."
             routine_end
          fi
       fi
-      ###################################################################
+      #############################################################
       # Censor the BOLD timeseries.
-      # Check the conditional again in case the value of censoring has
-      # been changed due to a failure to locate the temporal mask.
-      ###################################################################
+      # Check the conditional again in case the value of censoring
+      # has been changed due to a failure to locate the temporal
+      # mask.
+      #############################################################
       if [[ ${censor[cxt]} != none ]]
          then
          subroutine           @5.4  [${censor[cxt]} censoring]
          cur=CEN
          buffer=${buffer}_${cur}
          exec_fsl imcp ${intermediate}.nii.gz ${uncensored[cxt]}
-         ################################################################
-         # Use the temporal mask to determine which volumes are to be
-         # left intact.
-         #
-         # Censoring is performed using the censor utility.
-         ################################################################
+         ##########################################################
+         # Use the temporal mask to determine which volumes are to
+         # be left intact. Censoring is performed using the censor
+         # utility.
+         ##########################################################
          subroutine           @5.5  [Applying the final censor]
          exec_xcp censor.R               \
             -t    ${tmaskpath}           \
@@ -565,7 +561,8 @@ routine                       @6    Spatially filtering image
 # SUSAN setup
 ###################################################################
 if [[ ${regress_sptf[cxt]} == susan ]] \
-&& [[ -n ${kernel[cxt]} ]]
+&& [[ -n ${kernel[cxt]} ]] \
+&& [[ -z ${usan} ]]
    then
    subroutine                 @6.1  [Configuring SUSAN]
    ################################################################

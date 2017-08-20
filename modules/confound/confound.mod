@@ -207,8 +207,7 @@ for class in "${!tissue_classes[@]}"
          exec_xcp erodespare \
             -i    ${mask}.nii.gz \
             -o    ${mask}_ero.nii.gz \
-            -e    ${!class_ero} \
-            ${traceprop}
+            -e    ${!class_ero}
          mask=${mask}_ero
       fi
       #############################################################
