@@ -29,7 +29,7 @@ completion() {
    write_derivative  alff
    write_derivative  alffZ
    
-   for k in ${kernel[${cxt}]}
+   for k in ${kernel[cxt]}
       do
       write_derivative  alff_sm${k}
       write_derivative  alffZ_sm${k}
@@ -51,9 +51,9 @@ completion() {
 derivative  alff                    ${prefix}_alff
 derivative  alffZ                   ${prefix}_alffZ
 
-configure   kernel                  ${alff_smo[${cxt}]//,/ }
+configure   kernel                  ${alff_smo[cxt]//,/ }
 
-for k in ${kernel[${cxt}]}
+for k in ${kernel[cxt]}
    do
    derivative        alff_sm${k}    ${prefix}_alff_sm${k}
    derivative        alffZ_sm${k}   ${prefix}_alffZ_sm${k}
@@ -64,7 +64,7 @@ done
 derivative_config    alff           Statistic         mean
 derivative_config    alffZ          Statistic         mean
 
-add_reference        referenceVolume[${subjidx}]   ${prefix}_referenceVolume
+add_reference        referenceVolume[$sub]   ${prefix}_referenceVolume
 
 << DICTIONARY
 
@@ -73,12 +73,12 @@ alff
    fluctuations.
 alff_sm
    Voxelwise maps of the amplitude of low-frequency fluctuations,
-   computed over the smoothed timeseries.
+   computed over the smoothed time series.
 kernel
    An array of all smoothing kernels to be applied to the
-   timeseries, measured in mm.
+   time series, measured in mm.
 img_sm
-   The smoothed input timeseries.
+   The smoothed input time series.
 
 DICTIONARY
 
@@ -93,13 +93,14 @@ DICTIONARY
 
 ###################################################################
 # Apply the desired smoothing kernel to the BOLD timeseries.
+# Start a list of kernels and smoothed images.
 ###################################################################
 routine                       @1    Spatially filtering image
 kernels=${img}'#0'
-for k in ${kernel[${cxt}]}
+for k in ${kernel[cxt]}
    do
-   sm_sub=img_sm${k}[${subjidx}]
-   sm_mod=img_sm${k}[${cxt}]
+   sm_sub=img_sm${k}[$sub]
+   sm_mod=img_sm${k}[$cxt]
    ################################################################
    # Determine whether an image with the specified smoothing kernel
    # already exists
@@ -117,7 +118,7 @@ for k in ${kernel[${cxt}]}
    # If no spatial filtering has been specified by the user, then
    # bypass this step.
    ################################################################
-   elif [[ ${alff_sptf[${cxt}]} == none ]]
+   elif [[ ${alff_sptf[cxt]} == none ]]
       then
       subroutine              @1.2
       kernels=${img}
@@ -126,7 +127,7 @@ for k in ${kernel[${cxt}]}
       then
       subroutine              @1.3
    else
-      subroutine              @1.4a Filter: ${alff_sptf[${cxt}]}
+      subroutine              @1.4a Filter: ${alff_sptf[cxt]}
       subroutine              @1.4b Smoothing kernel: ${k} mm
       #############################################################
       # Obtain the mask over which smoothing is to be applied.
@@ -134,10 +135,10 @@ for k in ${kernel[${cxt}]}
       # not exist, then search for a mask created by this
       # module.
       #############################################################
-      if is_image ${mask[${subjidx}]}
+      if is_image ${mask[sub]}
          then
          subroutine           @1.5
-         mask=${mask[${subjidx}]}
+         mask=${mask[sub]}
       else
          subroutine           @1.6b Generating a mask using 3dAutomask
          exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
@@ -149,15 +150,16 @@ for k in ${kernel[${cxt}]}
       #############################################################
       # Prime the inputs to sfilter for SUSAN filtering
       #############################################################
-      if [[ ${alff_sptf[${cxt}]} == susan ]]
+      if [[ ${alff_sptf[cxt]} == susan ]] \
+      && [[ -z ${usan} ]]
          then
-         if is_image ${alff_usan[${cxt}]}
+         if is_image ${alff_usan[cxt]}
             then
             subroutine        @1.7  Warping USAN
             warpspace \
-               ${alff_usan[${cxt}]} \
+               ${alff_usan[cxt]} \
                ${intermediate}usan.nii.gz \
-               ${alff_usan_space[${cxt}]}:${space} \
+               ${alff_usan_space[cxt]}:${space[sub]} \
                NearestNeighbor
             usan="-u ${intermediate}usan.nii.gz"
             hardseg=-h
@@ -168,35 +170,33 @@ for k in ${kernel[${cxt}]}
          #  * In this case, force a switch to uniform
          #    smoothing to mitigate the catastrophe.
          ##########################################################
-         elif is_image ${referenceVolumeBrain[${subjidx}]}
+         elif is_image ${referenceVolumeBrain[sub]}
             then
             subroutine        @1.8
-            usan="-u ${referenceVolumeBrain[${subjidx}]}"
+            usan="-u ${referenceVolumeBrain[sub]}"
          else
             subroutine        @1.9a No appropriate USAN: reconfiguring pipeline
             subroutine        @1.9b to smooth to uniformity instead
-            configure            alff_sptf   uniform
-            write_config         alff_sptf
+            configure               alff_sptf   uniform
+            write_config            alff_sptf
          fi
       fi
-      ##########################################################
+      #############################################################
       # Engage the sfilter routine to filter the image.
       #  * This is essentially a wrapper around the three
       #    implemented smoothing routines: gaussian, susan,
       #    and uniform.
-      ##########################################################
+      #############################################################
       subroutine              @1.10
       exec_xcp sfilter \
-         -i ${img} \
-         -o ${!sm_mod} \
-         -s ${alff_sptf[${cxt}]} \
-         -k ${alff_smo[${cxt}]} \
-         -m ${mask} \
-         ${usan}
+         -i    ${img} \
+         -o    ${!sm_mod} \
+         -s    ${alff_sptf[cxt]} \
+         -k    ${alff_smo[cxt]} \
+         -m    ${mask} \
+         ${usan} ${hardseg}
       #############################################################
-      # Update image pointer, and write the smoothed image path to
-      # the design file and derivatives index so that it may be used
-      # by additional modules.
+      # Append the current kernel and smoothed image to the list.
       #############################################################
       kernels="${kernels} ${!sm_mod}#${k}"
    fi
@@ -271,18 +271,18 @@ for k in ${kernels}
       # and lowpass cutoff frequencies
       ################################################################
       subroutine              @2.6  Extracting power spectrum at the low frequency band
-      if [[ ${alff_lopass[${cxt}]} == nyquist ]]
+      if [[ ${alff_lopass[cxt]} == nyquist ]]
          then
          subroutine           @2.6a
          configure            alff_lopass       99999
       fi
-      n_hp=$(arithmetic ${alff_hipass[${cxt}]}*${nvol}*${trep})
-      n_lp=$(arithmetic ${alff_lopass[${cxt}]}*${nvol}*${trep})
+      n_hp=$(arithmetic ${alff_hipass[cxt]}*${nvol}*${trep})
+      n_lp=$(arithmetic ${alff_lopass[cxt]}*${nvol}*${trep})
       n1=$(  arithmetic ${n_hp}-1         |xargs printf "%1.0f")
       n2=$(  arithmetic ${n_lp}-${n_hp}+1 |xargs printf "%1.0f")
-      subroutine              @2.7a ${alff_hipass[${cxt}]} Hz is approximately position ${n1}
+      subroutine              @2.7a ${alff_hipass[cxt]} Hz is approximately position ${n1}
       subroutine              @2.7b of the power spectrum. There are about ${n2} frequency
-      subroutine              @2.7d "positions corresponding to the passband (${alff_lopass[${cxt}]} - ${alff_hipass[${cxt}]} Hz)"
+      subroutine              @2.7d "positions corresponding to the passband (${alff_lopass[cxt]} - ${alff_hipass[cxt]} Hz)"
       subroutine              @2.7e "in the power spectrum."
       ################################################################
       # Extract the data corresponding to the passband from the power
@@ -299,7 +299,7 @@ for k in ${kernels}
       # Convert the raw ALFF output values to standard scores.
       ################################################################
       subroutine              @2.9  Standardising ALFF values
-      zscore_image            ${!output_var} ${!output_zvar}   ${mask[${subjidx}]}
+      zscore_image            ${!output_var} ${!output_zvar}   ${mask[sub]}
    fi
 done
 routine_end
