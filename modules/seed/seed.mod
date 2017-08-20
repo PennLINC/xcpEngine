@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   for seed in ${seeds[${cxt}]}
+   for seed in ${seeds[cxt]}
       do
       seed=(               ${seed//\#/ } )
       seed[0]=$(           eval echo            ${seed[0]})
@@ -32,9 +32,9 @@ completion() {
       write_derivative     ${seed[0]}
       write_derivative     ${seed[0]}Z
    done
-   for k in ${kernel[${cxt}]}
+   for k in ${kernel[cxt]}
       do
-      for seed in ${seeds[${cxt}]}
+      for seed in ${seeds[cxt]}
          do
          seed=(            ${seed//\#/ } )
          seed[0]=$(        eval echo            ${seed[0]})
@@ -56,30 +56,30 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   seeds                   $(grep -i '^#' ${seed_lib[${cxt}]})
-configure   kernel                  ${seed_smo[${cxt}]//,/ }
+configure   seeds                   $(grep -i '^#' ${seed_lib[cxt]})
+configure   kernel                  ${seed_smo[cxt]//,/ }
 
-for seed in ${seeds[${cxt}]}
+for seed in ${seeds[cxt]}
    do
    seed=(            ${seed//\#/ } )
    seed[0]=$(        eval echo            ${seed[0]})
    configure         mapdir               ${outdir}/${seed[0]}/
-   exec_sys          mkdir -p             ${mapdir[${cxt}]}
-   configure         mapbase              ${mapdir[${cxt}]}/${prefix}_connectivity
-   output            ${seed[0]}_ts        ${mapbase[${cxt}]}_${seed[0]}_ts.1D
-   derivative        ${seed[0]}_seed      ${mapbase[${cxt}]}_${seed[0]}_seed
-   derivative        ${seed[0]}           ${mapbase[${cxt}]}_${seed[0]}
-   derivative        ${seed[0]}Z          ${mapbase[${cxt}]}_${seed[0]}Z
+   exec_sys          mkdir -p             ${mapdir[cxt]}
+   configure         mapbase              ${mapdir[cxt]}/${prefix}_connectivity
+   output            ${seed[0]}_ts        ${mapbase[cxt]}_${seed[0]}_ts.1D
+   derivative        ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed
+   derivative        ${seed[0]}           ${mapbase[cxt]}_${seed[0]}
+   derivative        ${seed[0]}Z          ${mapbase[cxt]}_${seed[0]}Z
 done
-for k in ${kernel[${cxt}]}
+for k in ${kernel[cxt]}
    do
-   for seed in ${seeds[${cxt}]}
+   for seed in ${seeds[cxt]}
       do
       seed=(         ${seed//\#/ } )
       seed[0]=$(     eval echo            ${seed[0]})
       configure      mapbase              ${outdir}/${seed[0]}/${prefix}_connectivity
-      derivative     ${seed[0]}_sm${k}    ${mapbase[${cxt}]}_${seed[0]}_sm${k}
-      derivative     ${seed[0]}Z_sm${k}   ${mapbase[${cxt}]}_${seed[0]}Z_sm${k}
+      derivative     ${seed[0]}_sm${k}    ${mapbase[cxt]}_${seed[0]}_sm${k}
+      derivative     ${seed[0]}Z_sm${k}   ${mapbase[cxt]}_${seed[0]}Z_sm${k}
    done
    derivative        img_sm${k}           ${prefix}_sm${k}
    derivative_config img_sm${k}           Type     timeseries
@@ -112,14 +112,36 @@ DICTIONARY
 
 
 ###################################################################
+# Retrieve all the seeds for which analysis should be run, and
+# prime the analysis.
+###################################################################
+if [[ -s ${seed_lib[cxt]} ]]
+   then
+   subroutine                 @0.1
+   add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
+else
+   echo \
+"
+::XCP-WARNING: Seed-based correlation analysis has been requested,
+  but no seed libraries have been provided.
+  
+  Skipping module"
+   exit 1
+fi
+
+
+
+
+
+###################################################################
 # Apply the desired smoothing kernel to the BOLD timeseries.
 ###################################################################
 routine                       @1    Spatially filtering image
 kernels=${img}'#0'
-for k in ${kernel[${cxt}]}
+for k in ${kernel[cxt]}
    do
-   sm_sub=img_sm${k}[${subjidx}]
-   sm_mod=img_sm${k}[${cxt}]
+   sm_sub=img_sm${k}[$sub]
+   sm_mod=img_sm${k}[$cxt]
    ################################################################
    # Determine whether an image with the specified smoothing kernel
    # already exists
@@ -137,7 +159,7 @@ for k in ${kernel[${cxt}]}
    # If no spatial filtering has been specified by the user, then
    # bypass this step.
    ################################################################
-   elif [[ ${seed_sptf[${cxt}]} == none ]]
+   elif [[ ${seed_sptf[cxt]} == none ]]
       then
       subroutine              @1.2
       kernels=${img}'#0'
@@ -146,7 +168,7 @@ for k in ${kernel[${cxt}]}
       then
       subroutine              @1.3
    else
-      subroutine              @1.4a Filter: ${seed_sptf[${cxt}]}
+      subroutine              @1.4a Filter: ${seed_sptf[cxt]}
       subroutine              @1.4b Smoothing kernel: ${k} mm
       #############################################################
       # Obtain the mask over which smoothing is to be applied.
@@ -154,10 +176,10 @@ for k in ${kernel[${cxt}]}
       # not exist, then search for a mask created by this
       # module.
       #############################################################
-      if is_image ${mask[${subjidx}]}
+      if is_image ${mask[sub]}
          then
          subroutine           @1.5
-         mask=${mask[${subjidx}]}
+         mask=${mask[sub]}
       else
          subroutine           @1.6b Generating a mask using 3dAutomask
          exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
@@ -169,15 +191,16 @@ for k in ${kernel[${cxt}]}
       #############################################################
       # Prime the inputs to sfilter for SUSAN filtering
       #############################################################
-      if [[ ${seed_sptf[${cxt}]} == susan ]]
+      if [[ ${seed_sptf[cxt]} == susan ]] \
+      && [[ -z ${usan} ]]
          then
-         if is_image ${seed_usan[${cxt}]}
+         if is_image ${seed_usan[cxt]}
             then
             subroutine        @1.7  Warping USAN
             warpspace \
-               ${seed_usan[${cxt}]} \
+               ${seed_usan[cxt]} \
                ${intermediate}usan.nii.gz \
-               ${seed_usan_space[${cxt}]}:${space} \
+               ${seed_usan_space[cxt]}:${space[sub]} \
                NearestNeighbor
             usan="-u ${intermediate}usan.nii.gz"
             hardseg=-h
@@ -188,10 +211,10 @@ for k in ${kernel[${cxt}]}
          #  * In this case, force a switch to uniform
          #    smoothing to mitigate the catastrophe.
          ##########################################################
-         elif is_image ${referenceVolumeBrain[${subjidx}]}
+         elif is_image ${referenceVolumeBrain[sub]}
             then
             subroutine        @1.8
-            usan="-u ${referenceVolumeBrain[${subjidx}]}"
+            usan="-u ${referenceVolumeBrain[sub]}"
          else
             subroutine        @1.9a No appropriate USAN: reconfiguring pipeline
             subroutine        @1.9b to smooth to uniformity instead
@@ -207,12 +230,12 @@ for k in ${kernel[${cxt}]}
       ##########################################################
       subroutine              @1.10
       exec_xcp sfilter \
-         -i ${img} \
-         -o ${!sm_mod} \
-         -s ${seed_sptf[${cxt}]} \
-         -k ${seed_smo[${cxt}]} \
-         -m ${mask} \
-         ${usan}
+         -i    ${img} \
+         -o    ${!sm_mod} \
+         -s    ${seed_sptf[cxt]} \
+         -k    ${seed_smo[cxt]} \
+         -m    ${mask} \
+         ${usan} ${hardseg}
       #############################################################
       # Update image pointer, and write the smoothed image path to
       # the design file and derivatives index so that it may be used
@@ -231,7 +254,7 @@ routine_end
 # Retrieve all the seeds for which SCA should be run from the
 # analysis's seed library.
 ###################################################################
-libspace=$(grep -i '^SPACE::' ${seed_lib[${cxt}]})
+libspace=$(grep -i '^SPACE::' ${seed_lib[cxt]})
 libspace=${libspace//SPACE\:\:/}
 ###################################################################
 # Iterate through all seeds.
@@ -245,7 +268,7 @@ libspace=${libspace//SPACE\:\:/}
 #  3. Compute the voxelwise correlation of the primary BOLD
 #     timeseries with the seed's mean timeseries.
 ###################################################################
-for seed in ${seeds[${cxt}]}
+for seed in ${seeds[cxt]}
    do
    ################################################################
    # Parse the current seed's information.
@@ -298,8 +321,8 @@ for seed in ${seeds[${cxt}]}
       warpspace \
          ${seed[1]} \
          ${intermediate}_coor_${seed[0]}.sclib \
-         ${libspace}:${space} \
-         ${seed_voxel[${cxt}]}
+         ${libspace}:${space[sub]} \
+         ${seed_voxel[cxt]}
       #############################################################
       # Obtain the warped coordinates.
       #############################################################
@@ -315,13 +338,13 @@ for seed in ${seeds[${cxt}]}
       [[ ! -d ${outbase}maps ]] && mkdir -p ${outbase}maps
       rm -f ${intermediate}_coor_${seed[0]}.sclib
       echo \
-"SPACE::${space}
+"SPACE::${space[sub]}
 :#ROIName#X,Y,Z#radius
 #${seed[0]}#${seed[1]}#${seed[2]}" \
          >> ${intermediate}_coor_${seed[0]}.sclib
       exec_xcp coor2map \
          -i ${intermediate}_coor_${seed[0]}.sclib \
-         -t ${referenceVolumeBrain[${subjidx}]} \
+         -t ${referenceVolumeBrain[sub]} \
          -o ${!sca_seed}
       ;;
    mask)
@@ -333,7 +356,7 @@ for seed in ${seeds[${cxt}]}
       warpspace \
          ${seed[1]} \
          ${!sca_seed} \
-         ${seed[2]}:${space} \
+         ${seed[2]}:${space[sub]} \
          NearestNeighbor
       ;;
    esac
