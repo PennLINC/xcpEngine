@@ -100,7 +100,7 @@ if [[ -n    ${censored[sub]} ]]
    configure   censored             ${censored[sub]}
 fi
 
-process     preprocessed            ${prefix}_preprocessed
+final       preprocessed            ${prefix}_preprocessed
 
 << DICTIONARY
 
