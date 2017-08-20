@@ -65,7 +65,7 @@ derivative_config   ic_maps_thr     Type              maps
 derivative_config   ic_maps_thr_mni Type              maps
 derivative_config   ic_maps_thr_mni Space             MNI
 
-process     icaDenoised             ${prefix}_icaDenoised
+final       icaDenoised             ${prefix}_icaDenoised
 
 << DICTIONARY
 
