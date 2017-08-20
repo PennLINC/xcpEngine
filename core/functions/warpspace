@@ -1,5 +1,6 @@
 warpspace() {
    local a_chk a_edges d_chk d_edges e edges f_chk f_edges i k layer n node_chk nodes o objects output route source t target v x xfm
+   declare -A s d a
    ################################################################
    # [1] PARSE INPUTS
    #---------------------------------------------------------------
@@ -23,32 +24,27 @@ warpspace() {
       #     Determine the coordinate space of origin, if it has not
       #     been passed explicitly.
       #
-      #     Case 1: The input is the analyte.
+      #     Case 1: The input is an atlas.
       #############################################################
-      if [[ ${i} == ${img} ]]
-         then
-         source=${space}
-      #############################################################
-      #     Case 2: The input is an atlas.
-      #############################################################
-      elif contains ${i} "atlas:"
+      if contains ${i} "atlas:"
          then
          i=${i//atlas:/}
-         source=$(   json_query  ${i}  Space    "${atlas[cxt]}")
-         i=$(        json_query  ${i}  Map      "${atlas[cxt]}")
+         atlas_parse ${i}
+         source=${a[Space]}
+         i=${a[Map]}
       #############################################################
-      #     Case 3: The input is a derivative.
+      #     Case 2: The input is a derivative.
       #############################################################
       elif ! is_image ${i}
          then
          source=$(   json_query  ${i}  Space    "${aux_imgs[sub]}")
          i=$(        json_query  ${i}  Map      "${aux_imgs[sub]}")
       #############################################################
-      #     Case 4: The source is otherwise unspecified. Default to
+      #     Case 3: The source is otherwise unspecified. Default to
       #     analyte space.
       #############################################################
       else
-         source=${space}
+         source=${space[sub]}
       fi
       i=$(eval echo ${i})
    fi

@@ -99,7 +99,7 @@ if ! is_image ${std[cxt]} \
    warpspace \
       ${img} \
       ${std[cxt]} \
-      ${standard}
+      ${space[sub]}:${standard}
 fi
 ###################################################################
 # Iterate through all derivative images, and apply the computed
