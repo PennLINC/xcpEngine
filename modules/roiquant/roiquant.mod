@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_config   ${a_name}   Space             ${space}
+   atlas_config   ${a[Name]}   Space             ${space[sub]}
 }
 
 completion() {
@@ -67,12 +67,12 @@ DICTIONARY
 # Retrieve all the networks for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-if [[ -s ${roiquant_atlas[${cxt}]} ]]
+if [[ -s ${roiquant_atlas[cxt]} ]]
    then
    subroutine                 @0.1
-   add_reference     referenceVolume[${subjidx}]   ${prefix}_referenceVolume
-   load_atlas        ${roiquant_atlas[${cxt}]}
-   load_atlas        ${atlas[${subjidx}]}
+   add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
+   load_atlas        ${roiquant_atlas[cxt]}
+   load_atlas        ${atlas[sub]}
    load_derivatives
    [[ -n ${sequence} ]] && sequence=${sequence}_
 else
@@ -102,15 +102,20 @@ fi
 for map in ${atlas_names[@]}
    do
    atlas_parse ${map}
-   [[ -z ${a_map} ]] && continue
-   routine                    @1    Regional quantification: ${a_name}
+   [[ -z ${a[Map]} ]] && continue
+   routine                    @1    Regional quantification: ${a[Name]}
    ################################################################
    # Define the paths to the potential outputs of the current
    # network analysis.
    ################################################################
-   configure   rstatdir             ${outdir}/${a_name}
-   configure   rstatbase            ${rstatdir[${cxt}]}/${prefix}_${a_name}
-   configure   nodemap              ${mapbase[${cxt}]}/${prefix}_${a_name}.nii.gz
+   configure   rstatdir             ${outdir}/${a[Name]}
+   configure   rstatbase            ${rstatdir[cxt]}/${prefix}_${a[Name]}
+   configure   nodemap              ${mapbase[cxt]}/${prefix}_${a[Name]}.nii.gz
+   
+   
+   
+   
+   
    ################################################################
    # [1]
    # Conform the atlas into the space of the analyte image.
@@ -120,27 +125,27 @@ for map in ${atlas_names[@]}
    # If the network map has already been computed in this space,
    # then move on to the next stage.
    ################################################################
-   if is_image ${nodemap[${cxt}]} \
+   if is_image ${nodemap[cxt]} \
    && ! rerun
       then
       subroutine              @1.2.1
-      a_type=done
+      a[Type]=done
    fi
-   mkdir -p ${rstatdir[${cxt}]}
-   case ${a_type} in
+   mkdir -p ${rstatdir[cxt]}
+   case ${a[Type]} in
    Map)
       subroutine              @1.2.2
       #############################################################
       # Ensure that the network has more than one node, then map
       # it into the analyte space.
       #############################################################
-      rm -f ${nodemap[${cxt}]}
-      warpspace atlas:${a_name} ${nodemap[${cxt}]} ${space} MultiLabel
+      rm -f ${nodemap[cxt]}
+      warpspace atlas:${a[Name]} ${nodemap[cxt]} ${space[sub]} MultiLabel
       ;;
    Coordinates)
       subroutine              @1.2.3
-      output      node_sclib           ${mapbase[${cxt}]}${a_name}.sclib
-      if (( ${a_nodes} <= 1 ))
+      output      node_sclib           ${mapbase[cxt]}${a[Name]}.sclib
+      if (( ${a[NodeCount]} <= 1 ))
          then
          subroutine           @1.2.4
          continue
@@ -150,62 +155,32 @@ for map in ${atlas_names[@]}
       # ANTs to transform spatial coordinates into native space.
       # This process is much less intuitive than it sounds,
       # largely because of the stringent orientation requirements
-      # within ANTs, and it is cleverly tucked away behind a
-      # utility script called pointTransform.
-      #
-      # Also, note that antsApplyTransformsToPoints (and
-      # consequently pointTransform) requires the inverse of the
-      # transforms that you would intuitively expect it to
-      # require.
+      # within ANTs, and it is wrapped in the warpspace function.
       #############################################################
-      case std2${space} in
-      std2native)
-         subroutine           @1.2.5
-         ##########################################################
-         # Apply the required transforms.
-         ##########################################################
-         rm -f ${node_sclib[${cxt}]}
-         exec_xcp pointTransform \
-            -v \
-            -i ${a_map} \
-            -s ${template} \
-            -r ${referenceVolume[${subjidx}]} \
-            $coreg \
-            $rigid \
-            $affine \
-            $warp \
-            $resample \
-            $trace_prop \
-            >> ${node_sclib[${cxt}]}
-         ;;
-      #############################################################
-      # Coordinates are always in standard space, so if the
-      # primary BOLD timeseries has already been normalised, then
-      # there is no need for any further manipulations.
-      #############################################################
-      std2standard)
-         subroutine           @1.2.6
-         ;;
-      esac
+      subroutine              @1.2.5
+      warpspace \
+         ${a[Map]} \
+         ${node_sclib[cxt]} \
+         ${a[Space]}:${space[sub]} \
+         ${a[VoxelCoordinates]}
       #############################################################
       # Use the (warped) coordinates and radius to generate a map
       # of the network.
       #############################################################
-      subroutine              @1.2.7
+      subroutine              @1.2.6
       exec_xcp coor2map \
-         ${traceprop} \
-         -i ${node_sclib[${cxt}]} \
-         -t ${referenceVolumeBrain[${subjidx}]} \
-         -o ${nodemap[${cxt}]}
+         -i    ${node_sclib[cxt]} \
+         -t    ${referenceVolumeBrain[sub]} \
+         -o    ${nodemap[cxt]}
       ;;
    done)
-      subroutine              @1.2.8
+      subroutine              @1.2.7
       ;;
    esac
    ################################################################
    # Update the path to the network map
    ################################################################
-   add_reference nodemap[${cxt}] ${a_name}/${prefix}_${a_name}
+   add_reference nodemap[cxt] ${a_name}/${prefix}_${a_name}
    
    
    
@@ -215,116 +190,99 @@ for map in ${atlas_names[@]}
    # [2]
    # Compute the value of the statistic of interest for each
    # RoI in the parcellation.
+   # Determine whether each node is sufficiently covered. If over
+   # 50 percent is not covered, remove it from computation.
    ################################################################
-   for map in ${derivatives}
-      do
-      subroutine              @1.3
-      unset mapStats
-      derivative_parse ${map}
-      if (( ${NUMOUT} == 0 ))
-         then
-         subroutine           @1.3.1
-         modout=${out}/${d_mod}
-      else
-         subroutine           @1.3.2
-         modout=${out}/${d_mod_idx}_${d_mod}
-      fi
-      #############################################################
-      # Determine whether each node is sufficiently covered.
-      # If over 50 percent is not covered, remove it from
-      # computation.
-      #############################################################
-      subroutine              @1.3.3
-      cover=( $(exec_xcp nodeCoverage.R \
-         -i ${mask[${subjidx}]} \
-         -r ${a_map} \
-         -x ${a_rois} \
-         -n ${a_roinames}) )
-      #############################################################
-      # Perform the quantification: Initialise
-      #############################################################
-      echo ${cover[0]//,/ } >> ${intermediate}_${a_name}_idx.1D
-      echo ${cover[1]//,/ } >> ${intermediate}_${a_name}_names.1D
-      unset qargs
-      qargs="
-         -a       ${a_map}
-         -n       ${a_name}
-         -i       ${intermediate}_${a_name}_idx.1D
-         -r       ${intermediate}_${a_name}_names.1D
-         -p       ${prefix//_/,}"
-      #############################################################
-      # Perform the quantification: Mean
-      #############################################################
-      subroutine              @1.3.4   Computing atlas statistics
-      apply_exec  Statistic:mean       /dev/null \
-         xcp      quantifyAtlas \
-         -v       %INPUT \
-         -s       mean \
-         -o       ${rstatbase[${cxt}]}_mean_%NAME.csv \
-         -t       ${intermediate}_${a_name}_mean_%NAME \
-         -d       ${sequence}%NAME \
-         ${qargs}
-      #############################################################
-      # Perform the quantification: Median
-      #############################################################
-      subroutine              @1.3.5
-      apply_exec  Statistic:median     /dev/null \
-         xcp      quantifyAtlas \
-         -v       %INPUT \
-         -s       median \
-         -o       ${rstatbase[${cxt}]}_median_%NAME.csv \
-         -t       ${intermediate}_${a_name}_median_%NAME \
-         -d       ${sequence}%NAME \
-         ${qargs}
-      #############################################################
-      # Perform the quantification: Mode
-      #############################################################
-      subroutine              @1.3.6
-      apply_exec  Statistic:mode       /dev/null \
-         xcp      quantifyAtlas \
-         -v       %INPUT \
-         -s       mode \
-         -o       ${rstatbase[${cxt}]}_mode_%NAME.csv \
-         -t       ${intermediate}_${a_name}_mode_%NAME \
-         -d       ${sequence}%NAME \
-         ${qargs}
-      #############################################################
-      # Perform the quantification: Min/Max
-      #############################################################
-      subroutine              @1.3.7
-      apply_exec  Statistic:minmax     /dev/null \
-         xcp      quantifyAtlas \
-         -v       %INPUT \
-         -s       minmax \
-         -o       ${rstatbase[${cxt}]}_minmax_%NAME.csv \
-         -t       ${intermediate}_${a_name}_minmax_%NAME \
-         -d       ${sequence}%NAME \
-         ${qargs}
-      #############################################################
-      # Perform the quantification: Standard deviation
-      #############################################################
-      subroutine              @1.3.8
-      apply_exec  Statistic:stdev      /dev/null \
-         xcp      quantifyAtlas \
-         -v       %INPUT \
-         -s       stdev \
-         -o       ${rstatbase[${cxt}]}_stdev_%NAME.csv \
-         -t       ${intermediate}_${a_name}_stdev_%NAME \
-         -d       ${sequence}%NAME \
-         ${qargs}
-      #############################################################
-      # Perform the quantification: Volume
-      #############################################################
-      if (( ${roiquant_vol[${cxt}]} == 1 ))
-         then
-         subroutine           @1.3.9
-         exec_xcp quantifyAtlas \
-         -s       vol \
-         -o       ${rstatbase[${cxt}]}_vol.csv \
-         -t       ${intermediate}_${a_name}_vol_%NAME \
-         ${qargs}
-      fi
-   done
+   subroutine              @1.3.3
+   cover=( $(exec_xcp nodeCoverage.R \
+      -i    ${mask[sub]} \
+      -r    ${a[Map]} \
+      -x    ${a[NodeIndex]} \
+      -n    ${a[NodeNames]}) )
+   ################################################################
+   # Perform the quantification: Initialise
+   ################################################################
+   echo ${cover[0]//,/ } >> ${intermediate}_${a[Name]}_idx.1D
+   echo ${cover[1]//,/ } >> ${intermediate}_${a[Name]}_names.1D
+   unset qargs
+   qargs="
+      -a       ${a[Map]}
+      -n       ${a[Name]}
+      -i       ${intermediate}_${a[Name]}_idx.1D
+      -r       ${intermediate}_${a[Name]}_names.1D
+      -p       ${prefix//_/,}"
+   ################################################################
+   # Perform the quantification: Mean
+   ################################################################
+   subroutine              @1.3.4   Computing atlas statistics
+   apply_exec  Statistic:mean       /dev/null \
+      xcp      quantifyAtlas \
+      -v       %INPUT \
+      -s       mean \
+      -o       ${rstatbase[cxt]}_mean_%NAME.csv \
+      -t       ${intermediate}_${a[Name]}_mean_%NAME \
+      -d       ${sequence}%NAME \
+      ${qargs}
+   ################################################################
+   # Perform the quantification: Median
+   ################################################################
+   subroutine              @1.3.5
+   apply_exec  Statistic:median     /dev/null \
+      xcp      quantifyAtlas \
+      -v       %INPUT \
+      -s       median \
+      -o       ${rstatbase[cxt]}_median_%NAME.csv \
+      -t       ${intermediate}_${a[Name]}_median_%NAME \
+      -d       ${sequence}%NAME \
+      ${qargs}
+   ################################################################
+   # Perform the quantification: Mode
+   ################################################################
+   subroutine              @1.3.6
+   apply_exec  Statistic:mode       /dev/null \
+      xcp      quantifyAtlas \
+      -v       %INPUT \
+      -s       mode \
+      -o       ${rstatbase[cxt]}_mode_%NAME.csv \
+      -t       ${intermediate}_${a[Name]}_mode_%NAME \
+      -d       ${sequence}%NAME \
+      ${qargs}
+   ################################################################
+   # Perform the quantification: Min/Max
+   ################################################################
+   subroutine              @1.3.7
+   apply_exec  Statistic:minmax     /dev/null \
+      xcp      quantifyAtlas \
+      -v       %INPUT \
+      -s       minmax \
+      -o       ${rstatbase[cxt]}_minmax_%NAME.csv \
+      -t       ${intermediate}_${a[Name]}_minmax_%NAME \
+      -d       ${sequence}%NAME \
+      ${qargs}
+   ################################################################
+   # Perform the quantification: Standard deviation
+   ################################################################
+   subroutine              @1.3.8
+   apply_exec  Statistic:stdev      /dev/null \
+      xcp      quantifyAtlas \
+      -v       %INPUT \
+      -s       stdev \
+      -o       ${rstatbase[cxt]}_stdev_%NAME.csv \
+      -t       ${intermediate}_${a[Name]}_stdev_%NAME \
+      -d       ${sequence}%NAME \
+      ${qargs}
+   ################################################################
+   # Perform the quantification: Volume
+   ################################################################
+   if (( ${roiquant_vol[cxt]} == 1 ))
+      then
+      subroutine           @1.3.9
+      exec_xcp quantifyAtlas \
+      -s       vol \
+      -o       ${rstatbase[cxt]}_vol.csv \
+      -t       ${intermediate}_${a[Name]}_vol_%NAME \
+      ${qargs}
+   fi
    update_networks
    routine_end
 done
