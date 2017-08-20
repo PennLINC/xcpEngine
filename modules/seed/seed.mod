@@ -278,11 +278,9 @@ for seed in ${seeds[cxt]}
    #    in which the seed mask is situated.
    ################################################################
    seed=( ${seed//\#/ } )
-   echo ${seed[@]}
    seed[0]=$(eval echo ${seed[0]})
    seed[1]=$(eval echo ${seed[1]})
    seed[2]=$(eval echo ${seed[2]})
-   echo ${seed[@]}
    sca_seed=${seed[0]}_seed'['${cxt}']'
    sca_map=${seed[0]}'['${cxt}']'
    sca_ts=${seed[0]}_ts'['${cxt}']'
