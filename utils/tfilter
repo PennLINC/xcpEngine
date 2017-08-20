@@ -141,6 +141,7 @@ pass=2
 rpass=1
 rstop=1
 tmask=ones
+unset tslist
 ###################################################################
 # Parse arguments
 ###################################################################
@@ -208,7 +209,7 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
       ! is+numeric ${rstop} && Usage && exit
       ;;
    1)
-      tslist=${OPTARG}
+      tslist="${tslist} ${OPTARG}"
       ;;
    t)
       set -x
