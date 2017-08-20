@@ -133,7 +133,7 @@ subroutine                    @0.1
 #  * TMP: temporal filter
 #  * REG: apply the final censor and execute the regression
 ###################################################################
-rem=${prestats_process[cxt]}
+rem=${regress_process[cxt]}
 while (( ${#rem} > 0 ))
    do
    ################################################################
