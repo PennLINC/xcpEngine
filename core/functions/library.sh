@@ -39,6 +39,7 @@ source ${LIBRARY}/json_query
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
 source ${LIBRARY}/load_transforms
+source ${LIBRARY}/matching
 source ${LIBRARY}/ninstances
 source ${LIBRARY}/output
 source ${LIBRARY}/printx
