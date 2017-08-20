@@ -9,7 +9,7 @@
 # This design file stores the values of all variables required to
 # execute a complete neuroimage processing pipeline. You may
 # execute the analysis specified in this design file by calling
-# (in any bash terminal):
+# (in any v4 or higher bash terminal):
 #
 # xcpEngine example.dsn
 #
@@ -36,14 +36,13 @@ analysis=accelerator_$(whoami)
 design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
 struct[sub]=${antsct[sub]}/ExtractedBrain0N4.nii.gz
 sequence=rest
-structural[sub]=${prefix[sub]}_anatomical
 standard=PNC%2x2x2
 
 ###################################################################
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound #,regress,fcon,reho,alff,net,roiquant,seed,norm
+pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,roiquant,seed,norm
 
 ###################################################################
 # 1 PRESTATS
@@ -63,7 +62,7 @@ prestats_hipass[1]=0.01
 prestats_lopass[1]=0.08
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
-prestats_dmdt[1]=auto
+prestats_dmdt[1]=2
 prestats_censor[1]=none,0.25
 prestats_censor_cr[1]=rms
 prestats_censor_contig[1]=0
@@ -119,25 +118,23 @@ confound_cleanup[3]=1
 regress_tmpf[4]=butterworth
 regress_hipass[4]=0.01
 regress_lopass[4]=0.08
-regress_despike[4]=Y
-regress_spkreg[4]=Y
 regress_tmpf_order[4]=1
 regress_tmpf_pass[4]=2
 regress_tmpf_ripple[4]=0.5
 regress_tmpf_ripple2[4]=20
 regress_smo[4]=6
 regress_sptf[4]=susan
-regress_usan[4]=${antsct[sub]}/BrainSegmentation.nii.gz
-regress_usan_space[4]=structural
+regress_usan[4]=default #${antsct[sub]}/BrainSegmentation.nii.gz
+regress_usan_space[4]= #structural
 regress_rerun[4]=0
-regress_cleanup[4]=1
-regress_process[4]=DSP-SPR-TMP-CEN-REG-SMO
+regress_cleanup[4]=0
+regress_process[4]=TMP-REG
 
 ###################################################################
 # 5 FCON
 ###################################################################
 
-fcon_atlas[5]=${XCPEDIR}/space/PNC/PNC_atlas.json
+fcon_atlas[5]=/data/joy/BBL-extend/share/pipeline_workshop/config/space/example-v6.json #${XCPEDIR}/space/PNC/PNC_atlas.json
 fcon_metric[5]=corrcoef
 fcon_thr[5]=N
 fcon_window[5]=10
@@ -150,8 +147,7 @@ fcon_cleanup[5]=1
 ###################################################################
 
 reho_nhood[6]=vertices
-reho_roimean[6]=Y
-reho_roikw[6]=N
+reho_roikw[6]=1 # does nothing at the moment
 reho_sptf[6]=susan
 reho_smo[6]=6
 reho_rerun[6]=0
@@ -181,7 +177,7 @@ net_cleanup[8]=1
 # 9 ROIQUANT
 ###################################################################
 
-roiquant_atlas[9]=${XCPEDIR}/space/PNC/PNC_atlas.json
+roiquant_atlas[9]=/data/joy/BBL-extend/share/pipeline_workshop/config/space/example-v6.json #${XCPEDIR}/space/PNC/PNC_atlas.json
 roiquant_vol[9]=1
 roiquant_rerun[9]=0
 roiquant_cleanup[9]=1
