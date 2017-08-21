@@ -16,7 +16,7 @@ cluster_submit() {
       -cwd \
       -j y \
       -o ${logfile} \
-      ${cspec[${cxt}]} \
+      ${cspec[cxt]} \
       $@)
    id=$(echo ${id}|tr -dc '0-9')
    ids="${ids} -e ${id}"
