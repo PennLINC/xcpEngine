@@ -8,6 +8,6 @@
 # Update the quality file to add new variables defined in the
 # course of processing.
 ###################################################################
-rm -f ${quality}
+rm -f ${quality[sub]}
 echo ${qvars} >> ${quality[sub]}
 echo ${qvals} >> ${quality[sub]}
