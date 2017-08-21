@@ -333,7 +333,6 @@ for seed in ${seeds[cxt]}
       # of the seed region.
       #############################################################
       subroutine              @2.3.3
-      [[ ! -d ${outbase}maps ]] && mkdir -p ${outbase}maps
       rm -f ${intermediate}_coor_${seed[0]}.sclib
       echo \
 "SPACE::${space[sub]}
