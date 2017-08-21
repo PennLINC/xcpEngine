@@ -226,6 +226,7 @@ printx         ${XCPEDIR}/core/CONSOLE_HEADER
 # Run the XCP Localiser first.
 ###################################################################
 cxt=0
+level=subject
 sub=$(( 1 + idx_offset ))
 substart=${sub}
 module=LOCALISER
@@ -288,6 +289,7 @@ for module in ${modules[@]}
    # If the current module has a subject-level component, then
    # iterate through all subjects and run it.
    ################################################################
+   level=subject
    if [[ -n ${modS} ]]
       then
       unset ids
@@ -336,6 +338,7 @@ for module in ${modules[@]}
    # If the current module has a group-level component, then
    # execute it.
    ################################################################
+   level=group
    if [[ -n ${modG} ]]
       then
       ${XCPEDIR}/core/validateGroup
