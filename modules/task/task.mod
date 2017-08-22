@@ -1,204 +1,147 @@
-#!/usr/bin/env bash
+
 
 ###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
 
 ###################################################################
-# Constants
+# SPECIFIC MODULE HEADER
+# This module runs an FSL design for task activation statistics.
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly POSINT='^[0-9]+$'
-
-
-
-
+mod_name_short=task
+mod_name='TASK-CONSTRAINED ACTIVATION MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
 ###################################################################
+# GENERAL MODULE HEADER
 ###################################################################
-# BEGIN GENERAL MODULE HEADER
-###################################################################
-###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
-###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design_local=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
-###################################################################
-# Ensure that the compulsory design_local variable has been defined
-###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "###################################################################"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭             EXECUTING TASK ACTIVATION MODULE              ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_local}
-###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-if [[ ! -e ${task_design[${cxt}]} ]]
-   then
-   echo "::XCP-ERROR: The task activation module requires a "
-   echo "  FEAT design file (.fsf) to complete, but the FEAT "
-   echo "  design file is undefined or absent."
-   exit 666
-fi
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}task
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsMod
 
-# For the task module, potential outputs include:
-#  * fsf : The FSL GLM design file, in .fsf format.
-#  * referenceVolume : an example volume extracted from EPI data,
-#    typically one of the middle volumes, though another may be
-#    selected if the middle volume is corrupted by motion-related
-#    noise; this is used as the reference volume during motion
-#    correction
-#  * meanIntensity : the mean intensity over time of functional data,
-#    after it has been realigned with the example volume
-#  * mcdir : the directory containing motion correction output
-#  * rps : the 6 realignment parameters computed in the motion
-#    correction procedure
-#  * relrms : relative root mean square motion, computed in the
-#    motion correction procedure
-#  * relmeanrms : mean relative RMS motion, computed in the
-#    motion correction procedure
-#  * absrms : absolute root mean square displacement, computed in
-#    the motion correction procedure
-#  * absmeanrms : mean absolute RMS displacement, computed in the
-#    motion correction procedure
-#  * rmat : a directory containing rigid transforms applied to each
-#    volume in order to realign it with the reference volume
 ###################################################################
-task_fsf[${cxt}]=${outdir}/model/design.fsf
-referenceVolume[${cxt}]=${outdir}/${prefix}_referenceVolume
-mask[${cxt}]=${outdir}/${prefix}_mask
-referenceVolumeBrain[${cxt}]=${outdir}/${prefix}_referenceVolumeBrain
-meanIntensity[${cxt}]=${outdir}/${prefix}_meanIntensity
-meanIntensityBrain[${cxt}]=${outdir}/${prefix}_meanIntensityBrain
-mcdir[${cxt}]=${outdir}/mc
-rps[${cxt}]=${outdir}/mc/${prefix}_realignment.1D
-relrms[${cxt}]=${outdir}/mc/${prefix}_rel_rms.1D
-relmeanrms[${cxt}]=${outdir}/mc/${prefix}_rel_mean_rms.txt
-absrms[${cxt}]=${outdir}/mc/${prefix}_abs_rms.1D
-absmeanrms[${cxt}]=${outdir}/mc/${prefix}_abs_mean_rms.txt
-rmat[${cxt}]=${outdir}/mc/${prefix}.mat
-confmat[${cxt}]=${outdir}/${prefix}_confmat.1D
+# MODULE COMPLETION
 ###################################################################
-# * Initialise a pointer to the image.
-# * Ensure that the pointer references an image, and not something
-#   else such as a design file.
-# * On the basis of this, define the image extension to be used for
-#   this module (for operations, such as AFNI, that require an
-#   extension).
-# * Localise the image using a symlink, if applicable.
-# * Define the base output path for intermediate files.
-###################################################################
-img=${out}/${prefix}
-imgpath=$(ls ${img}.*)
-for i in ${imgpath}
-   do
-   [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-done
-ext=$(echo ${imgpath}|sed s@${img}@@g)
-[[ ${ext} == ".nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext} == ".nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext} == ".hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext} == ".img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-img=${outdir}/${prefix}~TEMP~
-if [[ $(imtest ${img}) != "1" ]] \
-   || [[ "${regress_rerun[${cxt}]}" == "Y" ]]
-   then
-   rm -f ${img}
-   ln -s ${out}/${prefix}${ext} ${img}${ext}
-fi
-imgpath=$(ls ${img}${ext})
-###################################################################
-# Parse quality variables.
-###################################################################
-qvars=$(head -n1 ${quality} 2>/dev/null)
-qvals=$(tail -n1 ${quality} 2>/dev/null)
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from task[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
-###################################################################
-# Verify that the module should be run:
-#  * Test whether the final output already exists.
-#  * Determine whether the user requested the module to be re-run.
-# If it is determined that the module should not be run, then any
-#  outputs must be written to the local design file.
-###################################################################
+completion() {
+   processed         processed
+   
+   write_derivative  meanIntensity
+   write_derivative  meanIntensityBrain
+   write_derivative  referenceVolume
+   write_derivative  referenceVolumeBrain
+   write_derivative  mask
+   
+   write_output      mcdir
+   write_output      rps
+   write_output      rel_rms
+   write_output      fd
+   
+   for i in ${!cpe[@]}
+      do
+      write_derivative  contrast${i}_${cpe[i]}
+      write_derivative  sigchange_contrast${i}_${cpe[i]}
+      write_derivative  varcope${i}_${cpe[i]}
+   done
+   if is_image ${referenceVolumeBrain[cxt]}
+      then
+      space_config   ${spaces[sub]}   ${space[sub]} \
+               Map   ${referenceVolumeBrain[cxt]}
+   fi
+   
+   quality_metric    relMeanRMSMotion        rel_mean_rms
+   quality_metric    relMaxRMSMotion         rel_max_rms
+   quality_metric    nFramesHighMotion       motion_vols
+   
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   source ${XCPEDIR}/core/moduleEnd
+}
+
+
 
 
 
 ###################################################################
+# OUTPUTS
 ###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
-###################################################################
+derivative  referenceVolume         ${prefix}_referenceVolume
+derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
+derivative  meanIntensity           ${prefix}_meanIntensity
+derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
+derivative  mask                    ${prefix}_mask
+
+output      confmat                 ${prefix}_confmat.1D
+output      fsf                     model/${prefix}_design.fsf
+output      mcdir                   mc
+output      rps                     mc/${prefix}_realignment.1D
+output      abs_rms                 mc/${prefix}_absRMS.1D
+output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
+output      rel_rms                 mc/${prefix}_relRMS.1D
+output      rel_max_rms             mc/${prefix}_relMaxRMS.txt
+output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt
+output      rmat                    mc/${prefix}.mat
+output      fd                      mc/${prefix}_fd.1D
+output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
+
+final       processed               ${prefix}_processed
+
+<< DICTIONARY
+
+abs_mean_rms
+   The absolute RMS displacement, averaged over all volumes.
+abs_rms
+   Absolute root mean square displacement.
+confmat
+   A 1D file containing all global nuisance timeseries for the
+   current subject, including any user-specified timeseries
+   and previous time points, derivatives, and powers.
+contrast
+   Contrasts of parameter estimates.
+fd
+   Framewise displacement values, computed as the absolute sum of
+   realignment parameter first derivatives.
+fsf
+   The design file for FEAT analysis in FSL.
+mcdir
+   The directory containing motion realignment output.
+mask
+   A spatial mask of binary values, indicating whether a voxel
+   should be analysed as part of the brain; the definition of brain
+   tissue is often fairly liberal.
+meanIntensity
+   The mean intensity over time of functional data, after it has
+   been realigned to the example volume
+motion_vols
+   A quality control file that specifies the number of volumes that
+   exceeded the maximum motion criterion. If censoring is enabled,
+   then this will be the same number of volumes that are to be
+   censored.
+processed
+   The final output of the module, indicating its successful
+   completion.
+referenceVolume
+   An example volume extracted from EPI data, typically one of the
+   middle volumes, though another may be selected if the middle
+   volume is corrupted by motion-related noise. This is used as the
+   reference volume during motion realignment.
+rel_max_rms
+   The maximum single-volume value of relative RMS displacement.
+rel_mean_rms
+   The relative RMS displacement, averaged over all volumes.
+rel_rms
+   Relative root mean square displacement.
+rmat
+   A directory containing rigid transforms applied to each volume
+   in order to realign it with the reference volume
+rps
+   Framewise values of the 6 realignment parameters.
+sigchange_contrast
+   Contrasts of parameter estimates, converted to percentage
+   signal change.
+varcope
+   The variance in each contrast of parameter estimates.
+
+DICTIONARY
 
 
 
@@ -207,106 +150,140 @@ echo "" >> $design_local
 ###################################################################
 # Localise the FSL design file.
 ###################################################################
-mkdir -p ${outdir}/model
-cp -f ${task_design[${cxt}]} ${task_fsf[${cxt}]}
+routine                       @1    Localising FEAT design
+exec_sys mkdir -p ${outdir}/model
+printx            ${task_design[cxt]} >> ${intermediate}-fsf.dsn
+mapfile           fsf_design           < ${intermediate}-fsf.dsn
 
 
 
 
 
 ###################################################################
-# Iterate through all fields and substitute.
+# Variable import and search:
+# Substitute the relevant lines of text in the design file.
+# OUT: The FEAT output directory
+# STD: The template for normalisation (please turn this off)
+# REF: The reference volume
+# MSK: The mask
+# CON: Boolean value indicating whether to import confounds
+# TRP: The repetition time
+# NVO: The number of volumes
+# IMG: The BOLD time series
+# HRS: The structural image
+# COF: The imported confounds
+# PAR: The explanatory variables
+# TDX: Boolean value indicating whether to include temporal deriv
+# CPE: Contrasts of the explanatory variables
 ###################################################################
-numfield=$(echo ${#subject[@]})
-curidx=0
-while [[ ${curidx} -lt ${numfield} ]]
+subroutine                    @1.1a Importing analysis variables
+subroutine                    @1.1b Parsing design and contrasts
+for l in "${!fsf_design[@]}"
    do
-   curfield=${subject[${curidx}]}
-   search=~XID${curidx}
-   sed s@${search}@${curfield}@g ${task_fsf[${cxt}]} \
-      >> ${task_fsf[${cxt}]}~TEMP~
-   mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-   curidx=$(expr ${curidx} + 1)
+   line="${fsf_design[l]}"
+   
+   chk_OUT=( "${line}"        'set fmri(outputdir)'         )
+   chk_STD=( "${line}"        'set fmri(regstandard)'       )
+   chk_REF=( "${line}"        'set fmri(alternative_example_func)' )
+   chk_MSK=( "${line}"        'set fmri(alternative_mask)'  )
+   chk_CON=( "${line}"        'set fmri(confoundevs)'       )
+   chk_TRP=( "${line}"        'set fmri(tr)'                )
+   chk_NVO=( "${line}"        'set fmri(npts)'              )
+   chk_IMG=( "${line}"        'set feat_files(1)'           )
+   chk_HRS=( "${line}"        'set highres_files(1)'        )
+   chk_COF=( "${line}"        'set confoundev_files(1)'     )
+   chk_PAR=( "${line}"        'set fmri(evtitle'            )
+   chk_TDX=( "${line}"        'set fmri(deriv_yn'           )
+   chk_CPE=( "${line}"        'set fmri(conname_real'       )
+   
+   contains  "${chk_PAR[@]}" \
+             && line=${line//set fmri\(evtitle/} \
+             && indx=${line/%\)*/}  \
+             && name=${line#*\"}    \
+             && name=${name//\"/}   \
+             && name=${name// /_}   \
+             && par[indx]=${name//\./_} \
+             && continue
+   contains  "${chk_CPE[@]}" \
+             && line=${line//set fmri\(conname_real\./} \
+             && indx=${line/%\)*/}  \
+             && name=${line#*\"}    \
+             && name=${name//\"/}   \
+             && name=${name// /_}   \
+             && cpe[indx]=${name//\./_} \
+             && continue
+   contains  "${chk_TDX[@]}" \
+             && line=${line//set fmri\(deriv_yn/} \
+             && indx=${line/%\)*/}  \
+             && name=${line#*\ }    \
+             && tdx[indx]=${name//\"/} \
+             && continue
+   
+   contains  "${chk_OUT[@]}" \
+             && fsf_design[l]='set fmri(outputdir) '${intermediate}'-feat\n' \
+             && continue
+   contains  "${chk_STD[@]}" \
+             && fsf_design[l]='set fmri(regstandard) '${template}'\n' \
+             && continue
+   contains  "${chk_IMG[@]}" \
+             && fsf_design[l]='set feat_files(1) '${img}'\n' \
+             && continue
+   contains  "${chk_REF[@]}" \
+             && fsf_design[l]='set fmri(alternative_example_func) "'${referenceVolume[sub]}'"\n' \
+             && continue
+   contains  "${chk_MSK[@]}" \
+             && fsf_design[l]='set fmri(alternative_mask) "'${mask[sub]}'"\n' \
+             && continue
+   contains  "${chk_TRP[@]}" \
+             && fsf_design[l]='set fmri(tr) '${trep}'\n' \
+             && continue
+   contains  "${chk_NVO[@]}" \
+             && fsf_design[l]='set fmri(npts) '${nvol}'\n' \
+             && continue
+   contains  "${chk_HRS[@]}" \
+             && fsf_design[l]='set highres_files(1) '${struct[sub]}'\n' \
+             && continue
+   contains  "${chk_CON[@]}" \
+             && coni=${l} \
+             && conf_include=${line//set fmri(confoundevs) /} \
+             && continue
+   contains  "${chk_COF[@]}" \
+             && conf=${l} \
+             && continue
 done
-###################################################################
-# Substitute the output directory variable so that it points to
-# the module output.
-###################################################################
-sed s@'set fmri(outputdir).*'@'set fmri(outputdir) '${img}@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-###################################################################
-# Substitute the standard variable so that it points to the
-# template.
-###################################################################
-sed s@'set fmri(regstandard).*'@'set fmri(regstandard) '${template}@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-###################################################################
-# Substitute the feat_files variable so that it points to the
-# BOLD timeseries.
-###################################################################
-sed s@'set feat_files(1).*'@'set feat_files(1) '${img}@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-###################################################################
-# Substitute the highres_files variable so that it points to the
-# structural image.
-###################################################################
-sed s@'set highres_files(1).*'@'set highres_files(1) '${struct[${subjidx}]}@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-###################################################################
-# Substitute the alternative variables so that they point to the
-# appropriate images (if prestats is performed in XCP rather than
-# as part of the FSL procedure).
-###################################################################
-sed s@'set fmri(alternative_example_func).*'@'set fmri(alternative_example_func) "'${referenceVolume[${subjidx}]}'"'@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-sed s@'set fmri(alternative_mask).*'@'set fmri(alternative_mask) "'${mask[${subjidx}]}'"'@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-###################################################################
-# Determine whether confound EVs must be imported from the XCP
-# Engine.
-###################################################################
-confincl=$(grep -i 'set fmri(confoundevs)' ${task_fsf[${cxt}]}\
-   |rev\
-   |cut -d' ' -f1\
-   |rev)
-###################################################################
-# Some FEAT files may not contain this option by default. If they
-# do not, attempt to add it. This may be unstable.
-###################################################################
-confopt=$(grep -i 'set confoundev_files' ${task_fsf[${cxt}]})
-if [[ ${confincl} == 1 ]] && [[ ${confopt} == 1 ]]
+if (( ${conf_include} == 1 ))
    then
-   sed s@'set confoundev_files(1).*'@'set confoundev_files(1) '${rps[${subjidx}]}@g \
-      ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-   mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-elif [[ ${confincl} == 1 ]] && [[ ${confopt} == 0 ]]
-   then
-   sed s@'set fmri(confoundevs).*'@'set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${rps[${subjidx}]}@g \
-      ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-   mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
+   subroutine                 @1.2  Importing confounds
+   if is+numeric ${conf}
+      then
+      subroutine              @1.2.1
+      fsf_design[conf]='set confoundev_files(1) '${rps[sub]}'\n'
+   else
+      subroutine              @1.2.2
+      fsf_design[coni]='set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${rps[sub]}'\n'
+   fi
 fi
+printf      "${fsf_design[@]}"                        >>  ${fsf[@]}
+routine_end
+
+
+
+
+
 ###################################################################
-# Substitute the tr variable so that it contains the correct
-# repetition time.
+# Declare each contrast and % signal change map as a derivative.
 ###################################################################
-trep=$(fslval ${img} pixdim4|sed s@' '@@g)
-sed s@'set fmri(tr).*'@'set fmri(tr) '${trep}@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
-###################################################################
-# Substitute the npts variable so that it contains the correct
-# number of data points
-###################################################################
-nvol=$(fslval ${img} dim4|sed s@' '@@g)
-sed s@'set fmri(npts).*'@'set fmri(npts) '${nvol}@g \
-   ${task_fsf[${cxt}]} >> ${task_fsf[${cxt}]}~TEMP~
-mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
+for i in ${!cpe[@]}
+   do
+   derivative  contrast${i}_${cpe[i]} \
+               contrasts/${prefix}_contrast${i}_${cpe[i]}
+   derivative  sigchange_contrast${i}_${cpe[i]} \
+               sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
+   derivative  varcope${i}_${cpe[i]} \
+               varcopes/${prefix}_varcope${i}_${cpe[i]}
+   derivative_config sigchange_contrast${i}_${cpe[i]} \
+               Statistic      mean
+done
 
 
 
@@ -316,19 +293,20 @@ mv -f ${task_fsf[${cxt}]}~TEMP~ ${task_fsf[${cxt}]}
 # Execute analysis in FEAT. Deactivate autosubmission before
 # calling FEAT, and reactivate after FEAT is complete.
 ###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "Executing analysis in FEAT"
-if [[ -z $(ls ${outdir}/*.feat 2>/dev/null)  \
-   && $(imtest ${outdir}/${prefix}_preprocessed) != 1 ]] \
-   || [[ ${task_rerun[${cxt}]} == Y ]]
+routine                       @2    Executing FEAT analysis
+if ! is_image ${processed[cxt]} \
+|| rerun
    then
-   rm -rf ${outdir}/*.feat
+   subroutine                 @2.1  Preparing environment
    buffer=${SGE_ROOT}
-   unset SGE_ROOT
-   feat ${task_fsf[${cxt}]}
+   unset    SGE_ROOT
+   exec_sys rm -rf            ${intermediate}-feat*
+   subroutine                 @2.2a Processing FEAT design:
+   subroutine                 @2.2b ${fsf[cxt]}
+   exec_fsl feat              ${fsf[cxt]}
    SGE_ROOT=${buffer}
 fi
+routine_end
 
 
 
@@ -337,336 +315,249 @@ fi
 ###################################################################
 # Reorganise the FEAT output.
 ###################################################################
-echo "Reorganising output"
-featout=$(ls -d1 ${outdir}/*.feat 2>/dev/null)
-[[ -z ${featout} ]] && featout=${outdir}
+featout=$(ls -d1 ${intermediate}-feat* 2>/dev/null)
 
-###################################################################
-# * Mask
-###################################################################
-if [[ $(imtest ${featout}/mask) == 1 ]]
-   then
-   immv ${featout}/mask ${mask[${cxt}]}
-fi
-if [[ $(imtest ${mask[${cxt}]}) == 1 ]]
-   then
-   echo "mask[${subjidx}]=${mask[${cxt}]}" >> $design_local
-   echo "#mask#${mask[${cxt}]}" >> ${auxImgs[${subjidx}]}
-fi
 
-###################################################################
-# * Example functional image
-###################################################################
-if [[ $(imtest ${featout}/example_func) == 1 ]]
-   then
-   immv ${featout}/example_func ${referenceVolume[${cxt}]}
-fi
-if [[ $(imtest ${referenceVolume[${cxt}]}) == 1 ]]
-   then
-   echo "referenceVolume[${subjidx}]=${referenceVolume[${cxt}]}" \
-      >> $design_local
-   echo "#referenceVolume#${referenceVolume[${cxt}]}" >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# * Brain-extracted
-###################################################################
-if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) != 1 ]]
-   then
-   fslmaths ${referenceVolume[${cxt}]} \
-      -mul ${mask[${cxt}]} \
-      ${referenceVolumeBrain[${cxt}]}
-fi
-if [[ $(imtest ${referenceVolumeBrain[${cxt}]}) == 1 ]]
-   then
-   echo "referenceVolumeBrain[${subjidx}]=${referenceVolumeBrain[${cxt}]}" \
-      >> $design_local
-   echo "#referenceVolumeBrain#${referenceVolumeBrain[${cxt}]}" >> ${auxImgs[${subjidx}]}
-fi
 
-###################################################################
-# * Mean functional image
-###################################################################
-if [[ $(imtest ${featout}/mean_func) == 1 ]]
-   then
-   immv ${featout}/mean_func ${meanIntensity[${cxt}]}
-fi
-if [[ $(imtest ${meanIntensity[${cxt}]}) == 1 ]]
-   then
-   echo "meanIntensity[${subjidx}]=${meanIntensity[${cxt}]}" \
-      >> $design_local
-   echo "#meanIntensity#${meanIntensity[${cxt}]}" >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# * Brain-extracted
-###################################################################
-if [[ $(imtest ${meanIntensityBrain[${cxt}]}) != 1 ]]
-   then
-   fslmaths ${meanIntensity[${cxt}]} \
-      -mul ${mask[${cxt}]} \
-      ${meanIntensityBrain[${cxt}]}
-fi
-if [[ $(imtest ${meanIntensityBrain[${cxt}]}) == 1 ]]
-   then
-   echo "meanIntensityBrain[${subjidx}]=${meanIntensityBrain[${cxt}]}" \
-      >> $design_local
-   echo "#meanIntensityBrain#${meanIntensityBrain[${cxt}]}" >> ${auxImgs[${subjidx}]}
-fi
 
-###################################################################
-# * Confound timeseries
-###################################################################
-if [[ -e ${featout}/confoundevs.txt ]]
-   then   
-   mv -f ${featout}/confoundevs.txt ${confmat[${cxt}]}
-   echo "confmat[${subjidx}]=${confmat[${cxt}]}" >> $design_local
-fi
 
-###################################################################
-# * Motion variables
-###################################################################
-if [[ -e ${featout}/mc/ ]]
+if [[ -d ${featout} ]]
    then
-   mkdir -p ${mcdir[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*mcf.par) ]] \
-      && mv -f ${featout}/mc/*mcf.par  ${rps[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*rel.rms) ]] \
-      && mv -f ${featout}/mc/*rel.rms  ${relrms[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*rel_mean.rms) ]] \
-      && mv -f ${featout}/mc/*rel_mean.rms ${relmeanrms[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*abs.rms) ]] \
-      && mv -f ${featout}/mc/*abs.rms  ${absrms[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*abs_mean.rms) ]] \
-      && mv -f ${featout}/mc/*abs_mean.rms  ${absmeanrms[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*.mat) ]] \
-      && mv -f ${featout}/mc/*.mat ${rmat[${cxt}]}
-   [[ -n $(ls ${featout}/mc/*.png) ]] \
-      && mv -f ${featout}/mc/*.png ${mcdir[${cxt}]}
-fi
-if [[ -e ${rps[${cxt}]} ]]
-   then
-   echo "mcdir[${subjidx}]=${mcdir[${cxt}]}" >> $design_local
-   echo "rps[${subjidx}]=${rps[${cxt}]}" >> $design_local
-   echo "relrms[${subjidx}]=${relrms[${cxt}]}" >> \
-      $design_local
-   qvars=${qvars},rel_mean_rms_motion
-	qvals="${qvals},$(cat ${relmeanrms[${cxt}]})"
-fi
+   routine                    @3    Reorganising FEAT output
+   ################################################################
+   # * Image localisation
+   ################################################################
+   exec_fsl immv ${featout}/mask                ${mask[cxt]}
+   exec_fsl immv ${featout}/example_func.nii.gz ${referenceVolume[cxt]}
+   exec_fsl immv ${featout}/mean_func.nii.gz    ${meanIntensity[cxt]}
+   ################################################################
+   # * Brain extraction
+   ################################################################
+   if ! is_image ${referenceVolumeBrain[cxt]}
+      then
+      subroutine              @3.1  Extracting reference brain
+      exec_fsl fslmaths ${referenceVolume[cxt]} \
+         -mul  ${mask[cxt]} \
+         ${referenceVolumeBrain[cxt]}
+   fi
+   if ! is_image ${meanIntensityBrain[cxt]}
+      then
+      subroutine              @3.2  Extracting mean brain
+      exec_fsl fslmaths ${meanIntensity[cxt]} \
+         -mul  ${mask[cxt]} \
+         ${meanIntensityBrain[cxt]}
+   fi
 
-###################################################################
-#  * FEAT design and model
-###################################################################
-if [[ -n $(ls ${featout}/design* 2>/dev/null) ]]
-   then
-   mv -f ${featout}/design* ${outdir}/model/
-fi
+   ################################################################
+   # * Confound time series
+   ################################################################
+   if [[ -s ${featout}/confoundevs.txt ]]
+      then
+      subroutine              @3.3
+      exec_sys mv -f ${featout}/confoundevs.txt    ${confmat[cxt]}
+   fi
 
-###################################################################
-#  * Logs
-###################################################################
-if [[ -d ${featout}/logs ]]
-   then
-   mv -f ${featout}/logs ${outdir}/logs
-   mv -f ${featout}/report_log.html ${outdir}/logs
-fi
+   ################################################################
+   # * Motion variables
+   ################################################################
+   if [[ -e ${featout}/mc/ ]]
+      then
+      subroutine              @3.4  Re-localising motion metrics
+      exec_sys mkdir -p ${mcdir[cxt]}
+      exec_sys mv -f ${featout}/mc/mcf.par         ${rps[cxt]}
+      exec_sys mv -f ${featout}/mc/*rel.rms        ${relrms[cxt]}
+      exec_sys mv -f ${featout}/mc/*rel_mean.rms   ${relmeanrms[cxt]}
+      exec_sys mv -f ${featout}/mc/*abs.rms        ${absrms[cxt]}
+      exec_sys mv -f ${featout}/mc/*abs_mean.rms   ${absmeanrms[cxt]}
+      exec_sys mv -f ${featout}/mc/*.mat           ${rmat[cxt]}
+      exec_sys mv -f ${featout}/mc/*.png           ${mcdir[cxt]}
+      exec_xcp 1dTool.R \
+         -i    ${rel_rms[cxt]} \
+         -o    max \
+         -f    ${rel_max_rms[cxt]}
+      exec_xcp fd.R \
+         -r    ${rps[cxt]} \
+         -o    ${fd[cxt]}
+      exec_xcp tmask.R \
+         -s    ${!censor_criterion} \
+         -t    ${censor_threshold} \
+         -o    ${intermediate}-tmask.1D \
+         -m    ${prestats_censor_contig[cxt]}
+      censor_ts=$(  echo               $(<${intermediate}-tmask.1D))
+      n_spikes=$(ninstances 0             ${censor_ts// /})
+      echo  ${n_spikes}             >> ${motion_vols[cxt]}
+   fi
 
-###################################################################
-#  * Parameter estimates
-###################################################################
-echo " * Parameter estimates"
-penames=$(grep -i 'evtitle' ${task_fsf[${cxt}]}\
-   |cut -d' ' -f3-\
-   |sed s@'"'@@g\
-   |sed s@' '@'_'@g\
-   |sed s@'\.'@','@g)
-pederiv=$(grep -i "deriv_yn" ${task_fsf[${cxt}]}\
-   |cut -d' ' -f3)
-pemag=$(grep -i "PPheights" ${outdir}/model/design.mat\
-   |sed s@'^.*PPheights'@@g)
-rm -f ${outdir}/model/magnitude_pe.txt
-for mag in ${pemag}
-   do
-   echo ${mag} >> ${outdir}/model/magnitude_pe.txt
-done
-echo "${penames}" >> ${outdir}/~TEMP~names
-echo "${pederiv}" >> ${outdir}/~TEMP~deriv
+   ################################################################
+   #  * FEAT design and model
+   ################################################################
+   subroutine                 @3.5  Re-localising model design
+   exec_sys    mv -f ${featout}/design*            ${outdir}/model/
 
-if [[ -n $(ls ${featout}/stats/pe* 2>/dev/null) ]]
-   then
-   mkdir -p ${outdir}/pe
-   mkdir -p ${outdir}/sigchange
-   deriv=0
-   fidx=1
-   paramest=$(ls -d1 ${featout}/stats/pe*${ext})
-   npes=$(echo "${paramest}"|wc -l)
-   cidx=1
-   while [[ ${cidx} -le ${npes} ]]
+   ################################################################
+   #  * Logs
+   ################################################################
+   if [[ -d ${featout}/logs ]]
+      then
+      subroutine              @3.6
+      exec_sys mv -f ${featout}/logs               ${outdir}/logs
+      exec_sys mv -f ${featout}/report_log.html    ${outdir}/logs
+   fi
+   routine_end
+
+   ################################################################
+   # Process the parameter estimates and compute percent signal
+   # change.
+   ################################################################
+   routine                    @4    Processing parameter estimates
+   
+   subroutine                 @4.1  Obtaining peak magnitudes: PEs
+   while read -r line
       do
-      pe=$(echo "${paramest}"|grep -i 'pe'${cidx}${ext})
-      mag=$(sed "${cidx}q;d" ${outdir}/model/magnitude_pe.txt)
-      if [[ ${deriv} == 0 ]]
-         then
-         cname=$(sed "${fidx}q;d" ${outdir}/~TEMP~names)
-         deriv=$(sed "${fidx}q;d" ${outdir}/~TEMP~deriv)
-         [[ -z ${cname} ]] && cname=confound && deriv=0
-         immv ${pe} ${outdir}/pe/${prefix}_pe${cidx}_${cname}
-         fidx=$(expr ${fidx} + 1)
-         ##########################################################
-         # Convert raw PE to percent signal change.
-         ##########################################################
-         fslmaths ${outdir}/pe/${prefix}_pe${cidx}_${cname} \
-            -mul ${mag} \
-            -mul 100 \
-            -div ${meanIntensity[${cxt}]} \
-            ${outdir}/sigchange/${prefix}_pe${cidx}_${cname}
-      else
-         immv ${pe} ${outdir}/pe/${prefix}_pe${cidx}_${cname}_tderiv
-         deriv=0
-         ##########################################################
-         # Convert raw PE to percent signal change.
-         ##########################################################
-         fslmaths ${outdir}/pe/${prefix}_pe${cidx}_${cname}_tderiv \
-            -mul ${mag} \
-            -mul 100 \
-            -div ${meanIntensity[${cxt}]} \
-            ${outdir}/pe/${prefix}_pe${cidx}_${cname}_tderiv
-      fi
-      cidx=$(expr ${cidx} + 1)
-   done
-   rm -f ${outdir}/~TEMP~names ${outdir}/~TEMP~deriv
-fi
+      chk_MAG=( "${line}"           '/PPheights'   )
+      contains  "${chk_MAG[@]}"     && break
+   done                       <     ${outdir}/model/design.mat
+   mag=(        ${line}       )
+   unset        mag[0]
 
-###################################################################
-#  * Contrasts of parameter estimates
-###################################################################
-echo " * Contrasts"
-copenames=$(grep -i 'conname_real' ${task_fsf[${cxt}]}\
-   |cut -d' ' -f3-\
-   |sed s@'"'@@g\
-   |sed s@' '@'_'@g\
-   |sed s@'\.'@','@g)
-copemag=$(grep -i "PPheights" ${outdir}/model/design.con\
-   |sed s@'^.*PPheights'@@g)
-rm -f ${outdir}/model/magnitude_cope.txt
-for mag in ${copemag}
-   do
-   echo ${mag} >> ${outdir}/model/magnitude_cope.txt
-done
-echo "${copenames}" >> ${outdir}/~TEMP~names
-
-if [[ -n $(ls ${featout}/stats/cope* 2>/dev/null) ]]
-   then
-   mkdir -p ${outdir}/cope
-   mkdir -p ${outdir}/sigchange
-   contrasts=$(ls -d1 ${featout}/stats/cope*${ext})
-   for cope in ${contrasts}
-      do
-      cidx=$(basename $cope|sed s@'^cope'@@g|sed s@${ext}@@g)
-      cname="$(sed "${cidx}q;d" ${outdir}/~TEMP~names)"
-      mag=$(sed "${cidx}q;d" ${outdir}/model/magnitude_cope.txt)
-      immv ${cope} ${outdir}/cope/${prefix}_cope${cidx}_${cname}
+   if [[ -n $(ls ${featout}/stats/pe* 2>/dev/null) ]]
+      then
+      subroutine              @4.2  Raw parameter estimates
+      exec_sys                mkdir -p ${outdir}/pe
+      exec_sys                mkdir -p ${outdir}/sigchange
+      paramest=( $(exec_sys ls -d1 ${featout}/stats/pe*.nii.gz) )
       #############################################################
-      # Convert raw contrast to percent signal change.
+      # is_dx indicates whether the next PE is a derivative
+      # fidx is the PE index according to the FSF file
+      # cidx is the PE index according to the output
+      # npes is the total number of PEs in the output
       #############################################################
-      fslmaths ${outdir}/cope/${prefix}_cope${cidx}_${cname} \
-         -mul ${mag} \
-         -mul 100 \
-         -div ${meanIntensity[${cxt}]} \
-         ${outdir}/sigchange/${prefix}_cope${cidx}_${cname}
-      echo "#cope${cidx}_${cname}#${outdir}/cope/${prefix}_cope${cidx}_${cname}" \
-         >> ${auxImgs[${subjidx}]}
-      echo "#sigchange_cope${cidx}_${cname}#${outdir}/sigchange/${prefix}_cope${cidx}_${cname}#task,${cxt}" \
-         >> ${auxImgs[${subjidx}]}
-   done
-else
-   contrasts=$(ls -d1 ${outdir}/cope/${prefix}_cope*${ext})
-   for cope in ${contrasts}
+      is_dx=0
+      fidx=1
+      npes=${#paramest[@]}
+      #############################################################
+      # Loop over parameter estimates.
+      #############################################################
+      for (( cidx=1; cidx <= ${npes}; cidx++ ))
+         do
+         par_out=${outdir}/pe/${prefix}_pe${cidx}
+         psc_out=${outdir}/sigchange/${prefix}_pe${cidx}
+         pe=${featout}/stats/pe${cidx}.nii.gz
+         subroutine           @4.3
+         ##########################################################
+         # FEAT creates parameter estimates in the order:
+         # (1) Each parameter estimate, followed by its derivative
+         #     if deriv_yn was set to 1
+         # (2) Confounds
+         # Decide whether the current PE is a temporal derivative.
+         ##########################################################
+         if (( ${is_dx} == 0 ))
+            then
+            subroutine        @4.4
+            #######################################################
+            # Store deriv_yn in is_dx so that the conditional can
+            # determine whether the next PE is a derivative.
+            #######################################################
+            is_dx=${tdx[fidx]}
+            cname=${par[fidx]}
+            par_pe=${par_out}_${cname}.nii.gz
+            psc_pe=${par_out}_${cname}.nii.gz
+            par_dx=${par_out}_${cname}_tderiv.nii.gz
+            psc_dx=${psc_out}_${cname}_tderiv.nii.gz
+            [[ -z ${cname}  ]] && cname=confound && is_dx=0
+            
+            exec_fsl immv     ${pe} ${par_pe}
+            #######################################################
+            # Convert raw PE to percent signal change.
+            #######################################################
+            exec_fsl fslmaths ${par_pe} \
+               -mul  ${mag[cidx]} \
+               -mul  100 \
+               -div  ${meanIntensity[cxt]} \
+               ${psc_pe}
+            (( fidx++ ))
+            
+         else
+            subroutine        @4.5
+            exec_fsl immv     ${pe} ${par_dx}
+            is_dx=0
+            #######################################################
+            # Convert raw PE to percent signal change.
+            #######################################################
+            exec_fsl fslmaths ${par_dx} \
+               -mul  ${mag[cidx]} \
+               -mul  100 \
+               -div  ${meanIntensity[cxt]} \
+               ${psc_dx}
+         fi
+      done
+   fi
+
+   ################################################################
+   # Contrasts of parameter estimates
+   ################################################################
+   subroutine                 @4.6  Obtaining peak magnitudes: contrasts
+   unset  mag
+   while read -r  line
       do
-      cidx=$(basename $cope|sed s@'^.*cope'@@g|sed s@'_.*$'@@g)
-      cname=$(basename $cope|cut -d'.' -f1|sed s@'^'"${prefix}".*cope[0-9]*_*@@g)
-      echo "#cope${cidx}_${cname}#${outdir}/cope/${prefix}_cope${cidx}_${cname}" \
-         >> ${auxImgs[${subjidx}]}
-      echo "#sigchange_cope${cidx}_${cname}#${outdir}/sigchange/${prefix}_cope${cidx}_${cname}#task,${cxt}" \
-         >> ${auxImgs[${subjidx}]}
-   done
+      chk_MAG=(   "${line}"           '/PPheights'   )
+      contains    "${chk_MAG[@]}"     && break
+   done                       <     ${outdir}/model/design.con
+   mag=(          ${line}       )
+   unset          mag[0]
+
+   if [[ -n $(ls ${featout}/stats/cope* 2>/dev/null) ]]
+      then
+      subroutine              @4.7  Contrasts
+      exec_sys                mkdir -p ${outdir}/cope
+      exec_sys                mkdir -p ${outdir}/sigchange
+      #############################################################
+      # Loop over contrasts.
+      #############################################################
+      for i in ${!cpe[@]}
+         do
+         subroutine           @4.8  ${cpe[i]}
+         con_i=${featout}/stats/cope${i}
+         var_i=${featout}/stats/varcope${i}
+         con_o='contrast'${i}'_'${cpe[i]}'['${cxt}']'
+         var_o='varcope'${i}'_'${cpe[i]}'['${cxt}']'
+         psc_o='sigchange_contrast'${i}'_'${cpe[i]}'['${cxt}']'
+         exec_fsl immv        ${!con_i} ${!con_o}
+         exec_fsl immv        ${!var_i} ${!var_o}
+         ##########################################################
+         # Convert raw contrast to percent signal change.
+         ##########################################################
+         exec_fsl fslmaths    ${!con_o} \
+            -mul  ${mag[cidx]} \
+            -mul  100 \
+            -div  ${meanIntensity[cxt]} \
+            ${!psc_o}
+      done
+   fi
+
+   ###################################################################
+   # Other statistical maps
+   ###################################################################
+   if [[ -d ${featout}/stats/ ]]
+      then
+      subroutine              @4.9
+      exec_sys mkdir -p ${outdir}/${prefix}_stats
+      mv ${featout}/stats/* ${outdir}/${prefix}_stats/
+   fi
+
+   ###################################################################
+   # Finish the module with the processed image
+   ###################################################################
+   if is_image ${featout}/filtered_func_data.nii.gz
+      then
+      subroutine              @4.9
+      immv ${featout}/filtered_func_data.nii.gz ${processed[cxt]}
+   fi
+   routine_end
 fi
 
-###################################################################
-#  * VarCoPEs
-###################################################################
-echo " * Uncertainty terms"
-if [[ -n $(ls ${featout}/stats/varcope* 2>/dev/null) ]]
-   then
-   mkdir -p ${outdir}/varcope
-   varcopes=$(ls -d1 ${featout}/stats/varcope*${ext})
-   for varcope in ${varcopes}
-      do
-      cidx=$(basename $varcope|sed s@'^varcope'@@g|sed s@${ext}@@g)
-      cname="$(sed "${cidx}q;d" ${outdir}/~TEMP~names)"
-      immv ${varcope} ${outdir}/varcope/${prefix}_varcope${cidx}_${cname}
-      echo "#varcope${cidx}_${cname}#${outdir}/varcope/${prefix}_varcope${cidx}_${cname}" \
-         >> ${auxImgs[${subjidx}]}
-   done
-else
-   varcopes=$(ls -d1 ${outdir}/varcope/${prefix}_varcope*${ext})
-   for varcope in ${varcopes}
-      do
-      cidx=$(basename $varcope|sed s@'^.*varcope'@@g|sed s@'_.*$'@@g)
-      cname=$(basename $varcope|cut -d'.' -f1|sed s@'^'"${prefix}".*varcope[0-9]*_*@@g)
-      echo "#varcope${cidx}_${cname}#${outdir}/varcope/${prefix}_varcope${cidx}_${cname}" \
-         >> ${auxImgs[${subjidx}]}
-   done
-fi
-
-###################################################################
-#  * Other statistical maps
-###################################################################
-if [[ -d ${featout}/stats/ ]]
-   then
-   mkdir -p ${outdir}/${prefix}_stats
-   mv ${featout}/stats/* ${outdir}/${prefix}_stats/
-fi
-
-###################################################################
-#  * Processed image
-###################################################################
-if [[ $(imtest ${featout}/filtered_func_data) == 1 ]]
-   then
-   immv ${featout}/filtered_func_data ${outdir}/${prefix}_preprocessed
-fi
-if [[ $(imtest ${outdir}/${prefix}_preprocessed) == 1 ]]
-   then
-   rm -f ${out}/${prefix}${ext}
-   ln -s ${outdir}/${prefix}_preprocessed${ext} ${out}/${prefix}${ext}
-fi
-echo "Processing step complete"
-echo "Task analysis"
 
 
 
 
-
-###################################################################
-# CLEANUP
-#  * Remove any temporary files if cleanup is enabled.
-#  * Update the audit file to reflect completion of the module.
-###################################################################
-img=$(readlink -f ${img}${ext})
-if [[ "${task_cleanup[${cxt}]}" == "Y" ]]
-   then
-   echo ""; echo ""; echo ""
-   echo "Cleaning up..."
-   rm -rf ${outdir}/*~TEMP~*
-fi
-rm -f ${quality}
-echo ${qvars} >> ${quality}
-echo ${qvals} >> ${quality}
-prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-modaudit=$(expr ${prefields} + ${cxt} + 1)
-subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-replacement=$(echo ${subjaudit}\
-   |sed s@[^,]*@@${modaudit}\
-   |sed s@',,'@',1,'@ \
-   |sed s@',$'@',1'@g)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
-
-echo "Module complete"
+completion
