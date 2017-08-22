@@ -12,7 +12,7 @@
 # Load required libraries
 ###################################################################
 suppressMessages(require(optparse))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -48,55 +48,49 @@ if (is.na(opt$out)) {
    quit()
 }
 
-impath <- opt$img
-tspath <- opt$timeseries
-derivspath <- opt$derivatives
-tmaskpath <- opt$tmask
-out <- opt$out
+impath            <- opt$img
+tspath            <- opt$timeseries
+derivspath        <- opt$derivatives
+tmaskpath         <- opt$tmask
+out               <- opt$out
 
 ###################################################################
 # 1. Load in the temporal mask
 ###################################################################
 sink("/dev/null")
-tmask <- as.logical(unlist(read.table(tmaskpath)))
+tmask             <- as.logical(unlist(read.table(tmaskpath,header=F)))
 ###################################################################
 # 2. Load in any BOLD timeseries to be censored
 ###################################################################
 if (!is.na(impath)) {
-   suppressMessages(require(ANTsR))
-   img <- antsImageRead(impath,4)
-   imgarray <- as.array(img)
+   img            <- readNifti(impath)
    ################################################################
    # Censor the image using the temporal mask
    ################################################################
-   imgarray_censored <- imgarray[,,,tmask]
+   img_censored   <- img[,,,tmask]
    ################################################################
    # Write the censored image
    ################################################################
-   img_censored <- as.antsImage(imgarray_censored)
-   antsCopyImageInfo(img,img_censored)
-   antsImageWrite(img_censored,out)
+   writeNifti(img_censored,out,template=impath,datatype='float')
 }
 rm(img)
 rm(img_censored)
-rm(imgarray)
-rm(imgarray_censored)
 
 ###################################################################
 # 3. Iterate through all 1D timeseries, then excise time points
 #    corresponding to censored volumes
 ###################################################################
 if (!is.na(tspath)) {
-   tspaths <- strsplit(tspath,split=',')
-   outbase <- sub('[.].*$','',out)
+   tspaths        <- strsplit(tspath,split=',')
+   outbase        <- sub('[.].*$','',out)
    for (path in tspaths) {
-      tscur <- unlist(as.matrix(read.table(path)))
-      tsname <- basename(path)
+      tscur       <- unlist(as.matrix(read.table(path)))
+      tsname      <- basename(path)
       if (is.null(dim(tscur)) && !is.null(length(tscur))) {
-         dim(tscur)<-c(length(tscur),1)
+         dim(tscur)<- c(length(tscur),1)
       }
-      tsrev <- tscur[tmask,]
-      tsname <- paste(outbase,tsname,sep='_')
+      tsrev       <- tscur[tmask,]
+      tsname      <- paste(outbase,tsname,sep='_')
       write.table(tsrev, file = tsname, quote=FALSE, col.names = F, row.names = F)
    }
 }
