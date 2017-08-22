@@ -54,7 +54,7 @@ for i in "${!standard[@]}"
       subroutine                 @1.4.2c     [Loading space: ${std}]
       import_metadata  ${space_standard} to  ${spaces[cxt]}
    else
-      subroutine                 @1.4.2s     [Space not found: ${std}]
+      subroutine                 @1.4.2d     [Space not found: ${std}]
    fi
 done
 standard=${standard[0]}
