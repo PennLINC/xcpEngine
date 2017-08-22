@@ -1,0 +1,17 @@
+import_metadata() {
+   local meta_new meta_floating
+   meta_floating='{}'
+   while [[ ${1} != to ]]
+      do
+      [[ -s ${1} ]]        && meta_new=$(cat ${1})
+      [[ -z ${meta_new} ]] && meta_new='{}'
+      meta_floating="$(echo ${meta_floating} ${meta_new}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
+      meta_new=''
+      shift
+   done
+   [[ -s ${2} ]]        && meta_new=$(cat ${2})
+   [[ -z ${meta_new} ]] && meta_new='{}'
+   meta_floating="$(echo ${meta_floating} ${meta_new}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
+   rm -f ${2}
+   eval "echo -e \"${meta_floating//\"/\\\"}\""|${JQ_PATH} --sort-keys '.' >> ${2}
+}
