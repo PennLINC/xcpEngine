@@ -28,20 +28,36 @@ subroutine                    @1.4.1   [Native space: ${space[sub]}]
 #     Standard space attempts to match an appropriate definition
 #     stored in the `space` subdirectory of the processing system.
 #     If no definition is found, then it is assumed that the user
-#     does not intend to standardise.
+#     does not intend to standardise. If the assignment to standard
+#     in the design file includes the '_via_' tag, then multiple
+#     spaces are loaded and the first is assigned to standard.
 ###################################################################
-space_standard=$(abspath ${XCPEDIR}/space/${standard//\%*/}/${standard//\%*/}_space.json)
-if [[ -s ${space_standard} ]]
-   then
-   subroutine                 @1.4.2a     [Standard space: ${standard//\%*/}]
-   printx ${space_standard}   >>          ${spaces[cxt]}
-   template=$(abspath         $(eval      echo $(cat ${spaces[cxt]}\
-              |$JQ_PATH       --raw-output '.'\"${standard}\"'.Map')))
-   echo "template=${template}"            >> ${design[sub]}
-else
-   subroutine                 @1.4.2b     [No standard space]
-   echo '{}'                  >>          ${spaces[cxt]}
-fi
+standard=( ${standard//_via_/ } )
+for i in "${!standard[@]}"
+   do
+   std=${standard[i]//\%*/}
+   space_standard=$(abspath ${XCPEDIR}/space/${std}/${std}_space.json)
+   if (( i == 0 )) && [[ -s ${space_standard} ]]
+      then
+      subroutine                 @1.4.2a     [Standard space: ${std}]
+      printx ${space_standard}   >>          ${spaces[cxt]}
+      template=$(abspath         $(eval      echo $(cat ${spaces[cxt]}\
+                 |$JQ_PATH       --raw-output '.'\"${standard[i]}\"'.Map')))
+      echo "template=${template}"            >> ${design[sub]}
+      echo "standard=${standard}"            >> ${design[sub]}
+   elif (( i == 0 ))
+      then
+      subroutine                 @1.4.2b     [No standard space]
+      echo '{}'                  >>          ${spaces[cxt]}
+   elif [[ -s ${space_standard} ]]
+      then
+      subroutine                 @1.4.2c     [Loading space: ${std}]
+      import_metadata  ${space_standard} to  ${spaces[cxt]}
+   else
+      subroutine                 @1.4.2s     [Space not found: ${std}]
+   fi
+done
+standard=${standard[0]}
 
 ###################################################################
 # (3) ANATOMICAL SPACE.
