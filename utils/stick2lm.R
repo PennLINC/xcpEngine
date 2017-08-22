@@ -10,6 +10,9 @@
 #
 # This is not to be used.
 ###################################################################
+cat('THIS UTILITY IS NO LONGER SUPPORTED\n')
+cat('EXITING\n')
+quit()
 
 ###################################################################
 # Load required libraries
