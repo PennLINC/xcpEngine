@@ -15,8 +15,6 @@
 # Load required libraries
 ###################################################################
 suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-suppressMessages(require(ANTsR))
 suppressMessages(require(signal))
 
 ###################################################################
