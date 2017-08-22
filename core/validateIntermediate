@@ -10,7 +10,7 @@
 ###################################################################
 if [[ -n ${scratch} ]]
    then
-   mkdir -p ${scratch}
+   mkdir -p ${scratch} 2>/dev/null
    if [[  ! -d ${scratch} ]]
       then
       echo \
