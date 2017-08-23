@@ -15,7 +15,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -34,36 +34,33 @@ if (is.na(opt$roi)) {
    quit()
 }
 sink(file = '/dev/null')
-roipath <- opt$roi
+roipath        <- opt$roi
 
 ###################################################################
 # 1. Load in the network map
 ###################################################################
-suppressMessages(require(ANTsR))
-net <- as.array(antsImageRead(roipath,3))
+net            <- readNifti(roipath)
 
 ###################################################################
 # 2. First, obtain all values corresponding to unique RoIs.
 ###################################################################
-labs <- sort(unique(net[net > 0]))
+labs           <- sort(unique(net[net > 0]))
 
 ###################################################################
 # 3. Then, compute a centre of mass for each.
 ###################################################################
 sink(file = NULL)
-syscom <- paste('fslval',roipath,'pixdim1')  
-xdim <- as.numeric(system(syscom,intern=TRUE))
-syscom <- paste('fslval',roipath,'pixdim2')  
-ydim <- as.numeric(system(syscom,intern=TRUE))
-syscom <- paste('fslval',roipath,'pixdim3')  
-zdim <- as.numeric(system(syscom,intern=TRUE))
+hdr            <- dumpNifti(roipath)
+xdim           <- hdr$pixdim[2]
+ydim           <- hdr$pixdim[3]
+zdim           <- hdr$pixdim[4]
 cat('SPACE::VOXEL::')
 cat(paste(xdim,ydim,zdim,sep=','))
 cat('::')
 cat(roipath,'\n')
 for (i in 1:length(labs)) {
-   voxelwise <- which(net==labs[i], arr.ind=TRUE)
-   cmass <- apply(voxelwise,2,mean) - c(1,1,1)
-   outln <- paste(paste('#node',i,sep=''),paste(as.vector(cmass),collapse=','),5,sep='#')
+   voxelwise   <- which(net==labs[i], arr.ind=TRUE)
+   cmass       <- apply(voxelwise,2,mean) - c(1,1,1)
+   outln       <- paste(paste('#node',i,sep=''),paste(as.vector(cmass),collapse=','),5,sep='#')
    cat(outln,'\n')
 }
