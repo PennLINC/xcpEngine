@@ -14,7 +14,7 @@
 ###################################################################
 suppressPackageStartupMessages(require(optparse))
 suppressPackageStartupMessages(require(pracma))
-#suppressPackageStartupMessages(require(ANTsR))
+suppressPackageStartupMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -28,9 +28,9 @@ option_list = list(
 )
 
 opt = parse_args(OptionParser(option_list=option_list))
-impath <- opt$img
-maskpath <- opt$mask
-rad2mm <- opt$convert
+impath               <- opt$img
+maskpath             <- opt$mask
+rad2mm               <- opt$convert
 
 if (is.na(opt$img)) {
    cat('User did not specify path to the BOLD timeseries.\n')
@@ -42,29 +42,32 @@ if (is.na(opt$img)) {
 # Read in the image and mask files, and construct derivative
 # timeseries.
 ###################################################################
-suppressPackageStartupMessages(require(ANTsR))
-img <- antsImageRead(impath,4)
-mask <- antsImageRead(maskpath,4)
-tsmain <- timeseries2matrix(img,mask)
-ts1 <- tsmain[1:(size(tsmain,1)-1),]
-ts2 <- tsmain[2:size(tsmain,1),]
-tsderiv <- ts2 - ts1
+img                  <- readNifti(impath)
+hdr                  <- dumpNifti(impath)
+mask                 <- readNifti(maskpath)
+logmask              <- (mask == 1)
+img                  <- img[logmask]
+dim(img)             <- c(sum(logmask),hdr$dim[5])
+img                  <- t(img)
+ts1                  <- img[1:(size(img,1)-1),]
+ts2                  <- img[2:size(img,1),]
+tsderiv              <- ts2 - ts1
 
 ###################################################################
 # Compute the square of the derivative.
 ###################################################################
-tdsq <- tsderiv^2
+tdsq                 <- tsderiv^2
 
 ###################################################################
 # Compute the mean over space.
 ###################################################################
-tdmeansq <- apply(tdsq,1,mean)
+tdmeansq             <- apply(tdsq,1,mean)
 
 ###################################################################
 # Compute the RMS, and prepend a 0 to obtain DVARS.
 ###################################################################
-tdrms <- sqrt(tdmeansq)
-dvars <- c(0,tdrms)
+tdrms                <- sqrt(tdmeansq)
+dvars                <- c(0,tdrms)
 
 ###################################################################
 # Write output
@@ -73,7 +76,3 @@ for (i in 1:length(dvars)){
    cat(dvars[i])
    cat('\n')
 }
-
-###################################################################
-
-###################################################################
