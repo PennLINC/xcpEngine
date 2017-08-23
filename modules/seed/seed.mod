@@ -337,7 +337,7 @@ for seed in ${seeds[cxt]}
       echo \
 "SPACE::${space[sub]}
 :#ROIName#X,Y,Z#radius
-#${seed[0]}#${seed[1]}#${seed[2]}" \
+#""${seed[0]}#${seed[1]}#${seed[2]}" \
          >> ${intermediate}_coor_${seed[0]}.sclib
       exec_xcp coor2map \
          -i ${intermediate}_coor_${seed[0]}.sclib \
