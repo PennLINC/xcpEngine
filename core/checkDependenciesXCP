@@ -40,14 +40,14 @@ fi
 ###################################################################
 # ANTs
 ###################################################################
-ver_ANTS=$(grep -ir _GIT_VERSION_HASH ${ANTSPATH}/../ANTS-build/*.cmake 2>/dev/null|cut -d'"' -f2)
+ver_ANTS=( $(${ANTSPATH}/antsRegistration --version 2>/dev/null|head -n1) )
 if [[ -z ${ver_ANTS} ]]
    then
    echo \
    "· [Warning: ANTs version unknown]"
    ver_ANTS=unknown
 else
-   ver_ANTS="${ver_ANTS}"
+   ver_ANTS="${ver_ANTS[2]}"
    echo "· Version ANTs           ${ver_ANTS}"
 fi
 
@@ -144,7 +144,7 @@ fi
 # R packages
 ###################################################################
 RpackageChk=( $(${XCPEDIR}/core/checkRpackageDependencies.R) )
-echo "· · ANTsR version        ${RpackageChk[0]}"
+echo "· · RNifti version       ${RpackageChk[0]}"
 echo "· · optparse version     ${RpackageChk[1]}"
 echo "· · pracma version       ${RpackageChk[2]}"
 echo "· · signal version       ${RpackageChk[3]}"
