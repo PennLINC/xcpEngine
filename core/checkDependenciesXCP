@@ -26,21 +26,21 @@ Checking general dependencies
 ###################################################################
 # AFNI
 ###################################################################
-ver_AFNI=$(${AFNI_PATH}/afni -ver 2>/dev/null|head -n1)
+ver_AFNI=( $(${AFNI_PATH}/afni -ver 2>/dev/null) )
 if [[ -z ${ver_AFNI} ]]
    then
    echo \
    "· [Warning: AFNI version unknown]"
    ver_AFNI=unknown
 else
-   ver_AFNI="${ver_AFNI//Version /}"
+   ver_AFNI="${ver_AFNI[1]}"
    echo "· Version AFNI           ${ver_AFNI}"
 fi
 
 ###################################################################
 # ANTs
 ###################################################################
-ver_ANTS=( $(${ANTSPATH}/antsRegistration --version 2>/dev/null|head -n1) )
+ver_ANTS=( $(${ANTSPATH}/antsRegistration --version 2>/dev/null) )
 if [[ -z ${ver_ANTS} ]]
    then
    echo \
@@ -54,28 +54,28 @@ fi
 ###################################################################
 # FSL
 ###################################################################
-ver_FSL=$(command -v ${FSLDIR}/bin/fsl 2>/dev/null|rev|cut -d"/" -f3|rev)
+ver_FSL=$(command -v ${FSLDIR}/bin/fsl 2>/dev/null)
 if [[ -z ${ver_FSL} ]]
    then
    echo \
    "· [Warning: FSL version unknown]"
    ver_FSL=unknown
 else 
-   ver_FSL="${ver_FSL}"
+   ver_FSL=$(strslice ${ver_FSL} -3 '/')
    echo "· Version FSL            ${ver_FSL}"
 fi
 
 ###################################################################
 # C3D
 ###################################################################
-ver_C3D=$(${C3D_PATH}/c3d -version 2>/dev/null|awk '{print $2}')
+ver_C3D=( $(${C3D_PATH}/c3d -version 2>/dev/null) )
 if [[ -z ${ver_C3D} ]]
    then
    echo \
    "· [Warning: Convert3D version unknown]"
    ver_C3D=unknown
 else
-   ver_C3D="${ver_C3D}"
+   ver_C3D="${ver_C3D[1]}"
    echo "· Version C3D            ${ver_C3D}"
 fi
 
@@ -101,30 +101,29 @@ echo "· Version XCP Engine     ${ver_XCP}"
 ###################################################################
 # R
 ###################################################################
-ver_R=$(R --version 2>/dev/null|grep -i "R version")
+ver_R=( $(R --version 2>/dev/null) )
 if [[ -z ${ver_R} ]]
    then
    echo \
    "[Warning: R version unknown]"
    ver_R=unknown
 else
-   ver_R="${ver_R/R version/}"
-   ver_R="${ver_R//\"/}"
-   echo "· R version             ${ver_R}"
+   ver_R="${ver_R[@]:2:2}"
+   echo "· R version              ${ver_R}"
 fi
 
 ###################################################################
 # Rscript
 ###################################################################
-ver_RSCRIPT=$(Rscript --version 2>&1 >/dev/null)
+ver_RSCRIPT=( $(Rscript --version 2>&1 >/dev/null) )
 if [[ -z ${ver_RSCRIPT} ]]
    then
    echo \
    "[Warning: Rscript version unknown]"
    ver_RSCRIPT=unknown
 else
-   ver_RSCRIPT="${ver_RSCRIPT/R scripting front-end version/}"
-   echo "· R scripting front-end ${ver_RSCRIPT}"
+   ver_RSCRIPT="${ver_RSCRIPT[@]:4:2}"
+   echo "· R scripting front-end  ${ver_RSCRIPT}"
 fi
 
 ###################################################################
