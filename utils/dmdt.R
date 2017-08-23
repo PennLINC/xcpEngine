@@ -13,7 +13,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -53,32 +53,33 @@ if (is.na(opt$out)) {
    quit()
 }
 
-impath <- opt$img
-order <- opt$detrend
-maskpath <- opt$mask
-out <- opt$out
-tmaskpath <- opt$tmask
+impath                  <- opt$img
+order                   <- opt$detrend
+maskpath                <- opt$mask
+outpath                 <- opt$out
+tmaskpath               <- opt$tmask
 sink("/dev/null")
 
 ###################################################################
 # 1. Load in the image to determine timeseries dimensions
 ###################################################################
-suppressMessages(require(ANTsR))
-img <- antsImageRead(impath,4)
+img                     <- readNifti(impath)
+hdr                     <- dumpNifti(impath)
+out                     <- img
 if (!is.na(maskpath)){
-   mask                 <- antsImageRead(maskpath,4)
+   mask                 <- readNifti(maskpath)
    logmask              <- (mask == 1)
-   imgmat               <- as.array(img)[logmask]
-   dim(imgmat)          <- c(sum(logmask),dim(img)[4])
-   imgmat               <- t(imgmat)
+   img                  <- img[logmask]
+   dim(img)             <- c(sum(logmask),hdr$dim[5])
+   img                  <- t(img)
 } else {
-   imgmat               <- as.array(img)
-   dim(imgmat)          <- c(prod(dim(img)[c(1,2,3)]),dim(img)[4])
-   imgmat               <- t(imgmat)
+   img                  <- as.array(img)
+   dim(img)             <- c(prod(hdr$dim[2:4]),hdr$dim[5])
+   img                  <- t(img)
 }
 sink(NULL)
-nvol <- dim(imgmat)[1]
-nvox <- dim(imgmat)[2]
+nvol <- dim(img)[1]
+nvox <- dim(img)[2]
 
 ###################################################################
 # 2. Build a matrix of regressors
@@ -88,21 +89,13 @@ nvox <- dim(imgmat)[2]
 curreg                  <- rep(1,nvol)
 regmat                  <- matrix(curreg,nrow=nvol,ncol=1)
 ###################################################################
-# linear detrend
+# polynomial detrend
 ###################################################################
-if ( order > 0 ){
-  linreg                <- seq(0,1,length=nvol)
-  curreg                <- linreg
-  regmat                <- cbind(regmat,curreg)
-}
-ordin                   <- 1
-###################################################################
-# higher-order polynomial detrend
-###################################################################
-while ( ordin < order ) {
-  curreg                <- curreg * linreg
-  regmat                <- cbind(regmat,curreg)
-  ordin                 <- ordin + 1
+if (order > 0) {
+   linreg               <- seq(0,1,length=nvol)
+   curreg               <- stats::poly(1:(nvol*2),degree=order)
+   curreg               <- curreg[(nvol+1):(nvol*2),]
+   regmat               <- cbind(regmat,curreg)
 }
 
 ###################################################################
@@ -122,9 +115,9 @@ regmat_censored         <- regmat[tmask,]
 ###################################################################
 # Iterate through all voxels
 ###################################################################
-imgmat_dmdt             <- matrix(nrow=nvol,ncol=nvox)
+img_dmdt                <- matrix(nrow=nvol,ncol=nvox)
 for (vox in 1:nvox) {
-  ts                    <- imgmat[,vox]
+  ts                    <- img[,vox]
   
   #################################################################
   # 4. Solve for parameter estimates
@@ -137,24 +130,21 @@ for (vox in 1:nvox) {
   # 5. Detrend timeseries with respect to regressors
   #################################################################
   ts_dmdt               <- ts - dmdt
-  imgmat_dmdt[,vox]     <- ts_dmdt
+  img_dmdt[,vox]        <- ts_dmdt
 }
 
 ###################################################################
 # 6. Write out the image
 ###################################################################
-img_dmdt                <- as.array(img)
 if (!is.na(maskpath)){
    for (i in 1:nvol) {
-      img_dmdt[,,,i][logmask] <- imgmat_dmdt[i,]
+      out[,,,i][logmask]<- img_dmdt[i,]
    }
 } else {
    for (i in 1:nvol) {
-      img_dmdt[img > -Inf] <- t(imgmat_dmdt)
+      out[out > -Inf]   <- t(img_dmdt)
    }
 }
-img_dmdt                <- as.antsImage(img_dmdt)
 sink("/dev/null")
-antsCopyImageInfo(img,img_dmdt)
-antsImageWrite(img_dmdt,out)
+writeNifti(out,outpath,template=impath,datatype='float')
 sink(NULL)
