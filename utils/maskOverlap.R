@@ -14,7 +14,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -45,11 +45,8 @@ mask2path <- opt$reference
 ###################################################################
 # 1. Load in the masks
 ###################################################################
-suppressMessages(require(ANTsR))
-mask1                <- as.logical(as.array(antsImageRead(mask1path,3)))
-mask2                <- as.logical(as.array(antsImageRead(mask2path,3)))
-dim(mask1)           <- c()
-dim(mask2)           <- c()
+mask1                <- as.logical(readNifti(mask1path))
+mask2                <- as.logical(readNifti(mask2path))
 ###################################################################
 # Compute some preliminary values.
 ###################################################################
