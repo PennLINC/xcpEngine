@@ -83,7 +83,7 @@ output      rmat                    mc/${prefix}.mat
 output      fd                      mc/${prefix}_fd.1D
 output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 
-final       processed               ${prefix}_processed
+process     processed               ${prefix}_processed
 
 << DICTIONARY
 
@@ -296,9 +296,9 @@ done
 # Execute analysis in FEAT. Deactivate autosubmission before
 # calling FEAT, and reactivate after FEAT is complete.
 ###################################################################
-routine                       @2    Executing FEAT analysis
 if ! is_image ${processed[cxt]} \
 || rerun
+   routine                    @2    Executing FEAT analysis
    then
    subroutine                 @2.1  Preparing environment
    buffer=${SGE_ROOT}
@@ -308,8 +308,8 @@ if ! is_image ${processed[cxt]} \
    subroutine                 @2.2b ${fsf[cxt]}
    exec_fsl feat                    ${fsf[cxt]}          >/dev/null
    SGE_ROOT=${buffer}
+   routine_end
 fi
-routine_end
 
 
 
