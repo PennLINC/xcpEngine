@@ -8,8 +8,8 @@
 # Check all R package dependencies
 ###################################################################
 failed=FALSE
-if(!is.element('ANTsR', installed.packages()[,1])) {
-   cat(' :::Dependencies check failed: ANTsR\n :::Please add ANTsR to your R installation\n')
+if(!is.element('RNifti', installed.packages()[,1])) {
+   cat(' :::Dependencies check failed: RNifti\n :::Please add RNifti to your R installation\n')
    failed=TRUE
 }
 if(!is.element('optparse', installed.packages()[,1])) {
@@ -35,12 +35,12 @@ if (failed==TRUE) {
 ###################################################################
 # Obtain and print versions of all package dependencies.
 ###################################################################
-ver_ANTSR <- packageVersion("ANTsR")
+ver_RNIFTI <- packageVersion("RNifti")
 ver_OPTPARSE <- packageVersion("optparse")
 ver_PRACMA <- packageVersion("pracma")
 ver_SIGNAL <- packageVersion("signal")
 
-cat(as.character(ver_ANTSR),' ')
+cat(as.character(ver_RNIFTI),' ')
 cat(as.character(ver_OPTPARSE),' ')
 cat(as.character(ver_PRACMA),' ')
 cat(as.character(ver_SIGNAL),' ')

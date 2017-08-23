@@ -14,9 +14,9 @@
       "JQ" : "${ver_JQ}",
       "R" : "${ver_R}",
       "RScript" : "${ver_RSCRIPT}",
-      "ANTsR" : "${RpackageChk[0]}",
       "optparse" : "${RpackageChk[1]}",
       "pracma" : "${RpackageChk[2]}",
+      "RNifti" : "${RpackageChk[0]}",
       "signal" : "${RpackageChk[3]}"
    },
    "Environment" : {
