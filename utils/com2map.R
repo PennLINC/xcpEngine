@@ -15,7 +15,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -51,28 +51,27 @@ if (is.na(opt$out)) {
 }
 
 roipath <- opt$roi
-com <- as.numeric(unname(unlist(read.table(opt$com))))
-outpath <- opt$out
+com               <- as.numeric(unname(unlist(read.table(opt$com,header=FALSE))))
+outpath           <- opt$out
 
 ###################################################################
 # 1. Load in the map of regions of interest.
 ###################################################################
-suppressMessages(require(ANTsR))
-roi <- antsImageRead(roipath,3)
-out <- roi
+roi               <- readNifti(roipath)
+out               <- roi
 
 ###################################################################
 # 2. Replace all ROI labels with community labels.
 ###################################################################
-labs <- sort(unique(roi[roi > 0]))
-for (i in labs) {
-   logmask <- roi==i
-   comasgt <- com[i]
-   out[logmask] <- comasgt
+labs              <- sort(unique(roi[roi > 0]))
+coms              <- sort(unique(com))
+for (c in coms) {
+   com_rois       <- which(com==c)
+   logmask        <- which(roi %in% com_rois)
+   out[logmask]   <- c
 }
 
 ###################################################################
 # 3. Write out the image
 ###################################################################
-antsImageWrite(out,outpath)
-sink(NULL)
+writeNifti(out,outpath,template=roipath,datatype='int16')
