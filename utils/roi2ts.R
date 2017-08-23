@@ -16,7 +16,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -43,19 +43,18 @@ if (is.na(opt$roi)) {
    quit()
 }
 
-impath <- opt$img
-roipath <- opt$roi
+impath                  <- opt$img
+roipath                 <- opt$roi
 
 ###################################################################
 # 1. Load in the image.
 ###################################################################
-suppressMessages(require(ANTsR))
-img <- antsImageRead(impath,4)
+img                     <- readNifti(impath)
 
 ###################################################################
 # 2. Load in the network map
 ###################################################################
-net <- antsImageRead(roipath,3)
+net                     <- readNifti(roipath)
 
 ###################################################################
 # 3. Compute the network timeseries. This functionality is based
@@ -64,20 +63,20 @@ net <- antsImageRead(roipath,3)
 #
 # First, obtain all unique nonzero values in the mask.
 ###################################################################
-labs <- sort(unique(net[net > 0]))
+labs                    <- sort(unique(net[net > 0]))
 ###################################################################
 # Create a logical over all voxels, indicating whether each
 # voxel has a nonzero mask value.
 ###################################################################
-logmask <- (net > 0)
+logmask                 <- (net > 0)
 ###################################################################
 # Use the logical mask to subset the 4D data. Determine the
 # dimensions of the timeseries matrix: they should equal
 # the number of voxels in the mask by the number of time points.
 ###################################################################
-mat <- img[logmask]
-dim(mat) <- c(sum(logmask), dim(img)[length(dim(img))])
-mat <- t(mat)
+mat                     <- img[logmask]
+dim(mat)                <- c(sum(logmask), dim(img)[length(dim(img))])
+mat                     <- t(mat)
 ###################################################################
 # Determine how many unique values are present in the RoI map.
 #  * If only one unique value is present, then the desired
@@ -88,9 +87,9 @@ mat <- t(mat)
 #    a set of mean node timeseries.
 ###################################################################
 if (length(labs) == 1) {
-   mmat <- mat
+   mmat                 <- mat
 } else {
-   mmat <- zeros(dim(mat)[1],max(labs))
+   mmat                 <- zeros(dim(mat)[1],max(labs))
    ################################################################
    # If the script enters this statement, then there are multiple
    # unique values in the map, indicating multiple mask RoIs: a
@@ -105,25 +104,25 @@ if (length(labs) == 1) {
    # influence. If multiple voxels are in the RoI, then the mean
    # RoI timeseries is computed and added to the model.
    ################################################################
-   nodevec <- net[logmask]
-   voxelwise <- mat[, nodevec == labs[1]]
+   nodevec              <- net[logmask]
+   voxelwise            <- mat[, nodevec == labs[1]]
    if (is.null(dim(voxelwise)) && !is.null(length(voxelwise))) {
       warning("Warning: node 1 contains one voxel\n")
-      dim(voxelwise)<-c(length(voxelwise),1)
+      dim(voxelwise)    <-c(length(voxelwise),1)
    }
-   mmat[,labs[1]] <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
+   mmat[,labs[1]]       <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
    ################################################################
    # Repeat for all remaining RoIs.
    ################################################################
    for (i in 2:length(labs)) {
-      voxelwise<-mat[, nodevec == labs[i]]
+      voxelwise         <-mat[, nodevec == labs[i]]
       if (is.null(dim(voxelwise)) && !is.null(length(voxelwise))) {
          warning(paste("Warning: node ", labs[i], " contains one voxel\n"))
-         dim(voxelwise)<-c(length(voxelwise),1)
+         dim(voxelwise) <-c(length(voxelwise),1)
       }
-      mmat[,labs[i]] <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
+      mmat[,labs[i]]    <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
    }
-   colnames(mmat) <- paste("L", 1:max(labs))
+   colnames(mmat)       <- paste("L", 1:max(labs))
 }
 
 ################################################################### 
