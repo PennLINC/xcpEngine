@@ -1,3 +1,3 @@
 atlas_config() {
-   atlas[${cxt}]=$(echo ${atlas[${cxt}]}|$JQ_PATH '.'"${1}"' += {'"${2}"': "'"${3}"'"}')
+   atlas[${cxt}]=$(echo ${atlas[${cxt}]}|$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
 }

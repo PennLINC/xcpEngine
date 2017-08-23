@@ -2,12 +2,12 @@ derivative_config() {
    local dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )
    if [[ ${dfloat_names[@]//${1}/} != ${dfloat_names[@]} ]]
       then
-      derivatives_floating=$(echo ${derivatives_floating}|$JQ_PATH '.'"${1}"' += {'"${2}"': "'"${3}"'"}')
+      derivatives_floating=$(echo ${derivatives_floating}|$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
       return
    fi
    if [[ ${derivatives[@]//${1}/} != ${derivatives[@]} ]]
       then
-      deriv[${cxt}]=$(echo ${deriv[${cxt}]}|$JQ_PATH '.'"${1}"' += {'"${2}"': "'"${3}"'"}')
+      deriv[${cxt}]=$(echo ${deriv[${cxt}]}|$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
       if [[ -f ${4} ]]
          then
          rm -f ${4}

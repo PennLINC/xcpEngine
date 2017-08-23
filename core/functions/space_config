@@ -11,11 +11,10 @@ space_config() {
       space_chk=$(echo ${spaces_fixed}|$JQ_PATH '.'\"${1}\")
       if [[ ${space_chk} == null ]]
          then
-         spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '. += { "'"${1}"'" : { "'"${2}"'" : "'"${3}"'" } }')
+         spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '. += { '\"${1}\"' : { "'"${2}"'" : "'"${3}"'" } }')
       else
-         spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '."'"${1}"'" += { "'"${2}"'" : "'"${3}"'" }')
+         spaces_floating=$(echo ${spaces_fixed}|$JQ_PATH '.'\"${1}\"' += { "'"${2}"'" : "'"${3}"'" }')
       fi
-      #spaces_floating="$(echo ${spaces_fixed} '{ "'"${1}"'" : { "'"${2}"'" : "'"${3}"'" } }'|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
    fi
    rm -f ${spaces_path}
    echo "${spaces_floating}"|${JQ_PATH} '.' >> ${spaces_path}
