@@ -14,7 +14,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -33,23 +33,18 @@ if (is.na(opt$img)) {
    quit()
 }
 
-refImgPath <- opt$img
+refImgPath           <- opt$img
 sink("/dev/null")
 
 ###################################################################
 # Read input image
 ###################################################################
-suppressMessages(require(ANTsR))
-refImg <- antsImageRead(refImgPath,3)
-refImg <- as.array(refImg)
-dim(refImg) <- NULL
-uniq <- sort(unique(refImg))
+refImg               <- readNifti(refImgPath)
+refImg               <- refImg[refImg!=0]
+uniq                 <- sort(unique(refImg))
 
 sink(file=NULL)
 
 for (i in 1:length(uniq)) {
-   begin <- i + 1
-   if (uniq[i] != 0) {
-      cat(uniq[i],'\n')
-   }
+   cat(uniq[i],'\n')
 }
