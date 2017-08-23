@@ -15,7 +15,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -56,9 +56,9 @@ if (is.na(opt$out)) {
    quit()
 }
 
-refImgPath <- opt$img
-valStr <- opt$values
-outPath <- opt$out
+refImgPath              <- opt$img
+valStr                  <- opt$values
+outPath                 <- opt$out
 f <- file()
 sink(tempfile())
 
@@ -66,40 +66,32 @@ sink(tempfile())
 ###################################################################
 # Parse value string
 ###################################################################
-maskVals <- unlist(strsplit(valStr,','))
+maskVals                <- unlist(strsplit(valStr,','))
 
 
 ###################################################################
 # Read input image
 ###################################################################
-suppressMessages(require(ANTsR))
-refImg <- antsImageRead(refImgPath,3)
-refImgArr <- as.array(refImg)
-mask <- as.antsImage(refImgArr<Inf)
-antsCopyImageInfo(refImg,mask)
-refImg <- imagesToMatrix(refImgPath,mask)
+refImg                  <- readNifti(refImgPath)
+out                     <- refImg
 
 
 ###################################################################
 # Subset image vector
 ###################################################################
-outImgVec <- refImg
-outImgVec <- outImgVec - outImgVec
-valIdx <- c()
+outImgVec               <- refImg[refImg<Inf] * 0
+valIdx                  <- c()
 for (maskVal in maskVals) {
-   bounds <- as.numeric(unlist(strsplit(maskVal,':')))
-   valIdx <- refImg >= bounds[1] & refImg <= bounds[length(bounds)]
-   outImgVec[valIdx] <- 1
+   bounds               <- as.numeric(unlist(strsplit(maskVal,':')))
+   valIdx               <- refImg >= bounds[1] & refImg <= bounds[length(bounds)]
+   outImgVec[valIdx]    <- 1
 }
 
 
 ###################################################################
 # Write output
 ###################################################################
-outImg <- antsImageClone(mask)
-outImg[mask <= 0] <- 0
-outImg[mask > 0] <- outImgVec
-antsCopyImageInfo(mask,outImg)
-antsImageWrite(outImg, outPath)
-sink()
-close(f)
+out[out > -Inf]         <- outImgVec
+sink("/dev/null")
+writeNifti(out,outPath,template=refImgPath,datatype='float')
+sink(NULL)
