@@ -14,7 +14,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -51,40 +51,39 @@ if (is.na(opt$mask)) {
    quit()
 }
 
-impaths <- read.csv(opt$imcsv,header=FALSE)
-mpath <- opt$mask
-thr <- opt$points
-opath <- opt$omask
+impaths           <- read.csv(opt$imcsv,header=FALSE)
+mpath             <- opt$mask
+thr               <- opt$points
+opath             <- opt$omask
 
 ###################################################################
 # 1. Load in the control points.
 ###################################################################
-suppressMessages(require(ANTsR))
-ctrl <- as.array(antsImageRead(mpath,3))
-ctrlog <- as.logical(ctrl)
-ctrl <- ctrl[ctrlog]
-sdim <- length(ctrl)
+ctrl              <- readNifti(mpath)
+ctrlog            <- ctrl==1
+ctrl              <- ctrl[ctrlog]
+sdim              <- length(ctrl)
 
 ###################################################################
 # 2. Iterate through all standardised subject masks.
 ###################################################################
-maskscol <- dim(impaths)[2]
-nmasks <- dim(impaths)[1]
-sdim <- c(sdim,nmasks)
-masks <- array(dim=sdim)
-fail <- 0
-pass <- 0
+maskscol          <- dim(impaths)[2]
+nmasks            <- dim(impaths)[1]
+sdim              <- c(sdim,nmasks)
+masks             <- array(dim=sdim)
+fail              <- 0
+pass              <- 0
 for (i in 1:nmasks) {
-   tmp <- as.array(antsImageRead(as.character(impaths[i,maskscol]),3))
-   masks[,i] <- tmp[ctrlog]
+   tmp            <- readNifti(as.character(impaths[i,maskscol]))
+   masks[,i]      <- tmp[ctrlog]
    if (mean(masks[,i]) < thr) {
       for (j in 1:maskscol) { cat(as.character(impaths[i,j]),',',sep='') }
       cat(mean(masks[,i]),'0\n',sep=',')
-      fail <- fail + 1
+      fail        <- fail + 1
    } else {
       for (j in 1:maskscol) { cat(as.character(impaths[i,j]),',',sep='') }
       cat(mean(masks[,i]),'1\n',sep=',')
-      pass <- pass + 1
+      pass        <- pass + 1
    }
 }
 warning(as.character(pass),' subjects passed coverage criteria\n')
