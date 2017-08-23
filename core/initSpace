@@ -58,6 +58,9 @@ for i in "${!standard[@]}"
    fi
 done
 standard=${standard[0]}
+str_targ=${standard[i]}
+str_temp=$(abspath               $(eval      echo $(cat ${spaces[cxt]}\
+                 |$JQ_PATH       --raw-output '.'\"${standard[i]}\"'.Map')))
 
 ###################################################################
 # (3) ANATOMICAL SPACE.
@@ -77,7 +80,7 @@ if [[ -d ${antsct[sub]} ]]
    then
    subroutine                 @1.4.3a     [Anatomical space: ${structural[cxt]//\%*/}]
    ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
-      -f ${standard}:${template} \
+      -f ${str_targ}:${str_temp} \
       -d ${structural[cxt]}:${antsct[sub]} \
       -s ${spaces[cxt]}
    struct[$sub]=$(abspath     $(eval      echo $(cat ${spaces[cxt]}\
@@ -97,7 +100,7 @@ elif is_image ${xfm_warp}
    ixfms=${xfms// /,}
    ${XCPEDIR}/utils/spaceMetadata \
       -o ${spaces[cxt]} \
-      -f ${standard}:${template} \
+      -f ${str_targ}:${str_temp} \
       -m ${structural[cxt]}:${struct[sub]} \
       -x ${xfms} \
       -i ${ixfms} \
