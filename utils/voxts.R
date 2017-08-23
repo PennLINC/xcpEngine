@@ -16,7 +16,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -68,20 +68,20 @@ if (! "ggplot2" %in% rownames(installed.packages())){
 # 1. Load in the image.
 ###################################################################
 suppressMessages(require(ggplot2))
-suppressMessages(require(ANTsR))
-img <- antsImageRead(impath,4)
+img <- readNifti(impath)
 tp <- dim(img)[length(dim(img))]
 
 ###################################################################
 # 2. Load in the regional mask
 ###################################################################
-net <- antsImageRead(roipath,3)
+net <- readNifti(roipath)
 
 ###################################################################
 # 3. (as in roi2ts or Shrinidhi KL's timeseries2matrix)
 #    Obtain all unique nonzero values in the mask.
 ###################################################################
 labs <- sort(unique(net[net > 0]))
+length(labs)
 
 ###################################################################
 # 4. Iterate through all labels. Extract the voxelwise timeseries
@@ -89,16 +89,22 @@ labs <- sort(unique(net[net > 0]))
 #    timeseries matrix.
 ###################################################################
 logmask <- (net == labs[1])
+
+
+tp
+sum(logmask)
 mat <- img[logmask]
 dim(mat) <- c(sum(logmask), tp)
 indvec <- ones(sum(logmask),1)
-for (i in 2:length(labs)) {
-   logmask <- (net == labs[i])
-   cmat <- img[logmask]
-   dim(cmat) <- c(sum(logmask), tp)
-   cindvec <- ones(sum(logmask),1) * i
-   mat <- rbind(mat,cmat)
-   indvec <- rbind(indvec,cindvec)
+if (length(labs) > 1) {
+   for (i in 2:length(labs)) {
+      logmask <- (net == labs[i])
+      cmat <- img[logmask]
+      dim(cmat) <- c(sum(logmask), tp)
+      cindvec <- ones(sum(logmask),1) * i
+      mat <- rbind(mat,cmat)
+      indvec <- rbind(indvec,cindvec)
+   }
 }
 mat <- t(scale(t(mat)))
 
