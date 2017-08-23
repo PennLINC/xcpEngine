@@ -145,7 +145,7 @@ if [[ -s ${coors} ]]
    radii=( ${radii} )
 else
    subroutine                 @u.2
-   atlas=( ${coors//#/ } )
+   atlas=( ${coors//\#/ } )
 fi
 coors=( ${atlas[@]} )
 
@@ -158,7 +158,7 @@ coors=( ${atlas[@]} )
 # order that they are passed.
 ###################################################################
 subroutine                    @u.3
-transforms=$(echo $transforms|sed s@'#'@' '@g)
+transforms=${transforms//\#/ }
 for transform in ${transforms}
    do
    antsXFM="-t ${transform} ${antsXFM}"
