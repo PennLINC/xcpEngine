@@ -23,7 +23,8 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_config   ${a[Name]}   Space             ${space[sub]}
+   atlas_config   ${a[Name]}   Map                 ${space[sub]}
+   atlas_config   ${a[Name]}   Space               ${nodemap[cxt]}
 }
 
 completion() {
@@ -180,7 +181,7 @@ for map in ${atlas_names[@]}
    ################################################################
    # Update the path to the network map
    ################################################################
-   add_reference nodemap[cxt] ${a_name}/${prefix}_${a_name}
+   add_reference nodemap[cxt] ${a[Name]}/${prefix}_${a[Name]}
    
    
    
@@ -196,7 +197,7 @@ for map in ${atlas_names[@]}
    subroutine              @1.3.3
    cover=( $(exec_xcp nodeCoverage.R \
       -i    ${mask[sub]} \
-      -r    ${a[Map]} \
+      -r    ${nodemap[cxt]} \
       -x    ${a[NodeIndex]} \
       -n    ${a[NodeNames]}) )
    ################################################################
@@ -206,7 +207,7 @@ for map in ${atlas_names[@]}
    echo ${cover[1]//,/ } >> ${intermediate}_${a[Name]}_names.1D
    unset qargs
    qargs="
-      -a       ${a[Map]}
+      -a       ${nodemap[cxt]}
       -n       ${a[Name]}
       -i       ${intermediate}_${a[Name]}_idx.1D
       -r       ${intermediate}_${a[Name]}_names.1D
