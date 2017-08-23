@@ -14,7 +14,7 @@
 ###################################################################
 suppressMessages(require(optparse))
 suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(require(RNifti))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -25,7 +25,7 @@ option_list = list(
               help="A 3D image specifying the extent of the brain."),
    make_option(c("-r", "--roi"), action="store", default=NA, type='character',
               help="A 3D image specifying the nodes or regions of interest
-                  from which timeseries are to be extracted."),
+                  for which coverage is to be assessed."),
    make_option(c("-t", "--thr"), action="store", default=0.5, type='numeric',
               help="The minimum coverage required for an RoI-wise value
                   to be included."),
@@ -49,29 +49,28 @@ if (is.na(opt$roi)) {
    quit()
 }
 
-impath <- opt$img
-roipath <- opt$roi
-thr <- opt$thr
+impath                  <- opt$img
+roipath                 <- opt$roi
+thr                     <- opt$thr
 if (!is.na(opt$idx)) {
-   labs <- as.vector(unlist(read.table(opt$idx,header=F)))
+   labs                 <- as.vector(unlist(read.table(opt$idx,header=F)))
 } else {
-   labs <- NaN
+   labs                 <- NaN
 }
 if (!is.na(opt$names)) {
-   name <- as.vector(unlist(read.table(opt$names,header=F)))
+   name                 <- as.vector(unlist(read.table(opt$names,header=F)))
 } else {
-   name <- NaN
+   name                 <- NaN
 }
 ###################################################################
 # 1. Load in the image.
 ###################################################################
-suppressMessages(require(ANTsR))
-img <- antsImageRead(impath,3)
+img                     <- readNifti(impath)
 
 ###################################################################
 # 2. Load in the network map
 ###################################################################
-net <- antsImageRead(roipath,3)
+net                     <- readNifti(roipath)
 
 ###################################################################
 # 3. Compute the RoI-wise coverage. This functionality is based
@@ -82,22 +81,22 @@ net <- antsImageRead(roipath,3)
 ###################################################################
 options(warn=-1)
 if (is.nan(labs)) {
-   labs <- sort(unique(net[net > 0]))
+   labs                 <- sort(unique(net[net > 0]))
 }
 options(warn=0)
 ###################################################################
 # Create a logical over all voxels, indicating whether each
 # voxel has a nonzero mask value.
 ###################################################################
-logmask <- (net > 0)
+logmask                 <- (net > 0)
 ###################################################################
 # Use the logical mask to subset the 4D data. Determine the
 # dimensions of the timeseries matrix: they should equal
 # the number of voxels in the mask by the number of time points.
 ###################################################################
-mat <- img[logmask]
-dim(mat) <- c(sum(logmask), 1)
-mat <- t(mat)
+mat                     <- img[logmask]
+dim(mat)                <- c(sum(logmask), 1)
+mat                     <- t(mat)
 ###################################################################
 # Determine how many unique values are present in the RoI map.
 #  * If only one unique value is present, then the desired
@@ -108,9 +107,9 @@ mat <- t(mat)
 #    a set of mean node timeseries.
 ###################################################################
 if (length(labs) == 1) {
-   mmat <- 1 - sum(mat==0)/length(mat)
+   mmat                 <- 1 - sum(mat==0)/length(mat)
 } else {
-   mmat <- zeros(dim(mat)[1],length(labs))
+   mmat                 <- zeros(dim(mat)[1],length(labs))
    ################################################################
    # If the script enters this statement, then there are multiple
    # unique values in the map, indicating multiple mask RoIs: a
@@ -125,25 +124,25 @@ if (length(labs) == 1) {
    # influence. If multiple voxels are in the RoI, then the mean
    # RoI timeseries is computed and added to the model.
    ################################################################
-   nodevec <- net[logmask]
-   voxelwise <- mat[, nodevec == labs[1]]
+   nodevec              <- net[logmask]
+   voxelwise            <- mat[, nodevec == labs[1]]
    if (length(voxelwise) == 1) {
       warning(paste("Warning: node ", labs[1], " contains one voxel\n"))
    }
-   mmat[,1] <- 1 - sum(voxelwise==0)/length(voxelwise)
+   mmat[,1]             <- 1 - sum(voxelwise==0)/length(voxelwise)
    ################################################################
    # Repeat for all remaining RoIs.
    ################################################################
    for (i in 2:length(labs)) {
-      voxelwise<-mat[, nodevec == labs[i]]
+      voxelwise         <- mat[, nodevec == labs[i]]
       if (length(voxelwise) == 1) {
          warning(paste("Warning: node ", labs[i], " contains one voxel\n"))
       }
-      mmat[,i] <- 1 - sum(voxelwise==0)/length(voxelwise)
+      mmat[,i]          <- 1 - sum(voxelwise==0)/length(voxelwise)
    }
 }
-mthr <- labs[which(mmat > thr)]
-name <- name[which(mmat > thr)]
+mthr                    <- labs[which(mmat > thr)]
+name                    <- name[which(mmat > thr)]
 
 ###################################################################
 # 4. Write the output.
