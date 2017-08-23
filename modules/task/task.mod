@@ -182,19 +182,19 @@ for l in "${!fsf_design[@]}"
    do
    line="${fsf_design[l]}"
    
-   chk_OUT=( "${line}"        'set fmri(outputdir)'         )
-   chk_STD=( "${line}"        'set fmri(regstandard)'       )
-   chk_REF=( "${line}"        'set fmri(alternative_example_func)' )
-   chk_MSK=( "${line}"        'set fmri(alternative_mask)'  )
-   chk_CON=( "${line}"        'set fmri(confoundevs)'       )
-   chk_TRP=( "${line}"        'set fmri(tr)'                )
-   chk_NVO=( "${line}"        'set fmri(npts)'              )
-   chk_IMG=( "${line}"        'set feat_files(1)'           )
-   chk_HRS=( "${line}"        'set highres_files(1)'        )
-   chk_COF=( "${line}"        'set confoundev_files(1)'     )
-   chk_PAR=( "${line}"        'set fmri(evtitle'            )
-   chk_TDX=( "${line}"        'set fmri(deriv_yn'           )
-   chk_CPE=( "${line}"        'set fmri(conname_real'       )
+   chk_OUT=( "${line}"        'set fmri\(outputdir\)'       )
+   chk_STD=( "${line}"        'set fmri\(regstandard\)'     )
+   chk_REF=( "${line}"        'set fmri\(alternative_example_func\)')
+   chk_MSK=( "${line}"        'set fmri\(alternative_mask\)')
+   chk_CON=( "${line}"        'set fmri\(confoundevs\)'     )
+   chk_TRP=( "${line}"        'set fmri\(tr\)'              )
+   chk_NVO=( "${line}"        'set fmri\(npts\)'            )
+   chk_IMG=( "${line}"        'set feat_files\(1\)'         )
+   chk_HRS=( "${line}"        'set highres_files\(1\)'      )
+   chk_COF=( "${line}"        'set confoundev_files\(1\)'   )
+   chk_PAR=( "${line}"        'set fmri\(evtitle'           )
+   chk_TDX=( "${line}"        'set fmri\(deriv_yn'          )
+   chk_CPE=( "${line}"        'set fmri\(conname_real'      )
    
    contains  "${chk_PAR[@]}" \
              && line=${line//set fmri\(evtitle/} \
@@ -263,7 +263,7 @@ if (( ${conf_include} == 1 ))
       fsf_design[coni]='set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${rps[sub]}'\n'
    fi
 fi
-printf      "${fsf_design[@]}"                        >>  ${fsf[@]}
+printf      "${fsf_design[@]}"                      >>  ${fsf[cxt]}
 routine_end
 
 
@@ -550,7 +550,7 @@ if [[ -d ${featout} ]]
    ###################################################################
    if is_image ${featout}/filtered_func_data.nii.gz
       then
-      subroutine              @4.9
+      subroutine              @4.10
       immv ${featout}/filtered_func_data.nii.gz ${processed[cxt]}
    fi
    routine_end
