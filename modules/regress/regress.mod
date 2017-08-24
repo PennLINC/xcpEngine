@@ -449,66 +449,6 @@ No censoring will be performed."
          intermediate=${intermediate}_${cur}
       fi
       routine_end
-      #############################################################
-      # Next, verify that the temporal mask exists before censoring
-      #############################################################
-      if [[ ${censor[cxt]} != none ]]
-         then
-         routine              @5    Censoring BOLD timeseries
-         if is_1D     ${tmask[sub]}
-            then
-            subroutine        @5.2
-            tmaskpath=${tmask[sub]}
-         else
-            subroutine        @5.3
-            echo \
-"WARNING: Censoring of high-motion volumes requires a
-temporal mask, but the regression module has failed
-to find one. You are advised to inspect your pipeline
-to ensure that this is intentional.
-
-Overriding user input:
-No censoring will be performed."
-            configure            censor   none
-            write_config         censor
-            routine_end
-         fi
-      fi
-      #############################################################
-      # Censor the BOLD timeseries.
-      # Check the conditional again in case the value of censoring
-      # has been changed due to a failure to locate the temporal
-      # mask.
-      #############################################################
-      if [[ ${censor[cxt]} != none ]]
-         then
-         subroutine           @5.4  [${censor[cxt]} censoring]
-         cur=CEN
-         buffer=${buffer}_${cur}
-         exec_fsl imcp ${intermediate}.nii.gz ${uncensored[cxt]}
-         ##########################################################
-         # Use the temporal mask to determine which volumes are to
-         # be left intact. Censoring is performed using the censor
-         # utility.
-         ##########################################################
-         subroutine           @5.5  [Applying the final censor]
-         exec_xcp censor.R               \
-            -t    ${tmaskpath}           \
-            -i    ${intermediate}.nii.gz \
-            -o    ${intermediate}_${cur}.nii.gz
-         apply_exec  timeseries  ${intermediate}_%NAME_${cur} \
-            xcp   censor.R     \
-            -t    ${tmaskpath} \
-            -i    %INPUT       \
-            -o    %OUTPUT
-         intermediate=${intermediate}_${cur}
-         nvol_pre=$( exec_fsl fslnvols       ${uncensored[cxt]})
-         nvol_post=$(exec_fsl fslnvols       ${intermediate}.nii.gz)
-         nvol_censored=$(( ${nvol_pre}   -   ${nvol_post} ))
-         subroutine           @5.6  [${nvol_censored} volumes censored]
-         echo ${nvol_censored}   >>    ${n_volumes_censored[cxt]}
-         routine_end
-      fi
       ;;
       
    *)
@@ -517,6 +457,69 @@ No censoring will be performed."
       
    esac
 done
+
+
+
+
+
+###################################################################
+# CENSORING: First, verify that the temporal mask exists.
+###################################################################
+if [[ ${censor[cxt]} != none ]]
+   then
+   routine                    @5    Censoring BOLD timeseries
+   if is_1D     ${tmask[sub]}
+      then
+      subroutine              @5.2
+      tmaskpath=${tmask[sub]}
+   else
+      subroutine              @5.3
+      echo \
+"WARNING: Censoring of high-motion volumes requires a
+temporal mask, but the regression module has failed
+to find one. You are advised to inspect your pipeline
+to ensure that this is intentional.
+
+Overriding user input:
+No censoring will be performed."
+      configure               censor   none
+      write_config            censor
+      routine_end
+   fi
+fi
+###################################################################
+# Censor the BOLD timeseries.
+# Check the conditional again in case the value of censoring has
+# been changed due to a failure to locate the temporal mask.
+###################################################################
+if [[ ${censor[cxt]} != none ]]
+   then
+   subroutine                 @5.4  [${censor[cxt]} censoring]
+   cur=CEN
+   buffer=${buffer}_${cur}
+   exec_fsl imcp ${intermediate}.nii.gz ${uncensored[cxt]}
+   ################################################################
+   # Use the temporal mask to determine which volumes are to be
+   # left intact. Censoring is performed using the censor utility.
+   ################################################################
+   subroutine                 @5.5  [Applying the final censor]
+   exec_xcp censor.R               \
+      -t    ${tmaskpath}           \
+      -i    ${intermediate}.nii.gz \
+      -o    ${intermediate}_${cur}.nii.gz
+   apply_exec  timeseries  ${intermediate}_%NAME_${cur} \
+      xcp   censor.R     \
+      -t    ${tmaskpath} \
+      -i    %INPUT       \
+      -o    %OUTPUT
+   intermediate=${intermediate}_${cur}
+   nvol_pre=$( exec_fsl fslnvols       ${uncensored[cxt]})
+   nvol_post=$(exec_fsl fslnvols       ${intermediate}.nii.gz)
+   nvol_censored=$(( ${nvol_pre}   -   ${nvol_post} ))
+   subroutine                 @5.6  [${nvol_censored} volumes censored]
+   echo ${nvol_censored}            >> ${n_volumes_censored[cxt]}
+   routine_end
+fi
 
 
 
