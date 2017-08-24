@@ -183,7 +183,7 @@ for (curbin in 1:nbins){
   numerator             <- apply(cosmult,c(1,3),sum)
   denominator           <- apply(costerm^2,1,sum)
   cosine                <- array(0, dim=c(length(freq),length(binincl)))
-  for (frq in 1:nvol) {
+  for (frq in 1:length(freq)) {
     cosine[frq,]        <- numerator[frq,]/denominator[frq]
   }
   rm(numerator,
@@ -199,7 +199,7 @@ for (curbin in 1:nbins){
   numerator             <- apply(sinmult,c(1,3),sum)
   denominator           <- apply(sinterm^2,1,sum)
   sine                  <- array(0, dim=c(length(freq),length(binincl)))
-  for (frq in 1:nvol) {
+  for (frq in 1:length(freq)) {
     sine[frq,]          <- numerator[frq,]/denominator[frq]
   }
   rm(numerator,
@@ -222,13 +222,13 @@ for (curbin in 1:nbins){
   sin_t                 <- sin(prod)
   cos_t                 <- cos(prod)
   rm(prod)
-  sine                  <- repmat(as.vector(sine),1,nvol_total)
+  sine                  <- rep(sine,nvol_total)
   dim(sine)             <- c(length(freq),length(binincl),nvol_total)
   sine                  <- aperm(sine,c(1,3,2))
   sw_p                  <- sin_t * sine
   rm(sine,
      sin_t)
-  cosine                <- repmat(as.vector(cosine),1,nvol_total)
+  cosine                <- rep(cosine,nvol_total)
   dim(cosine)           <- c(length(freq),length(binincl),nvol_total)
   cosine                <- aperm(cosine,c(1,3,2))
   cw_p                  <- cos_t * cosine
@@ -268,11 +268,11 @@ for (curbin in 1:nbins){
 # 11. Save out image
 ###################################################################
 if (!is.na(maskpath)){
-   for (i in 1:nvol) {
+   for (i in 1:nvol_total) {
       out[,,,i][logmask]<- img_interpol[i,]
    }
 } else {
-   for (i in 1:nvol) {
+   for (i in 1:nvol_total) {
       out[out > -Inf]   <- t(img_interpol)
    }
 }
