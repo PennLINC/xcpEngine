@@ -44,7 +44,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  e2smask                 ${prefix}_seq2structMask
+derivative  e2smask                 ${prefix}_seq2stdMask
 
 output      norm_cross_corr         ${prefix}_normCrossCorr.txt
 output      norm_coverage           ${prefix}_normCoverage.txt
@@ -148,7 +148,7 @@ if is_image ${referenceVolumeBrain[cxt]} \
 || rerun
 then
 subroutine                 @2.0
-if [[ ! -e ${outdir}/${prefix}_ep2std.png ]] \
+if [[ ! -e ${outdir}/${prefix}_seq2std.png ]] \
 || rerun
    then
    routine                 @2    Quality assessment
@@ -167,7 +167,7 @@ if [[ ! -e ${outdir}/${prefix}_ep2std.png ]] \
       -s ${referenceVolumeBrain[cxt]} \
       -t ${template} \
       -i ${intermediate} \
-      -o ${outdir}/${prefix}_ep2std
+      -o ${outdir}/${prefix}_seq2std
    routine_end
 fi
 fi
