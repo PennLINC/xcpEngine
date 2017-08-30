@@ -42,6 +42,14 @@ completion() {
                Map   ${referenceVolumeBrain[cxt]}
    fi
    
+   exec_xcp spaceMetadata \
+      -o    ${spaces[sub]} \
+      -f    ${standard}:${template} \
+      -m    ${space[sub]}:${struct[cxt]} \
+      -x    ${xfm_affine[cxt]},${xfm_warp[cxt]} \
+      -i    ${ixfm_warp[cxt]},${ixfm_affine[cxt]} \
+      -s    ${spaces[sub]}
+   
    quality_metric    regCoverage            reg_coverage
    quality_metric    regCrossCorr           reg_cross_corr
    quality_metric    regJaccard             reg_jaccard
@@ -403,6 +411,7 @@ fi
 
 ###################################################################
 # CLEANUP
+#  * Add the space definitions.
 #  * Test for the expected output. This should be the initial
 #    image name with any routine suffixes appended.
 #  * If the expected output is present, move it to the target path.
