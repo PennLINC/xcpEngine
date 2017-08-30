@@ -170,6 +170,8 @@ DICTIONARY
 
 
 
+priors_format=${struc_template_priors[cxt]#*\%}
+priors_format=${priors_format%%d*}
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
 # already complete; it becomes the expected ending for the final
@@ -189,8 +191,9 @@ subroutine                    @0.1
 #  * DCT: DireCT cortical thickness computation
 #  * SEG: ANTs prior-driven brain segmentation implemented in
 #         Atropos (subsumes a round of N4)
+#  * FST: FSL 3-class brain segmentation using FAST
 #  * REG: ANTs registration
-#  * FBE: FSL Brain Extraction using BET
+#  * FBE: FSL brain extraction using BET
 ###################################################################
 rem=${struc_process[cxt]}
 while (( ${#rem} > 0 ))
@@ -222,13 +225,21 @@ while (( ${#rem} > 0 ))
       exec_ants   antsCorticalThickness.sh         \
          -d       3                                \
          -a       ${intermediate}.nii.gz           \
-         -e       ${struc_templateHead[cxt]}       \
-         -m       ${struc_templateMask[cxt]}       \
-         -f       ${struc_templateMaskDil[cxt]}    \
-         -p       ${struc_templatePriors[cxt]}     \
-         -w       ${struc_extractionPrior[cxt]}    \
+         -e       ${struc_template_head[cxt]}      \
+         -m       ${struc_template_mask[cxt]}      \
+         -p       ${struc_template_priors[cxt]}    \
+         -o       ${ctroot[cxt]}                   \
+         -s       'nii.gz'                         \
          -t       ${template}                      \
-         -o       ${ctroot[cxt]}
+         -f       ${struc_template_mask_dil[cxt]}  \
+         -g       ${struc_denoise_anat[cxt]}       \
+         -w       ${struc_prior_weight[cxt]}       \
+         -b       ${struc_posterior_formulation[cxt]} \
+         -j       ${struc_floating_point[cxt]}     \
+         -u       ${struc_random_seed[cxt]}        \
+         -v       ${struc_bspline[cxt]}            \
+         ${additional_images} \
+         ${label_propagation}
       exec_sys ln -sf ${struct[cxt]} ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
       routine_end
@@ -246,9 +257,6 @@ while (( ${#rem} > 0 ))
       exec_ants   N4BiasFieldCorrection            \
          -d       3                                \
          -i       ${intermediate}.nii.gz           \
-         -c       ${struc_N4convergence[cxt]}      \
-         -s       ${struc_N4shrinkFactor[cxt]}     \
-         -b       ${struc_N4bsplineParams[cxt]}    \
          -o       ${biasCorrected[cxt]}            \
          --verbose 1
       exec_sys ln -sf ${biasCorrected[cxt]} ${intermediate}_${cur}.nii.gz
@@ -273,8 +281,8 @@ while (( ${#rem} > 0 ))
             -e       ${template}                      \
             -f       ${struc_templateMaskDil[cxt]}    \
             -m       ${struc_extractionPrior[cxt]}    \
-            -q       ${struc_useBEFloat[cxt]}         \
-            -u       ${struc_useBERandomSeed[cxt]}    \
+            -q       ${struc_floating_point[cxt]} \
+            -u       ${struc_random_seed[cxt]}    \
             -s       'nii.gz'                         \
             -o       ${intermediate}_${cur}_
          exec_fsl immv  ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
@@ -309,12 +317,12 @@ while (( ${#rem} > 0 ))
          ${intermediate}_${cur}.nii.gz             \
          -f    ${struc_fit[${cxt}]}                \
          -m
-	   exec_fsl immv  ${intermediate}_${cur}.nii.gz \
-	                  ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
-	   exec_fsl immv  ${intermediate}_${cur}_mask.nii.gz \
-	                  ${outdir}/${prefix}_BrainExtractionMask.nii.gz
-      exec_sys ln -s ${outdir}/${prefix}_BrainExtractionBrain.nii.gz \
-                     ${intermediate}_${cur}.nii.gz
+	   exec_fsl immv   ${intermediate}_${cur}.nii.gz \
+	                   ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+	   exec_fsl immv   ${intermediate}_${cur}_mask.nii.gz \
+	                   ${outdir}/${prefix}_BrainExtractionMask.nii.gz
+      exec_sys ln -sf ${outdir}/${prefix}_BrainExtractionBrain.nii.gz \
+                      ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
       routine_end
       ;;
@@ -323,12 +331,41 @@ while (( ${#rem} > 0 ))
 
 
 
+   SEG)
+      #############################################################
+      # SEG runs ANTs tissue-class segmentation via antsAtroposN4
+      #############################################################
+      if ! is_image ${segmentation[cxt]}
+         then
+         for (( i=2; i<=${#priors[cxt]}; i++ ))
+            do
+            priors_include="${priors_include} -y ${i}"
+         done
+         exec_ants   antsAtroposN4.sh                    \
+            -d       3                                   \
+            -b       ${struc_posterior_formulation[cxt]} \
+            -a       ${intermediate}.nii.gz              \
+            -x       ${mask[cxt]}                        \
+            -m       3                                   \
+            -n       5                                   \
+            -c       ${#priors[cxt]}                     \
+            -p       ${ctroot[cxt]}BrainSegmentationPriorWarped${priors_format} \
+            -w       ${struc_prior_weight[cxt]}          \
+            -o       ${ctroot[cxt]}Brain                 \
+            -u       ${struc_random_seed[cxt]}           \
+            -g       ${struc_denoise_anat[cxt]}          \
+            -s       'nii.gz'                            \
+            ${additional_images} \
+            ${label_propagation} \
+            ${priors_include}    \
+            -o       ${intermediate}_${cur}_
+      fi
+      ;;
+      
    CCC)
       #############################################################
       # CCC runs cortical contrast analysis
-      #############################################################
-      
-      #############################################################
+      #------------------------------------------------------------
       # First, prepare the binarised mask indicating the GM-WM
       # interface.
       #############################################################
@@ -337,18 +374,18 @@ while (( ${#rem} > 0 ))
          -inset   ${segmentation[cxt]}.nii.gz \
          -prefix  ${intermediate}-upsample.nii.gz
       exec_fsl    fslmaths ${intermediate}_${cur}-upsample.nii.gz \
-         -thr     3 \
-         -uthr    3 \
-         -edge \
-         -uthr    1 \
-         -bin \
+         -thr     3  \
+         -uthr    3  \
+         -edge       \
+         -uthr    1  \
+         -bin        \
          ${intermediate}_${cur}-upsample-edge.nii.gz
-      exec_ants   ImageMath 3 ${intermediate}_${cur}-dist-from-edge.nii.gz \
-         MaurerDistance ${intermediate}_${cur}-upsample-edge.nii.gz 1
+      exec_ants   ImageMath 3    ${intermediate}_${cur}-dist-from-edge.nii.gz \
+                  MaurerDistance ${intermediate}_${cur}-upsample-edge.nii.gz 1
       exec_fsl    fslmaths ${intermediate}_${cur}-dist-from-edge.nii.gz \
-         -thr     .75 \
-         -uthr    1.25 \
-         -bin \
+         -thr     .75   \
+         -uthr    1.25  \
+         -bin           \
          ${intermediate}_${cur}-dist-from-edge-bin.nii.gz
       #############################################################
       # Next, prepare the WM and GM masks.
