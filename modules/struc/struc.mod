@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         preprocessed
+   processed         struct
    
    write_derivative  mask
    write_derivative  segmentation
