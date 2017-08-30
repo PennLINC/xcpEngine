@@ -184,9 +184,11 @@ subroutine                    @0.1
 # Parse the control sequence to determine what routine to run next.
 # Available routines include:
 #  * ACT: ANTs CT pipeline. This routine subsumes all others.
-#  * ABF: ANTs N4 bias field correction
-#  * ABE: ANTs Brain Extraction
-#  * SEG: ANTs prior-driven brain segmentation
+#  * N4B: ANTs N4 bias field correction
+#  * ABE: ANTs Brain Extraction (subsumes N4)
+#  * DCT: DireCT cortical thickness computation
+#  * SEG: ANTs prior-driven brain segmentation implemented in
+#         Atropos (subsumes a round of N4)
 #  * REG: ANTs registration
 #  * FBE: FSL Brain Extraction using BET
 ###################################################################
@@ -217,15 +219,15 @@ while (( ${#rem} > 0 ))
       subroutine              @1.1b Template: ${template}
       subroutine              @1.1c Output root: ${ctroot[cxt]}
       subroutine              @1.x  Delegating control to ANTsCT
-      exec_ants   antsCorticalThickness.sh \
-         -d       3 \
-         -a       ${intermediate}.nii.gz \
-         -e       ${struc_templateHead[cxt]} \
-         -m       ${struc_templateMask[cxt]} \
-         -f       ${struc_templateMaskDil[cxt]} \
-         -p       ${struc_templatePriors[cxt]} \
-         -w       ${struc_extractionPrior[cxt]} \
-         -t       ${template} \
+      exec_ants   antsCorticalThickness.sh         \
+         -d       3                                \
+         -a       ${intermediate}.nii.gz           \
+         -e       ${struc_templateHead[cxt]}       \
+         -m       ${struc_templateMask[cxt]}       \
+         -f       ${struc_templateMaskDil[cxt]}    \
+         -p       ${struc_templatePriors[cxt]}     \
+         -w       ${struc_extractionPrior[cxt]}    \
+         -t       ${template}                      \
          -o       ${ctroot[cxt]}
       exec_sys ln -sf ${struct[cxt]} ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
@@ -236,18 +238,18 @@ while (( ${#rem} > 0 ))
 
 
 
-   ABF)
+   N4B)
       #############################################################
       # ABF runs ANTs bias field correction.
       #############################################################
       routine                 @2    ANTs N4 bias field correction
-      exec_ants   N4BiasFieldCorrection \
-         -d       3 \
-         -i       ${intermediate}.nii.gz \
-         -c       ${struc_N4convergence[cxt]} \
-         -s       ${struc_N4shrinkFactor[cxt]} \
-         -b       ${struc_N4bsplineParams[cxt]} \
-         -o       ${biasCorrected[cxt]} \
+      exec_ants   N4BiasFieldCorrection            \
+         -d       3                                \
+         -i       ${intermediate}.nii.gz           \
+         -c       ${struc_N4convergence[cxt]}      \
+         -s       ${struc_N4shrinkFactor[cxt]}     \
+         -b       ${struc_N4bsplineParams[cxt]}    \
+         -o       ${biasCorrected[cxt]}            \
          --verbose 1
       exec_sys ln -sf ${biasCorrected[cxt]} ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
@@ -263,17 +265,33 @@ while (( ${#rem} > 0 ))
       # ABE runs ANTs brain extraction
       #############################################################
       routine                 @3    ANTs brain extraction
-      exec_ants   antsBrainExtraction.sh \
-         -d       3 \
-         -a       ${intermediate}.nii.gz \
-         -e       ${template} \
-         ${struc_extractionPrior[cxt]} \
-         ${struc_keepBEImages[cxt]} \
-         ${struc_useBEFloat[cxt]} \
-         ${struc_useBERandomSeed[cxt]} \
-         -o ${ctroot[cxt]}
-      exec_sys ln -s ${outdir}/${prefix}_BrainExtractionBrain.nii.gz \
-                     ${intermediate}_${cur}.nii.gz
+      if ! is_image ${mask[cxt]}
+         then
+         exec_ants   antsBrainExtraction.sh           \
+            -d       3                                \
+            -a       ${intermediate}.nii.gz           \
+            -e       ${template}                      \
+            -f       ${struc_templateMaskDil[cxt]}    \
+            -m       ${struc_extractionPrior[cxt]}    \
+            -q       ${struc_useBEFloat[cxt]}         \
+            -u       ${struc_useBERandomSeed[cxt]}    \
+            -s       'nii.gz'                         \
+            -o       ${intermediate}_${cur}_
+         exec_fsl immv ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
+            ${mask[cxt]}
+         exec_fsl immv ${intermediate}_${cur}_BrainExtractionBrain.nii.gz \
+            ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+         exec_sys mv -f ${intermediate}_${cur}_BrainExtractionPrior0GenericAffine.mat \
+            ${outdir}/${prefix}_BrainExtractionPrior0GenericAffine.mat
+      fi
+      if ! is_image ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+         then
+         exec_fsl fslmaths ${intermediate}.nii.gz \
+            -mul  ${mask[cxt]} \
+            ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+      fi
+      exec_sys ln -sf ${outdir}/${prefix}_BrainExtractionBrain.nii.gz \
+                      ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
       routine_end
       ;;
@@ -286,10 +304,10 @@ while (( ${#rem} > 0 ))
       #############################################################
       # FBE runs FSL brain extraction via BET
       #############################################################
-      exec_fsl bet \
-         ${intermediate}.nii.gz \
-         ${intermediate}_${cur}.nii.gz \
-         -f    ${struc_fit[${cxt}]} \
+      exec_fsl bet                                 \
+         ${intermediate}.nii.gz                    \
+         ${intermediate}_${cur}.nii.gz             \
+         -f    ${struc_fit[${cxt}]}                \
          -m
 	   exec_fsl immv  ${intermediate}_${cur}.nii.gz \
 	                  ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
@@ -411,7 +429,6 @@ fi
 
 ###################################################################
 # CLEANUP
-#  * Add the space definitions.
 #  * Test for the expected output. This should be the initial
 #    image name with any routine suffixes appended.
 #  * If the expected output is present, move it to the target path.
