@@ -277,14 +277,14 @@ while (( ${#rem} > 0 ))
             -u       ${struc_useBERandomSeed[cxt]}    \
             -s       'nii.gz'                         \
             -o       ${intermediate}_${cur}_
-         exec_fsl immv ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
-            ${mask[cxt]}
-         exec_fsl immv ${intermediate}_${cur}_BrainExtractionBrain.nii.gz \
-            ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+         exec_fsl immv  ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
+                        ${mask[cxt]}
          exec_sys mv -f ${intermediate}_${cur}_BrainExtractionPrior0GenericAffine.mat \
-            ${outdir}/${prefix}_BrainExtractionPrior0GenericAffine.mat
+                        ${outdir}/${prefix}_BrainExtractionPrior0GenericAffine.mat
+         exec_fsl immv  ${intermediate}_${cur}_BrainExtractionBrain.nii.gz \
+                        ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
       fi
-      if ! is_image ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+      if ! is_image     ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
          then
          exec_fsl fslmaths ${intermediate}.nii.gz \
             -mul  ${mask[cxt]} \
