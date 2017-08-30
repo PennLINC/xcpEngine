@@ -337,7 +337,7 @@ while (( ${#rem} > 0 ))
       #############################################################
       if ! is_image ${segmentation[cxt]}
          then
-         for (( i=2; i<=${#priors[cxt]}; i++ ))
+         for (( i=2; i<=${#priors[@]}; i++ ))
             do
             priors_include="${priors_include} -y ${i}"
          done
@@ -351,7 +351,29 @@ while (( ${#rem} > 0 ))
             -c       ${#priors[cxt]}                     \
             -p       ${ctroot[cxt]}BrainSegmentationPriorWarped${priors_format} \
             -w       ${struc_prior_weight[cxt]}          \
-            -o       ${ctroot[cxt]}Brain                 \
+            -u       ${struc_random_seed[cxt]}           \
+            -g       ${struc_denoise_anat[cxt]}          \
+            -s       'nii.gz'                            \
+            ${additional_images}                         \
+            ${label_propagation}                         \
+            ${priors_include}                            \
+            -o       ${intermediate}_${cur}_
+         unset additional_images
+         for (( i=1; i<=${#anat[@]}; i++ ))
+            do
+            anat[i]=${intermediate}_${cur}_Segmentation${i}N4.nii.gz
+            additional_images="${additional_images} ${anat[i]}"
+         done
+         exec_ants   antsAtroposN4.sh                    \
+            -d       3                                   \
+            -b       ${struc_posterior_formulation[cxt]} \
+            -a       ${intermediate}_${cur}_Segmentation.nii.gz \
+            -x       ${mask[cxt]}                        \
+            -m       2                                   \
+            -n       5                                   \
+            -c       ${#priors[cxt]}                     \
+            -p       ${ctroot[cxt]}BrainSegmentationPriorWarped${priors_format} \
+            -w       ${struc_prior_weight[cxt]}          \
             -u       ${struc_random_seed[cxt]}           \
             -g       ${struc_denoise_anat[cxt]}          \
             -s       'nii.gz'                            \
