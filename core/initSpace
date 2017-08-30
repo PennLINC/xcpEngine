@@ -89,11 +89,11 @@ if [[ -d ${antsct[sub]} ]]
 ###################################################################
 #     Case 2: Template and structural:template maps are provided.
 ###################################################################
-elif is_image ${xfm_warp}
+elif is_image ${xfm_warp[sub]}
    then
    subroutine                 @1.4.3b     [Anatomical space: ${structural[cxt]//\%*/}]
-   xfms="${xfm_rigid} ${xfm_affine} ${xfm_warp} ${xfm_resample}"
-   ixfms="${ixfm_resample} ${ixfm_warp} ${ixfm_affine} ${ixfm_rigid}"
+   xfms="${xfm_rigid[sub]} ${xfm_affine[sub]} ${xfm_warp[sub]} ${xfm_resample[sub]}"
+   ixfms="${ixfm_resample[sub]} ${ixfm_warp[sub]} ${ixfm_affine[sub]} ${ixfm_rigid[sub]}"
    xfms=$( echo ${xfms})
    ixfms=$(echo ${ixfms})
    xfms=${xfms// /,}
