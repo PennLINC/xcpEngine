@@ -84,6 +84,11 @@ output      reg_coverage            ${prefix}_regCoverage.txt
 output      reg_jaccard             ${prefix}_regJaccard.txt
 output      reg_dice                ${prefix}_regDice.txt
 
+output      xfm_affine              ${prefix}_SubjectToTemplate0GenericAffine.mat
+output      xfm_warp                ${prefix}_SubjectToTemplate1Warp.nii.gz
+output      ixfm_affine             ${prefix}_TemplateToSubject1GenericAffine.mat
+output      ixfm_warp               ${prefix}_TemplateToSubject0Warp.nii.gz
+
 final       struct                  ${prefix}_ExtractedBrain0N4
 
 << DICTIONARY
@@ -101,6 +106,12 @@ corticalThickness_std
 ctroot
    The base name of the path for all outputs of the ANTs Cortical
    Thickness pipeline.
+ixfm_affine
+   A matrix that defines an affine transformation from standard
+   space to anatomical space.
+ixfm_warp
+   A distortion field that defines a nonlinear diffeomorphic warp
+   from standard space to anatomical space.
 mask
    A spatial mask of binary values, indicating whether a voxel
    should be analysed as part of the brain. This is the output of
@@ -133,6 +144,12 @@ struct
 struct_std
    The subject's brain following normalisation to a standard or
    template space. This should not be processed as a derivative.
+xfm_affine
+   A matrix that defines an affine transformation from anatomical
+   space to standard space.
+xfm_warp
+   A distortion field that defines a nonlinear diffeomorphic warp
+   from anatomical space to standard space.
    
 DICTIONARY
 
