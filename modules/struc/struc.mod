@@ -6,7 +6,7 @@
 
 ###################################################################
 # SPECIFIC MODULE HEADER
-# This module preprocesses fMRI data.
+# This module performs basic structural data processing.
 ###################################################################
 mod_name_short=struc
 mod_name='STRUCTURAL PROCESSING MODULE'
@@ -25,38 +25,27 @@ source ${XCPEDIR}/core/parseArgsMod
 completion() {
    processed         preprocessed
    
-   write_derivative  meanIntensity
-   write_derivative  meanIntensityBrain
-   write_derivative  referenceVolume
-   write_derivative  referenceVolumeBrain
    write_derivative  mask
+   write_derivative  segmentation
+   write_derivative  biasCorrected
+   write_derivative  corticalThickness
+   write_derivative  corticalContrast
    
-   write_output      mcdir
-   write_output      rps
-   write_output      rel_rms
-   write_output      fd
-   write_output      tmask
+   write_output      meanIntensity
+   write_output      meanIntensityBrain
+   write_output      referenceVolume
+   write_output      referenceVolumeBrain
    
-   write_config_safe censor
-   if is_1D ${tmask[cxt]}
-      then
-      configure      censored       1
-      write_config   censored
-   fi
    if is_image ${referenceVolumeBrain[cxt]}
       then
       space_config   ${spaces[sub]}   ${space[sub]} \
                Map   ${referenceVolumeBrain[cxt]}
    fi
    
-   apply_exec        timeseries              ${prefix}_%NAME \
-      sys            ls %OUTPUT              >/dev/null
-   apply_exec        timeseries              ${prefix}_%NAME \
-      sys            write_derivative        %NAME
-   
-   quality_metric    relMeanRMSMotion        rel_mean_rms
-   quality_metric    relMaxRMSMotion         rel_max_rms
-   quality_metric    nFramesHighMotion       motion_vols
+   quality_metric    regCoverage            reg_coverage
+   quality_metric    regCrossCorr           reg_cross_corr
+   quality_metric    regJaccard             reg_jaccard
+   quality_metric    regDice                reg_dice
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -90,9 +79,10 @@ output      referenceVolume         ${prefix}_BrainSegmentation0N4.nii.gz
 output      referenceVolumeBrain    ${prefix}_ExtractedBrain0N4.nii.gz
 output      meanIntensity           ${prefix}_BrainSegmentation0N4.nii.gz
 output      meanIntensityBrain      ${prefix}_ExtractedBrain0N4.nii.gz
-
-configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
-configure   censored                0
+output      reg_cross_corr          ${prefix}_regCrossCorr.txt
+output      reg_coverage            ${prefix}_regCoverage.txt
+output      reg_jaccard             ${prefix}_regJaccard.txt
+output      reg_dice                ${prefix}_regDice.txt
 
 final       struct                  ${prefix}_ExtractedBrain0N4
 
@@ -119,6 +109,17 @@ meanIntensity,meanIntensityBrain
    For compatibility exporting to other modules.
 referenceVolume,referenceVolumeBrain
    For compatibility exporting to other modules.
+reg_coverage
+   The percentage of the template image that is covered by the
+   normalised anatomical image.
+reg_cross_corr
+   The spatial cross-correlation between the template image mask
+   and the normalised anatomical mask.
+reg_dice
+   The Dice coefficient between the template and anatomical image.
+reg_jaccard
+   The Jaccard coefficient between the template and anatomical
+   image.
 segmentation
    The deterministic (hard) segmentation of the brain into tissue
    classes.
@@ -300,7 +301,7 @@ while (( ${#rem} > 0 ))
          -bin \
          ${intermediate}_${cur}-upsample-edge.nii.gz
       exec_ants   ImageMath 3 ${intermediate}_${cur}-dist-from-edge.nii.gz \
-         MaurerDistance ${intermediate}_${cur}-upsample-edge.nii.gz
+         MaurerDistance ${intermediate}_${cur}-upsample-edge.nii.gz 1
       exec_fsl    fslmaths ${intermediate}_${cur}-dist-from-edge.nii.gz \
          -thr     .75 \
          -uthr    1.25 \
@@ -314,9 +315,10 @@ while (( ${#rem} > 0 ))
                         [wm]="white matter" )
       for class in "${!tissue_classes[@]}"
          do
+         class_val='struc_'${class}'_val['${cxt}']'
          exec_fsl    fslmaths ${intermediate}-upsample.nii.gz \
-            -thr     3 \
-            -uthr    3 \
+            -thr     ${!class_val} \
+            -uthr    ${!class_val} \
             -mul     ${intermediate}_${cur}-dist-from-edge-bin.nii.gz \
             -bin \
             ${intermediate}_${cur}-dist-from-edge-${class}.nii.gz
@@ -389,8 +391,6 @@ fi
 #  * If the expected output is present, move it to the target path.
 #  * If the expected output is absent, notify the user.
 ###################################################################
-apply_exec        timeseries              ${prefix}_%NAME \
-   fsl            imcp %INPUT %OUTPUT
 if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
