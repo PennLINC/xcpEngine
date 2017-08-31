@@ -1,11 +1,12 @@
 # new home directory for the XCP Engine
 
 ##### Change log
-v0.6.0 2017.08 (target)
+v0.6.0 2017.09 (target)
 * Operational modules (17): alff, benchmark, antsCT, confound, coreg, fcon, gmd, jlf, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
 * Internal-only modules (3): asl, dico, dti2xcp
 * Modules added (1): fcon
 * Modules assimilated (1): locreg (into confound)
+* A metadata system has been implemented for derivative neuroimages, parcellation schemes, and coordinate spaces.
 * Development for the XCP system is now easier. The generalised module header (and other cumbersome code) has been encapsulated in a new directory for core scripts, functions, and text blocks.
 * The code has been extensively rewritten. 
 
@@ -63,35 +64,3 @@ v0.2.0 and fixes (2015.10)
 v0.1.0 and fixes (2015.09)
 * Original RSPIPE deFEATed
 * major debugging
-
-##### devnotes
-
-Modules implemented or partially implemented
-* alff : computes amplitude of low-frequency fluctuations
-* aroma : ICA-AROMA-like denoising
-* confound : creates a matrix of global confound variables/nuisance regressors
-* coreg : computes coregistration of structural and functional images
-* locreg : generates localised confound variables/nuisance regressors
-* net : extracts an a priori network from 4D timeseries and computes basic network metrics
-* norm : moves all images from subject space into template space
-* prestats : encompasses numerous preprocessing strategies
-* regress : removes effects of global and local nuisance variables from data
-* reho : computes regional homogeneity
-* sca : seed-based correlation analysis
-
-Planned/in preparation:
-* astate : identifies activity states from network or 4D timeseries
-* concat : performs all future analyses on subject-concatenated images/nets
-* context : runs contextual connectivity pipeline on dynamic FC data
-* cspace : computes trajectories through connectomic or activity space
-* cstate : identifies connectivity states from dynamic FC
-* infomax : computes a data-driven network using the Infomax ICA algorithm
-* metacon : computes a metaconnectivity matrix from dynamic FC
-* mtd : dynamic FC using the multiplication of temporal derivatives
-* mtdregrec : alternative confound regression procedure with imputation
-* qavars : obtains variables related to data and analysis quality
-* sliwico : dynamic FC using sliding window correlations
-* streg : spatiotemporal regression for simple back-reconstruction
-* tica : temporal ICA on network timeseries to obtain TFMs
-* time : obtains a time-by-time adjacency matrix and computes basic metrics
-
