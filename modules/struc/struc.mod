@@ -337,9 +337,9 @@ while (( ${#rem} > 0 ))
       #############################################################
       if ! is_image ${segmentation[cxt]}
          then
-         for (( i=2; i<=${#priors[@]}; i++ ))
+         for i in ${!priors[@]}
             do
-            priors_include="${priors_include} -y ${i}"
+            (( i != 1 )) && priors_include="${priors_include} -y ${i}"
          done
          exec_ants   antsAtroposN4.sh                    \
             -d       3                                   \
@@ -367,7 +367,7 @@ while (( ${#rem} > 0 ))
          exec_ants   antsAtroposN4.sh                    \
             -d       3                                   \
             -b       ${struc_posterior_formulation[cxt]} \
-            -a       ${intermediate}_${cur}_Segmentation.nii.gz \
+            -a       ${intermediate}_${cur}_Segmentation0N4.nii.gz \
             -x       ${mask[cxt]}                        \
             -m       2                                   \
             -n       5                                   \
@@ -381,6 +381,27 @@ while (( ${#rem} > 0 ))
             ${label_propagation} \
             ${priors_include}    \
             -o       ${intermediate}_${cur}_
+         unset additional_images
+         for (( i=1; i<=${#anat[@]}; i++ ))
+            do
+            exec_fsl immv  ${intermediate}_${cur}_Segmentation${i}N4.nii.gz \
+                           ${outdir}/${prefix}_BrainSegmentation${i}N4.nii.gz
+            anat[i]=${outdir}/${prefix}_BrainSegmentation${i}N4.nii.gz
+            additional_images="${additional_images} ${anat[i]}"
+         done
+         for i in ${!priors[@]}
+            do
+            exec_fsl immv  ${intermediate}_${cur}_SegmentationPosteriors${i}.nii.gz \
+                           ${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
+         done
+         exec_sys    mv -f ${intermediate}_${cur}_SegmentationTiledMosaic.png \
+                           ${outdir}/${prefix}_BrainSegmentationTiledMosaic.png
+         exec_sys    mv -f ${intermediate}_${cur}_SegmentationConvergence.txt \
+                           ${outdir}/${prefix}_BrainSegmentationConvergence.txt
+         exec_fsl    immv  ${intermediate}_${cur}_Segmentation0N4.nii.gz \
+                           ${biasCorrected[cxt]}
+         exec_fsl    immv  ${intermediate}_${cur}_Segmentation.nii.gz \
+                           ${segmentation[cxt]}
       fi
       ;;
       
