@@ -114,7 +114,7 @@ for derivative in ${derivatives[@]}
    do
    derivative_parse        ${derivative}
    subroutine              @1.5  [${d[Name]}]
-   derivative              ${d[Name]}      ${prefix}_${d[Name]}Std
+   derivative_config       ${d[Name]}     Map      ${outdir}/${prefix}_${d[Name]}Std.nii.gz
    d_call=${d[Name]}'['${cxt}']'
    ################################################################
    # If the image is a mask, apply nearest neighbour interpolation
