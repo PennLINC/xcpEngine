@@ -376,7 +376,7 @@ if [[ ${confound_gsr[cxt]} != N ]]
       output   confmat                 ${prefix}_confmat.1D
    elif [[ ${confound_gsr[cxt]} ==  local ]]
       then
-      routine                 @4.4  "Including mean local signal in confound model."
+      subroutine              @4.4  "Including mean local signal in confound model."
       if ! is_image ${lmsLocal[cxt]} \
       || rerun
          then
@@ -397,7 +397,6 @@ if [[ ${confound_gsr[cxt]} != N ]]
          exec_fsl fslmaths ${lmsLocal[cxt]} \
             -mul  ${mask[sub]} \
             ${lmsLocal[cxt]}
-         routine_end
       fi
    fi
 fi
