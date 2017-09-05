@@ -9,6 +9,7 @@
 ###################################################################
 LIBRARY=${XCPEDIR}/core/functions
 
+source ${LIBRARY}/abort_stream
 source ${LIBRARY}/abspath
 source ${LIBRARY}/add_reference
 source ${LIBRARY}/apply_exec
