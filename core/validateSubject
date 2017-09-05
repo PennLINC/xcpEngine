@@ -5,29 +5,31 @@
 ###################################################################
 
 ###################################################################
-# Read the subject's log file to identify whether the subject
-# should be skipped or flagged.
+# Scan an index of subjects to determine whether any should be
+# removed from the current analysis due to pipeline failure.
 ###################################################################
-logfile=$1
-subjid=$2
+ERR_ROOT=${interm}/${analysis}-${xcp_date}
 
+failure_chk() {
+   local failures f fids
+   failures=$(ls ${ERR_ROOT}-* 2>/dev/null)
+   for f in ${failures}
+      do
+      f=${f//${ERR_ROOT}-/}
+      fids="${fids} ${f}"
+      unset ${cohort[f]}
+   done
+   if [[ -n ${fids} ]]
+      then
+      echo "
+· [Module failure occurred in a number of subjects. They have been]
+· [removed from further analysis.]"
+      for f in ${fids}
+         do
+         echo "· · [${prefix[f]} removed from analysis]"
+      done
+   fi
+   rm -f ${failures}
+}
 
-unset errortest qatest
-if [[ -e ${logfile} ]]
-   then
-   error_test=$(grep -i XCP-ERROR ${logfile})
-   qa_test=$(grep -i QA-EXCLUDE ${logfile})
-fi
-
-if [[ ! -z ${error_test} ]] || [[ ! -z ${qa_test} ]]
-   then
-   echo -e \
-   "
-   Skipping analysis for:
-   * ${subjid}
-   for the following reasons.
-   ${error_test}
-   ${qa_test}
-   "
-   exit 1
-fi
+failure_chk
