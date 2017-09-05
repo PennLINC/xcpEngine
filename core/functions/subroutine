@@ -1,10 +1,10 @@
 subroutine() {
-   local subroutine_id=${1}
+   signpost=${1}
    routine_map="${routine_map}
-· ${subroutine_id}"
+· ${signpost}"
    shift
    local subroutine_description="${@}"
-   verbose && local vid="${subroutine_id} "
+   verbose && local vid="${signpost} "
    if [[ -n ${subroutine_description} ]]
       then
       (>&2 echo "· ${vid}${subroutine_description}")
