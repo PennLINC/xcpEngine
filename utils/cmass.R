@@ -54,10 +54,7 @@ hdr            <- dumpNifti(roipath)
 xdim           <- hdr$pixdim[2]
 ydim           <- hdr$pixdim[3]
 zdim           <- hdr$pixdim[4]
-cat('SPACE::VOXEL::')
-cat(paste(xdim,ydim,zdim,sep=','))
-cat('::')
-cat(roipath,'\n')
+cat('SPACE::',roipath,'\n',sep='')
 for (i in 1:length(labs)) {
    voxelwise   <- which(net==labs[i], arr.ind=TRUE)
    cmass       <- apply(voxelwise,2,mean) - c(1,1,1)

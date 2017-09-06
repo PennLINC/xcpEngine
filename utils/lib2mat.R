@@ -27,7 +27,15 @@ option_list = list(
    make_option(c("-m", "--metric"), action="store", default='euclidean', type='character',
               help="Distance metric. Available options include: manhattan, 
                      euclidean [default], maximum, canberra, binary, 
-                     minkowski")
+                     minkowski"),
+   make_option(c("-r", "--rescale"), action="store", default='1,1,1', type='character',
+              help="Rescale values. This argument should be used if the seed
+                     library is declared in voxel space that is not 1mm
+                     isotropic. It should consist of three comma-separated
+                     numbers corresponding to the voxel dimensions in the
+                     x, y, and z directions. For instance, '-r 1,1,4' will
+                     result in rescaling of distances by 1 in the x and
+                     y directions and 4 in the z direction.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -36,19 +44,14 @@ if (is.na(opt$coors)) {
    cat('Use lib2mat.R -h for an expanded usage menu.\n')
    quit()
 }
-coorPath <- opt$coors
-metric <- opt$metric
-rescale <- NA
+coorPath          <- opt$coors
+metric            <- opt$metric
+rescale           <- opt$rescale
 
 ###################################################################
 # 1. Obtain the library's scaling factor if it is in voxel space.
 ###################################################################
-space <- readLines(coorPath)[grep('SPACE::',readLines(coorPath))]
-spaceType <- unlist(strsplit(space,':'))[3]
-if (spaceType == 'VOXEL') {
-   rescale <- strsplit(unlist(strsplit(space,':'))[5],',')
-   rescale <- as.numeric(unlist(rescale))
-}
+rescale <- as.numeric(unlist(strsplit(rescale,',')))
 
 ###################################################################
 # 2. Read in all coordinates, and rescale them if necessary.
