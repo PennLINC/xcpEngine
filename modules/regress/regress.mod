@@ -541,16 +541,11 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    exec_fsl immv ${processed} ${residualised[cxt]}
 else
    subroutine                 @0.3
-   echo \
-   "
-
-
-XCP-ERROR: Expected output not present.
-Expected: ${prefix}${buffer}
-Check the log to verify that processing
-completed as intended.
-"
-   exit 1
+   abort_stream \
+"Expected output not present.]
+[Expected: ${buffer}]
+[Check the log to verify that processing]
+[completed as intended."
 fi
 fi
 
