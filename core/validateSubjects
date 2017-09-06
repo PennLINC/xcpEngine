@@ -12,7 +12,7 @@
 failure_chk() {
    local ERR_ROOT failures f fids errdir
    errdir=${out_super}/group/tmp
-   [[   -n ${scratch} ]] && errdir=${scratch}
+   [[   -n ${scratch} ]] && errdir=${scratch//\-i /}
    [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
    ERR_ROOT=${errdir}/${analysis}-${xcp_date}
    failures=$(ls ${ERR_ROOT}-* 2>/dev/null)
@@ -20,7 +20,7 @@ failure_chk() {
       do
       f=${f//${ERR_ROOT}-/}
       fids="${fids} ${f}"
-      unset ${cohort[f]}
+      unset cohort[f]
    done
    if [[ -n ${fids} ]]
       then

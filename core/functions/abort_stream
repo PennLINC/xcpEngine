@@ -21,7 +21,7 @@ ${routine_map}
 
 ····································································
 · [An error occurred while processing module ${mod_name_short}.]
-· [The error was detected at signpost ${signpost}.]"
+· [The error was detected at signpost ${signpost}.]
 · [The most recent command logged was]
 · [${process_command}]
 · [For additional details, view the processing log. For improved]

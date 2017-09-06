@@ -122,7 +122,7 @@ if [[ -n ${scratch} ]]
    then
    mkdir -p ${scratch}
    intermediate=${scratch}/${prefix}-${mod_name_short}-$(date +%N)~TEMP~
-   intermediate=$(abspath ${intermediate})
+   intermediate=${intermediate//\/\//\/}
 else
    intermediate=${outdir}/${prefix}~TEMP~
 fi
