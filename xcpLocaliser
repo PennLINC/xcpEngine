@@ -52,6 +52,7 @@ subroutine                    @1.2  [Writing localised design]
 subroutine                    @1.3  [Evaluating subject variables]
    cat    ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT >> ${design[sub]}
    printx ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT  >> ${design[sub]}
+   echo   "out_super=$out_super"                >> ${design[sub]}
    echo   "sub=$sub"                            >> ${design[sub]}
    echo   "design[$sub]=${design[sub]}"         >> ${design[sub]}
    echo   "prefix[$sub]=${prefix[sub]}"         >> ${design[sub]}
@@ -141,7 +142,10 @@ routine_end
 ###################################################################
 routine                       @2    Localising image
 subroutine                    @2.1  [Verifying that images are present]
-source ${XCPEDIR}/core/imgChk
+if ! is_image ${img[sub]}
+   then
+   abort_stream "The primary analyte is not a valid image: ${img[sub]}"
+fi
 subroutine                    @2.2  [Conforming and localising image]
 source ${XCPEDIR}/core/imgLocalise
 routine_end
