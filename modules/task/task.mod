@@ -183,7 +183,7 @@ nvol=$(exec_fsl               fslval ${img} dim4)
 for l in "${!fsf_design[@]}"
    do
    line="${fsf_design[l]}"
-   [[ -z ${line} ]]           && continue
+   [[ -z $(echo ${line}) ]]   && continue
    
    chk_OUT=( "${line}"        'set fmri\(outputdir\)'       )
    chk_STD=( "${line}"        'set fmri\(regstandard\)'     )
