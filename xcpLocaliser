@@ -10,6 +10,7 @@
 # This module localises inputs to the XCP engine
 ###################################################################
 mod_name='XCP ENGINE LOCALISER'
+mod_name_short=localiser
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 cxt=0
 
