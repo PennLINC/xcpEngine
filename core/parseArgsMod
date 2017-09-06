@@ -55,10 +55,14 @@ shift $((OPTIND-1))
 # Ensure that the compulsory design[sub] variable has been defined
 # reasonably.
 ###################################################################
+[[ -z ${design[sub]} ]] && usage_flag=1
+###################################################################
+# Usage and exit
+###################################################################
 if (( ${usage_flag} == 1 ))
    then
    cat ${XCPEDIR}/core/USAGE_MOD
-   exit
+   exit 1
 fi
 ###################################################################
 # Set trace status, if applicable
@@ -79,14 +83,6 @@ case ${trace} in
    ;;
 esac
 ###################################################################
-# Usage and exit
-###################################################################
-if (( ${usage_flag} == 1 ))
-   then
-   cat ${XCPEDIR}/core/USAGE_MOD
-   exit 1
-fi
-###################################################################
 # Source the design file.
 ###################################################################
 source ${design[sub]}
@@ -94,12 +90,11 @@ design=${design[sub]}
 prefix=${prefix[sub]}
 out=${out[sub]}
 ###################################################################
-# Verify that all compulsory inputs are present.
+# Verify that the analyte image is present.
 ###################################################################
 if ! is_image ${out}/${prefix}.nii.gz
    then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
+   abort_stream "The primary analyte is not a valid image: ${out}/${prefix}.nii.gz"
 fi
 ###################################################################
 # Create the primary module output directory.
@@ -127,7 +122,7 @@ if [[ -n ${scratch} ]]
    then
    mkdir -p ${scratch}
    intermediate=${scratch}/${prefix}-${mod_name_short}-$(date +%N)~TEMP~
-   intermediate=${intermediate//\/\//\/}
+   intermediate=$(abspath ${intermediate})
 else
    intermediate=${outdir}/${prefix}~TEMP~
 fi
