@@ -227,13 +227,12 @@ printx         ${XCPEDIR}/core/CONSOLE_HEADER
 ###################################################################
 cxt=0
 level=subject
-sub=$(( 1 + idx_offset ))
-substart=${sub}
 module=LOCALISER
 unset       ids
 printx      ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT
-for subject in ${cohort[@]:substart}
+for sub in ${!cohort[@]}
    do
+   subject=${cohort[sub]}
    ################################################################
    # Run the localiser.
    ################################################################
@@ -255,7 +254,6 @@ for subject in ${cohort[@]:substart}
       cluster_submit ${mod_cmd}
       ;;
    esac
-   (( sub++ ))
 done
 ###################################################################
 # Wait for the localiser to run to completion. (cluster mode)
@@ -293,8 +291,8 @@ for module in ${modules[@]}
    if [[ -n ${modS} ]]
       then
       unset ids
-      sub=${substart}
-      for   subject in ${cohort[@]:substart}
+      source       ${XCPEDIR}/core/validateSubjects
+      for   sub in ${!cohort[@]}
          do
          ##########################################################
          # Before running the subject, verify that it has not
@@ -302,7 +300,6 @@ for module in ${modules[@]}
          # for quality reasons.
          ##########################################################
          logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
-         ${XCPEDIR}/core/validateSubject ${logfile} ${subject}
          (( $? == 1 )) && continue
          ##########################################################
          # Execute the current module.
@@ -321,7 +318,6 @@ for module in ${modules[@]}
             cluster_submit ${mod_cmd}
             ;;
          esac
-         (( sub++ ))
       done
       #############################################################
       # Wait for all subject-level routines to run to completion.
