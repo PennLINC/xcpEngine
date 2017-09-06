@@ -8,10 +8,13 @@
 # Scan an index of subjects to determine whether any should be
 # removed from the current analysis due to pipeline failure.
 ###################################################################
-ERR_ROOT=${interm}/${analysis}-${xcp_date}
 
 failure_chk() {
-   local failures f fids
+   local ERR_ROOT failures f fids errdir
+   errdir=${out_super}/group/tmp
+   [[   -n ${scratch} ]] && errdir=${scratch}
+   [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
+   ERR_ROOT=${errdir}/${analysis}-${xcp_date}
    failures=$(ls ${ERR_ROOT}-* 2>/dev/null)
    for f in ${failures}
       do

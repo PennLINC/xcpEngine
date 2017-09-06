@@ -1,4 +1,8 @@
 abort_stream() {
+   local errdir=${out_super}/group/tmp
+   [[   -n ${scratch} ]] && errdir=${scratch}
+   [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
+   ERR_ROOT=${errdir}/${analysis}-${xcp_date}
    local error="
 · [A major error has occurred.]
 · [The processing stream will now abort.]
@@ -23,7 +27,7 @@ ${routine_map}
 · [For additional details, view the processing log. For improved]
 · [diagnostics, increment verbosity using the -t option.]
 · []
-· []
+· [${@}]
 · []
 · [stream abort]
 ····································································
