@@ -32,6 +32,11 @@ option_list = list(
                   etc."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path"),
+   make_option(c("-x", "--mean"), action="store", default=NA, type='character',
+              help="Output mean image: If this option is set to a valid
+                  path, then the demeaning procedure will output the
+                  voxelwise fit of the constant term as the mean
+                  image."),
    make_option(c("-m", "--mask"), action="store", default=NA, type='character',
               help="Spatial mask indicating the voxels of the input image
                   for which the linear model should be computed."),
@@ -57,6 +62,7 @@ impath                  <- opt$img
 order                   <- opt$detrend
 maskpath                <- opt$mask
 outpath                 <- opt$out
+outmean                 <- opt$mean
 tmaskpath               <- opt$tmask
 sink("/dev/null")
 
@@ -116,6 +122,7 @@ regmat_censored         <- regmat[tmask,]
 # Iterate through all voxels
 ###################################################################
 img_dmdt                <- matrix(nrow=nvol,ncol=nvox)
+img_mean                <- matrix(nrow=1,   ncol=nvox)
 for (vox in 1:nvox) {
   ts                    <- img[,vox]
   
@@ -125,6 +132,7 @@ for (vox in 1:nvox) {
   #################################################################
   betas                 <- mldivide(regmat_censored,ts[tmask])
   dmdt                  <- t(betas) %*% t(regmat)
+  img_mean[,vox]        <- betas[1]
   
   #################################################################
   # 5. Detrend timeseries with respect to regressors
@@ -140,11 +148,20 @@ if (!is.na(maskpath)){
    for (i in 1:nvol) {
       out[,,,i][logmask]<- img_dmdt[i,]
    }
+   if (!is.na(outmean)){
+      omean             <- array(0,dim=dim(out)[1:3])
+      omean[logmask]    <- img_mean
+   }
 } else {
    for (i in 1:nvol) {
       out[out > -Inf]   <- t(img_dmdt)
    }
+   if (!is.na(outmean)){
+      omean             <- array(0,dim=dim(out)[1:3])
+      omean[omean>-Inf] <- img_mean
+   }
 }
 sink("/dev/null")
 writeNifti(out,outpath,template=impath,datatype='float')
+if(!is.na(outmean)) { writeNifti(omean,outmean,template=impath,datatype='float') }
 sink(NULL)
