@@ -43,11 +43,6 @@ completion() {
       configure      censored       1
       write_config   censored
    fi
-   if is_image ${referenceVolumeBrain[cxt]}
-      then
-      space_config   ${spaces[sub]}   ${space[sub]} \
-               Map   ${referenceVolumeBrain[cxt]}
-   fi
    
    apply_exec        timeseries              ${prefix}_%NAME \
       sys            ls %OUTPUT              >/dev/null
@@ -91,14 +86,8 @@ output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
 configure   censored                0
 
-if [[ -n    ${censor[sub]} ]]
-   then
-   configure   censor               ${censor[sub]}
-fi
-if [[ -n    ${censored[sub]} ]]
-   then
-   configure   censored             ${censored[sub]}
-fi
+input       censor
+input       censored
 
 final       preprocessed            ${prefix}_preprocessed
 
@@ -802,22 +791,12 @@ while (( ${#rem} > 0 ))
             # then a new mask can be computed quickly using
             # AFNI's 3dAutomask tool.
             #######################################################
-            if is_image ${mask[sub]}
+            assign image   mask[sub] \
+                or         mask[cxt] \
+                as         mask_dmdt
+            if is_image ${mask_dmdt}
                then
-               subroutine     @6.1a [Using previously determined mask]
-               mask_dmdt=${mask[sub]}
-            elif is_image ${mask[cxt]}
-               then
-               subroutine     @6.1b [Using mask from this preprocessing run]
-               mask_dmdt=${mask[cxt]}
-            else
-               subroutine     @6.2  [Generating a mask using 3dAutomask]
-               exec_afni \
-                  3dAutomask -prefix ${intermediate}_${cur}_mask.nii.gz \
-                  -dilate 3 \
-                  -q \
-                  ${intermediate}.nii.gz
-               mask_dmdt=${intermediate}_${cur}_mask.nii.gz
+               mask_dmdt="-m ${mask_dmdt}"
             fi
             #######################################################
             # If the user has requested iterative censoring of
@@ -831,14 +810,12 @@ while (( ${#rem} > 0 ))
             # points must be used in the linear model.
             #######################################################
             subroutine        @6.3
-            if is_1D ${tmask[cxt]} \
-            && [[ ${censor[cxt]} == iter ]]
+            if [[ ${censor[cxt]} == iter ]]
                then
-               subroutine     @6.3.1
-               tmask_dmdt=${tmask[cxt]}
-            else
-               subroutine     @6.3.2
-               tmask_dmdt=ones
+               assign 1dim    tmask[cxt] \
+                   otherwise  ones \
+                   as         tmask_dmdt
+               tmask_dmdt="-t ${tmask_dmdt}"
             fi
             #######################################################
             # AFNI's afni_proc.py pipeline uses a formula to
@@ -866,8 +843,9 @@ while (( ${#rem} > 0 ))
                dmdt.R \
                -d ${dmdt_order} \
                -i ${intermediate}.nii.gz \
-               -m ${mask_dmdt} \
-               -t ${tmask_dmdt} \
+               -x ${meanIntensityBrain[cxt]} \
+               ${mask_dmdt} \
+               ${tmask_dmdt} \
                -o ${intermediate}_${cur}.nii.gz
          fi
          intermediate=${intermediate}_${cur}
@@ -939,44 +917,28 @@ while (( ${#rem} > 0 ))
             # particularly well if the BOLD timeseries has already
             # been demeaned or detrended.
             #######################################################
-            if is_image ${mask[sub]}
+            assign image   mask[sub] \
+                or         mask[cxt] \
+                as         mask_spt
+            if is_image ${mask_spt}
                then
-               subroutine     @8.2
-               mask_spt=${mask[sub]}
-            elif is_image ${mask[cxt]}
-               then
-               subroutine     @8.3
-               mask_spt=${mask[cxt]}
-            else
                subroutine     @8.4  Generating a mask using 3dAutomask
-               exec_afni \
-                  3dAutomask -prefix ${intermediate}_${cur}_mask.nii.gz \
-                  -dilate 3 \
-                  -q \
-                  ${intermediate}.nii.gz
-               mask_spt=${intermediate}_${cur}_mask.nii.gz
+               mask_spt="-m ${mask_spt}"
             fi
             #######################################################
             # Prime the inputs to sfilter for SUSAN filtering
             #######################################################
             if [[ "${prestats_sptf[cxt]}" == susan ]]
                then
-               if is_image ${referenceVolumeBrain[sub]}
+               assign image   referenceVolumeBrain[sub]
+                   or         referenceVolumeBrain[cxt]
+                   or         referenceVolume[sub]
+                   or         referenceVolume[cxt]
+                   as         usan
+               if is_image ${usan}
                   then
                   subroutine  @8.5.1
-                  usan="-u ${referenceVolumeBrain[sub]}"
-               elif is_image ${referenceVolumeBrain[cxt]}
-                  then
-                  subroutine  @8.5.2
-                  usan="-u ${referenceVolumeBrain[cxt]}"
-               elif is_image ${referenceVolume[sub]}
-                  then
-                  subroutine  @8.5.3
-                  usan="-u ${referenceVolume[sub]}"
-               elif is_image ${referenceVolume[cxt]}
-                  then
-                  subroutine  @8.5.4
-                  usan="-u ${referenceVolume[cxt]}"
+                  usan="-u ${usan}"
                else
                   subroutine  @8.6a SUSAN requires a reference volume, and none
                   subroutine  @8.6b was located. Switching to UNIFORM smoothing.
@@ -998,7 +960,7 @@ while (( ${#rem} > 0 ))
                -o ${intermediate}_${cur}.nii.gz \
                -s ${prestats_sptf[cxt]} \
                -k ${prestats_smo[cxt]} \
-               -m ${mask_spt} \
+               ${mask_spt} \
                ${usan}
          fi
          intermediate=${intermediate}_${cur}
