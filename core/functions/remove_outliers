@@ -1,0 +1,82 @@
+remove_outliers() {
+
+<<USAGE
+
+This function is used to remove outlying values from a BOLD time
+series.
+
+remove_outliers   routine_signpost_tag                   \
+                  input_image_without_extension          \
+                  output_image_without_extension         \
+                  confound_matrix_input_path<optional>   \
+                  confound_matrix_output_path<optional>
+
+Despike intermediate.nii.gz, any derivative timeseries, and the
+confound matrix:
+routine           @2
+remove_outliers   @2                      \
+                  intermediate            \
+                  intermediate_despiked   \
+                  confmat.1D              \
+                  confmat_despiked.1D
+
+Despike intermediate.nii.gz and any derivative timeseries:
+remove_outliers   @2                      \
+                  intermediate            \
+                  intermediate_despiked
+
+USAGE
+
+   ################################################################
+   # INPUTS
+   ################################################################
+   local tag=${1}    # e.g., ${signpost}
+   local img_i=${2}  # e.g., ${intermediate}
+   local img_o=${3}  # e.g., ${intermediate}_${cur}
+   local con_i=${4}  # e.g., ${confproc[cxt]}
+   local con=${4}    # e.g., ${intermediate}_${cur}_confmat.1D
+   
+   ################################################################
+   # Despike all timeseries.
+   #---------------------------------------------------------------
+   # First, verify that this step has not already run to
+   # completion by searching for expected output.
+   ################################################################
+   if ! is_image ${img_o}.nii.gz \
+   || rerun
+      then
+      exec_sys rm -rf         ${img_o}.nii.gz
+      t_rep=$(exec_fsl fslval ${img_i}.nii.gz      pixdim4)
+      #############################################################
+      # Primary image
+      #############################################################
+      subroutine           ${tag}.1   [Executing despike: Primary analyte]
+      proc_afni   ${img_o}.nii.gz   \
+      3dDespike                     \
+         -prefix  %OUTPUT           \
+         -nomask  -quiet            \
+         -NEW     ${img_i}.nii.gz
+      #############################################################
+      # Derivatives
+      #############################################################
+      subroutine           ${tag}.2   [Executing despike: Derivative images]
+      apply_exec  timeseries  ${img_o}_%NAME  ECHO:Name \
+         afni     3dDespike         \
+         -prefix  %OUTPUT           \
+         -nomask  -quiet            \
+         -NEW     %INPUT
+      #############################################################
+      # Confound matrix
+      #############################################################
+      if is_1D ${con_i}
+         then
+         subroutine        ${tag}.3   [Executing despike: Confound matrix]
+         exec_xcp 1dDespike         \
+            -i    ${confproc[cxt]}  \
+            -x    ${img_i}_1dDespike \
+            -o    ${con_o}          \
+            -r    ${t_rep}          \
+            -n    -q
+      fi
+   fi
+}
