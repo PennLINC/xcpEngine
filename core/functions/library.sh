@@ -14,6 +14,7 @@ source ${LIBRARY}/abspath
 source ${LIBRARY}/add_reference
 source ${LIBRARY}/apply_exec
 source ${LIBRARY}/arithmetic
+source ${LIBRARY}/assign
 source ${LIBRARY}/atlas_add
 source ${LIBRARY}/atlas_config
 source ${LIBRARY}/atlas_parse
@@ -32,6 +33,7 @@ source ${LIBRARY}/exec_sys
 source ${LIBRARY}/exec_xcp
 source ${LIBRARY}/final
 source ${LIBRARY}/import_metadata
+source ${LIBRARY}/input
 source ${LIBRARY}/is_1D
 source ${LIBRARY}/is_image
 source ${LIBRARY}/is_integer
@@ -50,6 +52,7 @@ source ${LIBRARY}/proc_afni
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
 source ${LIBRARY}/quality_metric
+source ${LIBRARY}/require
 source ${LIBRARY}/rerun
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
