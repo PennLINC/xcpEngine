@@ -1,0 +1,119 @@
+demean_detrend() {
+
+<<USAGE
+
+This function demeans and optionally detrends a time series image.
+
+demean_detrend    --SIGNPOST=routine_signpost_tag                 \
+                  --ORDER=detrend_order                           \
+                  --INPUT=input_image_without_extension           \
+                  --OUTPUT=output_image_without_extension         \
+                  --CONFIN=confound_matrix_input_path<optional>   \
+                  --CONFOUT=confound_matrix_output_path<optional>
+
+USAGE
+
+   ################################################################
+   # INPUTS
+   ################################################################
+   local censor_dmdt con_i       con_o       demeaned_dmdt  \
+         img_i       img_o       mask_dmdt   mean_dmdt      \
+         nvol        order       tag         tmask_dmdt     \
+         trep
+   
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--SIGNPOST='  && tag=${1/--SIGNPOST=}
+      contains ${1} '^--ORDER='     && order=${1/--ORDER=}
+      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=}
+      contains ${1} '^--OUTPUT='    && img_o=${1/--OUTPUT=}
+      contains ${1} '^--CONFIN='    && con_i=${1/--CONFIN=}
+      contains ${1} '^--CONFOUT='   && con_o=${1/--CONFOUT=}
+      shift
+   done
+   
+   ################################################################
+   # Determine whether the image is already demeaned.
+   ################################################################
+   assign value   demeaned[sub] \
+       or         demeaned[cxt] \
+       as         demeaned_dmdt
+   if [[ ${demeaned_dmdt} == 1 ]]
+      then
+      subroutine        ${tag}.1
+      exec_sys ln -s ${img_i}.nii.gz   ${img_o}.nii.gz
+      exec_sys cp    ${con_i}          ${con_o} 2>/dev/null
+   elif ! is_image ${img_o} \
+   || rerun
+      then
+      #############################################################
+      # First, fetch a brain mask.
+      #############################################################
+      assign image   mask[sub] \
+          or         mask[cxt] \
+          as         mask_dmdt
+      if is_image ${mask_dmdt}
+         then
+         subroutine     ${tag}.2
+         mask_dmdt="-m  ${mask_dmdt}"
+      fi
+      #############################################################
+      # If the user has requested iterative censoring of motion-
+      # corrupted volumes, then the demean/detrend step should
+      # exclude the corrupted volumes from the linear model. In
+      # this case, a temporal mask is required for the
+      # demean/detrend step.
+      #
+      # If iterative censoring has not been specified or if no
+      # temporal mask exists yet, then all time points must be used
+      # in the linear model.
+      #############################################################
+      assign value   censor[sub] \
+          or         censor[cxt] \
+          as         censor_dmdt
+      if [[ ${censor_dmdt} == iter ]]
+         then
+         subroutine     ${tag}.3
+         assign 1dim    tmask[cxt] \
+             otherwise  ones       \
+             as         tmask_dmdt
+         tmask_dmdt="-t ${tmask_dmdt}"
+      fi
+      #############################################################
+      # Decide whether to obtain the mean intensity as output.
+      #############################################################
+      [[ -z ${meanIntensityBrain[cxt]} ]] && mean_dmdt="-x ${meanIntensityBrain[cxt]}"
+      #############################################################
+      # AFNI's afni_proc.py pipeline uses a formula to determine
+      # an appropriate order of polynomial detrend to apply to the
+      # data.
+      #
+      #        floor(1 + TR*nVOLS / 150)
+      #
+      # In summary, the detrend order is based upon the overall
+      # duration of the scan.
+      #############################################################
+      if ! is+integer ${order}
+         then
+         subroutine     ${tag}.4 [Estimating polynomial order]
+         nvol=$(exec_fsl fslnvols ${img_i}.nii.gz)
+         trep=$(exec_fsl fslval   ${img_i}.nii.gz pixdim4)
+         order=$(arithmetic 1 + ${trep}\*${nvol}/150)
+         order=$(strslice ${order} 1 '.')
+      fi
+      subroutine        ${tag}.5a   [Applying polynomial detrend]
+      subroutine        ${tag}.5b   [Order: ${order}]
+      exec_xcp dmdt.R            \
+         -d    ${order}          \
+         -i    ${img_i}.nii.gz   \
+         -o    ${img_o}.nii.gz   \
+         ${mean_dmdt}   ${mask_dmdt}   ${tmask_dmdt}
+      apply_exec        ${img_o}_%NAME \
+         xcp   dmdt.R            \
+         -d    ${order}          \
+         -i    ${img_i}.nii.gz   \
+         -o    %OUTPUT           \
+         ${mask_dmdt}   ${tmask_dmdt}
+      configure         demeaned    1
+   fi
+}
