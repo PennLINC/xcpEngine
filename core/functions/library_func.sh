@@ -9,7 +9,8 @@
 ###################################################################
 LIBRARY=${XCPEDIR}/core/functions
 
-source ${LIBRARY}/smooth_spatial
-source ${LIBRARY}/filter_temporal
 source ${LIBRARY}/demean_detrend
+source ${LIBRARY}/filter_temporal
 source ${LIBRARY}/remove_outliers
+source ${LIBRARY}/smooth_spatial
+source ${LIBRARY}/smooth_spatial_prime
