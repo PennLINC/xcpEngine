@@ -1,0 +1,9 @@
+require() {
+   local imported="${@: -1}"[${cxt}]
+   unset ${imported}
+   input "${@}"
+   if [[ -z ${!imported} ]]
+      then
+      abort_stream "Failed to import required variable: ${imported}"
+   fi
+}
