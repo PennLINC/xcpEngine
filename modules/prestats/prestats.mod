@@ -11,6 +11,7 @@
 mod_name_short=prestats
 mod_name='FMRI PREPROCESSING MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -88,6 +89,7 @@ configure   censored                0
 
 input       censor
 input       censored
+input       confmat as confproc
 
 final       preprocessed            ${prefix}_preprocessed
 
@@ -777,78 +779,14 @@ while (( ${#rem} > 0 ))
          # residuals of the model as the processed timeseries.
          ##########################################################
          routine              @6    Demeaning and detrending BOLD timeseries
-         if ! is_image ${intermediate}_${cur} \
-         || rerun
-            then
-            #######################################################
-            # DMT uses a utility R script called DMDT to compute
-            # the linear model residuals using ANTsR and pracma.
-            #
-            # A spatial mask of the brain is necessary
-            # for ANTsR to read in the image.
-            #
-            # If no mask has yet been computed for the subject,
-            # then a new mask can be computed quickly using
-            # AFNI's 3dAutomask tool.
-            #######################################################
-            assign image   mask[sub] \
-                or         mask[cxt] \
-                as         mask_dmdt
-            if is_image ${mask_dmdt}
-               then
-               mask_dmdt="-m ${mask_dmdt}"
-            fi
-            #######################################################
-            # If the user has requested iterative censoring of
-            # motion-corrupted volumes, then the demean/detrend
-            # step should exclude the corrupted volumes from the
-            # linear model. In this case, a temporal mask is
-            # required for the demean/detrend step.
-            #
-            # If iterative censoring has not been specified or
-            # if no temporal mask exists yet, then all time
-            # points must be used in the linear model.
-            #######################################################
-            subroutine        @6.3
-            if [[ ${censor[cxt]} == iter ]]
-               then
-               assign 1dim    tmask[cxt] \
-                   otherwise  ones \
-                   as         tmask_dmdt
-               tmask_dmdt="-t ${tmask_dmdt}"
-            fi
-            #######################################################
-            # AFNI's afni_proc.py pipeline uses a formula to
-            # automatically determine an appropriate order of
-            # polynomial detrend to apply to the data.
-            #
-            #        floor(1 + TR*nVOLS / 150)
-            #
-            # In summary, the detrend order is based upon the
-            # overall duration of the scan.
-            #######################################################
-            if ! is+integer ${prestats_dmdt[cxt]}
-               then
-               subroutine     @6.4  [Estimating polynomial order]
-               nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
-               trep=$(exec_fsl fslval   ${intermediate}.nii.gz pixdim4)
-               dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
-               dmdt_order=$(strslice ${dmdt_order} 1 '.')
-            else
-               dmdt_order=${prestats_dmdt[cxt]}
-            fi
-            subroutine        @6.5  [Applying polynomial detrend]
-            subroutine        @6.6  [Order: ${dmdt_order}]
-            exec_xcp \
-               dmdt.R \
-               -d ${dmdt_order} \
-               -i ${intermediate}.nii.gz \
-               -x ${meanIntensityBrain[cxt]} \
-               ${mask_dmdt} \
-               ${tmask_dmdt} \
-               -o ${intermediate}_${cur}.nii.gz
-         fi
+         demean_detrend       --SIGNPOST=${signpost}           \
+                              --ORDER=${prestats_dmdt[cxt]}    \
+                              --INPUT=${intermediate}          \
+                              --OUTPUT=${intermediate}_${cur}  \
+                              --CONFIN=${confproc[cxt]}        \
+                              --CONFOUT=${intermediate}_${cur}_confmat.1D
          intermediate=${intermediate}_${cur}
+         configure            confproc  ${intermediate}_confmat.1D
          routine_end
          ;;
       
@@ -863,20 +801,13 @@ while (( ${#rem} > 0 ))
          # interpolate over outlier epochs.
          ##########################################################
          routine              @7    Despiking BOLD timeseries
-         if ! is_image ${intermediate}_${cur}.nii.gz \
-         || rerun
-            then
-            subroutine        @7.1  [Executing despike]
-            exec_sys rm -rf ${intermediate}_${cur}.nii.gz
-            exec_afni \
-               3dDespike \
-               -prefix ${intermediate}_${cur}.nii.gz \
-               -nomask \
-               -quiet \
-               -NEW \
-               ${intermediate}.nii.gz
-         fi
+         remove_outliers      --SIGNPOST=${signpost}           \
+                              --INPUT=${intermediate}          \
+                              --OUTPUT=${intermediate}_${cur}  \
+                              --CONFIN=${confproc[cxt]}        \
+                              --CONFIN=${intermediate}_${cur}_confmat.1D
          intermediate=${intermediate}_${cur}
+         configure            confproc  ${intermediate}_confmat.1D
          routine_end
          ;;
       
@@ -891,79 +822,14 @@ while (( ${#rem} > 0 ))
          # number of other modules.
          ##########################################################
          routine              @8    Spatially filtering image
-         ##########################################################
-         # If no spatial filtering has been specified by the user,
-         # then bypass this step.
-         ##########################################################
-         if [[ ${prestats_sptf[cxt]} == none ]]
-            then
-            subroutine        @8.1
-            exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
-         ##########################################################
-         # Ensure that this step has not already run to completion
-         # by checking for the existence of a smoothed image.
-         ##########################################################
-         elif ! is_image ${intermediate}_${cur}.nii.gz \
-         || rerun
-            then
-            #######################################################
-            # Obtain the mask over which smoothing is to be applied
-            # Begin by searching for the subject mask; if this does
-            # not exist, then search for a mask created by this
-            # module.
-            #
-            # If prestats fails to find a mask, then generate one
-            # using AFNI's 3dAutomask utility. This may not work
-            # particularly well if the BOLD timeseries has already
-            # been demeaned or detrended.
-            #######################################################
-            assign image   mask[sub] \
-                or         mask[cxt] \
-                as         mask_spt
-            if is_image ${mask_spt}
-               then
-               subroutine     @8.4  Generating a mask using 3dAutomask
-               mask_spt="-m ${mask_spt}"
-            fi
-            #######################################################
-            # Prime the inputs to sfilter for SUSAN filtering
-            #######################################################
-            if [[ "${prestats_sptf[cxt]}" == susan ]]
-               then
-               assign image   referenceVolumeBrain[sub]
-                   or         referenceVolumeBrain[cxt]
-                   or         referenceVolume[sub]
-                   or         referenceVolume[cxt]
-                   as         usan
-               if is_image ${usan}
-                  then
-                  subroutine  @8.5.1
-                  usan="-u ${usan}"
-               else
-                  subroutine  @8.6a SUSAN requires a reference volume, and none
-                  subroutine  @8.6b was located. Switching to UNIFORM smoothing.
-                  ${prestats_sptf[cxt]}=uniform
-                  write_output   prestats_sptf
-               fi
-            fi
-            #######################################################
-            # Engage the sfilter routine to filter the image.
-            #  * This is essentially a wrapper around the three
-            #    implemented smoothing routines: gaussian, susan,
-            #    and uniform.
-            #######################################################
-            subroutine        @8.7a [Filter: ${prestats_sptf[cxt]}]
-            subroutine        @8.7b [Smoothing kernel: ${prestats_smo[cxt]} mm]
-            exec_xcp \
-               sfilter \
-               -i ${intermediate}.nii.gz \
-               -o ${intermediate}_${cur}.nii.gz \
-               -s ${prestats_sptf[cxt]} \
-               -k ${prestats_smo[cxt]} \
-               ${mask_spt} \
-               ${usan}
-         fi
+         smooth_spatial       --SIGNPOST=${signpost}           \
+                              --FILTER=${prestats_sptf[cxt]}   \
+                              --INPUT=${intermediate}          \
+                              --USAN=${prestats_usan[cxt]}     \
+                              --USPACE=${prestats_usan_space[cxt]}
+         smoothed='img_sm'${prestats_smo[cxt]}'['${cxt}']'
          intermediate=${intermediate}_${cur}
+         exec_fsl immv ${!smoothed} ${intermediate}.nii.gz
          routine_end
          ;;
       
@@ -984,203 +850,20 @@ while (( ${#rem} > 0 ))
          # genfilter to enable a wide array of filters.
          ##########################################################
          routine              @9    Temporally filtering image
-         ##########################################################
-         # If no temporal filtering has been specified by the user,
-         # then bypass this step.
-         ##########################################################
-         if [[ ${prestats_tmpf[cxt]} == none ]]
-            then
-            subroutine        @9.1
-            ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
-         elif ! is_image ${intermediate}_${cur} \
-         || rerun
-            then
-            #######################################################
-            # OBTAIN MASKS: SPATIAL
-            #######################################################
-            if is_image ${mask[sub]}
-               then
-               subroutine     @9.2.1
-               mask="-m ${mask[sub]}"
-            elif is_image ${mask[cxt]}
-               then
-               subroutine     @9.2.2
-               mask="-m ${mask[cxt]}"
-            else
-               subroutine     @9.3
-               mask=''
-            fi
-            #######################################################
-            # OBTAIN MASKS: TEMPORAL
-            #######################################################
-            censor_type=${censor[cxt]}
-            if is_1D ${tmask[sub]}
-               then
-               subroutine     @9.4.1
-               tmask_tmp=${tmask[sub]}
-            elif is_1D ${tmask[cxt]}
-               then
-               subroutine     @9.4.2
-               tmask_tmp=${tmask[cxt]}
-            else
-               subroutine     @9.5
-               tmask_tmp=ones
-               censor_type=none
-            fi
-            #######################################################
-            # Next, determine whether the user has enabled
-            # censoring of high-motion volumes in order to pass
-            # the most appropriate temporal mask to the child
-            # script.
-            #######################################################
-            if [[ ${censor_type} == iter ]] \
-            && [[ ${tmask_tmp} != ones ]]
-               then
-               subroutine     @9.6.1
-               tmask_tmp="-n ${tmask_tmp}"
-            elif [[ ${censor_type} == final ]] \
-            && [[ ${tmask_tmp} != ones ]]
-               then
-               subroutine     @9.6.2
-               tmask_tmp="-k ${tmask_tmp}"
-            else
-               subroutine     @9.7
-               unset tmask_tmp
-            fi
-            #######################################################
-            # DERIVATIVE IMAGES AND TIMESERIES
-            # Prime the index of derivative images, as well as
-            # any 1D timeseries (e.g. realignment parameters)
-            # that should be filtered so that they can be used in
-            # linear models without reintroducing the frequencies
-            # removed from the BOLD timeseries.
-            #######################################################
-            unset ts1d
-            #######################################################
-            # Realignment parameters...
-            #######################################################
-            if is_1D    ${rps[sub]}
-               then
-               subroutine     @9.8.1
-               ts1d="${ts1d}  realignment:${rps[sub]}"
-            elif is_1D  ${rps[cxt]}
-               then
-               subroutine     @9.8.2
-               ts1d="${ts1d}  realignment:${rps[cxt]}"
-            fi
-            #######################################################
-            # Relative RMS motion...
-            #######################################################
-            if is_1D    ${rel_rms[sub]}
-               then
-               subroutine     @9.9.1
-               ts1d="${ts1d}  rel_rms:${rel_rms[sub]}"
-            elif is_1D  ${rel_rms[cxt]}
-               then
-               subroutine     @9.9.2
-               ts1d="${ts1d}  rel_rms:${rel_rms[cxt]}"
-            fi
-            #######################################################
-            # Absolute RMS motion...
-            #######################################################
-            if is_1D    ${abs_rms[sub]}
-               then
-               subroutine     @9.10.1
-               ts1d="${ts1d} abs_rms:${abs_rms[sub]}"
-            elif is_1D  ${abs_rms[cxt]}
-               then
-               subroutine     @9.10.2
-               ts1d="${ts1d} abs_rms:${abs_rms[cxt]}"
-            fi
-            #######################################################
-            # Replace any whitespace characters in the 1D
-            # timeseries list with commas, and prepend the -l flag
-            # for input as an argument to tfilter
-            #######################################################
-            if [[ ! -z ${ts1d} ]]
-               then
-               subroutine     @9.11
-               ts1d=$(echo ${ts1d})
-               ts1d="-1 ${ts1d// /,}"
-            fi
-            #######################################################
-            # FILTER-SPECIFIC ARGUMENTS
-            # Next, set arguments specific to each filter class.
-            #######################################################
-            unset tf_order tf_direc tf_p_rip tf_s_rip
-            case ${prestats_tmpf[cxt]} in
-            butterworth)
-               subroutine     @9.12
-               tf_order="-r ${prestats_tmpf_order[cxt]}"
-               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
-               ;;
-            chebyshev1)
-               subroutine     @9.13
-               tf_order="-r ${prestats_tmpf_order[cxt]}"
-               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
-               tf_p_rip="-p ${prestats_tmpf_ripple[cxt]}"
-               ;;
-            chebyshev2)
-               subroutine     @9.14
-               tf_order="-r ${prestats_tmpf_order[cxt]}"
-               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
-               tf_s_rip="-s ${prestats_tmpf_ripple2[cxt]}"
-               ;;
-            elliptic)
-               subroutine     @9.15
-               tf_order="-r ${prestats_tmpf_order[cxt]}"
-               tf_direc="-d ${prestats_tmpf_pass[cxt]}"
-               tf_p_rip="-p ${prestats_tmpf_ripple[cxt]}"
-               tf_s_rip="-s ${prestats_tmpf_ripple2[cxt]}"
-               ;;
-            esac
-            #######################################################
-            # Engage the tfilter routine to filter the image.
-            #  * This is essentially a wrapper around the three
-            #    implemented filtering routines: fslmaths,
-            #    3dBandpass, and genfilter
-            #######################################################
-            subroutine        @9.17a   ${prestats_tmpf[cxt]} filter
-            subroutine        @9.17b   High pass frequency: ${prestats_hipass[cxt]}
-            subroutine        @9.17c   Low pass frequency: ${prestats_lopass[cxt]}
-            exec_xcp \
-               tfilter \
-               -i ${intermediate}.nii.gz \
-               -o ${intermediate}_${cur}.nii.gz \
-               -f ${prestats_tmpf[cxt]} \
-               -h ${prestats_hipass[cxt]} \
-               -l ${prestats_lopass[cxt]} \
-               ${mask}     ${tmask_tmp}   ${tf_order} ${tf_direc} \
-               ${tf_p_rip} ${tf_s_rip}    ${ts1d}
-            apply_exec  timeseries  ${intermediate}_${cur}_%NAME \
-               xcp tfilter \
-               -i %INPUT \
-               -o %OUTPUT \
-               -f ${prestats_tmpf[cxt]} \
-               -h ${prestats_hipass[cxt]} \
-               -l ${prestats_lopass[cxt]} \
-               ${mask}     ${tmask_tmp}   ${tf_order} ${tf_direc} \
-               ${tf_p_rip} ${tf_s_rip}
-            #######################################################
-            # Move outputs to target
-            #######################################################
-            is_1D ${intermediate}_${cur}_realignment.1D \
-            && mv -f ${intermediate}_${cur}_realignment.1D \
-               ${rps[cxt]}
-            is_1D ${intermediate}_${cur}_abs_rms.1D \
-            && mv -f ${intermediate}_${cur}_abs_rms.1D \
-               ${absrms[cxt]}
-            is_1D ${intermediate}_${cur}_rel_rms.1D \
-            && mv -f ${intermediate}_${cur}_rel_rms.1D \
-               ${relrms[cxt]}
-            is_1D ${intermediate}_${cur}_tmask.1D \
-            && mv -f ${intermediate}_${cur}_tmask.1D \
-               ${tmask[cxt]}
-         fi
-         ##########################################################
-         # Update image pointer
-         ##########################################################
+         filter_temporal      --SIGNPOST=${signpost}              \
+                              --FILTER=${prestats_tmpf[cxt]}      \
+                              --INPUT=${intermediate}             \
+                              --OUTPUT=${intermediate}_${cur}     \
+                              --CONFIN=${confproc[cxt]}           \
+                              --CONFOUT=${intermediate}_${cur}_confmat.1D \
+                              --HIPASS=${prestats_hipass[cxt]}    \
+                              --LOPASS=${prestats_lopass[cxt]}    \
+                              --ORDER=${prestats_tmpf_order[cxt]} \
+                              --DIRECTIONS=${prestats_tmpf_pass[cxt]} \
+                              --RIPPLE_PASS=${prestats_tmpf_ripple[cxt]} \
+                              --RIPPLE_STOP=${prestats_tmpf_ripple2[cxt]}
          intermediate=${intermediate}_${cur}
+         configure            confproc  ${intermediate}_confmat.1D
          routine_end
          ;;
 
@@ -1200,8 +883,8 @@ while (( ${#rem} > 0 ))
          subroutine           @10.1 [Selecting reference volume]
          nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
          midpt=$(( ${nvol} / 2))
-         exec_fsl \
-            fslroi   ${intermediate}.nii.gz \
+         exec_fsl fslroi            \
+            ${intermediate}.nii.gz  \
             ${referenceVolume[cxt]} \
             ${midpt} 1
          subroutine           @10.2 [Computing mean volume]
