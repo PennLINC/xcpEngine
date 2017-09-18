@@ -1,7 +1,10 @@
 assign() {
    local input input_try type
-   type=${1}
-   shift
+   [[ ${1} == image ]] && type=${1} && shift
+   [[ ${1} == 1dim  ]] && type=${1} && shift
+   [[ ${1} == files ]] && type=${1} && shift
+   [[ ${1} == value ]] && type=${1} && shift
+   [[ -z ${type}    ]] && type=value
    while (( $# > 0 ))
       do
       if [[ -z ${input} ]]
