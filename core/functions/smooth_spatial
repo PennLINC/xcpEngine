@@ -47,6 +47,11 @@ USAGE
    done
    
    ################################################################
+   # INITIALISE OUTPUT VARIABLE
+   ################################################################
+   kernels=${img}'#0'
+   
+   ################################################################
    # (1)
    # Obtain the mask over which smoothing is to be applied. Begin
    # by searching for the subject mask; if this does not exist,
@@ -77,10 +82,10 @@ USAGE
       if is_image ${usan}
          then
          subroutine              ${tag}.3  Warping USAN
-         warpspace               \
-            ${usan} \
+         warpspace                     \
+            ${usan}                    \
             ${intermediate}usan.nii.gz \
-            ${uspace}:${space} \
+            ${uspace}:${space}         \
             NearestNeighbor
          FUNC_SPATIAL_usan="-u ${intermediate}usan.nii.gz"
          FUNC_SPATIAL_hardseg=-h
@@ -90,10 +95,10 @@ USAGE
       #    prevent a catastrophe.
       #############################################################
       else
-         assign image   referenceVolumeBrain[sub]
-             or         referenceVolumeBrain[cxt]
-             or         referenceVolume[sub]
-             or         referenceVolume[cxt]
+         assign image   referenceVolumeBrain[sub]  \
+             or         referenceVolumeBrain[cxt]  \
+             or         referenceVolume[sub]       \
+             or         referenceVolume[cxt]       \
              as         usan
          if is_image ${usan}
             then
@@ -115,38 +120,60 @@ USAGE
    for k in ${kernel[cxt]}
       do
       subroutine                 ${tag}.6
-      smoothed='img_sm'${k}'['${cxt}']'
-      #############################################################
-      # If no spatial filtering has been specified by the user,
-      # then bypass this step.
-      #############################################################
-      if [[ ${!sptf} == none ]] \
-      || (( ${k}    == 0 ))
+      sm_sub=img_sm${k}[$sub]
+      sm_mod=img_sm${k}[$cxt]
+      ################################################################
+      # Determine whether an image with the specified smoothing kernel
+      # already exists
+      ################################################################
+      if is_image ${!sm_sub}
          then
-         subroutine              ${tag}.7
+         subroutine              ${tag}.7a
+         kernels="${kernels} ${!sm_sub}#${k}"
+      elif is_image ${!sm_mod} \
+      && ! rerun
+         then
+         subroutine              ${tag}.7b
+         kernels="${kernels} ${!sm_mod}#${k}"
+      ################################################################
+      # If no spatial filtering has been specified by the user, then
+      # bypass this step.
+      ################################################################
+      elif [[ ${alff_sptf[cxt]} == none ]]
+         then
+         subroutine              ${tag}.8
+         kernels=${img}#0
          break
+      elif (( ${k} == 0 ))
+         then
+         subroutine              ${tag}.9
       else
-         subroutine              ${tag}.8a [Filter: ${!sptf}]
-         subroutine              ${tag}.8b [Smoothing kernel: ${k} mm]
+         subroutine              ${tag}.10a [Filter: ${!sptf}]
+         subroutine              ${tag}.10b [Smoothing kernel: ${k} mm]
          ##########################################################
          # Ensure that this step has not already run to completion
          # by checking for the existence of a smoothed image.
          # First, obtain the mask for filtering. Then, engage the
          # sfilter routine.
          ##########################################################
-         if ! is_image ${!smoothed} \
+         if ! is_image ${!sm_mod} \
          || rerun
             then
-            subroutine           ${tag}.9
+            subroutine           ${tag}.11
             exec_xcp sfilter        \
-               -i    ${img_i}       \
-               -o    ${!smoothed}   \
+               -i    ${img_i}.nii.gz\
+               -o    ${!sm_mod}   \
                -s    ${!sptf}       \
                -k    ${k}           \
                ${mask_sptf}         \
                ${FUNC_SPATIAL_usan} \
                ${FUNC_SPATIAL_hardseg}
          fi
+         ##########################################################
+         # Append the current kernel and smoothed image to the
+         # list.
+         ##########################################################
+         kernels="${kernels} ${!sm_mod}#${k}"
       fi
    done
 
