@@ -101,6 +101,9 @@ USAGE
          order=$(arithmetic 1 + ${trep}\*${nvol}/150)
          order=$(strslice ${order} 1 '.')
       fi
+      #############################################################
+      # Apply detrend: primary analyte
+      #############################################################
       subroutine        ${tag}.5a   [Applying polynomial detrend]
       subroutine        ${tag}.5b   [Order: ${order}]
       exec_xcp dmdt.R            \
@@ -108,12 +111,27 @@ USAGE
          -i    ${img_i}.nii.gz   \
          -o    ${img_o}.nii.gz   \
          ${mean_dmdt}   ${mask_dmdt}   ${tmask_dmdt}
+      #############################################################
+      # Apply detrend: Derivatives
+      #############################################################
       apply_exec        ${img_o}_%NAME \
          xcp   dmdt.R            \
          -d    ${order}          \
          -i    ${img_i}.nii.gz   \
          -o    %OUTPUT           \
          ${mask_dmdt}   ${tmask_dmdt}
+      #############################################################
+      # Apply detrend: Confound matrix
+      #############################################################
+      if is_1D ${con_i}
+         then
+         subroutine     ${tag}.6   [Executing detrend: Confound matrix]
+         exec_xcp 1dDMDT.R          \
+            -i    ${con_i}  \
+            -d    ${order}          \
+            -o    ${con_o}          \
+            ${tmask_dmdt}
+      fi
       configure         demeaned    1
    fi
 }
