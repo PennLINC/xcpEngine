@@ -65,8 +65,8 @@ USAGE
    if [[ ${!tmpf} == none ]]
       then
       subroutine           ${tag}.1
-      exec_sys ln -s ${img_i}.nii.gz   ${img_o}.nii.gz
-      exec_sys cp    ${con_i}          ${con_o} 2>/dev/null
+      exec_sys ln -sf ${img_i}.nii.gz   ${img_o}.nii.gz
+      exec_sys cp     ${con_i}          ${con_o} 2>/dev/null
    ################################################################
    # Ensure that this step has not already run to completion by
    # checking for the existence of a filtered image and confound
@@ -127,6 +127,8 @@ No censoring will be performed."
          configure            censor   none
          write_output         censor
          unset tmask_tmpf
+      else
+         unset tmask_tmpf
       fi
       #############################################################
       # DERIVATIVE IMAGES AND TIMESERIES
@@ -175,8 +177,10 @@ No censoring will be performed."
          if is_1D    ${abs_rms_tmpf}
             then
             subroutine     ${tag}.7.3
-            ts1d="${ts1d} abs_rms:${abs_rms_tmpf}"
+            ts1d="${ts1d}  abs_rms:${abs_rms_tmpf}"
          fi
+         ts1d=$(echo ${ts1d})
+         ts1d="-1 ${ts1d// /,}"
       fi
       #############################################################
       # FILTER-SPECIFIC ARGUMENTS
@@ -216,15 +220,15 @@ No censoring will be performed."
       #    implemented filtering routines: fslmaths, 3dBandpass,
       #    and genfilter
       #############################################################
-      subroutine           ${tag}.12a  [${!tmpf} filter]
+      subroutine           ${tag}.12a  [${tmpf} filter]
       subroutine           ${tag}.12b  [High pass frequency: ${tmpf_hipass}]
       subroutine           ${tag}.12c  [Low pass frequency: ${tmpf_lopass}]
       exec_xcp tfilter \
          -i    ${img_i}.nii.gz \
          -o    ${img_o}.nii.gz \
          -f    ${tmpf} \
-         -h    ${tmpf_hipass} \
-         -l    ${tmpf_lopass} \
+         -h    ${hipass} \
+         -l    ${lopass} \
          ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \
          ${tf_p_rip}    ${tf_s_rip}    ${ts1d}
       apply_exec        timeseries     ${img_o}_%NAME \
@@ -232,8 +236,8 @@ No censoring will be performed."
          -i    %INPUT \
          -o    %OUTPUT \
          -f    ${tmpf} \
-         -h    ${tmpf_hipass} \
-         -l    ${tmpf_lopass} \
+         -h    ${hipass} \
+         -l    ${lopass} \
          ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \
          ${tf_p_rip}    ${tf_s_rip}
       #############################################################
