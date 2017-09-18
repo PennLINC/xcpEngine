@@ -124,6 +124,7 @@ USAGE
       || (( ${k}    == 0 ))
          then
          subroutine              ${tag}.7
+         break
       else
          subroutine              ${tag}.8a [Filter: ${!sptf}]
          subroutine              ${tag}.8b [Smoothing kernel: ${k} mm]
