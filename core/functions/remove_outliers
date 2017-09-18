@@ -5,36 +5,42 @@ remove_outliers() {
 This function is used to remove outlying values from a BOLD time
 series.
 
-remove_outliers   routine_signpost_tag                   \
-                  input_image_without_extension          \
-                  output_image_without_extension         \
-                  confound_matrix_input_path<optional>   \
-                  confound_matrix_output_path<optional>
+remove_outliers   --SIGNPOST=routine_signpost_tag                 \
+                  --INPUT=input_image_without_extension           \
+                  --OUTPUT=output_image_without_extension         \
+                  --CONFIN=confound_matrix_input_path<optional>   \
+                  --CONFOUT=confound_matrix_output_path<optional>
 
 Despike intermediate.nii.gz, any derivative timeseries, and the
 confound matrix:
 routine           @2
-remove_outliers   @2                      \
-                  intermediate            \
-                  intermediate_despiked   \
-                  confmat.1D              \
-                  confmat_despiked.1D
+remove_outliers   --SIGNPOST=@2                   \
+                  --INPUT=intermediate            \
+                  --OUTPUT=intermediate_despiked  \
+                  --CONFIN=confmat.1D             \
+                  --CONFOUT=confmat_despiked.1D
 
 Despike intermediate.nii.gz and any derivative timeseries:
-remove_outliers   @2                      \
-                  intermediate            \
-                  intermediate_despiked
+remove_outliers   --SIGNPOST=@2                   \
+                  --INPUT=intermediate            \
+                  --OUTPUT=intermediate_despiked
 
 USAGE
 
    ################################################################
    # INPUTS
    ################################################################
-   local tag=${1}    # e.g., ${signpost}
-   local img_i=${2}  # e.g., ${intermediate}
-   local img_o=${3}  # e.g., ${intermediate}_${cur}
-   local con_i=${4}  # e.g., ${confproc[cxt]}
-   local con=${4}    # e.g., ${intermediate}_${cur}_confmat.1D
+   local con_i       con_o       img_i       img_o       tag
+   
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--SIGNPOST='  && tag=${1/--SIGNPOST=}
+      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=}
+      contains ${1} '^--OUTPUT='    && img_o=${1/--OUTPUT=}
+      contains ${1} '^--CONFIN='    && con_i=${1/--CONFIN=}
+      contains ${1} '^--CONFOUT='   && con_o=${1/--CONFOUT=}
+      shift
+   done
    
    ################################################################
    # Despike all timeseries.
