@@ -60,8 +60,8 @@ output      n_volumes_censored      ${prefix}_nVolumesCensored.txt
 output      tmask                   ${prefix}_tmask.1D
 output      uncensored              ${prefix}_uncensored.nii.gz
 
-configure   confproc                ${confmat[sub]}
-configure   censor                  ${censor[sub]}
+input       confmat as confproc
+input       censor
 
 smooth_spatial_prime                ${regress_smo[cxt]}
 
@@ -389,7 +389,7 @@ fi
 routine                       @6    Spatially filtering image
 smooth_spatial                --SIGNPOST=${signpost}              \
                               --FILTER=regress_sptf[$cxt]         \
-                              --INPUT=${intermediate}             \
+                              --INPUT=${residualised[cxt]//.nii.gz}\
                               --USAN=${regress_usan[cxt]}         \
                               --USPACE=${regress_usan_space[cxt]}
 routine_end

@@ -84,6 +84,7 @@ output      rmat                    mc/${prefix}.mat
 output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
+output      confmat                 ${prefix}_confmat.1D
 
 configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
 configure   censored                0
@@ -112,6 +113,10 @@ censor
 censored
    A variable that specifies whether censoring has been primed in
    the current module.
+confmat
+   The confound matrix after filtering and censoring.
+confproc
+   A pointer to the working version of the confound matrix.
 fd
    Framewise displacement values, computed as the absolute sum of
    realignment parameter first derivatives.
