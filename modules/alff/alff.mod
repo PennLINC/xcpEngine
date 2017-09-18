@@ -14,6 +14,7 @@
 mod_name_short=alff
 mod_name='AMPLITUDE OF LOW-FREQUENCY FLUCTUATIONS MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -51,18 +52,10 @@ completion() {
 derivative  alff                    ${prefix}_alff
 derivative  alffZ                   ${prefix}_alffZ
 
-configure   kernel                  ${alff_smo[cxt]//,/ }
-
-for k in ${kernel[cxt]}
-   do
-   derivative        alff_sm${k}    ${prefix}_alff_sm${k}
-   derivative        alffZ_sm${k}   ${prefix}_alffZ_sm${k}
-   derivative        img_sm${k}     ${prefix}_sm${k}
-   derivative_config img_sm${k}     Type     timeseries
-done
-
 derivative_config    alff           Statistic         mean
 derivative_config    alffZ          Statistic         mean
+
+smooth_spatial_prime ${alff_smo[cxt]//,/ }            alff alffZ
 
 add_reference        referenceVolume[$sub]   ${prefix}_referenceVolume
 
@@ -96,111 +89,11 @@ DICTIONARY
 # Start a list of kernels and smoothed images.
 ###################################################################
 routine                       @1    Spatially filtering image
-kernels=${img}'#0'
-for k in ${kernel[cxt]}
-   do
-   sm_sub=img_sm${k}[$sub]
-   sm_mod=img_sm${k}[$cxt]
-   ################################################################
-   # Determine whether an image with the specified smoothing kernel
-   # already exists
-   ################################################################
-   if is_image ${!sm_sub}
-      then
-      subroutine              @1.1a
-      kernels="${kernels} ${!sm_sub}#${k}"
-   elif is_image ${!sm_mod} \
-   && ! rerun
-      then
-      subroutine              @1.1b
-      kernels="${kernels} ${!sm_mod}#${k}"
-   ################################################################
-   # If no spatial filtering has been specified by the user, then
-   # bypass this step.
-   ################################################################
-   elif [[ ${alff_sptf[cxt]} == none ]]
-      then
-      subroutine              @1.2
-      kernels=${img}
-      break
-   elif (( ${k} == 0 ))
-      then
-      subroutine              @1.3
-   else
-      subroutine              @1.4a Filter: ${alff_sptf[cxt]}
-      subroutine              @1.4b Smoothing kernel: ${k} mm
-      #############################################################
-      # Obtain the mask over which smoothing is to be applied.
-      # Begin by searching for the subject mask; if this does
-      # not exist, then search for a mask created by this
-      # module.
-      #############################################################
-      if is_image ${mask[sub]}
-         then
-         subroutine           @1.5
-         mask=${mask[sub]}
-      else
-         subroutine           @1.6b Generating a mask using 3dAutomask
-         exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
-            -dilate 3 \
-            -q \
-            ${img}
-         mask=${intermediate}_fmask.nii.gz
-      fi
-      #############################################################
-      # Prime the inputs to sfilter for SUSAN filtering
-      #############################################################
-      if [[ ${alff_sptf[cxt]} == susan ]] \
-      && [[ -z ${usan} ]]
-         then
-         if is_image ${alff_usan[cxt]}
-            then
-            subroutine        @1.7  Warping USAN
-            warpspace \
-               ${alff_usan[cxt]} \
-               ${intermediate}usan.nii.gz \
-               ${alff_usan_space[cxt]}:${space[sub]} \
-               NearestNeighbor
-            usan="-u ${intermediate}usan.nii.gz"
-            hardseg=-h
-         ##########################################################
-         # Ensure that an example functional image exists.
-         #  * If it does not, then you are probably doing
-         #    something stupid.
-         #  * In this case, force a switch to uniform
-         #    smoothing to mitigate the catastrophe.
-         ##########################################################
-         elif is_image ${referenceVolumeBrain[sub]}
-            then
-            subroutine        @1.8
-            usan="-u ${referenceVolumeBrain[sub]}"
-         else
-            subroutine        @1.9a No appropriate USAN: reconfiguring pipeline
-            subroutine        @1.9b to smooth to uniformity instead
-            configure               alff_sptf   uniform
-            write_config            alff_sptf
-         fi
-      fi
-      #############################################################
-      # Engage the sfilter routine to filter the image.
-      #  * This is essentially a wrapper around the three
-      #    implemented smoothing routines: gaussian, susan,
-      #    and uniform.
-      #############################################################
-      subroutine              @1.10
-      exec_xcp sfilter \
-         -i    ${img} \
-         -o    ${!sm_mod} \
-         -s    ${alff_sptf[cxt]} \
-         -k    ${alff_smo[cxt]} \
-         -m    ${mask} \
-         ${usan} ${hardseg}
-      #############################################################
-      # Append the current kernel and smoothed image to the list.
-      #############################################################
-      kernels="${kernels} ${!sm_mod}#${k}"
-   fi
-done
+smooth_spatial                --SIGNPOST=${signpost}              \
+                              --FILTER=${alff_sptf[cxt]}          \
+                              --INPUT=${img}                      \
+                              --USAN=${alff_usan[cxt]}            \
+                              --USPACE=${alff_usan_space[cxt]}
 routine_end
 
 
