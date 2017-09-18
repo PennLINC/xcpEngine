@@ -12,7 +12,7 @@ assign() {
             is_image ${!input_try} && input=${!input_try}
             ;;
          1dim)
-            is_1d ${!input_try} && input=${!input_try}
+            is_1D ${!input_try} && input=${!input_try}
             ;;
          files)
             [[ -s ${!input_try} ]] && input=${!input_try}
