@@ -11,6 +11,7 @@
 mod_name_short=regress
 mod_name='CONFOUND REGRESSION MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -61,13 +62,8 @@ output      uncensored              ${prefix}_uncensored.nii.gz
 
 configure   confproc                ${confmat[sub]}
 configure   censor                  ${censor[sub]}
-configure   kernel                  ${regress_smo[cxt]//,/ }
 
-for k in ${kernel[cxt]}
-   do
-   derivative        img_sm${k}     ${prefix}_img_sm${k}
-   derivative_config img_sm${k}     Type     timeseries
-done
+smooth_spatial_prime                ${regress_smo[cxt]}
 
 process     residualised            ${prefix}_residualised
 
@@ -119,7 +115,7 @@ DICTIONARY
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
 # already complete; it becomes the expected ending for the final
-# image name and is used to verify that prestats has completed
+# image name and is used to verify that regression has completed
 # successfully.
 ###################################################################
 if ! is_image ${residualised[cxt]} \
@@ -162,43 +158,11 @@ while (( ${#rem} > 0 ))
       #  * Global regressors
       #############################################################
       routine                 @1    Despiking BOLD timeseries
-      #############################################################
-      # First, verify that this step has not already run to
-      # completion by searching for expected output.
-      #############################################################
-      if ! is_image ${intermediate}_${cur}.nii.gz \
-      || rerun
-         then
-         exec_sys rm -rf         ${intermediate}_${cur}.nii.gz
-         t_rep=$(exec_fsl fslval ${intermediate}      pixdim4)
-         ##########################################################
-         # Primary image
-         ##########################################################
-         subroutine           @1.1  Primary analyte image
-         exec_afni   3dDespike \
-            -prefix  ${intermediate}_${cur}.nii.gz \
-            -nomask  -quiet \
-            -NEW     ${intermediate}.nii.gz
-         ##########################################################
-         # Derivatives
-         ##########################################################
-         subroutine           @1.2
-         apply_exec  timeseries  ${intermediate}_%NAME_${cur}  ECHO:Name \
-            afni     3dDespike \
-            -prefix  %OUTPUT \
-            -nomask  -quiet \
-            -NEW     %INPUT
-         ##########################################################
-         # Confound matrix
-         ##########################################################
-         subroutine           @1.3
-         exec_xcp 1dDespike \
-            -i    ${confproc[cxt]} \
-            -x    ${intermediate}_1dDespike \
-            -o    ${intermediate}_${cur}_confmat.1D \
-            -r    ${t_rep} \
-            -n    -q
-      fi
+      remove_outliers         --SIGNPOST=${signpost}              \
+                              --INPUT=${intermediate}             \
+                              --OUTPUT=${intermediate}_${cur}     \
+                              --CONFIN=${confproc[cxt]}           \
+                              --CONFOUT=${intermediate}_${cur}_confmat.1D
       #############################################################
       # Update image pointers
       #############################################################
@@ -221,154 +185,18 @@ while (( ${#rem} > 0 ))
       # the confound matrix.
       #############################################################
       routine                 @2    Temporally filtering image and confounds
-      #############################################################
-      # If no temporal filtering has been specified by the user,
-      # then bypass this step.
-      #############################################################
-      if [[ ${regress_tmpf[cxt]} == none ]]
-         then
-         subroutine           @2.1
-         exec_sys ln -s ${intermediate}.nii.gz  ${intermediate}_${cur}.nii.gz
-         exec_sys cp    ${confproc[cxt]}        ${intermediate}_${cur}_confmat.1D
-      #############################################################
-      # Ensure that this step has not already run to completion by
-      # checking for the existence of a filtered image and confound
-      # matrix.
-      #############################################################
-      elif ! is_image ${intermediate}_${cur}.nii.gz \
-      ||   ! is_1D    ${confmat[cxt]} \
-      || rerun
-         then
-         subroutine           @2.2
-         ##########################################################
-         # OBTAIN MASKS: SPATIAL
-         # Obtain the spatial mask over which filtering is to be
-         # applied, if a subject mask has been generated. If not,
-         # perform filtering without a mask.
-         ##########################################################
-         if is_image ${mask[sub]}
-            then
-            subroutine        @2.3.1
-            mask="-m ${mask[sub]}"
-         else
-            subroutine        @2.3.2
-            unset mask
-         fi
-         ##########################################################
-         # OBTAIN MASKS: TEMPORAL
-         # Obtain the path to the temporal mask over which
-         # filtering is to be executed.
-         #
-         # If iterative censoring has been specified, then it will
-         # be necessary to interpolate over high-motion epochs to
-         # ensure that they do not exert inordinate influence upon
-         # the temporal filter, resulting in corruption of adjacent
-         # volumes by motion-related variance.
-         ##########################################################
-         if [[ ${censor[cxt]} == iter ]] \
-         && is_1D ${tmask[sub]}
-            then
-            subroutine        @2.4.1
-            tmask="-n ${tmask[sub]}"
-         elif [[ ${censor[cxt]} == final ]] \
-         && is_1D ${tmask[sub]}
-            then
-            subroutine        @2.4.2
-            tmask="-k ${tmask[sub]}"
-         elif [[ ${censor[cxt]} != none ]]
-            then
-            subroutine        @2.4.3
-            echo \
-"WARNING: Censoring of high-motion volumes requires a
-temporal mask, but the regression module has failed
-to find one. You are advised to inspect your pipeline
-to ensure that this is intentional.
-
-Overriding user input:
-No censoring will be performed."
-            configure            censor   none
-            write_output         censor
-            unset tmask
-         fi
-         ##########################################################
-         # DERIVATIVE IMAGES AND TIMESERIES
-         # (CONFOUND MATRIX AND LOCAL REGRESSORS)
-         # Prime the index of derivative images, as well as any 1D
-         # timeseries (e.g. realignment parameters) that should be
-         # filtered so that they can be used in linear models
-         # without reintroducing the frequencies removed from the
-         # primary BOLD timseries.
-         ##########################################################
-         subroutine           @2.5
-         unset derivs ts1d
-         if is_1D ${confproc[cxt]}
-            then
-            subroutine        @2.6
-            ts1d="-1 confmat:${confproc[cxt]}"
-         fi
-         ##########################################################
-         # FILTER-SPECIFIC ARGUMENTS
-         # Next, set arguments specific to each filter class.
-         ##########################################################
-         unset tforder tfdirec tfprip tfsrip
-         case ${regress_tmpf[cxt]} in
-         butterworth)
-            subroutine        @2.7
-            tforder="-r ${regress_tmpf_order[cxt]}"
-            tfdirec="-d ${regress_tmpf_pass[cxt]}"
-            ;;
-         chebyshev1)
-            subroutine        @2.8
-            tforder="-r ${regress_tmpf_order[cxt]}"
-            tfdirec="-d ${regress_tmpf_pass[cxt]}"
-            tfprip="-p ${regress_tmpf_ripple[cxt]}"
-            ;;
-         chebyshev2)
-            subroutine        @2.9
-            tforder="-r ${regress_tmpf_order[cxt]}"
-            tfdirec="-d ${regress_tmpf_pass[cxt]}"
-            tfsrip="-s ${regress_tmpf_ripple2[cxt]}"
-            ;;
-         elliptic)
-            subroutine        @2.10
-            tforder="-r ${regress_tmpf_order[cxt]}"
-            tfdirec="-d ${regress_tmpf_pass[cxt]}"
-            tfprip="-p ${regress_tmpf_ripple[cxt]}"
-            tfsrip="-s ${regress_tmpf_ripple2[cxt]}"
-            ;;
-         esac
-         ##########################################################
-         # Engage the tfilter routine to filter the image.
-         #  * This is essentially a wrapper around the three
-         #    implemented filtering routines: fslmaths, 3dBandpass,
-         #    and genfilter
-         ##########################################################
-         subroutine           @2.11a   [${regress_tmpf[cxt]} filter]
-         subroutine           @2.11b   [High pass frequency: ${regress_hipass[cxt]}]
-         subroutine           @2.11c   [Low pass frequency: ${regress_lopass[cxt]}]
-         exec_xcp tfilter \
-            -i    ${intermediate}.nii.gz \
-            -o    ${intermediate}_${cur}.nii.gz \
-            -f    ${regress_tmpf[cxt]} \
-            -h    ${regress_hipass[cxt]} \
-            -l    ${regress_lopass[cxt]} \
-            ${mask}     ${tmask}    ${tforder}  ${tfdirec} \
-            ${tfprip}   ${tfsrip}   ${ts1d}
-         apply_exec     timeseries  ${intermediate}_%NAME_${cur} \
-            xcp   tfilter \
-            -i    %INPUT \
-            -o    %OUTPUT \
-            -f    ${regress_tmpf[cxt]} \
-            -h    ${regress_hipass[cxt]} \
-            -l    ${regress_lopass[cxt]} \
-            ${mask}     ${tmask}    ${tforder}  ${tfdirec} \
-            ${tfprip}   ${tfsrip}
-         ##########################################################
-         # Reorganise outputs
-         ##########################################################
-         is_1D ${intermediate}_${cur}_tmask.1D  \
-            && exec_sys mv -f ${intermediate}_${cur}_tmask.1D ${tmask[cxt]}
-      fi
+      filter_temporal         --SIGNPOST=${signpost}              \
+                              --FILTER=${regress_tmpf[cxt]}       \
+                              --INPUT=${intermediate}             \
+                              --OUTPUT=${intermediate}_${cur}     \
+                              --CONFIN=${confproc[cxt]}           \
+                              --CONFOUT=${intermediate}_${cur}_confmat.1D \
+                              --HIPASS=${regress_hipass[cxt]}     \
+                              --LOPASS=${regress_lopass[cxt]}     \
+                              --ORDER=${regress_tmpf_order[cxt]}  \
+                              --DIRECTIONS=${regress_tmpf_pass[cxt]} \
+                              --RIPPLE_PASS=${regress_tmpf_ripple[cxt]} \
+                              --RIPPLE_STOP=${regress_tmpf_ripple2[cxt]}
       #############################################################
       # Update image pointer
       #############################################################
@@ -559,97 +387,12 @@ fi
 #   it creates a derivative for each kernel.
 ###################################################################
 routine                       @6    Spatially filtering image
-###################################################################
-# SUSAN setup
-###################################################################
-if [[ ${regress_sptf[cxt]} == susan ]] \
-&& [[ -n ${kernel[cxt]} ]] \
-&& [[ -z ${usan} ]]
-   then
-   subroutine                 @6.1  [Configuring SUSAN]
-   ################################################################
-   # Determine whether a custom USAN is being used, and register
-   # it to analyte space if so.
-   ################################################################
-   if is_image ${regress_usan[cxt]}
-      then
-      subroutine              @6.2  Warping USAN
-      warpspace               \
-         ${regress_usan[cxt]} \
-         ${intermediate}usan.nii.gz \
-         ${regress_usan_space[cxt]}:${space} \
-         NearestNeighbor
-      usan="-u ${intermediate}usan"
-      hardseg=-h
-   ################################################################
-   # Otherwise, ensure that an example functional image exists.
-   #  * If it does not, force a switch to uniform smoothing to
-   #    prevent a catastrophe.
-   ################################################################
-   elif is_image ${referenceVolumeBrain[sub]}
-      then
-      subroutine              @6.3
-      usan="-u ${referenceVolumeBrain[sub]}"
-   else
-      subroutine              @6.4a No appropriate USAN: reconfiguring pipeline
-      subroutine              @6.4b to smooth to uniformity instead
-      configure               regress_sptf   uniform
-      write_config            regress_sptf
-   fi
-fi
-###################################################################
-# * First, identify all kernels to apply.
-###################################################################
-for k in ${kernel[cxt]}
-   do
-   subroutine                 @6.5
-   img_sm_name=sm${k}
-   smoothed='img_sm'${k}'['${cxt}']'
-   ################################################################
-   # If no spatial filtering has been specified by the user, then
-   # bypass this step.
-   ################################################################
-   if [[ ${regress_sptf[cxt]} == none ]] \
-   || [[ ${k} == 0 ]]
-      then
-      subroutine              @6.8
-   else
-      subroutine              @6.9a [Filter: ${regress_sptf[cxt]}]
-      subroutine              @6.9b [Smoothing kernel: ${k} mm]
-      #############################################################
-      # Ensure that this step has not already run to completion
-      # by checking for the existence of a smoothed image. First,
-      # obtain the mask for filtering. Then, engage the sfilter
-      # routine.
-      #############################################################
-      if ! is_image ${!smoothed} \
-      || rerun
-         then
-         subroutine           @6.10
-         if is_image ${mask[sub]}
-            then
-            subroutine        @6.11
-            mask=${mask[sub]}
-         else
-            subroutine        @6.12 Generating a mask using 3dAutomask
-            exec_afni   3dAutomask \
-               -prefix  ${intermediate}_fmask.nii.gz \
-               -dilate  3 \
-               -q       ${intermediate}.nii.gz
-            mask=${intermediate}_fmask.nii.gz
-         fi
-         exec_xcp sfilter \
-            -i    ${residualised[cxt]} \
-            -o    ${!smoothed} \
-            -s    ${regress_sptf[cxt]} \
-            -k    ${k} \
-            -m    ${mask} \
-            ${usan} ${hardseg}
-      fi
-   fi
-done
+smooth_spatial                --SIGNPOST=${signpost}              \
+                              --FILTER=regress_sptf[$cxt]         \
+                              --INPUT=${intermediate}             \
+                              --USAN=${regress_usan[cxt]}         \
+                              --USPACE=${regress_usan_space[cxt]}
 routine_end
-
 
 
 
