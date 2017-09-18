@@ -39,6 +39,7 @@ completion() {
    write_output      tmask
    
    write_config_safe censor
+   write_config      demeaned
    if is_1D ${tmask[cxt]}
       then
       configure      censored       1
@@ -86,9 +87,13 @@ output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 
 configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
 configure   censored                0
+configure   demeaned                0
+
+smooth_spatial_prime                ${prestats_smo[cxt]}
 
 input       censor
 input       censored
+input       demeaned
 input       confmat as confproc
 
 final       preprocessed            ${prefix}_preprocessed
@@ -823,7 +828,7 @@ while (( ${#rem} > 0 ))
          ##########################################################
          routine              @8    Spatially filtering image
          smooth_spatial       --SIGNPOST=${signpost}           \
-                              --FILTER=${prestats_sptf[cxt]}   \
+                              --FILTER=prestats_sptf[$cxt]     \
                               --INPUT=${intermediate}          \
                               --USAN=${prestats_usan[cxt]}     \
                               --USPACE=${prestats_usan_space[cxt]}
