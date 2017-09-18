@@ -11,6 +11,7 @@
 mod_name_short=aroma
 mod_name='ICA-AROMA DENOISING MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -33,6 +34,8 @@ completion() {
    write_output      ic_class
    write_output      ic_mix
    
+   write_config      demeaned
+   
    quality_metric    numICsNoise             ic_noise
    
    source ${XCPEDIR}/core/auditComplete
@@ -50,7 +53,6 @@ completion() {
 derivative  ic_maps                 melodic/melodic_IC
 derivative  ic_maps_thr             melodic/melodic_IC_thr
 derivative  ic_maps_thr_mni         melodic/melodic_IC_thr_mni
-derivative  sm${aroma_smo[cxt]}     ${prefix}_sm${aroma_smo[cxt]}
 
 output      melodir                 melodic
 output      ic_mix                  melodic/melodic_mix
@@ -65,10 +67,22 @@ derivative_config   ic_maps_thr     Type              maps
 derivative_config   ic_maps_thr_mni Type              maps
 derivative_config   ic_maps_thr_mni Space             MNI
 
+configure   demeaned                0
+input       demeaned
+input       confmat as confproc
+
+smooth_spatial_prime                ${aroma_smo[cxt]}
+
 final       icaDenoised             ${prefix}_icaDenoised
 
 << DICTIONARY
 
+confmat
+   The confound matrix after filtering and censoring.
+confproc
+   A pointer to the working version of the confound matrix.
+demeaned
+   A Boolean indicator of whether the analyte image is demeaned.
 ic_class
    A matrix cataloguing the features used to classify MELODIC
    components as signal or noise.
@@ -123,76 +137,20 @@ DICTIONARY
 # components, but de-noising is performed on the unsmoothed data,
 # and the unsmoothed data is propagated to the primary analyte.
 ###################################################################
-if [[ -n ${aroma_smo[cxt]} ]] \
-&& (( ${aroma_smo[cxt]} != 0 ))
+if [[ ${aroma_sptf[cxt]} != none ]] \
+&& (( ${aroma_smo[cxt]}  != 0 ))
    then
    routine                    @1    Spatially filtering image
-   ################################################################
-   # Ensure that this step has not already run to completion
-   # by checking for the existence of a smoothed image.
-   ################################################################
-   img_sm=sm${aroma_smo[cxt]}
-   if ! is_image ${!img_sm} \
-   || rerun
-      then
-      subroutine              @1.1
-      #############################################################
-      # Obtain the mask over which smoothing is to be applied
-      # Begin by searching for the subject mask; if this does
-      # not exist, then search for a mask created by this
-      # module.
-      #############################################################
-      if is_image ${mask[sub]}
-         then
-         subroutine           @1.2
-         mask=${mask[sub]}
-      else
-         subroutine           @1.3  Generating a mask using 3dAutomask
-         exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
-            -dilate 3 \
-            -q \
-            ${img}
-         mask=${intermediate}_fmask.nii.gz
-      fi
-      #############################################################
-      # Prime the inputs to sfilter for SUSAN filtering
-      #############################################################
-      if [[ ${aroma_sptf[cxt]} == susan ]]
-         then
-         ##########################################################
-         # Ensure that an example functional image exists. If it
-         # does not, then force a switch to uniform smoothing.
-         ##########################################################
-         if is_image ${referenceVolumeBrain[sub]}
-            then
-            subroutine        @1.4
-            usan="-u ${referenceVolume[sub]}"
-         else
-            subroutine        @1.5  No USAN available -- applying uniform filter
-            configure         aroma_sptf        uniform
-            write_config      aroma_aptf
-         fi
-      fi
-      #############################################################
-      # Engage the sfilter routine to filter the image.
-      #  * This is essentially a wrapper around the three
-      #    implemented smoothing routines: gaussian, susan,
-      #    and uniform.
-      #############################################################
-      subroutine              @1.6a Filter: ${aroma_sptf[cxt]}
-      subroutine              @1.6b Smoothing kernel: ${aroma_smo[cxt]} mm
-      exec_xcp sfilter \
-         -i ${img} \
-         -o ${!img_sm} \
-         -s ${aroma_sptf[cxt]} \
-         -k ${aroma_smo[cxt]} \
-         -m ${mask} \
-         ${usan}
-   fi
+   smooth_spatial             --SIGNPOST=${signpost}           \
+                              --FILTER=aroma_sptf[$cxt]        \
+                              --INPUT=${intermediate}          \
+                              --USAN=${aroma_usan[cxt]}        \
+                              --USPACE=${aroma_usan_space[cxt]}
    ################################################################
    # Update image pointer for the purpose of MELODIC.
    ################################################################
-   img_in=${!img_sm}
+   smoothed='img_sm'${aroma_smo[cxt]}'['${cxt}']'
+   img_in=${!smoothed}
    routine_end
 else
    img_in=${img}
@@ -231,15 +189,15 @@ if ! is_image ${ic_maps[cxt]} \
    ################################################################
    buffer=${SGE_ROOT}
    unset SGE_ROOT
-   exec_fsl melodic \
-      --in=${img_in} \
-      --outdir=${melodir[cxt]} \
-      --mask=${mask[sub]} \
-      ${melodim} \
-      --Ostats \
-      --nobet \
-      --mmthresh=0.5 \
-      --report \
+   exec_fsl melodic              \
+      --in=${img_in}             \
+      --outdir=${melodir[cxt]}   \
+      --mask=${mask[sub]}        \
+      ${melodim}                 \
+      --Ostats                   \
+      --nobet                    \
+      --mmthresh=0.5             \
+      --report                   \
       --tr=${trep}
    SGE_ROOT=${buffer}
 fi
@@ -541,107 +499,17 @@ routine_end
 # This should be run if you are applying a filter that is
 # sensitive to such things.
 ###################################################################
-routine                       @8    Demeaning and detrending BOLD timeseries
-if [[ ${aroma_dmdt[cxt]} != N ]]
+if (( ${demeaned[cxt]} == 0 ))
    then
-   ################################################################
-   # A spatial mask of the brain is necessary for ANTsR to read
-   # the image.
-   ################################################################
-   if is_image ${mask[sub]}
-      then
-      subroutine              @8.1  Using previously determined mask
-      mask_dmdt=${mask[sub]}
-   ################################################################
-   # If no mask has yet been computed for the subject,
-   # then a new mask can be computed quickly using
-   # AFNI's 3dAutomask tool.
-   ################################################################
-   else
-      subroutine              @8.2  Generating a mask using 3dAutomask
-      exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
-         -dilate 3 \
-         -q \
-         ${icaDenoised[cxt]}
-      mask_dmdt=${intermediate}_fmask.nii.gz
-   fi
-   ################################################################
-   # If the user has requested iterative censoring of
-   # motion-corrupted volumes, then the demean/detrend
-   # step should exclude the corrupted volumes from the
-   # linear model. In this case, a temporal mask is
-   # required for the demean/detrend step.
-   #
-   # If motion correction was run for the first time
-   # during this module, then the censoring requested by
-   # the user should be defined in censor[cxt]. If it is
-   # not, then set it to the global subject value.
-   ################################################################
-   if [[ -z ${censor[cxt]} ]]
-      then
-      subroutine              @8.3
-      configure               censor      ${censor[sub]}
-   fi
-   ################################################################
-   # The temporal mask must be stored either in the
-   # module-specific censor[cxt] variable or in the
-   # subject-specific censor[subjidx] variable.
-   ################################################################
-   if is_1D ${tmask[sub]} \
-   && [[ ${censor[cxt]} == iter ]]
-      then
-      subroutine              @8.4.1
-      tmask_dmdt=${tmask[sub]}
-   ################################################################
-   # If iterative censoring has not been specified or
-   # if no temporal mask exists yet, then all time
-   # points must be used in the linear model.
-   ################################################################
-   else
-      subroutine              @8.4.2
-      tmask_dmdt=ones
-   fi
-   ################################################################
-   # AFNI's afni_proc.py pipeline uses a formula to
-   # automatically determine an appropriate order of
-   # polynomial detrend to apply to the data.
-   #
-   #        floor(1 + TR*nVOLS / 150)
-   #
-   # In summary, the detrend order is based upon the
-   # overall duration of the scan. If the user has
-   # requested automatic determination of detrend order,
-   # then it is computed here. Note that there are a
-   # number of assumptions in this computation, and it
-   # may not always be appropriate.
-   ################################################################
-   if ! is+integer ${aroma_dmdt[cxt]}
-      then
-      subroutine           @8.5.1 Estimating polynomial order
-      nvol=$(exec_fsl fslnvols ${icaDenoised[cxt]})
-      trep=$(exec_fsl fslval   ${icaDenoised[cxt]} pixdim4)
-      dmdt_order=$(arithmetic 1 + ${trep}\*${nvol}/150)
-   else
-      subroutine           @8.5.2
-      dmdt_order=${aroma_dmdt[cxt]}
-   fi
-   ################################################################
-   # Now, pass the inputs computed above to the detrend
-   # function itself.
-   ################################################################
-   subroutine              @8.6a Applying polynomial detrend
-   subroutine              @8.6b Order: ${dmdt_order}
-   exec_xcp dmdt.R \
-      -d ${dmdt_order} \
-      -i ${icaDenoised[cxt]} \
-      -m ${mask_dmdt} \
-      -t ${tmask_dmdt} \
-      -o ${icaDenoised[cxt]}
+   routine                    @8    Demeaning and detrending BOLD timeseries
+   demean_detrend             --SIGNPOST=${signpost}           \
+                              --ORDER=${aroma_dmdt[cxt]}       \
+                              --INPUT=${icaDenoised[cxt]}      \
+                              --OUTPUT=${icaDenoised[cxt]}     \
+                              --CONFIN=${confproc[cxt]}        \
+                              --CONFOUT=${confmat[cxt]}
+   routine_end
 fi
-###################################################################
-# Update image pointer
-###################################################################
-routine_end
 
 
 
