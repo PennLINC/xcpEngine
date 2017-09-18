@@ -706,13 +706,13 @@ while (( ${#rem} > 0 ))
             if is_image ${referenceVolume[sub]}
                then
                subroutine     @5.3a
-               bet ${referenceVolume[sub]} \
-                  ${referenceVolumeBrain[cxt]} \
+               exec_fsl bet ${referenceVolume[sub]} \
+                  ${referenceVolumeBrain[cxt]}      \
                   -f ${prestats_fit[cxt]}
             else
                subroutine     @5.3b
-               bet ${referenceVolume[cxt]} \
-                  ${referenceVolumeBrain[cxt]} \
+               exec_fsl bet ${referenceVolume[cxt]} \
+                  ${referenceVolumeBrain[cxt]}      \
                   -f ${prestats_fit[cxt]}
             fi
             subroutine        @5.4  [Initial estimate]
