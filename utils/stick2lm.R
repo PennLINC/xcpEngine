@@ -17,9 +17,9 @@ quit()
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
+#suppressMessages(suppressWarnings(library(ANTsR)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments

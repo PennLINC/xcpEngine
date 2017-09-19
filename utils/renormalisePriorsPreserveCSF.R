@@ -11,8 +11,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(RNifti))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments

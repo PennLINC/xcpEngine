@@ -7,8 +7,8 @@
 ###################################################################
 # adjmat2pajek inputs an adjacency matrix and outputs Pajek format
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments

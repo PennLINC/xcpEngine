@@ -14,8 +14,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(signal))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(signal)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments

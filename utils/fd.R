@@ -12,7 +12,7 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressPackageStartupMessages(require(optparse))
+suppressMessages(suppressWarnings(library(optparse)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
