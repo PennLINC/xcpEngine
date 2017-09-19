@@ -114,7 +114,6 @@ for derivative in ${derivatives[@]}
    do
    derivative_parse        ${derivative}
    subroutine              @1.5  [${d[Name]}]
-   derivative_config       ${d[Name]}     Map      ${outdir}/${prefix}_${d[Name]}Std.nii.gz
    d_call=${d[Name]}'['${cxt}']'
    ################################################################
    # If the image is a mask, apply nearest neighbour interpolation
@@ -126,17 +125,19 @@ for derivative in ${derivatives[@]}
       subroutine           @1.6
       interpol=NearestNeighbor
    fi
+   output                  ${d[Name]}     ${prefix}_${d[Name]}Std.nii.gz
    if ! is_image ${!d_call} \
       || rerun
       then
       subroutine           @1.7
       warpspace \
          ${d[Map]} \
-         ${!d_call} \
+         ${outdir}/${prefix}_${d[Name]}Std.nii.gz \
          ${d[Space]}:${standard} \
          ${interpol}
    fi
-   derivative_config       ${d[Name]}      Space    ${standard}
+   derivative_config       ${d[Name]}     Map      ${outdir}/${prefix}_${d[Name]}Std.nii.gz
+   derivative_config       ${d[Name]}     Space    ${standard}
    write_derivative        ${d[Name]}
 done
 routine_end

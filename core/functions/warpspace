@@ -1,6 +1,10 @@
 warpspace() {
-   local a_chk a_edges d_chk d_edges e edges f_chk f_edges i k layer n node_chk nodes o objects output route source t target v x xfm
-   declare -A s d a
+   local a_chk       a_edges     d_chk       d_edges     e \
+         edges       f_chk       f_edges     i           k \
+         layer       n           node_chk    nodes       o \
+         objects     output      route       source      t \
+         target      v           x           xfm
+   declare -A        s           d           a
    ################################################################
    # [1] PARSE INPUTS
    #---------------------------------------------------------------
