@@ -221,8 +221,8 @@ No censoring will be performed."
       #    and genfilter
       #############################################################
       subroutine           ${tag}.12a  [${tmpf} filter]
-      subroutine           ${tag}.12b  [High pass frequency: ${tmpf_hipass}]
-      subroutine           ${tag}.12c  [Low pass frequency: ${tmpf_lopass}]
+      subroutine           ${tag}.12b  [High pass frequency: ${hipass}]
+      subroutine           ${tag}.12c  [Low pass frequency: ${lopass}]
       exec_xcp tfilter \
          -i    ${img_i}.nii.gz \
          -o    ${img_o}.nii.gz \
