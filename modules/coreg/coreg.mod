@@ -67,17 +67,17 @@ completion() {
 case ${coreg_reference[cxt]} in
 exemplar)
 require image  referenceVolumeBrain    \
-     OR        referenceVolume         \
-     AS        sourceReference
+     or        referenceVolume         \
+     as        sourceReference
      ;;
 mean)
 require image  meanIntensityBrain      \
-     OR        meanIntensity           \
-     AS        sourceReference
+     or        meanIntensity           \
+     as        sourceReference
      ;;
 esac
 require image  struct                  \
-     AS        targetReference
+     as        targetReference
 space_config   ${spaces[sub]}   ${space[sub]} \
          Map   ${sourceReference[cxt]}
 
