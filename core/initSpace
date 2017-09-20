@@ -18,9 +18,8 @@
 #     For this one, we only need to decide what to call the space,
 #     since no metadata exist for it until processing.
 ###################################################################
-[[ -z ${sequence} ]]       && sequence=native   \
-&& echo "sequence=native"  >> ${design[sub]}
-set_space                     ${prefix[sub]}_${sequence}
+[[ -z ${sequence} ]]       && sequence=native
+space[$sub]=${prefix[sub]}_${sequence}
 subroutine                    @1.4.1   [Native space: ${space[sub]}]
 
 ###################################################################
@@ -43,8 +42,7 @@ for i in "${!standard[@]}"
       printx ${space_standard}   >>          ${spaces[cxt]}
       template=$(abspath         $(eval      echo $(cat ${spaces[cxt]}\
                  |$JQ_PATH       --raw-output '.'\"${standard[i]}\"'.Map')))
-      echo "template=${template}"            >> ${design[sub]}
-      echo "standard=${standard}"            >> ${design[sub]}
+      normalise=1
    elif (( i == 0 ))
       then
       subroutine                 @1.4.2b     [No standard space]
@@ -70,7 +68,6 @@ str_temp=$(abspath               $(eval      echo $(cat ${spaces[cxt]}\
 #     delegated to a utility script if necessary.
 ###################################################################
 configure         structural        ${prefix[sub]}_anatomical
-write_config      structural
 ###################################################################
 #     Case 1: ANTsCT directory and template are provided. In this
 #             case, the anatomical map should be added to the
@@ -85,7 +82,6 @@ if [[ -d ${antsct[sub]} ]]
       -s ${spaces[cxt]}
    struct[$sub]=$(abspath     $(eval      echo $(cat ${spaces[cxt]}\
               |$JQ_PATH       --raw-output '.'\"${structural[cxt]}\"'.Map')))
-   echo "struct[$sub]=${struct[sub]}"     >> ${design[sub]}
 ###################################################################
 #     Case 2: Template and structural:template maps are provided.
 ###################################################################
