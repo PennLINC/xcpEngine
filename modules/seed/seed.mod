@@ -56,7 +56,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   seeds                   $(grep -i '^#' ${seed_lib[cxt]})
+configure   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
 configure   kernel                  ${seed_smo[cxt]//,/ }
 
 for seed in ${seeds[cxt]}
@@ -122,10 +122,10 @@ if [[ -s ${seed_lib[cxt]} ]]
 else
    echo \
 "
-::XCP-WARNING: Seed-based correlation analysis has been requested,
-  but no seed libraries have been provided.
+[WARNING: Seed-based correlation analysis has been requested,]
+[but no seed libraries have been provided.]
   
-  Skipping module"
+[Skipping module]"
    exit 1
 fi
 
