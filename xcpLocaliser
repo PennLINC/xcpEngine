@@ -24,7 +24,7 @@ source ${XCPEDIR}/core/parseArgsLocaliser
 ################################################################### 
 # Localise design file
 ################################################################### 
-routine                       @1    Localising design file...
+routine                       @1    Localising subject metadata...
 
 ###################################################################
 # Parse subject
@@ -40,71 +40,37 @@ subroutine                    @1.1a [Creating output directory]
    mkdir -p $outdir
 
 ###################################################################
-# Write local design file
-###################################################################
-subroutine                    @1.2  [Writing localised design]
-   design[$sub]=${out[sub]}/${prefix[sub]}.dsn
-   rm -f  ${design[sub]}
-   printx ${design}                             >> ${design[sub]}
-
-###################################################################
-# Evaluate subject-specific variables
-###################################################################
-subroutine                    @1.3  [Evaluating subject variables]
-   cat    ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT >> ${design[sub]}
-   printx ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT  >> ${design[sub]}
-   echo   "out_super=$out_super"                >> ${design[sub]}
-   echo   "sub=$sub"                            >> ${design[sub]}
-   echo   "design[$sub]=${design[sub]}"         >> ${design[sub]}
-   echo   "prefix[$sub]=${prefix[sub]}"         >> ${design[sub]}
-   echo   "out[$sub]=${out[sub]}"               >> ${design[sub]}
-   [[ -n  ${scratch} ]] \
-   && echo "scratch=${scratch}"                 >> ${design[sub]}
-   for v in "${cohort_vars[@]}"
-      do
-      echo "${v}=${!v}"                         >> ${design[sub]}
-   done
-   for i in "${!subject[@]}"
-      do
-      echo "subject[$i]=${subject[i]}"          >> ${design[sub]}
-   done
-
-###################################################################
 # Write path to spaces index
 ###################################################################
-subroutine                    @1.4  [Initialising space mapping]
+subroutine                    @1.2  [Initialising space mapping]
    output                     spaces      ${prefix[sub]}_spaces.json
    rm -f                                  ${spaces[cxt]}
    source                                 ${XCPEDIR}/core/initSpace
-   write_output               spaces
 
 ###################################################################
 # Write path to derivative image index
 ###################################################################
-subroutine                    @1.5  [Initialising derivative maps]
+subroutine                    @1.3  [Initialising derivative maps]
    output                     aux_imgs    ${prefix[sub]}_derivatives.json
    rm -f                                  ${aux_imgs[cxt]}
    echo '{}'                           >> ${aux_imgs[cxt]}
-   write_output               aux_imgs
 
 ###################################################################
 # Write path to network index
 ###################################################################
-subroutine                    @1.6  [Initialising atlas system]
+subroutine                    @1.4  [Initialising atlas system]
    mkdir -p                               ${out[sub]}/${prefix[sub]}_atlas
    output                     atlas       ${prefix[sub]}_atlas/${prefix[sub]}_atlas.json
    rm -f                                  ${atlas[cxt]}
    echo '{}'                           >> ${atlas[cxt]}
-   write_output               atlas
 
 ###################################################################
 # Write path to audit file, and write information
 # to the audit file
 ###################################################################
-subroutine                    @1.7  [Priming analytic audit]
+subroutine                    @1.5  [Priming analytic audit]
    audit[sub]=${out[sub]}/${prefix[sub]}_logs/${prefix[sub]}_audit.csv
    rm -f ${audit[sub]}
-   echo "audit[$sub]=${audit[sub]}"             >> ${design[sub]}
    
    ################################################################
    # Prepare the audit header, which will contain information
@@ -126,13 +92,63 @@ subroutine                    @1.7  [Priming analytic audit]
 ###################################################################
 # Write path to index of quality variables
 ###################################################################
-subroutine                    @1.8  [Priming quality assessment]
+subroutine                    @1.6  [Priming quality assessment]
    quality=${out[sub]}/${prefix[sub]}_quality.csv
    rm -f ${quality}
-   echo "quality[$sub]=${quality}"              >> ${design[sub]}
    echo "${id_vars}"                            >> ${quality}
    echo "${id_vals}"                            >> ${quality}
 routine_end
+
+routine                       @2    Localising design
+###################################################################
+# Write local design file
+###################################################################
+subroutine                    @2.1  [Writing localised design]
+   design[$sub]=${out[sub]}/${prefix[sub]}.dsn
+   rm -f  ${design[sub]}
+   printx ${design}                             >> ${design[sub]}
+
+###################################################################
+# Evaluate subject-specific variables
+###################################################################
+subroutine                    @2.2  [Evaluating subject variables]
+   cat    ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT >> ${design[sub]}
+   printx ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT  >> ${design[sub]}
+   set_space                                       ${space[sub]}
+   write_config                                    structural
+   write_output                                    spaces
+   write_output                                    aux_imgs
+   write_output                                    atlas
+   echo   "audit[$sub]=${audit[sub]}"           >> ${design[sub]}
+   echo   "quality[$sub]=${quality}"            >> ${design[sub]}
+   echo   "out_super=$out_super"                >> ${design[sub]}
+   echo   "sub=$sub"                            >> ${design[sub]}
+   echo   "design[$sub]=${design[sub]}"         >> ${design[sub]}
+   echo   "prefix[$sub]=${prefix[sub]}"         >> ${design[sub]}
+   echo   "out[$sub]=${out[sub]}"               >> ${design[sub]}
+   [[ -n  ${scratch} ]] \
+   && echo "scratch=${scratch}"                 >> ${design[sub]}
+   for v in "${cohort_vars[@]}"
+      do
+      echo "${v}=${!v}"                         >> ${design[sub]}
+   done
+   for i in "${!subject[@]}"
+      do
+      echo "subject[$i]=${subject[i]}"          >> ${design[sub]}
+   done
+   [[ ${sequence}  == native ]] \
+   && echo  "sequence=native"                   >> ${design[sub]}
+   (( ${normalise} == 1      )) \
+   && echo "template=${template}"               >> ${design[sub]} \
+   && echo "standard=${standard[0]}"            >> ${design[sub]}
+   if [[ -d ${antsct[sub]} ]]
+      then
+      echo "struct[$sub]=${struct[sub]}"        >> ${design[sub]}
+      [[ -z ${segmentation[sub]} ]] \
+      && segmentation[$sub]=$(ls ${antsct[sub]}/*BrainSegmentation.nii.gz) \
+      && echo "segmentation[$sub]=${segmentation[sub]}" \
+                                                >> ${design[sub]}
+   fi
 
 
 ###################################################################
@@ -141,22 +157,20 @@ routine_end
 # * If necessary, convert it to NIFTI_GZ format.
 # * If necessary, convert it to RPI orientation.
 ###################################################################
-routine                       @2    Localising image
-subroutine                    @2.1  [Verifying that images are present]
+routine                       @3    Localising image
+subroutine                    @3.1  [Verifying that images are present]
 if ! is_image ${img[sub]}
    then
    abort_stream "The primary analyte is not a valid image: ${img[sub]}"
 fi
-subroutine                    @2.2  [Conforming and localising image]
+subroutine                    @3.2  [Conforming and localising image]
 source ${XCPEDIR}/core/imgLocalise
 routine_end
 
 ###################################################################
 # Enter audit information for the current subject
 ###################################################################
-routine                       @3    Updating audit
 source ${XCPEDIR}/core/auditComplete
-routine_end
 
 echo "
 
