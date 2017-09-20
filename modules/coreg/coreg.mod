@@ -23,8 +23,11 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   write_derivative  referenceVolume
+   processed         remasked
+   
+   write_derivative  meanIntensityBrain
    write_derivative  referenceVolumeBrain
+   write_derivative  mask
    
    write_output      seq2struct
    write_output      struct2seq
@@ -61,12 +64,30 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
+case ${coreg_reference[cxt]} in
+exemplar)
+require image  referenceVolumeBrain    \
+     OR        referenceVolume         \
+     AS        sourceReference
+     ;;
+mean)
+require image  meanIntensityBrain      \
+     OR        meanIntensity           \
+     AS        sourceReference
+     ;;
+esac
+require image  struct                  \
+     AS        targetReference
+space_config   ${spaces[sub]}   ${space[sub]} \
+         Map   ${sourceReference[cxt]}
+
 configure   fit                     0.3
 configure   altreg1                 corratio
 configure   altreg2                 mutualinfo
 
-derivative  referenceVolume         ${prefix}_referenceVolume
 derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
+derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
+derivative  mask                    ${prefix}_mask
 derivative  e2simg                  ${prefix}_seq2struct
 derivative  s2eimg                  ${prefix}_struct2seq
 derivative  e2smask                 ${prefix}_seq2structMask
@@ -80,6 +101,8 @@ output      coreg_cross_corr        ${prefix}_coregCrossCorr.txt
 output      coreg_coverage          ${prefix}_coregCoverage.txt
 output      coreg_jaccard           ${prefix}_coregJaccard.txt
 output      coreg_dice              ${prefix}_coregDice.txt
+
+process     remasked                ${prefix}_remasked
 
 << DICTIONARY
 
@@ -114,14 +137,23 @@ e2smat
 fit
    The fractional intensity threshold. Used only in the unlikely
    event that brain extraction has not already been run.
+mask
+   A spatial mask of binary values, indicating whether a voxel
+   should be analysed as part of the brain; the definition of brain
+   tissue is often fairly liberal.
+meanIntensity
+   The mean intensity over time of functional data, after it has
+   been realigned to the example volume
 referenceVolume
-   An exemplar volume from the subject's 4D timeseries that is
-   used to compute the coregistration. If this has already been
-   defined by a previous module, it will instead be symbolically
-   linked.
-referenceVolumeBrain
-   The brain-extracted version of the subject's reference volume;
-   this will probably already have been obtained in prestats.
+   An example volume extracted from EPI data, typically one of the
+   middle volumes, though another may be selected if the middle
+   volume is corrupted by motion-related noise. This is used as the
+   reference volume during motion realignment.
+sourceReference
+   An analyte-space volume that is to be coregistered to the
+   anatomical image. This can either be an exemplar volume from the
+   subject's 4D timeseries or the mean over all included volumes
+   in the subject's 4D timeseries.
 s2eimg
    The subject's structural image, aligned into analyte space.
 s2emask
@@ -138,6 +170,9 @@ struct2seq
    Affine coregistration whose application to the subject's
    structural image will output a structural image that is
    aligned with the subject's reference acquisition.
+targetReference
+   The anatomical-space volume to which the analyte will be
+   coregistered.
    
 DICTIONARY
 
@@ -145,72 +180,6 @@ DICTIONARY
 
 
 
-
-
-
-
-
-###################################################################
-# Coregistration is computed using a source reference volume
-# and using the subject's structural scan as a target. Here,
-# the source reference volume is an example volume,
-# typically selected as the reference during the motion
-# realignment phase of analysis.
-#
-# Before coregistration can be performed, the coregistration
-# module must obtain a pointer to this source volume.
-###################################################################
-routine                       @1    Identifying reference volume
-###################################################################
-# Determine whether a brain-extracted version of the source
-# reference volume already exists.
-###################################################################
-if is_image ${referenceVolumeBrain[sub]}
-   then
-   subroutine                 @1.1  [Existing reference image recognised]
-   referenceBrain=referenceVolumeBrain[sub]
-else
-   if ! is_image ${referenceVolume[sub]}
-      then
-      #############################################################
-      # * If the source volume does not exist, this reflects an
-      #   unconventional decision in the pipeline, since motion
-      #   realignment should always create a source volume.
-      # * If this is the case, the coregistration module will
-      #   generate a new source volume. Be advised that this
-      #   might lead to unexpected or catastrophic results if, for
-      #   instance, the primary BOLD timeseries has been demeaned.
-      #############################################################
-      subroutine              @1.2a XCP-WARNING: No reference volume detected. This
-      subroutine              @1.2b probably means that you are doing something
-      subroutine              @1.2c unconventional, like computing coregistration prior
-      subroutine              @1.2d to alignment of volumes. You are advised to inspect
-      subroutine              @1.2e your pipeline to ensure that this is intentional.
-      subroutine              @1.2f Preparing reference volume
-      nvol=$(exec_fsl fslnvols ${img})
-      midpt=$(arithmetic ${nvol}/2)
-      exec_fsl \
-         fslroi ${out}/${prefix}.nii.gz \
-         ${referenceVolume[cxt]} ${midpt} 1
-   fi
-   if ! is_image ${referenceVolumeBrain[cxt]} \
-   || rerun
-      then
-      #############################################################
-      # * If the source volume exists but brain extraction has
-      #   not yet been performed, then the coregistration module
-      #   will automatically identify and isolate brain tissue in
-      #   the reference volume using BET.
-      #############################################################
-      subroutine              @1.3a No brain-extracted reference volume detected.
-      subroutine              @1.3b Extracting brain from reference volume
-      exec_fsl bet ${referenceVolume[sub]} \
-         ${referenceVolumeBrain[cxt]} \
-         -f ${coreg_fit[cxt]}
-   fi
-   referenceBrain=referenceVolumeBrain[cxt]
-fi
-routine_end
 
 
 
@@ -301,12 +270,12 @@ if [[ ! -e ${e2smat[cxt]} ]] \
    subroutine                 @4.1a [Cost function]
    subroutine                 @4.1b [${coreg_cfunc[cxt]}]
    subroutine                 @4.1c [Input volume]
-   subroutine                 @4.1d [${!referenceBrain}]
+   subroutine                 @4.1d [${sourceReference[cxt]}]
    subroutine                 @4.1e [Reference volume]
    subroutine                 @4.1f [${struct[sub]}]
    subroutine                 @4.1g [Output volume]
    subroutine                 @4.1h [${e2simg[cxt]}]
-   exec_fsl flirt -in ${!referenceBrain} \
+   exec_fsl flirt -in ${sourceReference[cxt]} \
       -ref  ${struct[sub]} \
       -dof  6 \
       -out  ${e2simg[cxt]} \
@@ -403,7 +372,7 @@ if (( ${flag} == 1 ))
    ################################################################
    # Re-compute coregistration.
    ################################################################
-   exec_fsl flirt -in ${!referenceBrain} \
+   exec_fsl flirt -in ${sourceReference[cxt]} \
       -ref  ${struct[sub]} \
       -dof  6 \
       -out  ${intermediate}_seq2struct_alt \
@@ -469,10 +438,10 @@ if (( ${registered} == 1  ))
    routine                    @7    Coregistration visual aids
    subroutine                 @7.1  [Slicewise rendering]
    add_reference   struct[sub]      ${prefix}_targetVolume
-   exec_xcp regslicer \
-      -s    ${e2simg[cxt]} \
-      -t    ${struct[sub]} \
-      -i    ${intermediate} \
+   exec_xcp regslicer         \
+      -s    ${e2simg[cxt]}    \
+      -t    ${struct[sub]}    \
+      -i    ${intermediate}   \
       -o    ${outdir}/${prefix}_seq2struct
    routine_end
 fi
@@ -506,7 +475,7 @@ if [[ ! -e ${seq2struct[cxt]} ]] \
    then
    subroutine                 @8.2  [Converting coregistration .mat to ANTs format]
    exec_c3d c3d_affine_tool \
-      -src  ${!referenceBrain} \
+      -src  ${sourceReference[cxt]} \
       -ref  ${struct[sub]} \
       ${e2smat[cxt]} \
       -fsl2ras \
@@ -521,7 +490,7 @@ if [[ ! -e ${struct2seq[cxt]} ]] \
    subroutine                 @8.3  [Converting inverse coregistration .mat to ANTs format]
    exec_c3d c3d_affine_tool \
       -src  ${struct[sub]} \
-      -ref  ${!referenceBrain} \
+      -ref  ${sourceReference[cxt]} \
       ${s2emat[cxt]} \
       -fsl2ras \
       -oitk ${struct2seq[cxt]}
@@ -537,13 +506,39 @@ if ! is_image ${s2emask[cxt]} \
    exec_ants \
       antsApplyTransforms \
       -e 3 -d 3 \
-      -r ${!referenceBrain} \
+      -r ${sourceReference[cxt]} \
       -o ${s2eimg[cxt]} \
       -i ${struct[sub]} \
       -t ${struct2seq[cxt]}
    exec_fsl fslmaths ${s2eimg[cxt]} -bin ${s2emask[cxt]}
 fi
 routine_end
+
+
+
+
+
+###################################################################
+# Re-extract the brain using the high-precision structural mask if
+# requested.
+###################################################################
+if (( ${coreg_mask[cxt]} == 1 ))
+   then
+   routine                    @9    Refining brain boundaries
+   subroutine                 @9.1  Refining brain boundary
+   exec_fsl fslmaths ${mask[sub]}                  \
+      -mul  ${s2emask[cxt]}   ${mask[cxt]}
+   subroutine                 @9.2  Applying refined mask
+   exec_fsl fslmaths ${intermediate}.nii.gz        \
+      -mul  ${mask[cxt]} ${remasked[cxt]}
+   ! is_image ${referenceVolumeBrain[sub]}         \
+   && exec_fsl fslmaths ${referenceVolume[sub]}    \
+         -mul  ${mask[cxt]} ${referenceVolumeBrain[cxt]}
+   ! is_image ${meanIntensityBrain[sub]}           \
+   && exec_fsl fslmaths ${meanIntensity[sub]}      \
+         -mul  ${mask[cxt]} ${meanIntensityBrain[cxt]}
+   routine_end
+fi
 
 
 
