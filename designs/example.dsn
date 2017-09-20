@@ -34,7 +34,6 @@
 
 analysis=accelerator_$(whoami)
 design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
-struct[sub]=${antsct[sub]}/ExtractedBrain0N4.nii.gz
 sequence=rest
 standard=PNC%2x2x2
 
@@ -74,6 +73,7 @@ prestats_process[1]=DVO-MPR-MCO-BXT-DSP-DMT
 # 2 COREG
 ###################################################################
 
+coreg_reference[2]=exemplar
 coreg_cfunc[2]=bbr
 coreg_seg[2]=${antsct[sub]}/BrainSegmentation.nii.gz
 coreg_wm[2]=3
@@ -81,6 +81,7 @@ coreg_refwt[2]=NULL
 coreg_inwt[2]=NULL
 coreg_qacut[2]=0.8,0.9,0.7,0.8
 coreg_decide[2]=1
+coreg_mask[2]=1
 coreg_rerun[2]=0
 coreg_cleanup[2]=1
 
