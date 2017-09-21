@@ -144,9 +144,7 @@ subroutine                    @2.2  [Evaluating subject variables]
    if [[ -d ${antsct[sub]} ]]
       then
       echo "struct[$sub]=${struct[sub]}"        >> ${design[sub]}
-      [[ -z ${segmentation[sub]} ]] \
-      && segmentation[$sub]=$(ls ${antsct[sub]}/*BrainSegmentation.nii.gz) \
-      && echo "segmentation[$sub]=${segmentation[sub]}" \
+      echo "segmentation[$sub]=${segmentation[sub]}" \
                                                 >> ${design[sub]}
    fi
 

@@ -82,6 +82,8 @@ if [[ -d ${antsct[sub]} ]]
       -s ${spaces[cxt]}
    struct[$sub]=$(abspath     $(eval      echo $(cat ${spaces[cxt]}\
               |$JQ_PATH       --raw-output '.'\"${structural[cxt]}\"'.Map')))
+   [[ -z ${segmentation[sub]} ]] \
+        && segmentation[$sub]=$(ls ${antsct[sub]}/*BrainSegmentation.nii.gz)
 ###################################################################
 #     Case 2: Template and structural:template maps are provided.
 ###################################################################
