@@ -96,6 +96,7 @@ input       censor
 input       censored
 input       demeaned
 input       confmat as confproc
+input       referenceVolume
 
 final       preprocessed            ${prefix}_preprocessed
 
@@ -310,13 +311,18 @@ while (( ${#rem} > 0 ))
          if ! is_image ${referenceVolume[cxt]} \
          || rerun
             then
-            subroutine        @2.1  [Extracting reference volume]
+            subroutine        @2.1.1 [Extracting reference volume]
             nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
             midpt=$(( ${nvol} / 2))
             exec_fsl \
                fslroi ${intermediate}.nii.gz \
-               ${referenceVolume[cxt]} \
+               ${intermediate}-reference.nii.gz \
                ${midpt} 1
+         else
+            subroutine        @2.1.2 [Reference volume: ${referenceVolume[cxt]}]
+            add_reference     referenceVolume[$cxt] ${prefix}_referenceVolume
+            exec_sys ln -sf   ${referenceVolume[cxt]} \
+                              ${intermediate}-reference.nii.gz
          fi
          if ! is_image ${intermediate}_${cur}.nii.gz \
          || rerun
@@ -334,7 +340,7 @@ while (( ${#rem} > 0 ))
                mcflirt -in ${intermediate}.nii.gz \
                -out ${intermediate}_mc \
                -plots \
-               -reffile ${referenceVolume[cxt]} \
+               -reffile ${intermediate}-reference.nii.gz \
                -rmsrel \
                -rmsabs \
                -spline_final
@@ -460,7 +466,6 @@ while (( ${#rem} > 0 ))
                   configure      censor         none
                fi
             fi
-            exec_sys rm -f ${referenceVolume[cxt]}
          fi # run check statement
          ##########################################################
          # * Remove the motion corrected image: this step should
@@ -906,6 +911,10 @@ while (( ${#rem} > 0 ))
          exec_sys ln -s    ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
          routine_end
          ;;
+      
+      
+      
+      
       
       *)
          subroutine           @E.1     Invalid option detected: ${cur}

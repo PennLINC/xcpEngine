@@ -76,10 +76,14 @@ require image  meanIntensityBrain      \
      as        sourceReference
      ;;
 esac
+
 require image  struct                  \
      as        targetReference
 space_config   ${spaces[sub]}   ${space[sub]} \
          Map   ${sourceReference[cxt]}
+
+add_reference  sourceReference[$cxt] ${prefix}_source
+add_reference  targetReference[$cxt] ${prefix}_target
 
 configure   fit                     0.3
 configure   altreg1                 corratio
@@ -437,7 +441,6 @@ if (( ${registered} == 1  ))
    then
    routine                    @7    Coregistration visual aids
    subroutine                 @7.1  [Slicewise rendering]
-   add_reference   struct[sub]      ${prefix}_targetVolume
    exec_xcp regslicer         \
       -s    ${e2simg[cxt]}    \
       -t    ${struct[sub]}    \
