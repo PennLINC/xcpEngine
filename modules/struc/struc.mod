@@ -80,7 +80,7 @@ done
 derivative_config    corticalThickness        Statistic        mean
 derivative_config    corticalContrast         Statistic        mean
 
-output      brain_std               ${prefix}_BrainNormalizedToTemplate.nii.gz
+output      struct_std              ${prefix}_BrainNormalizedToTemplate.nii.gz
 output      corticalThickness_std   ${prefix}_CorticalThicknessNormalizedToTemplate.nii.gz
 output      ctroot                  ${prefix}_
 output      referenceVolume         ${prefix}_BrainSegmentation0N4.nii.gz
@@ -91,11 +91,14 @@ output      reg_cross_corr          ${prefix}_regCrossCorr.txt
 output      reg_coverage            ${prefix}_regCoverage.txt
 output      reg_jaccard             ${prefix}_regJaccard.txt
 output      reg_dice                ${prefix}_regDice.txt
+output      str2stdmask             ${prefix}_str2stdmask.nii.gz
 
 output      xfm_affine              ${prefix}_SubjectToTemplate0GenericAffine.mat
 output      xfm_warp                ${prefix}_SubjectToTemplate1Warp.nii.gz
 output      ixfm_affine             ${prefix}_TemplateToSubject1GenericAffine.mat
 output      ixfm_warp               ${prefix}_TemplateToSubject0Warp.nii.gz
+
+add_reference                       template template
 
 final       struct                  ${prefix}_ExtractedBrain0N4
 
@@ -172,6 +175,7 @@ DICTIONARY
 
 priors_format=${struc_template_priors[cxt]#*\%}
 priors_format=${priors_format%%d*}
+#(( ${trace} > 1 )) && ants_verbose=1 || ants_verbose=0
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
 # already complete; it becomes the expected ending for the final
@@ -249,16 +253,24 @@ while (( ${#rem} > 0 ))
 
 
 
-   N4B)
+   BFC)
       #############################################################
-      # ABF runs ANTs bias field correction.
+      # BFC runs ANTs bias field correction.
       #############################################################
       routine                 @2    ANTs N4 bias field correction
-      exec_ants   N4BiasFieldCorrection            \
-         -d       3                                \
-         -i       ${intermediate}.nii.gz           \
-         -o       ${biasCorrected[cxt]}            \
-         --verbose 1
+      if ! is_image ${biasCorrected[cxt]} \
+      || rerun
+         then
+         subroutine           @2.1a Correcting inhomogeneities
+         subroutine           @2.1b Delegating control to N4BiasFieldCorrection
+         exec_ants   N4BiasFieldCorrection            \
+            -d       3                                \
+            -i       ${intermediate}.nii.gz           \
+            -o       ${biasCorrected[cxt]}            \
+            --verbose 1
+      else
+         subroutine           @2.2  Bias field correction already complete
+      fi
       exec_sys ln -sf ${biasCorrected[cxt]} ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
       routine_end
@@ -275,16 +287,22 @@ while (( ${#rem} > 0 ))
       routine                 @3    ANTs brain extraction
       if ! is_image ${mask[cxt]}
          then
+         [[ -d ${scratch} ]]  && pushd ${scratch} >/dev/null
+         subroutine           @3.1a Computing brain boundaries
+         subroutine           @3.1b Input: ${intermediate}.nii.gz
+         subroutine           @3.1c Output: ${intermediate}_${cur}
+         subroutine           @3.1d Delegating control to antsBrainExtraction
          exec_ants   antsBrainExtraction.sh           \
             -d       3                                \
             -a       ${intermediate}.nii.gz           \
             -e       ${template}                      \
-            -f       ${struc_templateMaskDil[cxt]}    \
-            -m       ${struc_extractionPrior[cxt]}    \
-            -q       ${struc_floating_point[cxt]} \
-            -u       ${struc_random_seed[cxt]}    \
+            -f       ${struc_template_mask_dil[cxt]}  \
+            -m       ${struc_extraction_prior[cxt]}   \
+            -q       ${struc_floating_point[cxt]}     \
+            -u       ${struc_random_seed[cxt]}        \
             -s       'nii.gz'                         \
             -o       ${intermediate}_${cur}_
+         [[ -d ${scratch} ]]  && popd >/dev/null
          exec_fsl immv  ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
                         ${mask[cxt]}
          exec_sys mv -f ${intermediate}_${cur}_BrainExtractionPrior0GenericAffine.mat \
@@ -294,10 +312,12 @@ while (( ${#rem} > 0 ))
       fi
       if ! is_image     ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
          then
+         subroutine           @3.2  Executing brain extraction
          exec_fsl fslmaths ${intermediate}.nii.gz \
             -mul  ${mask[cxt]} \
             ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
       fi
+      subroutine              @3.3  Reorganising output
       exec_sys ln -sf ${outdir}/${prefix}_BrainExtractionBrain.nii.gz \
                       ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
@@ -312,11 +332,14 @@ while (( ${#rem} > 0 ))
       #############################################################
       # FBE runs FSL brain extraction via BET
       #############################################################
+      routine                 @4    FSL brain extraction
+      subroutine              @4.1  Computing brain boundary
       exec_fsl bet                                 \
          ${intermediate}.nii.gz                    \
          ${intermediate}_${cur}.nii.gz             \
          -f    ${struc_fit[${cxt}]}                \
          -m
+	   subroutine              @4.2  Reorganising output
 	   exec_fsl immv   ${intermediate}_${cur}.nii.gz \
 	                   ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
 	   exec_fsl immv   ${intermediate}_${cur}_mask.nii.gz \
@@ -332,6 +355,9 @@ while (( ${#rem} > 0 ))
 
 
    SEG)
+      subroutine              @E.1     Invalid option detected: ${cur}
+      continue
+<<NOT_FUNCTIONAL_CODE
       #############################################################
       # SEG runs ANTs tissue-class segmentation via antsAtroposN4
       #############################################################
@@ -403,6 +429,7 @@ while (( ${#rem} > 0 ))
          exec_fsl    immv  ${intermediate}_${cur}_Segmentation.nii.gz \
                            ${segmentation[cxt]}
       fi
+NOT_FUNCTIONAL_CODE
       ;;
 
 
@@ -413,7 +440,60 @@ while (( ${#rem} > 0 ))
       #############################################################
       # REG registers the input brain to the target template.
       #############################################################
-      
+      routine                 @6    Normalisation to template
+      if [[ ${struc_quick[cxt]} == 1 ]]
+         then
+         subroutine           @6.1.1 Using quick SyN registration
+         registration_prog=antsRegistrationSyNQuick.sh
+      else
+         subroutine           @6.1.2 Using SyN registration
+         registration_prog=antsRegistrationSyN.sh
+      fi
+      if [[ ${struc_bspline[cxt]} == 1 ]]
+         then
+         subroutine           @6.2.1 SyN registration: b-spline
+         registration_mode=b
+      else
+         subroutine           @6.2.2 SyN registration: default settings
+         registration_mode=s
+      fi
+      if ! is_image ${struct_std[cxt]} \
+      || rerun
+         then
+         subroutine           @6.3a Input: ${intermediate}.nii.gz
+         subroutine           @6.3b Output root: ${intermediate}_${cur}.nii.gz
+         subroutine           @6.3c Template: ${template}
+         exec_ants   ${registration_prog}                   \
+            -d       3                                      \
+            -f       ${template}                            \
+            -m       ${intermediate}.nii.gz                 \
+            -o       ${intermediate}_${cur}                 \
+            -t       ${registration_mode}
+         subroutine           @6.4  Reorganising output
+         exec_sys mv -f ${intermediate}_${cur}0GenericAffine.mat \
+                        ${xfm_affine[cxt]}
+         exec_fsl immv  ${intermediate}_${cur}1Warp.nii.gz \
+                        ${xfm_warp[cxt]}
+         exec_fsl immv  ${intermediate}_${cur}1InverseWarp.nii.gz \
+                        ${ixfm_warp[cxt]}
+         exec_fsl immv  ${intermediate}_${cur}Warped.nii.gz \
+                        ${struct_std[cxt]}
+      else
+         subroutine           @6.5  Registration already completed
+      fi
+      if [[ ! -s ${ixfm_affine[cxt]} ]] \
+      || rerun
+         then
+         subroutine           @6.6  Inverting affine transform
+         exec_ants   antsApplyTransforms  \
+            -d       3                    \
+            -o       Linear[${ixfm_affine[cxt]},1] \
+            -t       ${xfm_affine[cxt]}
+      fi
+      exec_sys ln -sf ${intermediate}.nii.gz      \
+                      ${intermediate}_${cur}.nii.gz
+      intermediate=${intermediate}_${cur}
+      routine_end
       ;;
 
 
@@ -483,6 +563,14 @@ while (( ${#rem} > 0 ))
       intermediate=${intermediate}_${cur}
       routine_end
       ;;
+      
+      
+      
+      
+      
+   *)
+      subroutine           @E.1     Invalid option detected: ${cur}
+      ;;
          
    esac
 done
@@ -503,12 +591,12 @@ if [[ ! -e ${outdir}/${prefix}_str2std.png ]] \
    subroutine              @2.1  [Computing registration quality metrics]
    registration_quality=( $(exec_xcp \
       maskOverlap.R \
-      -m ${mask[cxt]} \
+      -m ${str2stdmask[cxt]} \
       -r ${template}) )
-   echo  ${registration_quality[0]} > ${struc_cross_corr[cxt]}
-   echo  ${registration_quality[1]} > ${struc_coverage[cxt]}
-   echo  ${registration_quality[2]} > ${struc_jaccard[cxt]}
-   echo  ${registration_quality[3]} > ${struc_dice[cxt]}
+   echo  ${registration_quality[0]} > ${reg_cross_corr[cxt]}
+   echo  ${registration_quality[1]} > ${reg_coverage[cxt]}
+   echo  ${registration_quality[2]} > ${reg_jaccard[cxt]}
+   echo  ${registration_quality[3]} > ${reg_dice[cxt]}
    subroutine              @2.2  [Preparing slicewise rendering]
    exec_xcp regslicer \
       -s ${struct_std[cxt]} \
@@ -533,7 +621,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${preprocessed[cxt]}
+   exec_sys ln -sf ${processed} ${struct[cxt]}
    completion
 else
    subroutine                 @0.3
@@ -543,9 +631,3 @@ else
 [Check the log to verify that processing]
 [completed as intended."
 fi
-
-
-
-
-
-completion
