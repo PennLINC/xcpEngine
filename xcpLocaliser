@@ -99,11 +99,28 @@ subroutine                    @1.6  [Priming quality assessment]
    echo "${id_vals}"                            >> ${quality}
 routine_end
 
-routine                       @2    Localising design
+
+###################################################################
+# Localise the image.
+# * Ensure that all images are present
+# * If necessary, convert it to NIFTI_GZ format.
+# * If necessary, convert it to RPI orientation.
+###################################################################
+routine                       @2    Localising image
+subroutine                    @2.1  [Verifying that images are present]
+if ! is_image ${img[sub]}
+   then
+   abort_stream "The primary analyte is not a valid image: ${img[sub]}"
+fi
+subroutine                    @2.2  [Conforming and localising images]
+source ${XCPEDIR}/core/imgLocalise
+routine_end
+
+routine                       @3    Localising design
 ###################################################################
 # Write local design file
 ###################################################################
-subroutine                    @2.1  [Writing localised design]
+subroutine                    @3.1  [Writing localised design]
    design[$sub]=${out[sub]}/${prefix[sub]}.dsn
    rm -f  ${design[sub]}
    printx ${design}                             >> ${design[sub]}
@@ -111,7 +128,7 @@ subroutine                    @2.1  [Writing localised design]
 ###################################################################
 # Evaluate subject-specific variables
 ###################################################################
-subroutine                    @2.2  [Evaluating subject variables]
+subroutine                    @3.2  [Evaluating subject variables]
    cat    ${XCPEDIR}/core/DESIGN_VARHEAD_OUTPUT >> ${design[sub]}
    printx ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT  >> ${design[sub]}
    set_space                                       ${space[sub]}
@@ -147,23 +164,6 @@ subroutine                    @2.2  [Evaluating subject variables]
       echo "segmentation[$sub]=${segmentation[sub]}" \
                                                 >> ${design[sub]}
    fi
-
-
-###################################################################
-# Localise the image.
-# * Ensure that all images are present
-# * If necessary, convert it to NIFTI_GZ format.
-# * If necessary, convert it to RPI orientation.
-###################################################################
-routine                       @3    Localising image
-subroutine                    @3.1  [Verifying that images are present]
-if ! is_image ${img[sub]}
-   then
-   abort_stream "The primary analyte is not a valid image: ${img[sub]}"
-fi
-subroutine                    @3.2  [Conforming and localising image]
-source ${XCPEDIR}/core/imgLocalise
-routine_end
 
 ###################################################################
 # Enter audit information for the current subject
