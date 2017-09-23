@@ -98,6 +98,9 @@ output      xfm_warp                ${prefix}_SubjectToTemplate1Warp.nii.gz
 output      ixfm_affine             ${prefix}_TemplateToSubject1GenericAffine.mat
 output      ixfm_warp               ${prefix}_TemplateToSubject0Warp.nii.gz
 
+input image mask
+input image segmentation
+
 add_reference                       template template
 
 final       struct                  ${prefix}_ExtractedBrain0N4
@@ -441,7 +444,7 @@ NOT_FUNCTIONAL_CODE
       # REG registers the input brain to the target template.
       #############################################################
       routine                 @6    Normalisation to template
-      if [[ ${struc_quick[cxt]} == 1 ]]
+      if (( ${struc_quick[cxt]} == 1 ))
          then
          subroutine           @6.1.1 Using quick SyN registration
          registration_prog=antsRegistrationSyNQuick.sh
@@ -449,7 +452,7 @@ NOT_FUNCTIONAL_CODE
          subroutine           @6.1.2 Using SyN registration
          registration_prog=antsRegistrationSyN.sh
       fi
-      if [[ ${struc_bspline[cxt]} == 1 ]]
+      if (( ${struc_bspline[cxt]} == 1 ))
          then
          subroutine           @6.2.1 SyN registration: b-spline
          registration_mode=b
