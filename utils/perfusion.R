@@ -108,7 +108,7 @@ lab                     <- which(tmask==1)
 npairs                  <- min(length(lab),length(con))
 con                     <- con[1:npairs]
 lab                     <- lab[1:npairs]
-perfusion               <- img[,,,lab] - img[,,,con]
+perfusion               <- img[,,,con] - img[,,,lab]
 
 ###################################################################
 # 4. Compute CBF time series and mean CBF image.
