@@ -95,7 +95,7 @@ elif is_image ${xfm_warp[sub]}
    xfms=$( echo ${xfms})
    ixfms=$(echo ${ixfms})
    xfms=${xfms// /,}
-   ixfms=${xfms// /,}
+   ixfms=${ixfms// /,}
    ${XCPEDIR}/utils/spaceMetadata \
       -o ${spaces[cxt]} \
       -f ${str_targ}:${str_temp} \
