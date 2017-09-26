@@ -3,6 +3,7 @@
 ###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
+tag=${signpost}
 
 ###################################################################
 # Generate the space metadata file for the current analysis.
@@ -20,7 +21,7 @@
 ###################################################################
 [[ -z ${sequence} ]]       && sequence=native
 space[$sub]=${prefix[sub]}_${sequence}
-subroutine                    @1.4.1   [Native space: ${space[sub]}]
+subroutine                       ${tag}.1    [Native space: ${space[sub]}]
 
 ###################################################################
 # (2) STANDARD SPACE.
@@ -38,21 +39,21 @@ for i in "${!standard[@]}"
    space_standard=$(abspath ${XCPEDIR}/space/${std}/${std}_space.json)
    if (( i == 0 )) && [[ -s ${space_standard} ]]
       then
-      subroutine                 @1.4.2a     [Standard space: ${std}]
+      subroutine                 ${tag}.2a   [Standard space: ${std}]
       printx ${space_standard}   >>          ${spaces[cxt]}
       template=$(abspath         $(eval      echo $(cat ${spaces[cxt]}\
                  |$JQ_PATH       --raw-output '.'\"${standard[i]}\"'.Map')))
       normalise=1
    elif (( i == 0 ))
       then
-      subroutine                 @1.4.2b     [No standard space]
+      subroutine                 ${tag}.2b   [No standard space]
       echo '{}'                  >>          ${spaces[cxt]}
    elif [[ -s ${space_standard} ]]
       then
-      subroutine                 @1.4.2c     [Loading space: ${std}]
+      subroutine                 ${tag}.2c   [Loading space: ${std}]
       import_metadata  ${space_standard} to  ${spaces[cxt]}
    else
-      subroutine                 @1.4.2d     [Space not found: ${std}]
+      subroutine                 ${tag}.2d   [Space not found: ${std}]
    fi
 done
 standard=${standard[0]}
@@ -75,7 +76,7 @@ configure         structural        ${prefix[sub]}_anatomical
 ###################################################################
 if [[ -d ${antsct[sub]} ]]
    then
-   subroutine                 @1.4.3a     [Anatomical space: ${structural[cxt]//\%*/}]
+   subroutine                 ${tag}.3a   [Anatomical space: ${structural[cxt]//\%*/}]
    ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
       -f ${str_targ}:${str_temp} \
       -d ${structural[cxt]}:${antsct[sub]} \
@@ -89,7 +90,7 @@ if [[ -d ${antsct[sub]} ]]
 ###################################################################
 elif is_image ${xfm_warp[sub]}
    then
-   subroutine                 @1.4.3b     [Anatomical space: ${structural[cxt]//\%*/}]
+   subroutine                 ${tag}.3b   [Anatomical space: ${structural[cxt]//\%*/}]
    xfms="${xfm_rigid[sub]} ${xfm_affine[sub]} ${xfm_warp[sub]} ${xfm_resample[sub]}"
    ixfms="${ixfm_resample[sub]} ${ixfm_warp[sub]} ${ixfm_affine[sub]} ${ixfm_rigid[sub]}"
    xfms=$( echo ${xfms})
@@ -108,5 +109,5 @@ elif is_image ${xfm_warp[sub]}
 #     structural analyses, for instance.
 ###################################################################
 else
-   subroutine                 @1.4.3c
+   subroutine                 ${tag}.3c
 fi
