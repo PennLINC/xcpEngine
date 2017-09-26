@@ -74,21 +74,21 @@ for i in ${imgs}
          ln -sf ${src} ${tgt}
          ;;
       01)
-         $AFNI_PATH/3dresample \
+         exec_afni   3dresample \
             -orient  RPI \
             -inset   ${src} \
             -prefix  ${tgt}
          ;;
       10)
-         $FSLDIR/bin/fslchfiletype NIFTI_GZ \
+         exec_fsl fslchfiletype NIFTI_GZ \
             ${src} \
             ${tgt}
          ;;
       11)
-         $FSLDIR/bin/fslchfiletype NIFTI_GZ \
+         exec_fsl fslchfiletype NIFTI_GZ \
             ${src} \
             ${tgt}
-         $AFNI_PATH/3dresample \
+         exec_afni   3dresample \
             -overwrite \
             -orient  RPI \
             -inset   ${tgt} \
