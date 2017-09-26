@@ -41,6 +41,7 @@ source ${LIBRARY}/is+integer
 source ${LIBRARY}/is_numeric
 source ${LIBRARY}/is+numeric
 source ${LIBRARY}/json_query
+source ${LIBRARY}/json_rm
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
 source ${LIBRARY}/load_transforms
