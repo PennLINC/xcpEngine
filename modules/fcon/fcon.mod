@@ -123,7 +123,9 @@ fi
 for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
-   [[ -z ${a[Map]} ]] && continue
+   [[ ! -s    ${a[Map]} ]] \
+   && json_rm ${a[Name]} from atlas[${cxt}] \
+   && continue
    routine                    @1    Functional connectome: ${a[Name]}
    ################################################################
    # Define the paths to the potential outputs of the current

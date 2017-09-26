@@ -103,7 +103,9 @@ fi
 for map in ${atlas_names[@]}
    do
    atlas_parse ${map}
-   [[ -z ${a[Map]} ]] && continue
+   [[ ! -s    ${a[Map]} ]] \
+   && json_rm ${a[Name]} from atlas[${cxt}] \
+   && continue
    routine                    @1    Regional quantification: ${a[Name]}
    ################################################################
    # Define the paths to the potential outputs of the current
