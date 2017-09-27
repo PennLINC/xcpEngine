@@ -527,20 +527,24 @@ routine_end
 ###################################################################
 if (( ${coreg_mask[cxt]} == 1 ))
    then
-   routine                    @9    Refining brain boundaries
-   subroutine                 @9.1  Refining brain boundary
-   exec_fsl fslmaths ${mask[sub]}                  \
-      -mul  ${s2emask[cxt]}   ${mask[cxt]}
-   subroutine                 @9.2  Applying refined mask
-   exec_fsl fslmaths ${intermediate}.nii.gz        \
-      -mul  ${mask[cxt]} ${remasked[cxt]}
-   ! is_image ${referenceVolumeBrain[sub]}         \
-   && exec_fsl fslmaths ${referenceVolume[sub]}    \
-         -mul  ${mask[cxt]} ${referenceVolumeBrain[cxt]}
-   ! is_image ${meanIntensityBrain[sub]}           \
-   && exec_fsl fslmaths ${meanIntensity[sub]}      \
-         -mul  ${mask[cxt]} ${meanIntensityBrain[cxt]}
-   routine_end
+   if ! is_image ${remasked[cxt]} \
+   || rerun
+      then
+      routine                 @9    Refining brain boundaries
+      subroutine              @9.1  Refining brain boundary
+      exec_fsl fslmaths ${mask[sub]}                  \
+         -mul  ${s2emask[cxt]}   ${mask[cxt]}
+      subroutine              @9.2  Applying refined mask
+      exec_fsl fslmaths ${intermediate}.nii.gz        \
+         -mul  ${mask[cxt]} ${remasked[cxt]}
+      ! is_image ${referenceVolumeBrain[sub]}         \
+      && exec_fsl fslmaths ${referenceVolume[sub]}    \
+            -mul  ${mask[cxt]} ${referenceVolumeBrain[cxt]}
+      ! is_image ${meanIntensityBrain[sub]}           \
+      && exec_fsl fslmaths ${meanIntensity[sub]}      \
+            -mul  ${mask[cxt]} ${meanIntensityBrain[cxt]}
+      routine_end
+   fi
 fi
 
 
