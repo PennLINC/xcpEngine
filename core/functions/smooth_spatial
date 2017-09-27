@@ -40,7 +40,7 @@ USAGE
       do
       contains ${1} '^--SIGNPOST='  && tag=${1/--SIGNPOST=}
       contains ${1} '^--FILTER='    && sptf=${1/--FILTER=}
-      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=}
+      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=} && img_i=${img_i%.nii.gz}
       contains ${1} '^--USAN='      && usan=${1/--USAN=}
       contains ${1} '^--USPACE='    && uspace=${1/--USPACE=}
       shift

@@ -44,8 +44,8 @@ USAGE
       do
       contains ${1} '^--SIGNPOST='     && tag=${1/--SIGNPOST=}
       contains ${1} '^--FILTER='       && tmpf=${1/--FILTER=}
-      contains ${1} '^--INPUT='        && img_i=${1/--INPUT=}
-      contains ${1} '^--OUTPUT='       && img_o=${1/--OUTPUT=}
+      contains ${1} '^--INPUT='        && img_i=${1/--INPUT=} && img_i=${img_i%.nii.gz}
+      contains ${1} '^--OUTPUT='       && img_o=${1/--OUTPUT=} && img_o=${img_o%.nii.gz}
       contains ${1} '^--CONFIN='       && con_i=${1/--CONFIN=}
       contains ${1} '^--CONFOUT='      && con_o=${1/--CONFOUT=}
       contains ${1} '^--HIPASS='       && hipass=${1/--HIPASS=}
