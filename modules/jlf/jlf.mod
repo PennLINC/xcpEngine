@@ -5,320 +5,175 @@
 ###################################################################
 
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly INT='^-?[0-9]+$'
-readonly POSINT='^[0-9]+$'
-readonly MOTIONTHR=0.2
-readonly MINCONTIG=0
-readonly PERSIST=0
-
-
-
-
+# SPECIFIC MODULE HEADER
+# This module uses joint label fusion (JLF) to generate an
+# anatomical parcellation based on the openly available set of
+# OASIS challenge labels (or a subset thereof).
+###################################################################
+mod_name_short=gmd
+mod_name='GREY MATTER DENSITY MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_AFGR
 
 ###################################################################
+# GENERAL MODULE HEADER
 ###################################################################
-# BEGIN GENERAL MODULE HEADER
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsMod
+
 ###################################################################
+# MODULE COMPLETION
 ###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
+completion() {
+   write_output      labels
+   write_output      labelsIntersect
+   write_output      intensityImage
+   
+   atlas[${cxt}]=$(echo ${atlas[cxt]}\
+                  |$JQ_PATH '. + {"JLF-MICCAI" : {} }')
+   
+   assign labelsIntersect[cxt] \
+      or  labels[cxt] \
+      as  jlfLabels
+   
+   atlas_add         JLF-MICCAI     Map         ${jlfLabels}
+   atlas_add         JLF-MICCAI     Space       ${structural[sub]}
+   atlas_add         JLF-MICCAI     Type        Map
+   atlas_add         JLF-MICCAI     NodeIndex   ${XCPEDIR}/atlas/miccai/miccaiNodeIndex.1D 
+   atlas_add         JLF-MICCAI     NodeNames   ${XCPEDIR}/atlas/miccai/miccaiNodeNames.txt 
+   atlas_add         JLF-MICCAI     Citation    Wang2013
+   
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   source ${XCPEDIR}/core/moduleEnd
+}
+
+
+
+
+
 ###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design_local=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
+# OUTPUTS
 ###################################################################
-# Ensure that the compulsory design_local variable has been defined
-###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "###################################################################"
-echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
-echo "#                                                                 #"
-echo "#  ☭                    EXECUTING JLF MODULE                   ☭  #"
-echo "#                                                                 #"
-echo "#  ✡✡ ✡✡✡✡ ✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡✡✡✡✡✡ ✡✡✡✡✡✡✡✡ ✡✡✡✡ ✡✡ #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_local}
-###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}jlf
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
-#
-# For the structural module, potential outputs include:
-# Define paths to all potential outputs.
-#
-# For the structural module, potential outputs include:
-#  * labelImage: The image with the associated labels from the output of the JLF procedure
-#  * intensityImage: The average intensity image from the the JLF procedure.
-#
-###################################################################
-labelImage[${cxt}]=${outdir}/${prefix}_Labels.nii.gz
-labelImageIntersect[${cxt}]=${outdir}/${prefix}_LabelsAntsCTIntersect.nii.gz
-intensityImage[${cxt}]=${outdir}/${prefix}_Intensity.nii.gz
-###################################################################
-# * Initialise a pointer to the image.
-# * Ensure that the pointer references an image, and not something
-#   else such as a design file.
-# * Localise the image using a symlink, if applicable.
-# * In the prestats module, the image name is used as the base name
-#   of intermediate outputs.
-###################################################################
-img=${out}/${prefix}
-imgpath=$(ls ${img}.*)
-for i in ${imgpath}
-  do
-  [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-done
-ext=".nii.gz"
-img=${outdir}/${prefix}~TEMP~
-if [[ $(imtest ${img}) != "1" ]] \
-   || [ "${jlf_rerun[${cxt}]}" == "Y" ]
-   then
-   rm -f ${img}*
-   ln -s ${out}/${prefix}${ext} ${img}${ext}
-fi
-imgpath=$(ls ${img}${ext})
-###################################################################
-# Parse quality variables.
-###################################################################
-qvars=$(head -n1 ${quality} 2>/dev/null)
-qvals=$(tail -n1 ${quality} 2>/dev/null)
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from jlf[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
-###################################################################
-# Parse quality variables.
-###################################################################
-qvars=$(head -n1 ${quality} 2>/dev/null)
-qvals=$(tail -n1 ${quality} 2>/dev/null)
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from jlf[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
-###################################################################
-# Verify that the module should be run:
-#  * Test whether the final output already exists.
-#  * Determine whether the user requested the module to be re-run.
-# If it is determined that the module should not be run, then any
-#  outputs must be written to the local design file.
-###################################################################
-if [[ $(imtest ${labelImage[${cxt}]}) == "1" ]] \
-  && [[ "${jlf_rerun[${cxt}]}" == "N" ]]
-  then
-  echo "jlf has already run to completion."
-  echo "Writing outputs..."
-  ###################################################################
-  # OUTPUT: Label image
-  # Test whether the JLF label image was created.
-  # If it does exist then add it to the index of derivatives and 
-  # to the localised design file
-  ###################################################################
-  if [[ $(imtest "${labelImage[${cxt}]}") == "1" ]] 
-    then
-    echo "labelImage[${subjidx}]=${labelImage[${cxt}]}" \ 
-      >> $design_local
-    echo "#labelImage#${labelImage[${cxt}]}#jlf,${cxt}" \ 
-      >> ${auxImgs[${subjidx}]}
-  fi
-  ###################################################################
-  # OUTPUT: Intensity image
-  # Test whether the JLF Intensity image was created.
-  # If it does exist then add it to the index of derivatives and 
-  # to the localised design file
-  ###################################################################
-  if [[ $(imtest "${intensityImage[${cxt}]}") == "1" ]] 
-    then
-    echo "intensityImage[${subjidx}]=${intensityImage[${cxt}]}" \ 
-      >> $design_local
-    echo "#intensityImage#${intensityImage[${cxt}]}" \ 
-      >> ${auxImgs[${subjidx}]}
-  fi
-  rm -f ${quality}
-  echo ${qvars} >> ${quality}
-  echo ${qvals} >> ${quality}
-  prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-  modaudit=$(expr ${prefields} + ${cxt} + 1)
-  subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-  replacement=$(echo ${subjaudit}\
-     |sed s@[^,]*@@${modaudit}\
-     |sed s@',,'@',1,'@ \
-     |sed s@',$'@',1'@g)
-  sed -i s@${subjaudit}@${replacement}@g ${audit}
-  echo "Module complete"
-  exit 0 
-fi
-###################################################################
-###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
+derivative  labels                  ${prefix}_Labels
+derivative  labelsGMIntersect       ${prefix}_LabelsGMIntersect
+derivative  Intensity               ${prefix}_Intensity
+
+load_atlas        ${atlas[sub]}
+
+<<DICTIONARY
+
+intensityImage
+   The weighted, fused intensity map of all images registered to
+   the target space.
+labels
+   The anatomical parcellation directly produced as the output
+   of the joint label fusion procedure.
+labelsIntersect
+   The JLF-derived parcellation after postprocessing, in the form
+   of excising non-ventricular CSF fron the brain periphery.
+
+DICTIONARY
+
+
+
+
+
+
+
+
+
+
 ###################################################################
 # * Run ANTs JLF w/ OASIS label set
 ###################################################################
-###################################################################
-echo ""; echo ""; echo ""
-echo "Current processing step:"
-echo "ANTs Joint Label Fusion"        	  
-###################################################################
-# Now prepare everything to run the JLF command
-# special teps must be taken to prepare the ANTSPATH
-###################################################################
-antsOrig=$ANTSPATH
-export ANTSPATH=${newAntsPath[${cxt}]}
+routine                       @1    ANTs Joint Label Fusion
 ###################################################################
 # Now create and declare the call to run the JLF pipeline
 ###################################################################	
-oasis=$(cat $XCPEDIR/thirdparty/oasis30/Cohorts/${jlfCohort[${cxt}]})
-brainDir=$XCPEDIR/thirdparty/oasis30/Heads/
-labelDir=$XCPEDIR/thirdparty/oasis30/MICCAI2012ChallangeLabels/
-if [[ ${jlfExtract[${cxt}]} -eq 1 ]]
-  then
-  brainDir=$XCPEDIR/thirdparty/oasis30/Brains/
+subroutine                    @1.1  Cohort: ${jlf_cohort[cxt]}
+mapfile     oasis             < ${XCPEDIR}/thirdparty/oasis30/Cohorts/${jlf_cohort[cxt]}
+labelDir=${XCPEDIR}/thirdparty/oasis30/MICCAI2012ChallengeLabels/
+if (( ${jlf_extract[${cxt}]} == 1 ))
+   then
+   subroutine                 @1.2  Using brains only
+   brainDir=$XCPEDIR/thirdparty/oasis30/Brains/
+else
+   subroutine                 @1.3  Using whole heads
+   brainDir=${XCPEDIR}/thirdparty/oasis30/Heads/
 fi
 
-for o in ${oasis}
+subroutine                    @1.4  Assembling cohort
+unset jlfReg
+for o in ${oasis[@]}
   do
   jlfReg="${jlfReg} -g ${brainDir}${o}.nii.gz"
   jlfReg="${jlfReg} -l ${labelDir}${o}.nii.gz"
 done
 
-jlfCMD="${ANTSPATH}/antsJointLabelFusion.sh \
-  -d 3 \
-  -q 0 \
-  -f 0 \
-  -j 2 \
-  -k ${keepJLFWarps[${cxt}]} \
-  -t ${img}.nii.gz \
-  -o ${outdir}/${prefix}_ \
-  -c 0 \
-  ${jlfReg}"
-${jlfCMD}
+subroutine                    @1.5a Executing joint label fusion routine
+subroutine                    @1.5b Delegating control to antsJointLabelFusion
+exec_ants   antsJointLabelFusion.sh \
+   -d       3                       \
+   -q       0                       \
+   -f       0                       \
+   -j       2                       \
+   -k       ${jlf_keep_warps[cxt]}  \
+   -t       ${img}                  \
+   -o       ${outdir}/${prefix}_    \
+   -c       0                       \
+   ${jlfReg}
 
-export ANTSPATH=${antsOrig}
+routine_end
+
+
+
+
 
 ###################################################################
 # Now apply the intersection between the ANTsCT segmentation
 # and the output of JLF if a brain segmentation image exists
 ###################################################################
-if [[ -f ${brainSegmentation[${subjidx}]}.nii.gz ]] ; then 
-  $XCEPDIR/modules/jlf/antsCTIntersect.sh ${labelImage[${cxt}]} \
-        ${brainSegmentation[${subjidx}]}.nii.gz ${labelImageIntersect[${cxt}]} ; 
+if is_image ${segmentation[sub]}
+   then
+   routine                    @2    Preparing grey matter intersection
+   valsToBin='2:6'
+   csfValsToBin='4,11,46,51,52'
+   vdcValsToBin="61,62"
+   subroutine                 @2.1  Generating non-CSF mask
+   exec_xcp val2mask.R                                \
+      -i    ${segmentation[sub]}.nii.gz               \
+      -v    ${valsToBin}                              \
+      -o    ${intermediate}-thresholdedImage.nii.gz 
+   subroutine                 @2.2  Generating ventricular CSF mask
+   exec_xcp val2mask.R                                \
+      -i    ${labels[cxt]}                        \
+      -v    ${csfValsToBin}                           \
+      -o    ${intermediate}-binMaskCSF.nii.gz
+   subroutine                 @2.3  Generating ventral diencephalon mask
+   exec_xcp val2mask.R                                \
+      -i    ${labels[cxt]}                        \
+      -v    ${vdcValsToBin}                           \
+      -o    ${intermediate}-binMaskVD.nii.gz
+   subroutine                 @2.4  Dilating ventricular CSF mask
+   exec_afni   3dmask_tool                            \
+      -input   ${intermediate}-binMaskCSF.nii.gz      \
+      -prefix  ${intermediate}-binMaskCSF_dil.nii.gz  \
+      -dilate_input 2
+   subroutine                 @2.5  Union of vCSF, VDC, and non-CSF masks
+   exec_fsl fslmaths ${intermediate}-thresholdedImage.nii.gz \
+      -add  ${intermediate}-binMaskCSF_dil.nii.gz     \
+      -add  ${intermediate}-binMaskVD.nii.gz          \
+      -bin  ${intermediate}-thresholdedImage.nii.gz
+   subroutine                 @2.6  Excising extraventricular CSF from labels
+   exec_fsl fslmaths ${intermediate}-thresholdedImage.nii.gz \
+      -mul  ${labels[cxt]}                        \
+      ${labelsIntersect[cxt]}
+   routine_end
 fi
 
-###################################################################
-# Write any remaining output paths to local design file so that
-# they may be used further along the pipeline.
-###################################################################
-###################################################################
-# OUTPUT: Label image
-# Test whether the JLF label image was created.
-# If it does exist then add it to the index of derivatives and 
-# to the localised design file
-###################################################################
-if [[ $(imtest "${labelImage[${cxt}]}") == "1" ]] 
-  then
-  echo "labelImage[${subjidx}]=${labelImage[${cxt}]}" \ 
-    >> $design_local
-  echo "#labelImage#${labelImage[${cxt}]}#jlf,${cxt}" \ 
-    >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: Label image Intersect
-# Test whether the JLF intersect label image was created.
-# If it does exist then add it to the index of derivatives and 
-# to the localised design file
-###################################################################
-if [[ $(imtest "${labelImageIntersect[${cxt}]}") == "1" ]] 
-  then
-  echo "labelImageIntersect[${subjidx}]=${labelImageIntersect[${cxt}]}" \ 
-    >> $design_local
-  echo "#labelImageIntersect#${labelImageIntersect[${cxt}]}#jlf,${cxt}" \ 
-    >> ${auxImgs[${subjidx}]}
-fi
-###################################################################
-# OUTPUT: Intensity image
-# Test whether the JLF Intensity image was created.
-# If it does exist then add it to the index of derivatives and 
-# to the localised design file
-###################################################################
-if [[ $(imtest "${intensityImage[${cxt}]}") == "1" ]] 
-  then
-  echo "intensityImage[${subjidx}]=${intensityImage[${cxt}]}" \ 
-    >> $design_local
-  echo "#intensityImage#${intensityImage[${cxt}]}" \ 
-    >> ${auxImgs[${subjidx}]}
-fi
-rm -f ${quality}
-echo ${qvars} >> ${quality}
-echo ${qvals} >> ${quality}
-prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-modaudit=$(expr ${prefields} + ${cxt} + 1)
-subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-replacement=$(echo ${subjaudit}\
-   |sed s@[^,]*@@${modaudit}\
-   |sed s@',,'@',1,'@ \
-   |sed s@',$'@',1'@g)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
-echo "Module complete"
-exit 0 
+
+
+
+
+completion
