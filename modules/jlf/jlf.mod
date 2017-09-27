@@ -10,8 +10,8 @@
 # anatomical parcellation based on the openly available set of
 # OASIS challenge labels (or a subset thereof).
 ###################################################################
-mod_name_short=gmd
-mod_name='GREY MATTER DENSITY MODULE'
+mod_name_short=jlf
+mod_name='JOINT LABEL FUSION MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_AFGR
 
 ###################################################################
@@ -32,9 +32,9 @@ completion() {
    atlas[${cxt}]=$(echo ${atlas[cxt]}\
                   |$JQ_PATH '. + {"JLF-MICCAI" : {} }')
    
-   assign labelsIntersect[cxt] \
-      or  labels[cxt] \
-      as  jlfLabels
+   assign image      labelsIntersect[cxt] \
+       or            labels[cxt] \
+       as            jlfLabels
    
    atlas_add         JLF-MICCAI     Map         ${jlfLabels}
    atlas_add         JLF-MICCAI     Space       ${structural[sub]}
@@ -147,12 +147,12 @@ if is_image ${segmentation[sub]}
       -o    ${intermediate}-thresholdedImage.nii.gz 
    subroutine                 @2.2  Generating ventricular CSF mask
    exec_xcp val2mask.R                                \
-      -i    ${labels[cxt]}                        \
+      -i    ${labels[cxt]}                            \
       -v    ${csfValsToBin}                           \
       -o    ${intermediate}-binMaskCSF.nii.gz
    subroutine                 @2.3  Generating ventral diencephalon mask
    exec_xcp val2mask.R                                \
-      -i    ${labels[cxt]}                        \
+      -i    ${labels[cxt]}                            \
       -v    ${vdcValsToBin}                           \
       -o    ${intermediate}-binMaskVD.nii.gz
    subroutine                 @2.4  Dilating ventricular CSF mask
