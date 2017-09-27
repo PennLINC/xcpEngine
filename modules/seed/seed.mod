@@ -11,6 +11,7 @@
 mod_name_short=seed
 mod_name='SEED-BASED CORRELATION MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -138,7 +139,7 @@ fi
 ###################################################################
 routine                       @1    Spatially filtering image
 smooth_spatial                --SIGNPOST=${signpost}              \
-                              --FILTER=${seed_sptf[cxt]}          \
+                              --FILTER=seed_sptf[$cxt]            \
                               --INPUT=${img}                      \
                               --USAN=${seed_usan[cxt]}            \
                               --USPACE=${seed_usan_space[cxt]}

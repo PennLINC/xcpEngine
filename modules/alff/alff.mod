@@ -90,7 +90,7 @@ DICTIONARY
 ###################################################################
 routine                       @1    Spatially filtering image
 smooth_spatial                --SIGNPOST=${signpost}              \
-                              --FILTER=${alff_sptf[cxt]}          \
+                              --FILTER=alff_sptf[cxt]             \
                               --INPUT=${img}                      \
                               --USAN=${alff_usan[cxt]}            \
                               --USPACE=${alff_usan_space[cxt]}
