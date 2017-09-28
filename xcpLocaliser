@@ -164,6 +164,7 @@ subroutine                    @3.2  [Evaluating subject variables]
       echo "segmentation[$sub]=${segmentation[sub]}" \
                                                 >> ${design[sub]}
    fi
+routine_end
 
 ###################################################################
 # Enter audit information for the current subject
