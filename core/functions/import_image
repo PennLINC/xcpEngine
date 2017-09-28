@@ -1,0 +1,66 @@
+import_image() {
+   local var=${1}
+   local tgt=${2}
+   local src=${!var}
+   
+   ################################################################
+   # Test #1:
+   # Is the image formatted as a gzipped NIfTI?
+   ################################################################
+   contains ${src} '.nii.gz$'
+   flag_imtype=$?
+   
+   ################################################################
+   # Test #2:
+   # Is the image in RPI orientation?
+   ################################################################
+   [[ $($AFNI_PATH/@GetAfniOrient ${src}) == RPI ]]
+   flag_orient=$?
+   
+   ################################################################
+   # For images other than the primary input, prepare an 'import'
+   # directory and reassign the input variable if the image fails
+   # either test. If the image passes both tests, then do nothing.
+   ################################################################
+   if [[ ${tgt} != ${out[sub]}/${prefix[sub]}.nii.gz ]]; then
+   if [[ ${flag_imtype}${flag_orient} != 00 ]]
+      then
+      mkdir -p ${out[sub]}/import
+      eval ${var}=${tgt}
+   else
+      continue
+   fi
+   fi
+   rm -f ${tgt}
+
+   ################################################################
+   # Based on the outcomes of all tests, perform the appropriate
+   # operation to localise the image.
+   ################################################################
+   case ${flag_imtype}${flag_orient} in
+      00)
+         ln -sf ${src} ${tgt}
+         ;;
+      01)
+         exec_afni   3dresample \
+            -orient  RPI \
+            -inset   ${src} \
+            -prefix  ${tgt}
+         ;;
+      10)
+         exec_fsl fslchfiletype NIFTI_GZ \
+            ${src} \
+            ${tgt}
+         ;;
+      11)
+         exec_fsl fslchfiletype NIFTI_GZ \
+            ${src} \
+            ${tgt}
+         exec_afni   3dresample \
+            -overwrite \
+            -orient  RPI \
+            -inset   ${tgt} \
+            -prefix  ${tgt}
+         ;;
+   esac
+}

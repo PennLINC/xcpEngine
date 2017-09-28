@@ -32,6 +32,7 @@ source ${LIBRARY}/exec_fsl
 source ${LIBRARY}/exec_sys
 source ${LIBRARY}/exec_xcp
 source ${LIBRARY}/final
+source ${LIBRARY}/import_image
 source ${LIBRARY}/import_metadata
 source ${LIBRARY}/input
 source ${LIBRARY}/is_1D
