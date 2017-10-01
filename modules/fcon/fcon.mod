@@ -171,7 +171,11 @@ for net in ${atlas_names[@]}
          subroutine           @1.2.3   Skipping ${a[Name]}: Not a well-formed node system
          continue
       fi
-      warpspace atlas:${a[Name]} ${nodemap[cxt]} ${space[sub]} MultiLabel
+      import_image              a[Map]   ${intermediate}-${a[Name]}.nii.gz
+      warpspace               ${a[Map]}                  \
+                              ${nodemap[cxt]}            \
+                              ${a[Space]}:${space[sub]}  \
+                              MultiLabel
       ;;
    Coordinates)
       subroutine              @1.2.4

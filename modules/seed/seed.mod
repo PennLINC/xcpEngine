@@ -244,7 +244,9 @@ for seed in ${seeds[cxt]}
          -o ${!sca_seed}
       ;;
    mask)
-      subroutine              @2.4  Warping seed into target space
+      subroutine              @2.4.1
+      import_image            seed[1] ${intermediate}-${seed[0]}.nii.gz
+      subroutine              @2.4.2 Warping seed into target space
       #############################################################
       # seed[1] stores the path to the seed mask.
       # seed[2] stores the space of the seed mask.

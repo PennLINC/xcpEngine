@@ -143,7 +143,11 @@ for map in ${atlas_names[@]}
       # it into the analyte space.
       #############################################################
       rm -f ${nodemap[cxt]}
-      warpspace atlas:${a[Name]} ${nodemap[cxt]} ${space[sub]} MultiLabel
+      import_image              a[Map]   ${intermediate}-${a[Name]}.nii.gz
+      warpspace               ${a[Map]}                  \
+                              ${nodemap[cxt]}            \
+                              ${a[Space]}:${space[sub]}  \
+                              MultiLabel
       ;;
    Coordinates)
       subroutine              @1.2.3
