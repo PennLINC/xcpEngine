@@ -27,4 +27,10 @@ out_super=$(abspath ${out_super})
 # Set the group-level output directory.
 ###################################################################
 echo "· [O][${out_super}]"
-out_group=${out_super}/group
+[[ -z ${out_group} ]] \
+&& for a in ${asgt[@]}
+   do
+   contains ${a} '^out_group=' && out_group=$(strslice ${a} 2 =)
+done
+[[ -z ${out_group} ]] && out_group=${out_super}/group
+asgt=( ${asgt[@]}     -a out_group=${out_group} )
