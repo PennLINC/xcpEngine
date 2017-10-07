@@ -29,7 +29,9 @@ done
 
 for i in ${imgs}
    do
+   ori=1
    var=$(strslice ${i} 1 ':')
    tgt=$(strslice ${i} 2 ':')
-   import_image ${var} ${tgt}
+   [[ ${var} == img[$sub] ]] && ori=0
+   import_image ${var} ${tgt} ${ori}
 done

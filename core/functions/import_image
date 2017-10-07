@@ -1,7 +1,9 @@
 import_image() {
+   local ori=1
    local var=${1}
    local tgt=${2}
    local src=${!var}
+   [[ -n ${3} ]] && local ori=${3}
    
    ################################################################
    # Test #1:
@@ -16,6 +18,7 @@ import_image() {
    ################################################################
    [[ $($AFNI_PATH/@GetAfniOrient ${src}) == RPI ]]
    flag_orient=$?
+   (( ori == 0 )) && flag_orient=0
    
    ################################################################
    # For images other than the primary input, prepare an 'import'
@@ -28,7 +31,7 @@ import_image() {
       mkdir -p ${out[sub]}/import
       eval ${var}=${tgt}
    else
-      continue
+      return
    fi
    fi
    rm -f ${tgt}
