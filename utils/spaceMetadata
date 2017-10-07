@@ -23,7 +23,7 @@ cat << endstream
 ___________________________________________________________________
 
 
-Usage: spaceMetadata -i <input> -o <output> <options>
+Usage: spaceMetadata -f <standardSpace:standardMap> -o <output> <options>
 
 Compulsory arguments:
  -o : Output path
@@ -225,8 +225,11 @@ esac
 # to the output path.
 ###################################################################
 subroutine                    @u.5
+[[       ! -s        ${out}   ]] && echo     '{}'        >> ${out}
 space_config         ${out}   ${fixed[0]}    Map            ${fixed[1]}
 space_config         ${out}   ${moving[0]}   Map            ${moving[1]}
+moving[0]=${moving[0]//\%*}
+fixed[0]=${fixed[0]//\%*}
 transform_config     ${out}   "itk:${transforms}"  ${moving[0]}   ${fixed[0]}
 if [[ -n ${itransforms} ]]
    then
