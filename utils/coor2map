@@ -31,13 +31,13 @@ Usage: coor2map -i <input> -o <output> <options>
 Compulsory arguments:
  -i : Input seed library
       An octothorpe/hash- (#) delimited list of seed names,
-      non-overlapping coordinates, and potentially radii."
+      non-overlapping coordinates, and potentially radii.
 
  -o : Output network"
       The path to the file where the output network will
       be written."
 
-Optional arguments:"
+Optional arguments:
  -r : Override radius. If this argument is passed to the
       conversion script, then this radius will take the place
       of any voxel radii defined in the seed library.
@@ -46,11 +46,17 @@ Optional arguments:"
       The path to an image file that defines the coordinate
       space used in the seed library.
 
- -x : Trace"
+ -x : Trace
       If this flag is set, then any commands called by the
       coor2map routine will be explicitly printed to the
       console or log.
 
+ -m : mm coordinates
+      If this flag is toggled, then input coordinates will be
+      treated as mm coordinates rather than voxel coordinates, and
+      the image qform and sform will be used to convert them to
+      voxel coordinates for seed generation.
+      
 
 endstream
 }
@@ -58,12 +64,13 @@ endstream
 ###################################################################
 # Define defaults
 ###################################################################
+mm=0
 radius_default=5
 template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:t:r:x" OPTION
+while getopts "i:o:t:r:mx" OPTION
    do
    case $OPTION in
    i)
@@ -80,6 +87,9 @@ while getopts "i:o:t:r:x" OPTION
    r)
       radius=${OPTARG}
       ! is+numeric ${radius} && Usage && exit
+      ;;
+   m)
+      mm=1
       ;;
    x)
       set -x
@@ -182,6 +192,11 @@ for node in ${atlas[@]}
    ################################################################
    subroutine                 @u.8
    coor=(${node[1]//,/ })
+   if (( mm == 1 ))
+      then
+      subroutine              @u.9
+      coor=( $(echo "${coor[@]}"|exec_fsl std2imgcoord -img ${template} -std ${template} -vox) )
+   fi
    
    ################################################################
    # Generate a solid ellipsoid (a sphere in true physical space)
@@ -191,7 +206,7 @@ for node in ${atlas[@]}
    #    will result in a much slower module, but is necessary to
    #    ensure that there is no overlap.
    ################################################################
-   subroutine                 @u.9
+   subroutine                 @u.10
    nodeexpr="step(1-(i-${coor[0]})*(i-${coor[0]})/${radsq[0]}-(j-${coor[1]})*(j-${coor[1]})/${radsq[1]}-(k-${coor[2]})*(k-${coor[2]})/${radsq[2]})"
    if [[ -z ${netexpr} ]]
       then
@@ -226,7 +241,7 @@ done
 ###################################################################
 subroutine                    @u.12
 ctemp=$(date +%N)coor2map
-[[ -z ${TMPDIR} ]] && ctemp=${TEMPDIR}/${ctemp}
+[[ -n ${TMPDIR} ]] && ctemp=${TMPDIR}/${ctemp}
 cmd[mapidx]="exec_afni 3dcalc -overwrite -a ${imgpath} -expr '${netexpr}' -prefix ${out}"
 for c in "${cmd[@]}"
    do
