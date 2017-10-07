@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=accelerator_$(whoami)
-design=/home/rciric/xcpAccelerator/xcpEngine/designs/example.dsn
+design=/home/rciric/xcpAccelerator/xcpEngine/designs/fc.dsn
 sequence=rest
 standard=PNC%2x2x2
 
@@ -50,15 +50,15 @@ pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,roiquant,seed,norm
 prestats_dvols[1]=4
 prestats_stime[1]=none
 prestats_sdir[1]=Z
-prestats_sptf[1]=gaussian
-prestats_smo[1]=6
-prestats_tmpf[1]=elliptic
-prestats_tmpf_order[1]=1
-prestats_tmpf_pass[1]=2
-prestats_tmpf_ripple[1]=0.5
-prestats_tmpf_ripple2[1]=20
-prestats_hipass[1]=0.01
-prestats_lopass[1]=0.08
+prestats_sptf[1]=none
+prestats_smo[1]=0
+prestats_tmpf[1]=none
+prestats_tmpf_order[1]=0
+prestats_tmpf_pass[1]=0
+prestats_tmpf_ripple[1]=0
+prestats_tmpf_ripple2[1]=0
+prestats_hipass[1]=0
+prestats_lopass[1]=nyquist
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
 prestats_dmdt[1]=2
@@ -67,7 +67,7 @@ prestats_censor_cr[1]=rms
 prestats_censor_contig[1]=0
 prestats_rerun[1]=0
 prestats_cleanup[1]=1
-prestats_process[1]=DVO-MPR-MCO-BXT-DSP-DMT
+prestats_process[1]=DVO-MPR-STM-MCO-BXT-DSP-DMT
 
 ###################################################################
 # 2 COREG
