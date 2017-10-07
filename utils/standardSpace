@@ -1,0 +1,313 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Defines a new standard space. Wraps spaceMetadata
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+mni=${XCPEDIR}/space/MNI/MNI-1x1x1.nii.gz
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: standardSpace -s <newStandardSpace:newStandardMap> \\
+                     -p <priors>                          \\
+                     -x <transforms:standardToMNI>        \\
+                     -i <transforms:MNIToStandard>        \\
+                     <options>
+
+Compulsory arguments:
+ -s : New standard space
+      The standard space to be defined. The argument should be 
+      provided in the format:
+      
+                     spaceName:pathToImage
+                              e.g.,
+      MNI%2x2x2:${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+      
+      Multiple -s arguments may be provided, in which case each 
+      will be treated as a different resolution of the new standard
+      space.
+
+ -x : A comma-separated index of paths to transforms from
+      the new standard space into MNI space. The transforms
+      should be indexed in the order that they are applied.
+
+ -i : A comma-separated index of paths to transforms from
+      MNI space into the new standard space. The transforms
+      should be indexed in the order that they are applied.
+      
+ -p : Priors
+      A comma-separated list of prior names and anatomical priors.
+      If no names are provided, then it will be assumed that priors
+      are CSF,GM,WM if 3 priors are provided and CSF,GMCortical,
+      WMCortical,GMDeep,Brainstem,Cerebellum if 6 priors are
+      provided. Otherwise, all priors will not be marked with
+      names. Priors should be passed as follows for custom naming:
+      priorName1:pathToPrior1,priorName2,pathToPrior2, . . .
+
+Optional arguments:
+ -t : Trace
+      If this flag is set, then any commands called by the
+      erodespare routine will be explicitly printed to the
+      console or log.
+
+
+endstream
+}
+
+
+###################################################################
+# Parse arguments
+###################################################################
+combine_only=0
+while getopts "s:x:i:p:m:t" OPTION
+   do
+   case $OPTION in
+   s)
+      template=( ${template[@]} ${OPTARG//:/ } )
+      ! is_image ${template[1]} && Usage && exit
+      ;;
+   x)
+      transforms=${OPTARG}
+      ;;
+   i)
+      itransforms=${OPTARG}
+      ;;
+   p)
+      priors=( ${OPTARG//,/ } )
+      ;;
+   t)
+      set -x
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z ${template} ]]          && Usage && exit 1
+[[ -z ${transforms} ]]        && Usage && exit 1
+[[ -z ${itransforms} ]]       && Usage && exit 1
+[[ -z ${priors} ]]            && Usage && exit 1
+
+
+
+
+
+###################################################################
+# Helper function:
+# dim_format parses the dimensions of the new template images and
+# reformats them to be used in the file name of the imported image
+# by removing trailing zeros and decimal points.
+###################################################################
+dim_format() {
+   local dim
+   local image=${1}
+   ################################################################
+   # Obtain image dimensions
+   ################################################################
+   dim[0]=$(echo $(exec_fsl fslval ${image} pixdim1))
+   dim[1]=$(echo $(exec_fsl fslval ${image} pixdim2))
+   dim[2]=$(echo $(exec_fsl fslval ${image} pixdim3))
+   ################################################################
+   # Remove leading and trailing zeros, decimal points from
+   # dimensions to include them in the template name.
+   ################################################################
+   dim[0]=${dim[0]//\./}
+   dim[1]=${dim[1]//\./}
+   dim[2]=${dim[2]//\./}
+   while contains ${dim[0]} '0$'; do dim[0]=${dim[0]%0}; done
+   while contains ${dim[1]} '0$'; do dim[1]=${dim[1]%0}; done
+   while contains ${dim[2]} '0$'; do dim[2]=${dim[2]%0}; done
+   while contains ${dim[0]} '^0'; do dim[0]=${dim[0]#0}; done
+   while contains ${dim[1]} '^0'; do dim[1]=${dim[1]#0}; done
+   while contains ${dim[2]} '^0'; do dim[2]=${dim[2]#0}; done
+   dims=${dim[0]}x${dim[1]}x${dim[2]}
+}
+
+
+
+
+
+###################################################################
+# STANDARD SPACE DEFINITION
+#------------------------------------------------------------------
+# Build the spatial metadata file into a standard space.
+###################################################################
+subroutine                    @u.1
+name=${template[0]//\%*}
+stddir=${XCPEDIR}/space/${name}
+mkdir -p ${stddir}/${name}_priors
+mkdir -p ${stddir}/${name}_transforms
+###################################################################
+# Obtain image dimensions
+###################################################################
+subroutine                    @u.2
+dim_format ${template[1]}
+###################################################################
+# Import the template to the application directory.
+###################################################################
+subroutine                    @u.3
+exec_fsl imcp ${template[1]} \
+            ${stddir}/${name}-${dims}.nii.gz
+template[1]=${stddir}/${name}-${dims}.nii.gz
+
+
+
+
+
+###################################################################
+# Import priors.
+#------------------------------------------------------------------
+# First define default names for the cases of 3 and 6 priors.
+###################################################################
+subroutine                    @u.4
+p3=(
+   [1]=CSF
+   [2]=GM
+   [3]=WM
+)
+p6=(
+   [1]=CSF
+   [2]=GMCortical
+   [3]=WMCortical
+   [4]=GMDeep
+   [5]=Brainstem
+   [6]=Cerebellum
+)
+###################################################################
+# Next, iterate through all priors and import each to the standard
+# space's application directory.
+###################################################################
+for i in ${!priors[@]}
+   do
+   subroutine                 @u.4.${i}
+   ################################################################
+   # Set the working prior and increment to begin indexing at 1.
+   ################################################################
+   p=${priors[i]}
+   (( i++ ))
+   ################################################################
+   # Pad the prior index with leading zeros.
+   ################################################################
+   while (( ${#i} < 3 ))
+      do
+      i=0${i}
+   done
+   ################################################################
+   # Parse the prior name and path.
+   ################################################################
+   p_name=$(strslice ${p} 1 :)
+   p_path=$(strslice ${p} 2 :)
+   ################################################################
+   # If the name is undefined, then
+   # (1) use the default name if either 3 or 6 priors are provided;
+   # (2) use only the prior index otherwise
+   ################################################################
+   [[ ${p_name} == ${p_path} ]] \
+      && unset p_name \
+      || p_name=-${p_name}
+   if [[ -z ${p_name} ]]
+      then
+      (( ${#priors[@]} == 3 )) && p_name=${p3[i]}
+      (( ${#priors[@]} == 6 )) && p_name=${p6[i]}
+   fi
+   exec_fsl imcp ${p_path} \
+      ${stddir}/${name}_priors/${name}-priors-${i}${p_name}.nii.gz
+done
+
+
+
+
+
+###################################################################
+# Import transforms
+###################################################################
+subroutine                    @u.5
+tx=( ${transforms//,/ }  )
+ix=( ${itransforms//,/ } )
+unset transforms itransforms
+for i in ${!tx[@]}
+   do
+   subroutine                 @u.5.1.${i}
+   if is_image ${tx[i]}
+      then
+      transforms[i]=${stddir}/${name}_transforms/${name}-MNI_${i}Warp.nii.gz
+      exec_fsl imcp  ${tx[i]} ${transforms[i]}
+   else
+      transforms[i]=${stddir}/${name}_transforms/${name}-MNI_${i}Affine.mat
+      exec_sys cp    ${tx[i]} ${transforms[i]}
+   fi
+done
+for i in ${!ix[@]}
+   do
+   subroutine                 @u.5.2.${i}
+   if is_image ${ix[i]}
+      then
+      itransforms[i]=${stddir}/${name}_transforms/MNI-${name}_${i}Warp.nii.gz
+      exec_fsl imcp  ${ix[i]} ${itransforms[i]}
+   else
+      itransforms[i]=${stddir}/${name}_transforms/MNI-${name}_${i}Affine.mat
+      exec_sys cp    ${ix[i]} ${itransforms[i]}
+   fi
+done
+transforms=$( echo ${transforms[@]} )
+itransforms=$(echo ${itransforms[@]})
+transforms=${transforms// /,}
+itransforms=${itransforms// /,}
+
+
+
+
+
+###################################################################
+# Wrap up with a call to spaceMetadata
+###################################################################
+subroutine                    @u.6
+space_path=${stddir}/${name}_space.json
+exec_xcp spaceMetadata                 \
+   -m    ${template[0]}:${template[1]} \
+   -f    MNI%1x1x1:${mni}              \
+   -x    ${transforms}                 \
+   -i    ${itransforms}                \
+   -o    ${space_path}
+###################################################################
+# Add any other resolutions.
+###################################################################
+subroutine                    @u.7
+i=2
+unset idx
+while (( i < ${#template[@]} ))
+   do
+   idx="${idx} ${i}"
+   i=$(( i+2 ))
+done
+for i in ${idx}
+   do
+   dim_format    ${template[i+1]}
+   exec_fsl imcp ${template[i+1]} \
+                 ${stddir}/${name}-${dims}.nii.gz
+   template[i+1]=${stddir}/${name}-${dims}.nii.gz
+   space_config  ${space_path} ${template[i]} Map ${template[i+1]}
+done
+unset space
+space=$(cat ${space_path})
+exec_sys rm -f ${space_path}
+echo "${space//${XCPEDIR}/\$XCPEDIR}" >> ${space_path}
