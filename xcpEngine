@@ -123,8 +123,7 @@ trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
-((      $# < 6      ))                             && usage && exit
-while getopts "d:i:c:o:m:t:" OPTION
+while getopts "d:i:c:o:m:t:uhv" OPTION
    do
    case $OPTION in
    d)
@@ -146,8 +145,11 @@ while getopts "d:i:c:o:m:t:" OPTION
       trace=${OPTARG}
       (( trace > 3 )) && trace=3
       ;;
+   v)
+      cat ${XCPEDIR}/core/VERSION
+      exit 1
+      ;;
    *)
-      echo "Option not recognised: ${OPTARG}"
       usage
       exit 1
       ;;
