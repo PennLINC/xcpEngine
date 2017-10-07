@@ -26,7 +26,7 @@ if (( $# < 6 ))
    then
    usage_flag=1
 fi
-while getopts "d:s:t:o:i:" OPTION
+while getopts "d:s:t:a:o:i:" OPTION
    do
    case $OPTION in
    d)
@@ -53,6 +53,9 @@ while getopts "d:s:t:o:i:" OPTION
       ;;
    o)
       out_super=${OPTARG}
+      ;;
+   a)
+      asgt=( ${asgt[@]} ${OPTARG} )
       ;;
    i)
       scratch=${OPTARG}

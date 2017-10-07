@@ -153,6 +153,10 @@ subroutine                    @3.2  [Evaluating subject variables]
       do
       echo "subject[$i]=${subject[i]}"          >> ${design[sub]}
    done
+   for a in "${asgt[@]}"
+      do
+      echo "${a}"                               >> ${design[sub]}
+   done
    [[ ${sequence}  == native ]] \
    && echo  "sequence=native"                   >> ${design[sub]}
    (( ${normalise} == 1      )) \

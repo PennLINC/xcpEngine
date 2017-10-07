@@ -123,7 +123,7 @@ trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "d:i:c:o:m:t:uhv" OPTION
+while getopts "d:i:c:o:m:t:a:uhv" OPTION
    do
    case $OPTION in
    d)
@@ -148,6 +148,9 @@ while getopts "d:i:c:o:m:t:uhv" OPTION
    v)
       cat ${XCPEDIR}/core/VERSION
       exit 1
+      ;;
+   a)
+      asgt=( ${asgt[@]} -a ${OPTARG} )
       ;;
    *)
       usage
@@ -243,6 +246,7 @@ for sub in ${!cohort[@]}
       -d ${design}
       -s ${sub}:${incohort}
       -o ${out_super}
+      ${asgt[@]}
       ${scratch}
       -t ${trace}
       "
