@@ -2,6 +2,6 @@ json_rm() {
    local key tmp var
    key=${1//\,/\,\.}
    var=${3}
-   tmp=$(echo ${!var}|$JQ_PATH --raw-output 'del(.'${key}')')
+   tmp=$(echo ${!var}|$JQ_PATH --raw-output 'del(."'${key}'")')
    eval ${var}=\${tmp}
 }
