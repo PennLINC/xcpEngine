@@ -11,7 +11,7 @@
 
 failure_chk() {
    local ERR_ROOT failures f fids errdir
-   errdir=${out_super}/group/tmp
+   errdir=${out_group}/tmp
    [[   -n ${scratch} ]] && errdir=${scratch//\-i /}
    [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
    ERR_ROOT=${errdir}/${analysis}-${xcp_date}

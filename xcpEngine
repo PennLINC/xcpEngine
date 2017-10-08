@@ -228,7 +228,7 @@ printx         ${XCPEDIR}/core/CONSOLE_HEADER
 
 
 ###################################################################
-# Run the XCP Localiser first.
+# Run the localiser first.
 ###################################################################
 cxt=0
 level=subject
@@ -298,7 +298,7 @@ for module in ${modules[@]}
       then
       unset ids
       source       ${XCPEDIR}/core/validateSubjects
-      for   sub in ${!cohort[@]}
+      for sub  in  ${!cohort[@]}
          do
          ##########################################################
          # Before running the subject, verify that it has not
@@ -306,7 +306,6 @@ for module in ${modules[@]}
          # for quality reasons.
          ##########################################################
          logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
-         (( $? == 1 )) && continue
          ##########################################################
          # Execute the current module.
          ##########################################################
