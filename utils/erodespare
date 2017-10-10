@@ -5,8 +5,8 @@
 ###################################################################
 
 ###################################################################
-# Function for eroding a mask while ensuring that some voxels
-# remain in the mask.
+# Function for eroding a mask while retaining the deepest n percent
+# of the mask's voxels.
 ###################################################################
 
 ###################################################################
@@ -27,27 +27,33 @@ Usage: erodespare -i <input> -o <output> <options>
 
 Compulsory arguments:
  -i : Input mask
-      The 3D timeseries to which erosion is to be
-      applied.
+      The 3D mask to which erosion is to be applied.
 
  -o : Output path
       The path to the file where the eroded mask will be
       written.
 
 Optional arguments:
- -e : Erosion iterations [default 1]
-      The maximum number of iterations of erosion to
-      apply to the mask. If application of this many
-      iterations of erosion results in a mask that is
-      empty or fails to survive the minimum retention
-      criterion, then progressively fewer iterations
-      of erosion will be applied until the criterion is
-      satisfied.
+ -r : Minimum retention criterion [default 5 percent]
+      The percent of voxels that should be retained in the
+      eroded mask. The argument should be a percent value, not
+      a fractional value (e.g., 5 not 0.05 for 5 percent). For
+      instance, a value of 5 will erode all but the deepest 5
+      percent of voxels. (At least 5 percent of voxels will be
+      preserved.)
 
- -r : Minimum retention criterion [default 1 voxel]
-      The minimum fraction of voxels that must be retained
-      in the eroded mask for the mask to be accepted. A
-      value of 1 accepts any non-empty mask.
+ -v : Value set
+      If this variable is defined, then the specified range of
+      labels will be extracted from the provided mask prior to
+      erosion. For instance, '-v 2,4' will extract cortical and
+      deep grey matter from a standard 6-class segmentation.
+      Syntax follows the -v specification in val2mask.R. If this
+      flag is unset, then all values from the input mask will be
+      used.
+
+ -n : Intermediate output path
+      Path for input and output of temporary files (intermediates)
+      (default: current directory)
 
  -t : Trace
       If this flag is set, then any commands called by the
@@ -61,27 +67,29 @@ endstream
 ###################################################################
 # Define defaults
 ###################################################################
-erode=1
+minret=5
+[[ -z ${intermediate} ]] && intermediate=$(pwd)/erodespare~TEMP~
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:e:r:t" OPTION
+while getopts "i:o:r:v:n:t" OPTION
    do
    case $OPTION in
    i)
       image=${OPTARG}
-      ! is_image ${image} && Usage && exit
       ;;
    o)
       out=${OPTARG}
       ;;
-   e)
-      erode=${OPTARG}
-      ! is+integer ${erode} && Usage && exit
-      ;;
    r)
       minret=${OPTARG}
       ! is+numeric ${minret} && Usage && exit
+      ;;
+   v)
+      value=${OPTARG}
+      ;;
+   n)
+      intermediate=${OPTARG}
       ;;
    t)
       set -x
@@ -95,60 +103,67 @@ done
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${image} ]] && Usage && exit
-[[ -z ${out} ]] && Usage && exit
-
-exec_sys rm -f ${out}
-masksize=( $(exec_fsl fslstats ${image} -V) )
+! is_image ${image}  && Usage && exit
+[[ -z      ${out} ]] && Usage && exit
 
 
 
 
 
-if [[ -z ${minret} ]]
+###################################################################
+# Binarise the segments of the image that are to be included.
+###################################################################
+if [[ -n ${value} ]]
    then
    subroutine                 @u.1
-   minret=$(arithmetic 1/${masksize[0]})
-fi
-
-
-
-
-
-while (( $(arithmetic ${erode}\>0) == 1 ))
-   do
+   exec_xcp val2mask.R \
+      -i    ${image}   \
+      -v    ${value}   \
+      -o    ${intermediate}-bin.nii.gz
+else
    subroutine                 @u.2
-   exec_ants ImageMath 3 \
-      ${out} \
-      GE ${image} ${erode}
-   ################################################################
-   # If the erosion satisfies the minimum retention criterion,
-   # break out of the loop. Otherwise, decrement the erosion
-   # coefficient.
-   ################################################################
-   erodesize=( $(exec_fsl fslstats ${out} -V) )
-   curret=$(arithmetic ${erodesize[0]}/${masksize[0]})
-   if (( $(arithmetic ${curret}\>=${minret}) == 1))
-      then
-      subroutine              @u.3
-      break
-   else
-      (( erode-- ))
-      subroutine              @u.4a "[Erosion resulted in an empty mask.]"
-      subroutine              @u.4b "[Decrementing coefficient to ${erode}]"
-      exec_sys rm -f ${out}
-   fi
-done
-###################################################################
-# If erosion failed, then the output is identical to the input.
-###################################################################
-if ! is_image ${out}
-   then
-   subroutine                 @u.5  
-   exec_sys ln -s ${image} ${out}
+   exec_fsl ${image}   \
+      -bin  ${intermediate}-bin.nii.gz
 fi
+image=${intermediate}-bin.nii.gz
+
+
+
+
+
 ###################################################################
-# The output should be binary, but if it is not for some reason,
-# then binarise it.
+# If full retention (no erosion) is requested, then return the
+# binarised/masked image.
 ###################################################################
-exec_fsl fslmaths ${out} -thr 0.5 -bin ${out}
+if (( minret == 100 ))
+   then
+   subroutine                 @u.3
+   exec_fsl imcp ${image} ${out}
+###################################################################
+# Otherwise, compute the depth of each voxel as a percentile.
+###################################################################
+else
+   subroutine                 @u.4
+   exec_xcp layerLabels          \
+      -l    ${image}             \
+      -i    ${intermediate}-ll   \
+      -o    ${intermediate}-onion.nii.gz
+   ################################################################
+   # Mask out the superficial voxels. If the deepest 10 percent of
+   # voxels are to be retained, then the most superficial 90
+   # percent can be discarded. (Note that percentiles output by
+   # layerLabels range from 100 to 200 rather than from 0 to 100.)
+   ################################################################
+   subroutine                 @u.5
+   llim=$(arithmetic 200-${minret})
+   exec_fsl fslmaths ${intermediate}-onion.nii.gz \
+      -thr  ${llim}           \
+      -uthr 200               \
+      ${out}
+fi
+
+
+
+
+   
+(( trace == 0 )) && rm -f ${intermediate}*
