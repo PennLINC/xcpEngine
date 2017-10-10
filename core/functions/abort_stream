@@ -1,5 +1,5 @@
 abort_stream() {
-   local errdir=${out_super}/group/tmp
+   local errdir=${out_group}/tmp
    [[   -n ${scratch} ]] && errdir=${scratch}
    [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
    ERR_ROOT=${errdir}/${analysis}-${xcp_date}
