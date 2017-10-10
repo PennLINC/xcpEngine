@@ -89,7 +89,7 @@ mat                     <- t(mat)
 if (length(labs) == 1) {
    mmat                 <- mat
 } else {
-   mmat                 <- zeros(dim(mat)[1],max(labs))
+   mmat                 <- zeros(dim(mat)[1],length(labs))
    ################################################################
    # If the script enters this statement, then there are multiple
    # unique values in the map, indicating multiple mask RoIs: a
@@ -110,7 +110,7 @@ if (length(labs) == 1) {
       warning("Warning: node 1 contains one voxel\n")
       dim(voxelwise)    <-c(length(voxelwise),1)
    }
-   mmat[,labs[1]]       <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
+   mmat[,1]       <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
    ################################################################
    # Repeat for all remaining RoIs.
    ################################################################
@@ -120,9 +120,9 @@ if (length(labs) == 1) {
          warning(paste("Warning: node ", labs[i], " contains one voxel\n"))
          dim(voxelwise) <-c(length(voxelwise),1)
       }
-      mmat[,labs[i]]    <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
+      mmat[,i]    <- matrix(apply(voxelwise, FUN = mean, MARGIN = 1), ncol = 1)
    }
-   colnames(mmat)       <- paste("L", 1:max(labs))
+   colnames(mmat)       <- paste("L", labs)
 }
 
 ################################################################### 
