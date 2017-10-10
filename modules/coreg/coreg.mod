@@ -75,6 +75,9 @@ require image  meanIntensityBrain      \
      or        meanIntensity           \
      as        sourceReference
      ;;
+*)
+stream_abort   Invalid reference for coregistration
+     ;;
 esac
 
 require image  struct                  \
