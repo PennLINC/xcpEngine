@@ -5,10 +5,11 @@
 ###################################################################
 
 ###################################################################
-# Utility script adaptation of Srinidhi KL's timeseries2matrix
+# Utility script to compute a voxelwise time series plot following
 #
-# roi2ts uses an input network map or mask and a BOLD timeseries
-# to generate node-specific timeseries for all network elements
+# Power JD (2017) A simple but useful way to assess fMRI scan
+#                 qualities. NeuroImage 154:150-8.
+#
 ###################################################################
 
 ###################################################################
@@ -17,6 +18,9 @@
 suppressMessages(suppressWarnings(library(optparse)))
 suppressMessages(suppressWarnings(library(pracma)))
 suppressMessages(suppressWarnings(library(RNifti)))
+suppressMessages(suppressWarnings(library(ggplot2)))
+suppressMessages(suppressWarnings(library(reshape2)))
+suppressMessages(suppressWarnings(library(grid)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -24,15 +28,23 @@ suppressMessages(suppressWarnings(library(RNifti)))
 ###################################################################
 option_list = list(
    make_option(c("-i", "--img"), action="store", default=NA, type='character',
-              help="Path to the 4d BOLD timeseries from which the timeseries
-                  will be extracted."),
+              help="Path to the denoised 4d BOLD timeseries from which 
+                  the voxelwise timeseries will be extracted. To include
+                  multiple images, pass them as a comma-separated list."),
    make_option(c("-r", "--roi"), action="store", default=NA, type='character',
-              help="A 3D image specifying the nodes or regions of interest
-                  according to which extracted timeseries should be sorted."),
+              help="A 3D image specifying the labels or regions of interest
+                  according to which extracted timeseries should be sorted
+                  This should be a depth map, which can be obtained using
+                  layerLabels."),
    make_option(c("-t", "--ts"), action="store", default=NA, type='character',
-              help="A path to an additional 1D timeseries to include as a
-                  line plot."),
-   make_option(c("-f", "--outfig"), action="store", default='similPlot.svg', type='character',
+              help="A list of paths to additional 1D timeseries to include as a
+                  line plot. Format as
+                           
+                           ts1_name:ts1_path,ts2_name:ts2_path,...
+                  "),
+   make_option(c("-n", "--names"), action="store", default=NA, type='character',
+              help="The path to a vector of label names."),
+   make_option(c("-o", "--outfig"), action="store", default='fcqa.png', type='character',
               help="The path where the voxelwise timeseries plot between
                      should be printed. This output will only be produced
                      if ggplot2 is installed. Otherwise, this script will
@@ -42,19 +54,20 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$img)) {
    cat('User did not specify an input timeseries.\n')
-   cat('Use roi2ts.R -h for an expanded usage menu.\n')
+   cat('Use voxts.R -h for an expanded usage menu.\n')
    quit()
 }
 if (is.na(opt$roi)) {
-   cat('User did not specify an input RoI map.\n')
-   cat('Use roi2ts.R -h for an expanded usage menu.\n')
+   cat('User did not specify an input label map.\n')
+   cat('Use voxts.R -h for an expanded usage menu.\n')
    quit()
 }
 
-impath <- opt$img
-roipath <- opt$roi
-tspath <- opt$ts
-outfig <- opt$outfig
+impath               <- opt$img
+maskpath             <- opt$roi
+tspath               <- opt$ts
+outfig               <- opt$outfig
+names                <- opt$names
 
 if (! "ggplot2" %in% rownames(installed.packages())){
    warning('The R package ggplot2 is not installed. A voxelwise\n')
@@ -64,64 +77,206 @@ if (! "ggplot2" %in% rownames(installed.packages())){
    quit()
 }
 
-###################################################################
-# 1. Load in the image.
-###################################################################
-suppressMessages(require(ggplot2))
-img <- readNifti(impath)
-tp <- dim(img)[length(dim(img))]
-
-###################################################################
-# 2. Load in the regional mask
-###################################################################
-net <- readNifti(roipath)
-
-###################################################################
-# 3. (as in roi2ts or Shrinidhi KL's timeseries2matrix)
-#    Obtain all unique nonzero values in the mask.
-###################################################################
-labs <- sort(unique(net[net > 0]))
-length(labs)
-
-###################################################################
-# 4. Iterate through all labels. Extract the voxelwise timeseries
-#    matrix from each, and bind it to the extant voxelwise
-#    timeseries matrix.
-###################################################################
-logmask <- (net == labs[1])
 
 
-tp
-sum(logmask)
-mat <- img[logmask]
-dim(mat) <- c(sum(logmask), tp)
-indvec <- ones(sum(logmask),1)
-if (length(labs) > 1) {
-   for (i in 2:length(labs)) {
-      logmask <- (net == labs[i])
-      cmat <- img[logmask]
-      dim(cmat) <- c(sum(logmask), tp)
-      cindvec <- ones(sum(logmask),1) * i
-      mat <- rbind(mat,cmat)
-      indvec <- rbind(indvec,cindvec)
-   }
+
+
+###################################################################
+# 1. Determine figure parameters.
+###################################################################
+tslist               <- unlist(strsplit(tspath,','))
+imlist               <- unlist(strsplit(impath,','))
+tsct                 <- length(tslist)
+imct                 <- length(imlist)
+TSHT                 <- 1
+IMHT                 <- 5
+LGHT                 <- 1
+DIMX                 <- 18
+DIMY                 <- TSHT * tsct + IMHT * imct + LGHT
+DIMSC                <- 100
+IMX                  <- DIMX * DIMSC
+IMY                  <- DIMY * DIMSC
+LNSZ                 <- DIMSC/50
+TEXTHT               <- DIMSC/10
+cy                   <- 1
+
+png(filename=outfig,width=IMX,height=IMY)
+pushViewport(viewport(layout = grid.layout(DIMY, DIMX)))
+
+dummy                <- suppressMessages(melt(data.frame(1)))
+
+
+
+
+
+###################################################################
+# 2. Iterate over 1D time series.
+###################################################################
+for (ts in tslist) {
+   ################################################################
+   # Parse
+   ################################################################
+   ts                <- unlist(strsplit(ts,':'))
+   ts_name           <- ts[1]
+   ts_path           <- ts[2]
+   ts_rang           <- as.numeric(unlist(strsplit(ts[3],'-')))
+   ################################################################
+   # Load
+   ################################################################
+   ts                <- as.numeric(unlist(read.table(ts_path,header=F)))
+   dim(ts)           <- c(length(ts),1)
+   ts                <- melt(ts)
+   ################################################################
+   # Label
+   ################################################################
+   molab <- ggplot(dummy) + 
+            geom_rect(xmin=0,xmax=1,ymin=0,ymax=1,color='#EEEEEE',fill='#EEEEEE') + 
+            geom_text(aes(x=0.5,y=0.5,label=ts_name),colour='black',size=TEXTHT) + 
+            scale_x_continuous(expand=c(0,0)) + 
+            scale_y_continuous(expand=c(0,0)) +
+            theme(axis.text.x=element_blank(),
+                axis.text.y=element_blank(),
+                axis.ticks=element_blank(),
+                axis.title.x=element_blank(),
+                axis.title.y=element_blank(),
+                legend.position="none",
+                panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                panel.grid.minor=element_blank(),plot.background=element_blank())
+   ################################################################
+   # Plot
+   ################################################################
+   moplt <- ggplot(ts) + 
+            geom_rect(aes(xmin=Var1-0.5,xmax=Var1+0.5,ymin=min(ts_rang),ymax=max(ts_rang),fill=value)) + 
+            geom_line(aes(x=Var1,y=value),colour='red',size=LNSZ) +
+            scale_x_continuous(expand=c(0,0)) + 
+            scale_y_continuous(expand=c(0,0)) +
+            theme(axis.text.x=element_blank(),
+                axis.text.y=element_blank(),
+                axis.ticks=element_blank(),
+                axis.title.x=element_blank(),
+                axis.title.y=element_blank(),
+                legend.position="none",
+                panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                panel.grid.minor=element_blank(),plot.background=element_blank())
+   ################################################################
+   # Print
+   ################################################################
+   fy                <- cy + TSHT - 1
+   print(molab, vp = viewport(layout.pos.row = cy:fy, layout.pos.col = 1))
+   print(moplt, vp = viewport(layout.pos.row = cy:fy, layout.pos.col = 2:DIMX))
+   cy                <- cy + TSHT
 }
-mat <- t(scale(t(mat)))
+
+
+
+
 
 ###################################################################
-# 5. Prepare the plot.
+# 3. Prepare the regional mask.
 ###################################################################
-rm(img)
-rm(net)
-png(filename=outfig,width=2000,height=700)
-par(fig=c(0.1,1,0,0.8),mar=c(0.5,0.5,0.5,0.5),new=TRUE)
-image(t(mat),zlim=c(quantile(mat,0.1,na.rm=TRUE),quantile(mat,0.9,na.rm=TRUE)),col=grey(c(seq(0,0.1,0.001),seq(0.1,0.9,0.01),seq(0.9,1,0.01))),xaxt='n',yaxt='n',ann=FALSE)
-par(fig=c(0,0.1,0,0.8),mar=c(0.5,0.5,0.5,0.5),new=TRUE)
-image(t(indvec),col=rainbow(length(labs)*1.5)[1:length(labs)],xaxt='n',yaxt='n',ann=FALSE)
-if (!is.na(tspath)){
-   par(fig=c(0.1,1,0.8,1),mar=c(0.5,0.5,0.5,0.5),new=TRUE)
-   ts <- as.matrix(read.table(tspath,header=FALSE))
-   matplot(scale(ts),type='l',lwd=5,xaxs='i',xaxt='n',yaxt='n',ann=FALSE)
+mask                 <- readNifti(maskpath)
+logmask              <- (mask != 0)
+voxrank              <- order(mask[logmask])
+nclass               <- length(unique(mask[logmask]))
+classes              <- unique(mask[logmask])
+for (c in 1:length(classes)) { if (! is.integer(classes[c])) {break} }
+if (c != nclass) {
+   class             <- sort(floor(mask[logmask]/100))
+   nclass            <- length(unique(class))
+} else {
+   class             <- sort(mask[logmask])
 }
-dev.off()
+dim(class)           <- c(1,length(class))
+class                <- melt(class)
+classes              <- sort(unique(class$value))
 
+
+
+
+
+###################################################################
+# 4. Iterate over images.
+###################################################################
+for (im in imlist) {
+   ################################################################
+   # Load
+   ################################################################
+   img               <- readNifti(im)
+   hdr               <- dumpNifti(im)
+   ################################################################
+   # Mask
+   ################################################################
+   img               <- img[logmask]
+   dim(img)          <- c(sum(logmask),hdr$dim[5])
+   img               <- scale(t(img))
+   img               <- img[,voxrank]
+   img               <- melt(img)
+   ################################################################
+   # Label
+   ################################################################
+   imlab <- ggplot(class,aes(Var1,Var2)) + 
+            geom_raster(aes(fill=value)) + 
+            scale_x_continuous(expand=c(0,0)) + 
+            scale_y_continuous(expand=c(0,0)) +
+            theme(axis.text.x=element_blank(),
+                   axis.text.y=element_blank(),
+                   axis.ticks=element_blank(),
+                   axis.title.x=element_blank(),
+                   axis.title.y=element_blank(),
+                   legend.position="none",
+                   panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                   panel.grid.minor=element_blank(),plot.background=element_blank())
+   ################################################################
+   # Plot
+   ################################################################
+   implt <- ggplot(img,aes(Var1,Var2)) + 
+            geom_raster(aes(fill=value)) + 
+            scale_x_continuous(expand=c(0,0)) + 
+            scale_y_continuous(expand=c(0,0)) +
+            theme(axis.text.x=element_blank(),
+                   axis.text.y=element_blank(),
+                   axis.ticks=element_blank(),
+                   axis.title.x=element_blank(),
+                   axis.title.y=element_blank(),
+                   legend.position="none",
+                   panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                   panel.grid.minor=element_blank(),plot.background=element_blank())
+   ################################################################
+   # Print
+   ################################################################
+   fy                <- cy + IMHT - 1
+   print(imlab, vp = viewport(layout.pos.row = cy:fy, layout.pos.col = 1))
+   print(implt, vp = viewport(layout.pos.row = cy:fy, layout.pos.col = 2:DIMX))
+   cy                <- cy + IMHT
+}
+
+
+
+
+
+###################################################################
+# 5. Produce ROI legend
+###################################################################
+dim(classes)         <- c(length(classes),1)
+classes              <- melt(classes)
+if (!is.na(names)) {
+   roilabs           <- as.vector(unlist(read.table(names,header=F)))
+} else {
+   roilabs           <- rep(NA,nclass)
+}
+lgnd  <- ggplot(classes,aes(Var1,Var2)) + 
+         geom_raster(aes(fill=value)) + 
+         annotate("text", x = 1:nclass, y = 1, label = roilabs, colour = "white", size = TEXTHT) +
+         scale_x_continuous(expand=c(0,0)) + 
+         scale_y_continuous(expand=c(0,0)) +
+         theme(axis.text.x=element_blank(),
+                axis.text.y=element_blank(),
+                axis.ticks=element_blank(),
+                axis.title.x=element_blank(),
+                axis.title.y=element_blank(),
+                legend.position="none",
+                panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                panel.grid.minor=element_blank(),plot.background=element_blank())
+fy                   <- cy + LGHT - 1
+suppressWarnings(print(lgnd, vp = viewport(layout.pos.row = cy:fy, layout.pos.col = 2:DIMX)))
+dummy                <- dev.off()
