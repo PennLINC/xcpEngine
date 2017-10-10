@@ -26,12 +26,12 @@ source ${XCPEDIR}/core/parseArgsMod
 completion() {
    processed         preprocessed
    
-   write_derivative  meanIntensity
    write_derivative  meanIntensityBrain
-   write_derivative  referenceVolume
    write_derivative  referenceVolumeBrain
    write_derivative  mask
    
+   write_output      meanIntensity
+   write_output      referenceVolume
    write_output      mcdir
    write_output      rps
    write_output      rel_rms
@@ -75,6 +75,7 @@ derivative  mask                    ${prefix}_mask
 
 output      mcdir                   mc
 output      rps                     mc/${prefix}_realignment.1D
+output      dvars                   mc/${prefix}_dvars.1D
 output      abs_rms                 mc/${prefix}_absRMS.1D
 output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
 output      rel_rms                 mc/${prefix}_relRMS.1D
@@ -118,6 +119,9 @@ confmat
    The confound matrix after filtering and censoring.
 confproc
    A pointer to the working version of the confound matrix.
+dvars
+   The DVARS, a framewise index of the rate of change of the global
+   BOLD signal
 fd
    Framewise displacement values, computed as the absolute sum of
    realignment parameter first derivatives.
@@ -776,6 +780,17 @@ while (( ${#rem} > 0 ))
                fslmaths ${intermediate}.nii.gz \
                -mas ${mask[cxt]} \
                ${intermediate}_${cur}.nii.gz
+         fi
+         ##########################################################
+         # Use the brain mask to compute DVARS.
+         ##########################################################
+         if ! is_1D  ${dvars[cxt]} \
+         || rerun
+            subroutine        @5.7  Computing DVARS
+            exec_xcp dvars.R \
+               -i    ${intermediate}_mc.nii.gz \
+               -m    ${mask[cxt]} \
+               >>    ${dvars[cxt]}
          fi
          intermediate=${intermediate}_${cur}
          routine_end
