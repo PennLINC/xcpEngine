@@ -185,36 +185,26 @@ for class in "${!tissue_classes[@]}"
       
       mask=${intermediate}_${class}
       #############################################################
-      # Generate a binary mask if necessary.
+      # Generate a binary mask if necessary. Erode the mask if
+      # erosion has been requested.
       #############################################################
       if ! is_image ${mask}.nii.gz \
       || rerun
          then
          subroutine           @3.1
          exec_sys    rm -f    ${mask}.nii.gz
-         exec_xcp    val2mask.R \
+         exec_xcp    erodespare     \
             -i       ${!class_path} \
-            -v       ${!class_val} \
+            -v       ${!class_val}  \
+            -r       ${!class_ero}  \
             -o       ${mask}.nii.gz
-      fi
-      #############################################################
-      # Erode the mask iteratively, ensuring that the result of
-      # applying the specified erosion is non-empty.
-      #############################################################
-      if (( ${!class_ero} > 0 ))
-         then
-         subroutine           @3.2
-         exec_xcp erodespare \
-            -i    ${mask}.nii.gz \
-            -o    ${mask}_ero.nii.gz \
-            -e    ${!class_ero}
-         mask=${mask}_ero
       fi
       #############################################################
       # Move the mask from subject structural space to subject
       # EPI space. If the BOLD timeseries is already standardised,
       # then instead move it to standard space.
       #############################################################
+      subroutine              @3.2
       warpspace \
          ${mask}.nii.gz \
          ${!class_mask} \
@@ -232,7 +222,7 @@ for class in "${!tissue_classes[@]}"
          # Extract the mean timecourse from the eroded and
          # transformed mask.
          ##########################################################
-         subroutine           @3.6
+         subroutine           @3.3
          exec_fsl \
             fslmeants   -i ${img} \
             -o          ${ts}.1D \
@@ -248,7 +238,7 @@ for class in "${!tissue_classes[@]}"
          # Use aCompCor to extract PC timecourses from the mask:
          # Fixed number of PCs.
          ##########################################################
-         subroutine           @3.7
+         subroutine           @3.4
          exec_afni      3dpc \
             -prefix     ${ts} \
             -pcsave     ${!class_include} \
@@ -262,7 +252,7 @@ for class in "${!tissue_classes[@]}"
          # All principal components.
          # Please don't do this?
          ##########################################################
-         subroutine           @3.8
+         subroutine           @3.5
          exec_afni      3dpc \
             -prefix     ${ts} \
             -pcsave     99999 \
@@ -276,7 +266,7 @@ for class in "${!tissue_classes[@]}"
          # Use aCompCor to extract PC timecourses from the mask:
          # Cumulative variance explained.
          ##########################################################
-         subroutine           @3.9
+         subroutine           @3.6
          exec_afni      3dpc \
             -prefix     ${ts} \
             -mask       ${!class_mask} \
@@ -290,7 +280,7 @@ for class in "${!tissue_classes[@]}"
             ((       ${chk} == 1 ))    && break
             ((       vidx++      ))
          done
-         subroutine           @3.9a [Retaining ${vidx} components from ${class_name}]
+         subroutine           @3.7  [Retaining ${vidx} components from ${class_name}]
          exec_afni      3dpc \
             -prefix     ${ts} \
             -pcsave     ${vidx} \
@@ -299,13 +289,13 @@ for class in "${!tissue_classes[@]}"
          cc_components=$(( ${cc_components} + ${vidx} ))
       elif [[ ${!class_include} == "local" ]]
          then
-         subroutine           @3.10 Modelling voxelwise ${class_name} signal
+         subroutine           @3.8  Modelling voxelwise ${class_name} signal
          class_radius='confound_'${class}'_rad['${cxt}']'
          class_local=${class}'Local['${cxt}']'
          if ! is_image        ${!class_local} \
          || rerun
             then
-            subroutine        @3.11 Radius of influence: ${!class_radius} mm
+            subroutine        @3.9  Radius of influence: ${!class_radius} mm
             exec_sys          rm -f ${!class_local}
             exec_afni         3dLocalstat \
                -prefix        ${!class_local} \
@@ -324,7 +314,7 @@ for class in "${!tissue_classes[@]}"
          fi
       fi
    else
-         subroutine           @3.12
+         subroutine           @3.10
    fi
 done
 
