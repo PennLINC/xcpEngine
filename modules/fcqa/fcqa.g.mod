@@ -37,17 +37,38 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-output      qcfc_n_sig_edges        ${prefix}_QC-FC_nSigEdges.txt
-output      qcfc_abs_med_cor        ${prefix}_QC-FC_absMedCor.txt
-output      qcfc_dist_dependence    ${prefix}_QC-FC_distanceDependence.csv
-output      qcfc_correlation        ${prefix}_QC-FC_correlation.csv
-output      qcfc_correlation_thr    ${prefix}_QC-FC_correlation_thr.csv
-output      node_distance           ${prefix}_node_distance.csv
+configure   qcfc_n_sig_edges        ${prefix}_QC-FC_nSigEdges
+configure   qcfc_pct_sig_edges      ${prefix}_QC-FC_pctSigEdges
+configure   qcfc_abs_med_cor        ${prefix}_QC-FC_absMedCor
+configure   qcfc_dist_dependence    ${prefix}_QC-FC_distanceDependence
+configure   qcfc_correlation        ${prefix}_QC-FC_correlation
+configure   qcfc_correlation_thr    ${prefix}_QC-FC_correlation_thr
+configure   node_distance           ${prefix}_node_distance
 
 <<DICTIONARY
 
-placeholder
-   placeholder
+node_distance
+   A matrix indicating the pairwise distance between the nodes of
+   the analysed network
+qcfc_abs_med_cor
+   The absolute median correlation between connectivity and motion
+   across all edges in the network
+qcfc_correlation
+   The QC-FC matrix: the weight of each edge is equal to the
+   correlation between functional connectivity along that edge and
+   subject motion
+qcfc_correlation_thr
+   Thresholded version of qcfc_correlation: all non-significant
+   edges are set to 0
+qcfc_dist_dependence
+   The edgewise correlation between QC-FC values and edge length
+   (Euclidean distance between connected nodes)
+qcfc_n_sig_edges
+   The number of edges in the network whose strength is related
+   significantly to subject motion
+qcfc_pct_sig_edges
+   The percentage of edges in the network whose strength is related
+   significantly to subject motion
 
 DICTIONARY
 
@@ -136,14 +157,12 @@ for map in ${atlas_names[@]}
    ################################################################
    rm -f ${outbase}quality
    [[ -e ${fcqa_confmat[cxt]} ]] \
-      && confound="-a ${fcqa_confmat[cxt]}"
-   exec_xcp mocor.R                                   \
+      && confound="-n ${fcqa_confmat[cxt]}"
+   exec_xcp qcfc.R                                    \
       -c    ${intermediate}-subjects.csv              \
       -s    ${fcqa_sig[cxt]}                          \
-      -n    ${parName}                                \
-      -o    ${qcfc_correlation[cxt]}_${a[Name]}.txt   \
-      -r    ${qcfc_correlation_thr[cxt]}_${a[Name]}.txt \
-      -f    ${qcfc_correlation[cxt]}_${a[Name]}       \
+      -n    ${a[Name]}                                \
+      -o    ${qcfc_correlation[cxt]}_${a[Name]}       \
       -q    ${qcfc_n_sig_edges[cxt]}                  \
       ${confound}
 
