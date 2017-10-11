@@ -786,9 +786,10 @@ while (( ${#rem} > 0 ))
          ##########################################################
          if ! is_1D  ${dvars[cxt]} \
          || rerun
+            then
             subroutine        @5.7  Computing DVARS
             exec_xcp dvars.R \
-               -i    ${intermediate}_mc.nii.gz \
+               -i    ${intermediate}_${cur}.nii.gz \
                -m    ${mask[cxt]} \
                >>    ${dvars[cxt]}
          fi
