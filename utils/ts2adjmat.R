@@ -49,7 +49,7 @@ if (! is.na(tmPath)) {
 ###################################################################
 # 2. Compute the adjacency matrix
 ###################################################################
-adjmat <- cor(tc)
+adjmat <- suppressWarnings(cor(tc))
 adjmat[is.na(adjmat)] <- NaN
 adjmat <- squareform(adjmat*(matrix(!diag(dim(adjmat)[1]),nrow=dim(adjmat)[1])))
 

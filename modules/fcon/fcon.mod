@@ -234,6 +234,7 @@ for net in ${atlas_names[@]}
       exec_xcp roi2ts.R \
          -i    ${img} \
          -r    ${nodemap[cxt]} \
+         -l    ${a[NodeIndex]} \
          >>    ${ts[cxt]}
    fi
 
