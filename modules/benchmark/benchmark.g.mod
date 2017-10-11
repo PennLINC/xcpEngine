@@ -5,241 +5,147 @@
 ###################################################################
 
 ###################################################################
-# This group-level module computes denoising benchmarks for a
-# pipeline
+# SPECIFIC MODULE HEADER
+# This module assesses quality of functional connectivity data
 ###################################################################
+mod_name_short=fcqa
+mod_name='FUNCTIONAL QUALITY ASSESSMENT MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
 ###################################################################
-# Constants
+# GENERAL GROUP MODULE HEADER
 ###################################################################
-# none yet
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/xcpDelocaliser
+
+###################################################################
+# MODULE COMPLETION
+###################################################################
+completion() {
+   write_output      placeholder
+   
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   source ${XCPEDIR}/core/moduleEnd
+}
 
 
 
 
 
 ###################################################################
+# OUTPUTS
 ###################################################################
-# BEGIN GENERAL MODULE HEADER
+output      qcfc_n_sig_edges        ${prefix}_QC-FC_nSigEdges.txt
+output      qcfc_abs_med_cor        ${prefix}_QC-FC_absMedCor.txt
+output      qcfc_dist_dependence    ${prefix}_QC-FC_distanceDependence.csv
+output      qcfc_correlation        ${prefix}_QC-FC_correlation.csv
+output      qcfc_correlation_thr    ${prefix}_QC-FC_correlation_thr.csv
+output      node_distance           ${prefix}_node_distance.csv
+
+<<DICTIONARY
+
+placeholder
+   placeholder
+
+DICTIONARY
+
+
+
+
+
+
+
+
+
+
 ###################################################################
+# Retrieve all the networks for which quality assessment should be
+# run, and prime the analysis.
 ###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
+if [[ -s ${fcqa_atlas[cxt]} ]]
+   then
+   subroutine                 @0.1
+   load_atlas        ${fcqa_atlas[cxt]}
+else
+   echo \
+"
+::XCP-WARNING: Quality assessment of functional connectivity data
+  has been requested, but no functional connectivity data have been
+  provided.
+  
+  Skipping module"
+   exit 1
+fi
+
+
+
+
+
 ###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
+# Retrieve all motion estimates.
+# qm should probably be a hash table.
+###################################################################
+unset    v     motion
+for i in ${!quality[@]}
    do
-   case $OPTION in
-   d)
-      design_group=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
+   unset    qa
+   mapfile  qa < ${quality[i]}
+   qvarsub=( ${qa[0]//,/ } )
+   qvalsub=( ${qa[1]//,/ } )
+   if [[ -z ${v} ]]
+      then
+      for v in ${!qvarsub[@]}; do contains ${qvarsub[v]} relMeanRMSMotion && break; done
+   fi
+   motion[i]=${qvalsub[v]}
 done
-shift $((OPTIND-1))
-###################################################################
-# Ensure that the compulsory design_group variable has been defined
-###################################################################
-[[ -z ${design_group} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_group} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "###################################################################"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭                 EXECUTING BENCHMARK MODULE                ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_group}
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out_group}/${prep}benchmark
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
 
-# For the benchmark module, potential outputs include:
-#  * metric: comma-separated index of benchmark metrics
-#  * mat: adjacency matrix with edges weighted according to
-#    subjectwise correlation between motion and connectivity
-#  * matthr: as above, thresholded at significance
-#  * matdist: adjacency matrix with edges weighted according to
-#    centre-of-mass distance in physical space
+
+
+
+
 ###################################################################
-outbase=${outdir}/~TEMP~
-benchMetric[${cxt}]=${outdir}/${analysis}_benchmarks.csv
-benchMat[${cxt}]=${outdir}/${analysis}_fcCorrelation
-benchMatthr[${cxt}]=${outdir}/${analysis}_fcCorrelationThresh
-benchMatdist[${cxt}]=${outdir}/${analysis}_distance
+# Iterate through each brain atlas. Compute the QC-FC measures for
+# each.
 ###################################################################
-# Obtain paths to all localised design files.
-###################################################################
-cohort=$(cat ${path_cohort} 2>/dev/null)
-for subject in ${cohort}
+for map in ${atlas_names[@]}
    do
-   subjid=$subject
-   remfield=$subject
-   iter=0
-   while [[ ! -z ${remfield} ]]
+   unset edges
+   ################################################################
+   # Iterate over all subjects's atlantes.
+   ################################################################
+   for i in ${!atlas[@]}
       do
-      curfield=$(echo ${remfield}|cut -d"," -f1)
-      remfield=$(echo ${remfield}|sed s@^[^,]*@@)
-      remfield=$(echo ${remfield}|sed s@^,@@)
-      subject[${iter}]=${curfield}
-      iter=$(expr ${iter} + 1)
+      load_atlas     ${atlas[i]}
+      atlas_parse    ${map}
+      edges[i]=${a[MatrixFC]}
+      
+      echo ${ids[i]},${edges[i]},${motion[i]} >> ${intermediate}-subjects.csv
    done
-   nfield=${iter}
-   source ${design}
-   designs="${designs} ${out}/${prefix}.dsn"
-done
-###################################################################
-# Prime the group design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_group
-echo "# *** outputs from benchmark[${cxt}] *** #" >> $design_group
-echo "" >> $design_group
-###################################################################
-###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
-###################################################################
+   load_atlas        ${fcqa_atlas[cxt]}
+   atlas_parse       ${map}
 
 
 
 
 
-###################################################################
-# Obtain the list of parcellations, and cycle through them.
-# confcor indicates whether the confound file has been re-ordered.
-###################################################################
-rm -f ${outbase}confound
-pars=$(grep -i '^#' ${benchmark_lib[${cxt}]})
-confcor=0
-for par in ${pars}
-   do
-   set +x
-   ################################################################
-   # Note that there is an involuntary cleanup step at the
-   # beginning here.
-   ################################################################
-   parName=$(echo $par|cut -d"#" -f2)
-   parPath=$(echo $par|cut -d"#" -f3)
-   parName=$(eval echo ${parName})
-   parPath=$(eval echo ${parPath})
-   parPath=$(ls -d1 ${parPath} 2>/dev/null)
-   ################################################################
-   # Cycle through subjects. Obtain, for each, a list comprising:
-   # * prefix identifiers
-   # * path to adjacency matrix
-   # * motion value
-   # * modularity quality
-   # * a priori specificity (within/between)
-   ################################################################
-   rm -f ${outbase}subjects
-   for dsn in ${designs}
-      do
-      [[ ! -e ${dsn} ]] \
-         && echo "${dsn} missing" \
-         && echo "" >> ${outbase}subjects \
-         && continue
-      source ${dsn}
-      net=$(grep -i '#NM,'${parName}'#' ${out}/${prefix}_networks)
-      adjmat=$(echo ${net}\
-         |sed s@'#'@'\n'@g\
-         |grep -i '^AM,'\
-         |cut -d',' -f2)
-      motion=${mcdir[${subjidx}]}/${prefix}_relMeanRMS.txt
-      motion=$(cat ${motion})
-      pfx=$(echo ${prefix}|sed s@'_'@' '@g)
-      apr=$(echo ${adjmat}\
-         |rev\
-         |cut -d'_' -f2-\
-         |rev)
-      modq=$(ls -d1 ${apr}_apriori_quality.txt)
-      wbspec=$(ls -d1 ${apr}_apriori_specOverall.txt)
-      modq=$(cat ${modq})
-      wbspec=$(cat ${wbspec})
-      #############################################################
-      # Ensure that subject order in the confound list conforms to
-      # that in the cohort.
-      #
-      # This only need be done once, regardless of the number of
-      # networks, so the confcor flag should be turned on to
-      # minimise redundancy.
-      #############################################################
-      if [[ -e ${benchmark_confmat[${cxt}]} ]] \
-         && [[ $confcor == 0 ]]
-         then
-         q=$(cat ${benchmark_confmat[${cxt}]})
-         for f in ${pfx}
-            do
-            q=$(echo "${q}"|grep ${f})
-         done
-         echo "${q}" >> ${outbase}confound
-      fi
-      pfx=$(echo ${prefix}|sed s@'_'@','@g)
-      echo ${pfx},${adjmat},${motion},${wbspec},${modq} >> ${outbase}subjects
-   done
-   confcor=1
-   [[ -e ${outbase}confound ]] \
-      && benchmark_confmat[${cxt}]=${outbase}confound
-   source ${design_group}
-   
-   
-   
-   
-   set -x
    ################################################################
    # Build the edgewise FC correlation matrix.
    # Pass in confounds if they have been provided.
    ################################################################
    rm -f ${outbase}quality
-   [[ -e ${benchmark_confmat[${cxt}]} ]] \
-      && confound="-a ${benchmark_confmat[${cxt}]}"
-   ${XCPEDIR}/utils/mocor.R \
-      -c ${outbase}subjects \
-      -s ${benchmark_sig[${cxt}]} \
-      -n ${parName} \
-      ${confound} \
-      -o ${benchMat[${cxt}]}_${parName} \
-      -r ${benchMatthr[${cxt}]}_${parName} \
-      -f ${benchMat[${cxt}]}_${parName} \
-      -q ${outbase}quality
+   [[ -e ${fcqa_confmat[cxt]} ]] \
+      && confound="-a ${fcqa_confmat[cxt]}"
+   exec_xcp mocor.R                                   \
+      -c    ${intermediate}-subjects.csv              \
+      -s    ${fcqa_sig[cxt]}                          \
+      -n    ${parName}                                \
+      -o    ${qcfc_correlation[cxt]}_${a[Name]}.txt   \
+      -r    ${qcfc_correlation_thr[cxt]}_${a[Name]}.txt \
+      -f    ${qcfc_correlation[cxt]}_${a[Name]}       \
+      -q    ${qcfc_n_sig_edges[cxt]}                  \
+      ${confound}
 
 
 
@@ -248,10 +154,10 @@ for par in ${pars}
    ################################################################
    # Obtain the centres of mass for each network node.
    ################################################################
-   rm -f ${outbase}cmass.sclib
-   ${XCPEDIR}/utils/cmass.R \
-      -r ${parPath} \
-      >> ${outbase}cmass.sclib
+   exec_sys rm -f ${intermediate}-cmass.sclib
+   exec_xcp cmass.R                                   \
+      -r    ${a[Map]}                                 \
+      >>    ${intermediate}-cmass.sclib
 
 
 
@@ -260,10 +166,10 @@ for par in ${pars}
    ################################################################
    # Build the edgewise distance matrix.
    ################################################################
-   rm -f ${benchMatdist[${cxt}]}_${parName}
-   ${XCPEDIR}/utils/lib2mat.R \
-      -c ${outbase}cmass.sclib \
-      >> ${benchMatdist[${cxt}]}_${parName}
+   exec_sys rm -f ${node_distance[cxt]}_${a[Name]}
+   exec_xcp lib2mat.R                                 \
+      -c    ${intermediate}-cmass.sclib               \
+      >>    ${node_distance[cxt]}_${a[Name]}
 
 
 
@@ -273,54 +179,15 @@ for par in ${pars}
    # Compute the overall correlation between distance and motion
    # effects to infer distance-dependence of motion effects.
    ################################################################
-   rm -f ${outbase}quality2
-   echo distDependMotion >> ${outbase}quality2
-   ${XCPEDIR}/utils/simil.R \
-      -i ${benchMatdist[${cxt}]}_${parName},${benchMat[${cxt}]}_${parName} \
-      -l 'Inter-node distance (mm),FC-motion correlation (r)' \
-      -f ${outdir}/${analysis}_distDepend_${parName}.svg \
-      |cut -d' ' -f2 \
-      |head -n1 \
-      >> ${outbase}quality2
-
-
-
-
-
-   ################################################################
-   # Community structure: closeness of the community partition to
-   # an a priori standard.
-   ################################################################
-
-
-
-
-
-   ################################################################
-   # Community structure: quality of the data-driven partition.
-   ################################################################
-
-
-
-
-
-   ################################################################
-   # Collate all benchmarks for the current network.
-   ################################################################
-   rm -f ${outdir}/${analysis}_${parName}_quality
-   qvars=$(head -n1 ${outbase}quality|sed s@'"'@@g|sed s@'\t'@','@g),$(head -n1 ${outbase}quality2)
-   qvars=$(echo ${qvars}|sed s@','@' '@g)
-   unset qvn
-   for qv in ${qvars}
-      do
-      qv=${qv}_${parName}
-      [[ -n ${qvn} ]] && qvn=${qvn},${qv}
-      [[ -z ${qvn} ]] && qvn=${qv}
-   done
-   qvars=${qvn}
-   qvals=$(tail -n1 ${outbase}quality|sed s@'"'@@g|sed s@'\t'@','@g),$(tail -n1 ${outbase}quality2)
-   echo ${qvars} >> ${outdir}/${analysis}_${parName}_quality
-   echo ${qvals} >> ${outdir}/${analysis}_${parName}_quality
+   exec_sys rm -f ${intermediate}-quality2
+   echo distDependMotion >> ${intermediate}-quality2
+   exec_xcp simil.R                                   \
+      -i    ${node_distance[cxt]}_${a[Name]},${qcfc_correlation[cxt]}_${a[Name]} \
+      -l    'Inter-node distance (mm),FC-motion correlation (r)' \
+      -f    ${outdir}/${analysis}_distDepend_${parName}.svg \
+      |cut -d' ' -f2                                  \
+      |head -n1                                       \
+      >> ${intermediate}-quality2
 done
 
 
@@ -335,115 +202,4 @@ done
 
 
 
-###################################################################
-# If desired, iterate through subjects to produce rug plots for
-# exemplars.
-###################################################################
-scount=0
-for dsn in ${designs}
-   do
-   set +x
-   ################################################################
-   # If plots have been produced for at least as many subjects as
-   # requested, then stop producing them.
-   ################################################################
-   [[ ${scount} -ge ${benchmark_nsubj[${cxt}]} ]] && break
-   [[ ! -e ${dsn} ]] \
-      && echo "${dsn} missing" \
-      && continue
-   source ${dsn}
-   img=${out}/${prefix}
-   imgpath=$(ls ${img}.*)
-   for i in ${imgpath}
-      do
-      [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-   done
-   ext=$(echo ${imgpath}|sed s@${img}@@g)
-   ################################################################
-   # If the segmentation is to be used to classify voxels, then
-   # move it into the same coordinate space as the subject image.
-   ################################################################
-   set -x
-   if [[ $(imtest ${benchmark_mask[${cxt}]}) == 1 ]]
-      then
-      coreg="-t ${seq2struct[${subjidx}]}"
-      icoreg="-t ${struct2seq[${subjidx}]}"
-      if [[ ! -z ${xfm_warp} ]] \
-         && [[ $(imtest "${xfm_warp}") == 1 ]]
-         then
-	      warp="-t ${xfm_warp}"
-	      iwarp="-t ${ixfm_warp}"
-      fi
-      if [[ ! -z ${xfm_affine} ]]
-	      then
-	      affine="-t ${xfm_affine}"
-	      iaffine="-t [${xfm_affine},1]"
-      fi
-      if [[ ! -z ${xfm_rigid} ]]
-	      then
-	      rigid="-t ${xfm_rigid}"
-	      irigid="-t [${xfm_rigid},1]"
-      fi
-      if [[ ! -z ${xfm_resample} ]]
-	      then
-	      resample="-t ${xfm_resample}"
-	      iresample="-t [${xfm_resample},1]"
-      fi
-      #############################################################
-      # Move the segmentation from subject structural space to
-      # subject EPI space. If the BOLD timeseries is already
-      # standardised, then instead move it to standard space.
-      #############################################################
-      rm -f ${outbase}seg${ext}
-      if [[ "${space}" == "standard" ]]
-         then
-         ${ANTSPATH}/antsApplyTransforms \
-            -i ${benchmark_mask[${cxt}]} \
-            -o ${outbase}seg${ext} \
-            -r ${template} \
-            -n NearestNeighbor \
-            ${rigid} \
-            ${affine} \
-            ${warp} \
-            ${resample}
-      else
-         ${ANTSPATH}/antsApplyTransforms \
-            -i ${benchmark_mask[${cxt}]} \
-            -o ${outbase}seg${ext} \
-            -r ${referenceVolumeBrain[${subjidx}]}${ext} \
-            -n NearestNeighbor \
-            -t ${struct2seq[${subjidx}]}
-      fi
-      benchmark_mask[${cxt}]=${outbase}seg${ext}
-   fi
-   ################################################################
-   # Prepare a rug plot for the example subject.
-   ################################################################
-   [[ $(imtest ${benchmark_mask[${cxt}]}) == 0 ]] \
-      && benchmark_mask[${cxt}]=${mask[${subjidx}]}
-   ${XCPEDIR}/utils/voxts.R \
-      -i ${imgpath} \
-      -r ${benchmark_mask[${cxt}]} \
-      -t ${relrms[${subjidx}]} \
-      -f ${outdir}/${analysis}_${prefix}_voxTS.png
-   ################################################################
-   # Increment the number of complete subjects.
-   ################################################################
-   scount=$(expr ${scount} + 1)
-done
-
-
-
-
-
-
-
-
-
-###################################################################
-# Clean up intermediate files.
-###################################################################
-if [[ ${benchmark_cleanup[${cxt}]} == Y ]]
-   then
-   rm -f ${outdir}/*~TEMP~*
-fi
+completion
