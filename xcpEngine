@@ -309,9 +309,10 @@ for module in ${modules[@]}
          ##########################################################
          # Execute the current module.
          ##########################################################
+         source ${XCPEDIR}/core/defineDesign
          mod_cmd="
          ${modS}
-            -d ${out[sub]}/${prefix[sub]}.dsn
+            -d ${design[sub]}
             -c ${cxt}
             -t ${trace}
             "
@@ -345,8 +346,9 @@ for module in ${modules[@]}
       ${XCPEDIR}/core/validateGroup
       mod_cmd="
       ${modG} 
-         -d ${out_group}/${analysis}.dsn
+         -s ${incohort}
          -c ${cxt}
+         -o ${out_super}
          -t ${trace}
          "
       case ${mode} in
