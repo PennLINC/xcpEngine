@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 ###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
@@ -127,7 +126,7 @@ routine                       @3    Localising design
 # Write local design file
 ###################################################################
 subroutine                    @3.1  [Writing localised design]
-   design[$sub]=${out[sub]}/${prefix[sub]}.dsn
+   source ${XCPEDIR}/core/defineDesign
    rm -f  ${design[sub]}
    printx ${design}                             >> ${design[sub]}
 
