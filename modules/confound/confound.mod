@@ -197,6 +197,7 @@ for class in "${!tissue_classes[@]}"
             -i       ${!class_path} \
             -v       ${!class_val}  \
             -r       ${!class_ero}  \
+            -n       ${intermediate}\
             -o       ${mask}.nii.gz
          ##########################################################
          # Move the mask from subject structural space to subject
