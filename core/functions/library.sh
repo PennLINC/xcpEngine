@@ -16,6 +16,7 @@ source ${LIBRARY}/apply_exec
 source ${LIBRARY}/arithmetic
 source ${LIBRARY}/assign
 source ${LIBRARY}/atlas_add
+source ${LIBRARY}/atlas_check
 source ${LIBRARY}/atlas_config
 source ${LIBRARY}/atlas_parse
 source ${LIBRARY}/cleanup

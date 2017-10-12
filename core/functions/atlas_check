@@ -1,0 +1,16 @@
+atlas_check() {
+   local i alist aorig a_new
+   alist=${mod_name_short}'_atlas['${cxt}']'
+   alist=( ${!alist//,/ } )
+   for i in "${alist[@]}"
+      do
+      contains ${a[Name]} ${i} && return 0
+   done
+   aorig=$(cat   $atlas_orig|$JQ_PATH '.'"${a[Name]}")
+   a_loc=$(cat ${atlas[sub]}|$JQ_PATH '.'"${a[Name]}")
+   if [[ ${aorig} == ${a_loc} ]]
+      then
+      json_rm ${a[Name]} from atlas[${cxt}]
+   fi
+   return 1
+}
