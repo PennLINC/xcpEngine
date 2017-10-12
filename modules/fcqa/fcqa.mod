@@ -44,6 +44,9 @@ input       depthMap
 input       residualised \
    or       icaDenoised  \
    as       denoised
+input       residualised_space \
+   or       icaDenoised_space  \
+   as       dn_space
 
 <<DICTIONARY
 
@@ -90,29 +93,26 @@ exec_afni   3dresample              \
 if is_image ${denoised[cxt]}
    then
    subroutine                 @2.2  Resampling to 6mm isotropic: denoised
-   exec_afni   3dresample           \
-      -dxyz    6 6 6                \
+   warpspace   ${residualised[sub]}       \
+               ${intermediate}-dn.nii.gz  \
+               ${dn_space[cxt]}:${preprocessed_space[sub]}
+   exec_afni   3dresample                 \
+      -dxyz    6 6 6                      \
       -prefix  ${intermediate}-dn-rs.nii.gz \
-      -inset   ${denoised[cxt]}     \
+      -inset   ${intermediate}-dn.nii.gz \
       -rmode   NN
 fi
 
-subroutine                    @2.3  Resampling to 6mm isotropic: reference map
-exec_afni   3dresample              \
-   -dxyz    6 6 6                   \
-   -prefix  ${intermediate}-ref-rs.nii.gz \
-   -inset   ${referenceVolumeBrain[sub]} \
+subroutine                    @2.3  Aligning depth map to functional space
+warpspace   ${depthMap[cxt]}              \
+            ${intermediate}-onion.nii.gz  \
+            ${structural[sub]}:${preprocessed_space[sub]} \
+            NearestNeighbor
+exec_afni   3dresample                    \
+   -dxyz    6 6 6                         \
+   -prefix  ${intermediate}-onion-rs.nii.gz \
+   -inset   ${intermediate}-onion.nii.gz  \
    -rmode   NN
-
-subroutine                    @2.4  Aligning depth map to functional space
-exec_ants   antsApplyTransforms     \
-   -e       3                       \
-   -d       3                       \
-   -i       ${depthMap[cxt]}        \
-   -r       ${intermediate}-ref-rs.nii.gz \
-   -o       ${intermediate}-onion-rs.nii.gz \
-   -t       ${struct2seq[sub]}      \
-   -n       NearestNeighbor
 
 routine_end
 
@@ -125,9 +125,9 @@ routine                       @3    Preparing summary graphics
 subroutine                    @3.1  Acquiring arguments
 is_image ${intermediate}-dn-rs.nii.gz \
                               && dn_arg=",${intermediate}-dn-rs.nii.gz"
-is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]},"
-is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]},"
-is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]},"
+is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:0-50,"
+is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:0-0.5,"
+is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:0-1,"
 
 [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
 
