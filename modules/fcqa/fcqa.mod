@@ -48,6 +48,13 @@ input       residualised_space \
    or       icaDenoised_space  \
    as       dn_space
 
+if [[ -s ${fcqa[cxt]} ]] \
+&& ! rerun
+   then
+   subroutine                 @0.1  fcqa has already run to completion
+   completion
+fi
+
 <<DICTIONARY
 
 depthMap
