@@ -343,7 +343,7 @@ for module in ${modules[@]}
    level=group
    if [[ -n ${modG} ]]
       then
-      ${XCPEDIR}/core/validateGroup
+      source ${XCPEDIR}/core/validateGroup
       mod_cmd="
       ${modG} 
          -s ${incohort}

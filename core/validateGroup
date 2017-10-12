@@ -13,8 +13,3 @@ if [[ ! -e ${out_group}/log ]]
    then
    mkdir -p ${out_group}/log
 fi
-
-if [[ ! -e ${out_group}/${analysis}.dsn ]]
-   then
-   cp ${design} ${out_group}/${analysis}.dsn
-fi
