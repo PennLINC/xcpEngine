@@ -122,10 +122,17 @@ warpspace() {
    nodes=${nodes// /,}
    edges=${edges// /,}
    ################################################################
+   #        If the source and target spaces are identical, then
+   #        apply only the identity transform.
+   ################################################################
+   if [[ ${source//\%*/} == ${target//\%*/} ]]
+      then
+      route=()
+   ################################################################
    #        Determine whether the input is an image or a coordinate
    #        If it's an image, use the forward transforms.
    ################################################################
-   if is_image ${i}
+   elif is_image ${i}
       then
       route=( $(${XCPEDIR}/utils/warprouter.R \
          -n ${nodes} \
@@ -152,7 +159,7 @@ warpspace() {
    layer=${route[0]}
    route=( "${route[@]:1}" )
    ################################################################
-   #        Determine whether the input is an image or a coordinate.
+   #        Determine whether input is an image or a coordinate.
    #        If it's an image, use antsApplyTransforms.
    ################################################################
    if is_image ${i}
