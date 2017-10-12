@@ -11,9 +11,11 @@
 case ${mode} in
 s)
    echo "· [M][Executing serially]"
+   read CTL_MSG < ${XCPEDIR}/core/CONSOLE_CONTROL_SERIAL
    ;;
 c)
    echo "· [M][Executing in cluster mode]"
+   read CTL_MSG < ${XCPEDIR}/core/CONSOLE_CONTROL_PARALLEL
    ;;
 *)
    if [[ -s ${mode} ]]
