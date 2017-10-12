@@ -1,17 +1,12 @@
 derivative_config() {
+   local dfloat=0
    local dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )
-   if [[ ${dfloat_names[@]//${1}/} != ${dfloat_names[@]} ]]
-      then
-      derivatives_floating=$(echo ${derivatives_floating}|$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
-      return
-   fi
-   if [[ ${derivatives[@]//${1}/} != ${derivatives[@]} ]]
-      then
-      deriv[${cxt}]=$(echo ${deriv[${cxt}]}|$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
-      if [[ -f ${4} ]]
-         then
-         rm -f ${4}
-         echo "${deriv[${cxt}]}"|$JQ_PATH --sort-keys . >> ${4}
-      fi
-   fi
+   for i in "${dfloat_names[@]}"
+      do
+      [[ ${d_name} == ${i} ]] && dfloat=1 && break
+   done
+   (( dfloat == 0 )) && deriv[${cxt}]=$(echo ${deriv[${cxt}]}\
+                     |$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
+   (( dfloat == 1 )) && derivatives_floating=$(echo ${derivatives_floating}\
+                     |$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
 }
