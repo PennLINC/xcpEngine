@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Delocaliser: import all subject-level variables to the group
+# level
+###################################################################
+idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+mapfile -O ${idx_offset} cohort < ${incohort}
+unset cohort[idx_offset]
+
+for sub in ${!cohort[@]}
+   do
+   subject=${cohort[sub]}
+   subject_parse        ${subject} ${incohort}
+   source ${XCPEDIR}/core/defineDesign
+   source ${design[sub]}
+done
