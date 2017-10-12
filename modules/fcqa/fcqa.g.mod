@@ -17,15 +17,19 @@ mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsGroup
 source ${XCPEDIR}/core/xcpDelocaliser
 
 ###################################################################
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   write_output      placeholder
+   quality_metric    QCFCnSigEdges           qcfc_n_sig_edges
+   quality_metric    QCFCpctSigEdges         qcfc_pct_sig_edges
+   quality_metric    QCFCabsMedCor           qcfc_abs_med_cor
+   quality_metric    QCFCdistanceDependence  qcfc_dist_dependence
    
-   source ${XCPEDIR}/core/auditComplete
+   quality[sub]=${quality_group}
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
 }
@@ -37,13 +41,13 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   qcfc_n_sig_edges        ${prefix}_QC-FC_nSigEdges
-configure   qcfc_pct_sig_edges      ${prefix}_QC-FC_pctSigEdges
-configure   qcfc_abs_med_cor        ${prefix}_QC-FC_absMedCor
-configure   qcfc_dist_dependence    ${prefix}_QC-FC_distanceDependence
-configure   qcfc_correlation        ${prefix}_QC-FC_correlation
-configure   qcfc_correlation_thr    ${prefix}_QC-FC_correlation_thr
-configure   node_distance           ${prefix}_node_distance
+configure   qcfc_n_sig_edges        ${sequence}_QC-FC_nSigEdges
+configure   qcfc_pct_sig_edges      ${sequence}_QC-FC_pctSigEdges
+configure   qcfc_abs_med_cor        ${sequence}_QC-FC_absMedCor
+configure   qcfc_dist_dependence    ${sequence}_QC-FC_distanceDependence
+configure   qcfc_correlation        ${sequence}_QC-FC_correlation
+configure   qcfc_correlation_thr    ${sequence}_QC-FC_correlation_thr
+configure   node_distance           ${sequence}_node_distance
 
 <<DICTIONARY
 
@@ -85,10 +89,10 @@ DICTIONARY
 # Retrieve all the networks for which quality assessment should be
 # run, and prime the analysis.
 ###################################################################
-if [[ -s ${fcqa_atlas[cxt]} ]]
+if [[ -s ${atlas_orig} ]]
    then
    subroutine                 @0.1
-   load_atlas        ${fcqa_atlas[cxt]}
+   load_atlas        ${atlas_orig}
 else
    echo \
 "
@@ -132,6 +136,8 @@ done
 ###################################################################
 for map in ${atlas_names[@]}
    do
+   atlas_parse       ${map}
+   atlas_check       || continue
    unset edges
    ################################################################
    # Iterate over all subjects's atlantes.
@@ -144,7 +150,7 @@ for map in ${atlas_names[@]}
       
       echo ${ids[i]},${edges[i]},${motion[i]} >> ${intermediate}-subjects.csv
    done
-   load_atlas        ${fcqa_atlas[cxt]}
+   load_atlas        ${atlas_orig}
    atlas_parse       ${map}
 
 
@@ -158,7 +164,7 @@ for map in ${atlas_names[@]}
    rm -f ${outbase}quality
    [[ -e ${fcqa_confmat[cxt]} ]] \
       && confound="-n ${fcqa_confmat[cxt]}"
-   exec_xcp qcfc.R                                    \
+   echo exec_xcp qcfc.R                                    \
       -c    ${intermediate}-subjects.csv              \
       -s    ${fcqa_sig[cxt]}                          \
       -n    ${a[Name]}                                \
@@ -174,7 +180,7 @@ for map in ${atlas_names[@]}
    # Obtain the centres of mass for each network node.
    ################################################################
    exec_sys rm -f ${intermediate}-cmass.sclib
-   exec_xcp cmass.R                                   \
+   echo exec_xcp cmass.R                                   \
       -r    ${a[Map]}                                 \
       >>    ${intermediate}-cmass.sclib
 
@@ -186,14 +192,14 @@ for map in ${atlas_names[@]}
    # Build the edgewise distance matrix.
    ################################################################
    exec_sys rm -f ${node_distance[cxt]}_${a[Name]}
-   exec_xcp lib2mat.R                                 \
+   echo exec_xcp lib2mat.R                                 \
       -c    ${intermediate}-cmass.sclib               \
       >>    ${node_distance[cxt]}_${a[Name]}
 
 
 
 
-
+exit
    ################################################################
    # Compute the overall correlation between distance and motion
    # effects to infer distance-dependence of motion effects.
