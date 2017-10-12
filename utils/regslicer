@@ -58,7 +58,7 @@ while getopts "s:t:i:o:" OPTION
       ! is_image ${target_image} && Usage && exit
       ;;
    i)
-      intermediate_root=${OPTARG}
+      intermediate_root=${OPTARG}-regslicer
       ;;
    o)
       output_root=${OPTARG}

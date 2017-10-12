@@ -114,7 +114,7 @@ while getopts "i:o:x:r:l:f:c:s:bnqt" OPTION
       out=${OPTARG}
       ;;
    x)
-      intermediate=${OPTARG}
+      intermediate=${OPTARG}-1dDespike
       ;;
    r)
       is+numeric ${OPTARG} && t_rep=${OPTARG}

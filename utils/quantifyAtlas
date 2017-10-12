@@ -99,7 +99,7 @@ while getopts "a:o:v:s:i:n:t:d:p:r:" OPTION
       aname=${OPTARG}
       ;;
    t)
-      oroot=${OPTARG}
+      oroot=${OPTARG}-quantifyAtlas
       ;;
    d)
       dname=${OPTARG}_

@@ -89,7 +89,7 @@ while getopts "i:o:r:v:n:t" OPTION
       value=${OPTARG}
       ;;
    n)
-      intermediate=${OPTARG}
+      intermediate=${OPTARG}-erodespare
       ;;
    t)
       set -x
@@ -146,7 +146,7 @@ else
    subroutine                 @u.4
    exec_xcp layerLabels          \
       -l    ${image}             \
-      -i    ${intermediate}-ll   \
+      -i    ${intermediate}      \
       -o    ${intermediate}-onion.nii.gz
    ################################################################
    # Mask out the superficial voxels. If the deepest 10 percent of

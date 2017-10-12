@@ -59,7 +59,7 @@ while getopts "l:o:i:t" OPTION
       out=${OPTARG}
       ;;
    i)
-      intermediate=${OPTARG}
+      intermediate=${OPTARG}-layerLabels
       ;;
    t)
       set -x
