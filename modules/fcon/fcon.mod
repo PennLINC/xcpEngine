@@ -88,11 +88,11 @@ DICTIONARY
 # Retrieve all the networks for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-if [[ -e ${fcon_atlas[cxt]} ]]
+if [[ -n ${fcon_atlas[cxt]} ]]
    then
    subroutine                 @0.1
    add_reference     referenceVolume[sub]   ${prefix}_referenceVolume
-   load_atlas        ${fcon_atlas[cxt]}
+   load_atlas        ${atlas_orig}
    load_atlas        ${atlas[sub]}
 else
    echo \
@@ -123,6 +123,7 @@ fi
 for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
+   atlas_check || continue
    [[ ! -s    ${a[Map]} ]] \
    && json_rm ${a[Name]} from atlas[${cxt}] \
    && continue

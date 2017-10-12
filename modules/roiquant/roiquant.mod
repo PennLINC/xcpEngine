@@ -68,11 +68,11 @@ DICTIONARY
 # Retrieve all the networks for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-if [[ -s ${roiquant_atlas[cxt]} ]]
+if [[ -n ${roiquant_atlas[cxt]} ]]
    then
    subroutine                 @0.1
    add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
-   load_atlas        ${roiquant_atlas[cxt]}
+   load_atlas        ${atlas_orig}
    load_atlas        ${atlas[sub]}
    load_derivatives
    [[ -n ${sequence} ]] && sequence=${sequence}_
@@ -103,6 +103,7 @@ fi
 for map in ${atlas_names[@]}
    do
    atlas_parse ${map}
+   atlas_check       || continue
    [[ ! -s    ${a[Map]} ]] \
    && json_rm ${a[Name]} from atlas[${cxt}] \
    && continue

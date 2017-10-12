@@ -80,8 +80,20 @@ DICTIONARY
 # Retrieve all the networks for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-subroutine                    @0.1
-load_atlas                    ${atlas[sub]}
+if [[ -n ${net_atlas[cxt]} ]]
+   then
+   subroutine                 @0.1
+   load_atlas        ${atlas_orig}
+   load_atlas        ${atlas[sub]}
+else
+   echo \
+"
+::XCP-WARNING: Network analysis has been requested, but no network
+  maps have been provided.
+  
+  Skipping module"
+   exit 1
+fi
 
 
 
@@ -101,6 +113,7 @@ load_atlas                    ${atlas[sub]}
 for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
+   atlas_check
    unset matrix communities
    matrix=(    $(matching Matrix    ${!a[@]}) )
    communities=( $(matching Community ${!a[@]}) )
