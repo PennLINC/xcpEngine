@@ -41,7 +41,7 @@ standard=PNC%2x2x2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,roiquant,seed,norm
+pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,roiquant,seed,norm,fcqa
 
 ###################################################################
 # 1 PRESTATS
@@ -135,7 +135,7 @@ regress_process[4]=TMP-REG
 # 5 FCON
 ###################################################################
 
-fcon_atlas[5]=/data/joy/BBL-extend/share/pipeline_workshop/config/space/example-v6.json #${XCPEDIR}/space/PNC/PNC_atlas.json
+fcon_atlas[5]=Power264,Gordon,Glasser,AAL,MICCAI,Schaefer
 fcon_metric[5]=corrcoef
 fcon_thr[5]=N
 fcon_window[5]=10
@@ -168,6 +168,7 @@ alff_cleanup[7]=1
 ###################################################################
 # 8 NET
 ###################################################################
+net_atlas[8]=Power264,Gordon,Glasser,AAL,MICCAI,Schaefer
 net_com[8]=genlouvain
 net_gamma[8]=1,7
 net_consensus[8]=1
@@ -178,7 +179,7 @@ net_cleanup[8]=1
 # 9 ROIQUANT
 ###################################################################
 
-roiquant_atlas[9]=/data/joy/BBL-extend/share/pipeline_workshop/config/space/example-v6.json #${XCPEDIR}/space/PNC/PNC_atlas.json
+roiquant_atlas[9]=Gordon,Glasser,AAL,MICCAI,Schaefer
 roiquant_vol[9]=1
 roiquant_rerun[9]=0
 roiquant_cleanup[9]=1
@@ -201,3 +202,12 @@ seed_cleanup[10]=1
 
 norm_rerun[11]=0
 norm_cleanup[11]=1
+
+###################################################################
+# 12 FCQA
+###################################################################
+
+fcqa_atlas[12]=Power264,Gordon
+fcqa_sig[12]=fdr
+fcqa_rerun[12]=0
+fcqa_cleanup[12]=0
