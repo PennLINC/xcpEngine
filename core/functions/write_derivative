@@ -1,9 +1,19 @@
 write_derivative() {
+   local i
+   local dfloat=0
    local derivative=${1}[${cxt}]
    if is_image ${!derivative}
       then
       local d_name=${1}
-      local deriv_cur=$(echo ${derivatives_floating}|$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
+      local dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )
+      for i in "${dfloat_names[@]}"
+         do
+         [[ ${d_name} == ${i} ]] && dfloat=1 && break
+      done
+      (( dfloat == 0 )) && local deriv_cur=$(echo ${deriv[cxt]}\
+                        |$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
+      (( dfloat == 1 )) && local deriv_cur=$(echo ${derivatives_floating}\
+                        |$JQ_PATH '{'"${d_name}"':.'"${d_name}"'}')
       local deriv=$(cat ${aux_imgs[sub]} 2>/dev/null)
       local deriv="$(echo ${deriv} ${deriv_cur}|$JQ_PATH -s '(.|.[0]) * (.|.[1])')"
       rm -f ${aux_imgs[${sub}]}

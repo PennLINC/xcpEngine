@@ -165,10 +165,10 @@ if [[ ! -e ${outdir}/${prefix}_seq2std.png ]] \
    echo  ${registration_quality[3]} > ${norm_dice[cxt]}
    subroutine              @2.2  [Preparing slicewise rendering]
    exec_xcp regslicer \
-      -s ${referenceVolumeBrain[cxt]} \
-      -t ${template} \
-      -i ${intermediate} \
-      -o ${outdir}/${prefix}_seq2std
+      -s    ${referenceVolumeBrain[cxt]} \
+      -t    ${template} \
+      -i    ${intermediate} \
+      -o    ${outdir}/${prefix}_seq2std
    routine_end
 fi
 fi
