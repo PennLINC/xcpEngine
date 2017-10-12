@@ -188,7 +188,7 @@ for class in "${!tissue_classes[@]}"
       # Generate a binary mask if necessary. Erode the mask if
       # erosion has been requested.
       #############################################################
-      if ! is_image ${mask}.nii.gz \
+      if ! is_image ${!class_mask} \
       || rerun
          then
          subroutine           @3.1
@@ -198,18 +198,18 @@ for class in "${!tissue_classes[@]}"
             -v       ${!class_val}  \
             -r       ${!class_ero}  \
             -o       ${mask}.nii.gz
+         ##########################################################
+         # Move the mask from subject structural space to subject
+         # EPI space. If the BOLD timeseries is already
+         # standardised, then instead move it to standard space.
+         ##########################################################
+         subroutine           @3.2
+         warpspace \
+            ${mask}.nii.gz \
+            ${!class_mask} \
+            ${structural[sub]}:${space[sub]} \
+            NearestNeighbor
       fi
-      #############################################################
-      # Move the mask from subject structural space to subject
-      # EPI space. If the BOLD timeseries is already standardised,
-      # then instead move it to standard space.
-      #############################################################
-      subroutine              @3.2
-      warpspace \
-         ${mask}.nii.gz \
-         ${!class_mask} \
-         ${structural[sub]}:${space[sub]} \
-         NearestNeighbor
       #############################################################
       # Determine whether to extract a mean timecourse or to apply
       # aCompCor to extract PC timecourses.
