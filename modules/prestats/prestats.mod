@@ -36,6 +36,7 @@ completion() {
    write_output      rps
    write_output      rel_rms
    write_output      fd
+   write_output      dvars
    write_output      tmask
    
    write_config_safe censor
