@@ -241,16 +241,19 @@ if (opt$outfig) {
    names(distribs)[2]   <- 'Distribution'
    
    opath                <- paste(outfig,'DistPlot.svg',sep='')
-   i <- ggplot(distribs, aes(values, fill=Distribution)) + 
-      geom_hline(aes(x=mat1,y=mat2),yintercept=0,size=2) + 
-      geom_vline(aes(x=mat1,y=mat2),xintercept=0,size=2) + 
-      geom_density(alpha=0.2) + 
-      theme_classic() + 
-      theme(panel.border = element_rect(colour = "black", fill=NA, size=2),
-         axis.line = element_line(color = 'black', size = 2)) + 
-      labs(x = 'FC-motion correlation (r)', y = 'Density') + 
-      scale_x_continuous(breaks=round(seq(quantile(distribs$values,.0001),quantile(distribs$values,.9999),quantile(distribs$values,.9999) - quantile(distribs$values,.0001)),2)) + 
-      scale_y_continuous(breaks=NULL)
+   i <-  ggplot(distribs, aes(values, fill=Distribution)) + 
+         geom_hline(aes(x=mat1,y=mat2),yintercept=0,size=2) + 
+         geom_vline(aes(x=mat1,y=mat2),xintercept=0,size=2) + 
+         geom_density(alpha=0.2) + 
+         theme_classic() + 
+         theme(panel.border = element_rect(colour = "black", fill=NA, size=2),
+            axis.line = element_line(color = 'black', size = 2)) + 
+         labs(x = 'FC-motion correlation (r)', y = 'Density') + 
+         scale_x_continuous(breaks=round(seq(quantile(distribs$values,.0001),
+            quantile(distribs$values,.9999),
+            quantile(distribs$values,.9999) - 
+            quantile(distribs$values,.0001)),2)) + 
+         scale_y_continuous(breaks=NULL)
    d                    <- ggplot_build(i)
    ymax                 <- d$panel$ranges[[1]]$y.range[2]
    yrsc                 <- (ymax - (ymax / 1.1) ) / 2
