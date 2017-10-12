@@ -18,7 +18,6 @@ mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
 source ${XCPEDIR}/core/parseArgsGroup
-source ${XCPEDIR}/core/xcpDelocaliser
 
 ###################################################################
 # MODULE COMPLETION
@@ -112,19 +111,22 @@ fi
 # Retrieve all motion estimates.
 # qm should probably be a hash table.
 ###################################################################
+routine                       @1    Obtaining motion estimates
+subroutine                    @1.1  Scanning subject-level quality metrics
 unset    v     motion
-for i in ${!quality[@]}
+for sub in ${subjects[@]}
    do
    unset    qa
-   mapfile  qa < ${quality[i]}
+   mapfile  qa < ${quality[sub]}
    qvarsub=( ${qa[0]//,/ } )
    qvalsub=( ${qa[1]//,/ } )
    if [[ -z ${v} ]]
       then
       for v in ${!qvarsub[@]}; do contains ${qvarsub[v]} relMeanRMSMotion && break; done
    fi
-   motion[i]=${qvalsub[v]}
+   motion[sub]=${qvalsub[v]}
 done
+routine_end
 
 
 
@@ -134,6 +136,7 @@ done
 # Iterate through each brain atlas. Compute the QC-FC measures for
 # each.
 ###################################################################
+routine                       @2    QC-FC
 for map in ${atlas_names[@]}
    do
    atlas_parse       ${map}
@@ -142,13 +145,14 @@ for map in ${atlas_names[@]}
    ################################################################
    # Iterate over all subjects's atlantes.
    ################################################################
-   for i in ${!atlas[@]}
+   subroutine                 @2.1  Atlas: ${a[Name]}
+   subroutine                 @2.2  Scanning subject-level atlas metadata
+   for sub in ${subjects[@]}
       do
-      load_atlas     ${atlas[i]}
+      load_atlas     ${atlas[sub]}
       atlas_parse    ${map}
-      edges[i]=${a[MatrixFC]}
-      
-      echo ${ids[i]},${edges[i]},${motion[i]} >> ${intermediate}-subjects.csv
+      edges[sub]=${a[MatrixFC]}
+      echo ${ids[sub]},${edges[sub]},${motion[sub]} >> ${intermediate}-subjects.csv
    done
    load_atlas        ${atlas_orig}
    atlas_parse       ${map}
@@ -161,6 +165,7 @@ for map in ${atlas_names[@]}
    # Build the edgewise FC correlation matrix.
    # Pass in confounds if they have been provided.
    ################################################################
+   subroutine                 @2.3  QC-FC matrix: correlations with motion
    rm -f ${outbase}quality
    [[ -e ${fcqa_confmat[cxt]} ]] \
       && confound="-n ${fcqa_confmat[cxt]}"
@@ -179,10 +184,11 @@ for map in ${atlas_names[@]}
    ################################################################
    # Obtain the centres of mass for each network node.
    ################################################################
+   subroutine                 @2.4  Identifying nodal centres of mass
    exec_sys rm -f ${intermediate}-cmass.sclib
    echo exec_xcp cmass.R                                   \
       -r    ${a[Map]}                                 \
-      >>    ${intermediate}-cmass.sclib
+      #>>    ${intermediate}-cmass.sclib
 
 
 
@@ -191,10 +197,11 @@ for map in ${atlas_names[@]}
    ################################################################
    # Build the edgewise distance matrix.
    ################################################################
+   subroutine                 @2.5  Constructing distance matrix
    exec_sys rm -f ${node_distance[cxt]}_${a[Name]}
    echo exec_xcp lib2mat.R                                 \
       -c    ${intermediate}-cmass.sclib               \
-      >>    ${node_distance[cxt]}_${a[Name]}
+      #>>    ${node_distance[cxt]}_${a[Name]}
 
 
 
@@ -204,16 +211,18 @@ exit
    # Compute the overall correlation between distance and motion
    # effects to infer distance-dependence of motion effects.
    ################################################################
+   subroutine                 @2.6  Computing QC-FC distance-dependence
    exec_sys rm -f ${intermediate}-quality2
    echo distDependMotion >> ${intermediate}-quality2
    exec_xcp simil.R                                   \
       -i    ${node_distance[cxt]}_${a[Name]},${qcfc_correlation[cxt]}_${a[Name]} \
       -l    'Inter-node distance (mm),FC-motion correlation (r)' \
       -f    ${outdir}/${analysis}_distDepend_${parName}.svg \
-      |cut -d' ' -f2                                  \
-      |head -n1                                       \
-      >> ${intermediate}-quality2
+      #|cut -d' ' -f2                                  \
+      #|head -n1                                       \
+      #>> ${intermediate}-quality2
 done
+routine_end
 
 
 
