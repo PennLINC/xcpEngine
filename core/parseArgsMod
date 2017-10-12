@@ -32,7 +32,7 @@ while getopts "d:c:t:" OPTION
       ;;
    c)
       cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && usage_flag=1
+      ! is+integer ${cxt} && usage_flag=1
       ;;
    t)
       trace=${OPTARG}
@@ -55,7 +55,7 @@ shift $((OPTIND-1))
 # Ensure that the compulsory design[sub] variable has been defined
 # reasonably.
 ###################################################################
-[[ -z ${design[sub]} ]] && usage_flag=1
+[[ ! -s ${design[sub]} ]] && usage_flag=1
 ###################################################################
 # Usage and exit
 ###################################################################
@@ -127,13 +127,14 @@ else
    intermediate=${outdir}/${prefix}~TEMP~
 fi
 intermediate_root=${intermediate}
-img_raw=${img}
+img_raw=${img[sub]}
 img=${out}/${prefix}.nii.gz
 ###################################################################
 # Parse quality variables.
 ###################################################################
-qvars=$(head -n1 ${quality[sub]} 2>/dev/null)
-qvals=$(tail -n1 ${quality[sub]} 2>/dev/null)
+mapfile  quality_lines < ${quality[sub]}
+qvars=${quality_lines[0]}
+qvals=${quality_lines[1]}
 ###################################################################
 # Prime the localised design file so that any outputs from this
 # module appear beneath the correct header.
