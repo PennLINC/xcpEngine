@@ -72,7 +72,7 @@ if (is.na(opt$out)) {
    quit()
 }
 
-cohort                  <- read.csv(opt$cohort,header=TRUE)
+cohort                  <- read.csv(opt$cohort,header=TRUE,stringsAsFactors=FALSE)
 sig                     <- opt$significance
 thr                     <- opt$threshold
 name                    <- opt$name
@@ -128,7 +128,7 @@ for (i in 1:dim(cohort)[1]) {
          net            <- squareform(net - diag(diag(net)))
       }
       if (length(net) == nEdges) {
-         edges          <- rbind(edges,net)
+         edges[i,]      <- net
       } else {
          cat('[Missing or extra edges in:',cohort$connectivity[i],']\n')
          quit()
@@ -176,8 +176,9 @@ for (i in 1:nEdges) {
       parform           <- as.formula(paste(edge,'~',conformula))
       cohort[edge]      <- lm(parform, data=cohort)$residuals
    }
-   rvec[i]              <- cor(cohort$motion, cohort[edge])
-   pvec[i]              <- cor.test(cohort$motion, cohort[edge])$p.value
+   c                    <- cor.test(cohort$motion, unlist(unname(cohort[edge])))
+   rvec[i]              <- c$estimate
+   pvec[i]              <- c$p.value
 }
 
 
@@ -199,8 +200,6 @@ rvecThr                 <- rvec
 rvecThr[!pvecThr]       <- 0
 nSigEdges               <- sum(pvecThr)
 pctSigEdges             <- nSigEdges/nEdges*100
-rMat                    <- squareform(as.vector(rvec))
-rMatThr                 <- squareform(as.vector(rvecThr))
 
 
 
@@ -209,9 +208,9 @@ rMatThr                 <- squareform(as.vector(rvecThr))
 ###################################################################
 # Write the outputs.
 ###################################################################
-write.table(rMat,file=out,sep='\t',col.names=FALSE,row.names=FALSE)
+write.table(rvec,file=out,sep='\t',col.names=FALSE,row.names=FALSE)
 if (opt$threshmat) {
-   write.table(rMatThr,file=out_thr,sep='\t',col.names=FALSE,row.names=FALSE)
+   write.table(rvecThr,file=out_thr,sep='\t',col.names=FALSE,row.names=FALSE)
 }
 if (opt$quality) {
    sink(out_amc)
@@ -240,23 +239,30 @@ if (opt$outfig) {
    distribs             <- stack(distribs)
    names(distribs)[2]   <- 'Distribution'
    
+   labels               <- data.frame(
+      xcoor             =  c(-0.3,0.45),
+      ycoor             =  c(0,0),
+      lab               =  c('-0.3','0.45'),
+      hj                =  c(-0.25,1.25),
+      variable          =  c('dummy','dummy')
+   )
+   
    opath                <- paste(outfig,'DistPlot.svg',sep='')
-   i <-  ggplot(distribs, aes(values, fill=Distribution)) + 
-         geom_hline(aes(x=mat1,y=mat2),yintercept=0,size=2) + 
-         geom_vline(aes(x=mat1,y=mat2),xintercept=0,size=2) + 
-         geom_density(alpha=0.2) + 
-         theme_classic() + 
-         theme(panel.border = element_rect(colour = "black", fill=NA, size=2),
-            axis.line = element_line(color = 'black', size = 2)) + 
-         labs(x = 'FC-motion correlation (r)', y = 'Density') + 
-         scale_x_continuous(breaks=round(seq(quantile(distribs$values,.0001),
-            quantile(distribs$values,.9999),
-            quantile(distribs$values,.9999) - 
-            quantile(distribs$values,.0001)),2)) + 
-         scale_y_continuous(breaks=NULL)
-   d                    <- ggplot_build(i)
-   ymax                 <- d$panel$ranges[[1]]$y.range[2]
-   yrsc                 <- (ymax - (ymax / 1.1) ) / 2
-   i                    <- i + coord_cartesian(ylim=c(yrsc,ymax - yrsc),xlim=c(-0.3,0.45))
+   i <-  ggplot(data=distribs, aes(value, fill=variable)) + 
+         geom_density(colour='#42B6F4',fill='#42B6F4') + 
+         geom_hline(yintercept=0,size=2) + 
+         geom_vline(xintercept=0,size=2) + 
+         scale_x_continuous(expand=c(0,0)) + 
+         scale_y_continuous(expand=c(0,0)) + 
+         coord_cartesian(xlim=c(-0.3,0.45)) +
+         geom_text(data=labels,aes(x=xcoor,y=ycoor,hjust=hj,label=lab),vjust=-1,color='black',size=5) +
+         theme(axis.ticks=element_blank(),
+               axis.title.x=element_blank(),
+               axis.title.y=element_blank(),
+               axis.text.x=element_blank(),
+               axis.text.y=element_blank(),
+               legend.position="none",
+               panel.background=element_blank(),panel.grid.major=element_blank(),
+               panel.grid.minor=element_blank(),plot.background=element_blank())
    ggsave(file=opath, plot=i, width=8, height=8)
 }
