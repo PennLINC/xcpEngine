@@ -44,8 +44,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  e2smask                 ${prefix}_seq2stdMask
-
+output      e2smask                 ${prefix}_seq2stdMask.nii.gz
 output      norm_cross_corr         ${prefix}_normCrossCorr.txt
 output      norm_coverage           ${prefix}_normCoverage.txt
 output      norm_jaccard            ${prefix}_normJaccard.txt
