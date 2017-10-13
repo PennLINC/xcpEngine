@@ -23,7 +23,7 @@ export XCPEDIR=/home/rciric/xcpAccelerator/xcpEngine
 #  * pracma
 #  * signal
 #  * optparse
-export RPATH=/share/apps/R/R-3.1.1/bin/R
+export RPATH=/share/apps/R/R-3.2.3/bin/R
 ###################################################################
 
 ###################################################################
