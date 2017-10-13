@@ -98,6 +98,7 @@ IMX                  <- DIMX * DIMSC
 IMY                  <- DIMY * DIMSC
 LNSZ                 <- DIMSC/50
 TEXTHT               <- DIMSC/10
+LIMTP                <- 0.4
 cy                   <- 1
 
 png(filename=outfig,width=IMX,height=IMY)
@@ -119,11 +120,12 @@ for (ts in tslist) {
    ts                <- unlist(strsplit(ts,':'))
    ts_name           <- ts[1]
    ts_path           <- ts[2]
-   ts_rang           <- as.numeric(unlist(strsplit(ts[3],'-')))
+   ts_lim            <- as.numeric(ts[3])
    ################################################################
    # Load
    ################################################################
    ts                <- as.numeric(unlist(read.table(ts_path,header=F)))
+   if (is.na(ts_lim)) { ts_lim <- max(ts) }
    dim(ts)           <- c(length(ts),1)
    ts                <- melt(ts)
    ################################################################
@@ -146,7 +148,8 @@ for (ts in tslist) {
    # Plot
    ################################################################
    moplt <- ggplot(ts) + 
-            geom_rect(aes(xmin=Var1-0.5,xmax=Var1+0.5,ymin=min(ts_rang),ymax=max(ts_rang),fill=value)) + 
+            geom_rect(aes(xmin=Var1-0.5,xmax=Var1+0.5,ymin=min(ts$value,ts_lim),ymax=max(ts$value,ts_lim),fill=value)) + 
+            annotate('rect',xmin=min(ts$Var1)-0.5,xmax=max(ts$Var1)+0.5,ymin=ts_lim,ymax=max(ts$value,ts_lim),alpha=LIMTP,fill='black') +
             geom_line(aes(x=Var1,y=value),colour='red',size=LNSZ) +
             scale_x_continuous(expand=c(0,0)) + 
             scale_y_continuous(expand=c(0,0)) +
