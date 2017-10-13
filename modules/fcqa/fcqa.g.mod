@@ -20,14 +20,15 @@ source ${XCPEDIR}/core/functions/library.sh
 source ${XCPEDIR}/core/parseArgsGroup
 
 ###################################################################
-# MODULE COMPLETION
+# MODULE COMPLETION ANF ANCILLARY FUNCTIONS
 ###################################################################
+atlas_complete() {
+   quality_metric    QCFCnSigEdges${a[Name]}          qcfc_n_sig_edges
+   quality_metric    QCFCpctSigEdges${a[Name]}        qcfc_pct_sig_edges
+   quality_metric    QCFCabsMedCor${a[Name]}          qcfc_abs_med_cor
+   quality_metric    QCFCdistanceDependence${a[Name]} qcfc_dist_dependence
+}
 completion() {
-   quality_metric    QCFCnSigEdges           qcfc_n_sig_edges
-   quality_metric    QCFCpctSigEdges         qcfc_pct_sig_edges
-   quality_metric    QCFCabsMedCor           qcfc_abs_med_cor
-   quality_metric    QCFCdistanceDependence  qcfc_dist_dependence
-   
    quality[sub]=${quality_group}
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -40,13 +41,16 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   qcfc_n_sig_edges        ${sequence}_QC-FC_nSigEdges
-configure   qcfc_pct_sig_edges      ${sequence}_QC-FC_pctSigEdges
-configure   qcfc_abs_med_cor        ${sequence}_QC-FC_absMedCor
-configure   qcfc_dist_dependence    ${sequence}_QC-FC_distanceDependence
-configure   qcfc_correlation        ${sequence}_QC-FC_correlation
-configure   qcfc_correlation_thr    ${sequence}_QC-FC_correlation_thr
-configure   node_distance           ${sequence}_node_distance
+declare_atlas_outputs() {
+   output   qcfc_n_sig_edges        ${sequence}_QC-FC_nSigEdges_${a[Name]}.txt
+   output   qcfc_pct_sig_edges      ${sequence}_QC-FC_pctSigEdges_${a[Name]}.txt
+   output   qcfc_abs_med_cor        ${sequence}_QC-FC_absMedCor_${a[Name]}.txt
+   output   qcfc_base               ${sequence}_QC-FC_correlation_${a[Name]}
+   output   qcfc_dist_dependence    ${sequence}_QC-FC_distanceDependence_${a[Name]}.txt
+   output   qcfc_correlation        ${sequence}_QC-FC_correlation_${a[Name]}.txt
+   output   qcfc_correlation_thr    ${sequence}_QC-FC_correlation_thr_${a[Name]}.txt
+   output   node_distance           ${sequence}_node_distance_${a[Name]}.txt
+}
 
 <<DICTIONARY
 
@@ -141,6 +145,7 @@ for map in ${atlas_names[@]}
    do
    atlas_parse       ${map}
    atlas_check       || continue
+   declare_atlas_outputs
    unset edges
    ################################################################
    # Iterate over all subjects's atlantes.
@@ -170,19 +175,22 @@ for map in ${atlas_names[@]}
    subroutine                 @2.3  QC-FC matrix: correlations with motion
    rm -f ${outbase}quality
    [[ -e ${fcqa_confmat[cxt]} ]] \
-      && confound="-n   ${fcqa_confmat[cxt]}" \
+      && confound="  -n ${fcqa_confmat[cxt]}" \
       && conformula="-y ${fcqa_conformula[cxt]}"
-   exec_xcp qcfc.R                                    \
-      -c    ${intermediate}-${a[Name]}-subjects.csv   \
-      -s    ${fcqa_sig[cxt]}                          \
-      -o    ${qcfc_correlation[cxt]}_${a[Name]}       \
-      ${confound} ${conformula}
-   exec_sys mv ${qcfc_correlation[cxt]}_${a[Name]}_absMedCor.txt \
-               ${qcfc_abs_med_cor[cxt]}_${a[Name]}.txt
-   exec_sys mv ${qcfc_correlation[cxt]}_${a[Name]}_nSigEdges.txt \
-               ${qcfc_n_sig_edges[cxt]}_${a[Name]}.txt
-   exec_sys mv ${qcfc_correlation[cxt]}_${a[Name]}_pctSigEdges.txt \
-               ${qcfc_pct_sig_edges[cxt]}_${a[Name]}.txt
+   if [[ ! -s ${qcfc_correlation[cxt]} ]]
+      then
+      exec_xcp qcfc.R                                    \
+         -c    ${intermediate}-${a[Name]}-subjects.csv   \
+         -s    ${fcqa_sig[cxt]}                          \
+         -o    ${qcfc_base[cxt]}                         \
+         ${confound} ${conformula}
+      exec_sys mv ${qcfc_base[cxt]}_absMedCor.txt \
+                  ${qcfc_abs_med_cor[cxt]}
+      exec_sys mv ${qcfc_base[cxt]}_nSigEdges.txt \
+                  ${qcfc_n_sig_edges[cxt]}
+      exec_sys mv ${qcfc_base[cxt]}_pctSigEdges.txt \
+                  ${qcfc_pct_sig_edges[cxt]}
+   fi
 
 
 
@@ -208,7 +216,7 @@ for map in ${atlas_names[@]}
    exec_sys rm -f ${node_distance[cxt]}_${a[Name]}
    exec_xcp distmat.R                                 \
       -c    ${intermediate}-cmass.sclib               \
-      >>    ${node_distance[cxt]}_${a[Name]}.txt
+      >>    ${node_distance[cxt]}
 
 
 
@@ -219,16 +227,11 @@ for map in ${atlas_names[@]}
    # effects to infer distance-dependence of motion effects.
    ################################################################
    subroutine                 @2.6  Computing QC-FC distance-dependence
-   exec_sys rm -f ${intermediate}-quality2
-   echo distDependMotion >> ${intermediate}-quality2
    echo exec_xcp simil.R                                   \
-      -i    ${node_distance[cxt]}_${a[Name]},${qcfc_correlation[cxt]}_${a[Name]} \
-      -l    'Inter-node distance (mm),FC-motion correlation (r)' \
-      -f    ${outdir}/${analysis}_distDepend_${parName}.svg \
-      #|cut -d' ' -f2                                  \
-      #|head -n1                                       \
-      #>> ${intermediate}-quality2
-   exit
+      -i    ${node_distance[cxt]},${qcfc_correlation[cxt]} \
+      -f    ${outdir}/${analysis}_distDepend_${a[Name]}.svg \
+      >> ${qcfc_dist_dependence[cxt]}
+   atlas_complete
 done
 routine_end
 
