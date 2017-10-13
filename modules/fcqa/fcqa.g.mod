@@ -170,14 +170,19 @@ for map in ${atlas_names[@]}
    subroutine                 @2.3  QC-FC matrix: correlations with motion
    rm -f ${outbase}quality
    [[ -e ${fcqa_confmat[cxt]} ]] \
-      && confound="-n ${fcqa_confmat[cxt]}"
-   echo exec_xcp qcfc.R                                    \
+      && confound="-n   ${fcqa_confmat[cxt]}" \
+      && conformula="-y ${fcqa_conformula[cxt]}"
+   exec_xcp qcfc.R                                    \
       -c    ${intermediate}-${a[Name]}-subjects.csv   \
       -s    ${fcqa_sig[cxt]}                          \
-      -n    ${a[Name]}                                \
       -o    ${qcfc_correlation[cxt]}_${a[Name]}       \
-      -q    ${qcfc_n_sig_edges[cxt]}                  \
-      ${confound}
+      ${confound} ${conformula}
+   exec_sys mv ${qcfc_correlation[cxt]}_${a[Name]}_absMedCor.txt \
+               ${qcfc_abs_med_cor[cxt]}_${a[Name]}.txt
+   exec_sys mv ${qcfc_correlation[cxt]}_${a[Name]}_nSigEdges.txt \
+               ${qcfc_n_sig_edges[cxt]}_${a[Name]}.txt
+   exec_sys mv ${qcfc_correlation[cxt]}_${a[Name]}_pctSigEdges.txt \
+               ${qcfc_pct_sig_edges[cxt]}_${a[Name]}.txt
 
 
 
@@ -188,9 +193,9 @@ for map in ${atlas_names[@]}
    ################################################################
    subroutine                 @2.4  Identifying nodal centres of mass
    exec_sys rm -f ${intermediate}-cmass.sclib
-   echo exec_xcp cmass.R                                   \
+   exec_xcp cmass.R                                   \
       -r    ${a[Map]}                                 \
-      #>>    ${intermediate}-cmass.sclib
+      >>    ${intermediate}-cmass.sclib
 
 
 
@@ -201,14 +206,14 @@ for map in ${atlas_names[@]}
    ################################################################
    subroutine                 @2.5  Constructing distance matrix
    exec_sys rm -f ${node_distance[cxt]}_${a[Name]}
-   echo exec_xcp lib2mat.R                                 \
+   exec_xcp distmat.R                                 \
       -c    ${intermediate}-cmass.sclib               \
-      #>>    ${node_distance[cxt]}_${a[Name]}
+      >>    ${node_distance[cxt]}_${a[Name]}.txt
 
 
 
 
-exit
+
    ################################################################
    # Compute the overall correlation between distance and motion
    # effects to infer distance-dependence of motion effects.
@@ -216,13 +221,14 @@ exit
    subroutine                 @2.6  Computing QC-FC distance-dependence
    exec_sys rm -f ${intermediate}-quality2
    echo distDependMotion >> ${intermediate}-quality2
-   exec_xcp simil.R                                   \
+   echo exec_xcp simil.R                                   \
       -i    ${node_distance[cxt]}_${a[Name]},${qcfc_correlation[cxt]}_${a[Name]} \
       -l    'Inter-node distance (mm),FC-motion correlation (r)' \
       -f    ${outdir}/${analysis}_distDepend_${parName}.svg \
       #|cut -d' ' -f2                                  \
       #|head -n1                                       \
       #>> ${intermediate}-quality2
+   exit
 done
 routine_end
 
