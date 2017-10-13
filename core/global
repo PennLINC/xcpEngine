@@ -23,7 +23,7 @@ export XCPEDIR=/home/rciric/xcpAccelerator/xcpEngine
 #  * pracma
 #  * signal
 #  * optparse
-export RPATH=/share/apps/R/R-3.2.3/bin/R
+export RPATH=/share/apps/R/R-3.1.1/bin/R
 ###################################################################
 
 ###################################################################
@@ -44,6 +44,11 @@ export AFNI_PATH=/share/apps/afni/linux_xorg7_64_2014_06_16
 ###################################################################
 # C3D_PATH stores a path to the local installation of C3D.
 export C3D_PATH=/share/apps/c3d/c3d-1.0.0-Linux-x86_64/bin
+###################################################################
+
+###################################################################
+# JQ_PATH stores a path to the local installation of JQ.
+export JQ_PATH=/home/rciric/xcpAccelerator/xcpEngine/thirdparty/jq/jq-linux64
 ###################################################################
 
 ###################################################################

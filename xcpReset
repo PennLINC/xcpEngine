@@ -70,6 +70,17 @@ if (( $? > 0 ))
    "
    exit 2
 fi
+
+if [[ -z ${JQ_PATH} ]]
+   then
+   if [[ $(arch) == x86_64 ]]
+      then
+      export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux64
+   else
+      export JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
+   fi
+fi
+
 ###################################################################
 # Done checking for variables
 #    ✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡✡      #
@@ -127,6 +138,11 @@ export AFNI_PATH=${AFNI_PATH}
 ###################################################################
 # C3D_PATH stores a path to the local installation of C3D.
 export C3D_PATH=${C3D_PATH}
+###################################################################
+
+###################################################################
+# JQ_PATH stores a path to the local installation of JQ.
+export JQ_PATH=${JQ_PATH}
 ###################################################################
 
 ###################################################################
