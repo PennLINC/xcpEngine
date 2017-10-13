@@ -9,12 +9,23 @@
 # level
 ###################################################################
 idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
-mapfile -O ${idx_offset} cohort < ${incohort}
+mapfile -O ${idx_offset} cohort  < ${incohort}
+###################################################################
+# Get identifier variable names
+###################################################################
+read -r        subject_vars      < ${2}
+subject_vars=( ${subject_vars//,/ } )
+for v in       "${subject_vars[@]}"
+   do
+   contains ${v} '^id[0-9]*$' \
+   && id_vars=( "${id_vars[@]}" "${v}" )
+done
+ids[0]=$(join_by ',' ${id_vars[@]})
 unset cohort[idx_offset]
 
-echo ${incohort}
-echo ${!cohort[@]}
-
+###################################################################
+# Import subject-evel variables from designs
+###################################################################
 for sub in ${!cohort[@]}
    do
    subject=${cohort[sub]}
