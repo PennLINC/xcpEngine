@@ -14,6 +14,7 @@
 ###################################################################
 suppressMessages(suppressWarnings(library(optparse)))
 suppressMessages(suppressWarnings(library(pracma)))
+suppressMessages(suppressWarnings(library(methods)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
