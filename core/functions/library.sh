@@ -42,6 +42,7 @@ source ${LIBRARY}/is_integer
 source ${LIBRARY}/is+integer
 source ${LIBRARY}/is_numeric
 source ${LIBRARY}/is+numeric
+source ${LIBRARY}/join_by
 source ${LIBRARY}/json_query
 source ${LIBRARY}/json_rm
 source ${LIBRARY}/load_atlas
