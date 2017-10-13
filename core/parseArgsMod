@@ -133,8 +133,8 @@ img=${out}/${prefix}.nii.gz
 # Parse quality variables.
 ###################################################################
 mapfile  quality_lines < ${quality[sub]}
-qvars=${quality_lines[0]}
-qvals=${quality_lines[1]}
+qvars=$(echo ${quality_lines[0]})
+qvals=$(echo ${quality_lines[1]})
 ###################################################################
 # Prime the localised design file so that any outputs from this
 # module appear beneath the correct header.
