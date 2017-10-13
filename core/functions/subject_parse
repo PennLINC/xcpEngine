@@ -1,5 +1,5 @@
 subject_parse() {
-   local i idx subject_vals subject_vars v
+   local i id_vals idx subject_vals subject_vars v
    unset subject prefix[sub] out[sub]
    cohort_vars=()
    subject_vals=( ${1//,/ } )
@@ -13,6 +13,7 @@ subject_parse() {
          then
          idx=${v//id/}
          eval subject[idx]=\${subject_vals[i]}
+         id_vals=( "${id_vals[@]}" "${subject[idx]}" )
       else
          cohort_vars+=(${v}[${sub}])
          eval ${v}[${sub}]=\${subject_vals[i]}
@@ -20,6 +21,7 @@ subject_parse() {
       (( i++ ))
    done
    i=$(echo ${subject[@]})
+   ids[sub]=$(join_by ',' ${id_vals[@]})
    prefix[sub]=${i// /_}
    out[sub]=${out_super}/${i// /\/}
 }
