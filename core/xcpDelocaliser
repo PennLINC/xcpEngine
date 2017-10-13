@@ -13,7 +13,7 @@ mapfile -O ${idx_offset} cohort  < ${incohort}
 ###################################################################
 # Get identifier variable names
 ###################################################################
-read -r        subject_vars      < ${2}
+subject_vars=${cohort[idx_offset]}
 subject_vars=( ${subject_vars//,/ } )
 for v in       "${subject_vars[@]}"
    do
