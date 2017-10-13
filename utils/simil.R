@@ -21,14 +21,11 @@ suppressMessages(suppressWarnings(library(pracma)))
 ###################################################################
 option_list = list(
    make_option(c("-i", "--inmat"), action="store", default=NA, type='character',
-              help="A comma-separated list of matrices to compare."),
-   make_option(c("-f", "--outfig"), action="store", default='similPlot.svg', type='character',
+              help="A comma-separated list of feature vectors to compare."),
+   make_option(c("-f", "--outfig"), action="store", default=NA, type='character',
               help="The path where the correlation plot between the most
                      correlated variables should be saved. This output will
-                     only be produced if ggplot2 is installed."),
-   make_option(c("-l", "--axisnames"), action="store", default='abscissa,ordinate', type='character',
-              help="The labels of the abscissa and ordinate to be displayed
-                     on the plot, input as a comma-separated pair.")
+                     only be produced if ggplot2 is installed.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -37,15 +34,19 @@ if (is.na(opt$inmat)) {
    cat('Use simil.R -h for an expanded usage menu.\n')
    quit()
 }
-inmat <- opt$inmat
-outfig <- opt$outfig
-axisnames <- opt$axisnames
+inmatpaths              <- opt$inmat
+outfig                  <- opt$outfig
+
+if (! "ggplot2" %in% rownames(installed.packages())){
+   outfig               <- NA
+}
 
 ###################################################################
 # 1. Verify that all inputs exist.
 ###################################################################
-inmat <- strsplit(inmat,',')
-existChk <- lapply(inmat, file.exists)
+inmat                   <- strsplit(inmatpaths,',')
+nMat                    <- length(inmat[[1]])
+existChk                <- lapply(inmat, file.exists)
 if (sum(unlist(existChk))!=length(unlist(inmat))){
    cat('ERROR: Not all input arguments exist.\n')
    quit(save='no')
@@ -54,40 +55,38 @@ if (sum(unlist(existChk))!=length(unlist(inmat))){
 ###################################################################
 # 2. Read in all inputs
 ###################################################################
-mats <- sapply(unlist(inmat),read.table)
-nnodes <- dim(mats)[1]
-numft <- dim(mats)[1] * (dim(mats)[1]-1) / 2
-ftvecs <- zeros(numft,dim(mats)[2])
-for (i in 1:dim(mats)[2]){
-   matTmp <- Reshape(as.matrix(unlist(mats[,i])),nnodes,)
-   ftvecs[,i] <- squareform(matTmp - diag(diag(matTmp)))
+mats                    <- list()
+for (i in 1:nMat) {
+   mats[[i]]            <- read.table(inmat[[1]][i],header=FALSE,stringsAsFactors=FALSE)
+   if (dim(mats[[i]])[1] != 1 && dim(mats[[i]])[2] != 1) {
+      mats[[i]]         <- squareform(mats[[i]] - diag(diag(mats[[i]])))
+   }
+}
+nEdges                  <- dim(mats[[1]])[1]
+ftvecs                  <- matrix(0,nEdges,length(mats))
+for (i in 1:length(mats)){
+   ftvecs[,i]           <- mats[[i]][,1]
 }
 
 ###################################################################
 # 3. Compute featurewise similarity.
 ###################################################################
-similmat <- cor(ftvecs)
+similmat                <- cor(ftvecs)
+similmat                <- similmat - diag(diag(similmat))
 
 ###################################################################
-# 4. Print the similarity matrix
-###################################################################
-for (row in seq(1,dim(similmat)[1])) {
-   cat(similmat[row,])
-   cat('\n')
-}
-
-###################################################################
-# 5. Plot the featurewise similarity.
+# 4. Plot the featurewise similarity.
 #    (Requires ggplot2)
 ###################################################################
-if ("ggplot2" %in% rownames(installed.packages())){
-   ftvecs <- data.frame(ftvecs)
-   pkcoor <- abs(triu(similmat,1))
-   pkcoor <- which(pkcoor==max(pkcoor),arr.ind=TRUE)
-   pkr <- similmat[pkcoor]
-   axlabs <- unlist(strsplit(axisnames,','))
-   names(ftvecs)[pkcoor[1]] <- 'mat1'
-   names(ftvecs)[pkcoor[2]] <- 'mat2'
+if (!is.na(opt$outfig)) {
+   suppressMessages(suppressWarnings(library(ggplot2)))
+   suppressMessages(suppressWarnings(library(reshape2)))
+   ftvecs               <- data.frame(ftvecs)
+   pkcoor               <- abs(similmat)
+   pkcoor               <- which(pkcoor==max(pkcoor),arr.ind=TRUE)[1,]
+   pkr                  <- similmat[pkcoor[1],pkcoor[2]]
+   names(ftvecs)[pkcoor[2]] <- 'mat1'
+   names(ftvecs)[pkcoor[1]] <- 'mat2'
 
    suppressMessages(require(ggplot2))
    i <- ggplot(ftvecs, aes(x=mat1,y=mat2)) + 
@@ -95,21 +94,30 @@ if ("ggplot2" %in% rownames(installed.packages())){
       geom_vline(aes(x=mat1,y=mat2),xintercept=0,size=2) + 
       geom_polygon(aes(x=mat1,y=mat2,fill= ..level..,alpha=0.05),stat='density2d') + 
       geom_smooth(method='lm',color='red',size=2) + 
-      annotate('text',label = paste('r =',round(pkr,3)), x=Inf, y=-Inf,hjust=1.1,vjust=-1.1) + 
-      theme_classic() + 
-      theme(legend.position="none", 
-         panel.border = element_rect(colour = "black", fill=NA, size=2),
-         axis.line = element_line(color = 'black', size = 2)) + 
-      labs(x = axlabs[1], y = axlabs[2]) + 
+      annotate('text',label = paste('r =',round(pkr,3)), x=Inf, y=-Inf,hjust=1.1,vjust=-1.1,size=5) + 
+      theme(axis.ticks=element_blank(),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank(),
+            axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            legend.position="none",
+            panel.border=element_rect(colour='black', fill=NA),
+            panel.background=element_blank(),panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank(),plot.background=element_blank()) +
+            scale_x_continuous(expand=c(0,0)) + 
+            scale_y_continuous(expand=c(0,0)) + 
       coord_cartesian(xlim=c(quantile(ftvecs$mat1,.001), 
-         quantile(ftvecs$mat1,.999)), 
-         ylim=c(quantile(ftvecs$mat2,.001), 
-         quantile(ftvecs$mat2,.999))) +
-#      coord_cartesian(xlim=c(quantile(ftvecs$mat1,.001), 
-#         quantile(ftvecs$mat1,.999)), 
-#         ylim=c(-0.25, 
-#         0.40)) +
-      scale_x_continuous(breaks=round(seq(quantile(ftvecs$mat1,.001),quantile(ftvecs$mat1,.999),quantile(ftvecs$mat1,.999) - quantile(ftvecs$mat1,.001)),2)) +
-      scale_y_continuous(breaks=round(seq(quantile(ftvecs$mat2,.001),quantile(ftvecs$mat2,.999),quantile(ftvecs$mat2,.999) - quantile(ftvecs$mat2,.001)),2))
-   ggsave(file=outfig, plot=i, width=8, height=8)
+            quantile(ftvecs$mat1,.999)), 
+            ylim=c(quantile(ftvecs$mat2,.001), 
+            quantile(ftvecs$mat2,.999)))
+   ggsave(file=outfig, plot=i, width=4, height=4)
+}
+
+###################################################################
+# 5. Print the similarity matrix
+###################################################################
+similmat                <- squareform(similmat)
+for (i in seq(1,length(similmat))) {
+   cat(similmat[i])
+   cat('\n')
 }
