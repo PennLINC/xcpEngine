@@ -78,6 +78,10 @@ DICTIONARY
 routine                       @1    Preparing depth map
 subroutine                    @1.1  Segmentation: ${segmentation[sub]}
 subroutine                    @1.2  Output: ${depthMap[cxt]}
+seg_class=( $(
+exec_xcp    unique.R                \
+   -i       ${segmentation[sub]}
+) )
 exec_xcp    layerLabels             \
    -l       ${segmentation[sub]}    \
    -i       ${intermediate}         \
@@ -132,18 +136,23 @@ routine                       @3    Preparing summary graphics
 subroutine                    @3.1  Acquiring arguments
 is_image ${intermediate}-dn-rs.nii.gz \
                               && dn_arg=",${intermediate}-dn-rs.nii.gz"
-is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:0-50,"
-is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:0-0.5,"
-is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:0-1,"
+is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:50,"
+is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:0.5,"
+is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:1,"
+
+[[ -n ${fcqa_custom[cxt]} ]]  &&  ts_1d="${ts_1d}${fcqa_custom[cxt]},"
 
 [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
 
 subroutine                    @3.2  Generating visuals
+[[ ${#seg_class[@]} == 3 ]]   &&    class_names="-n ${XCPEDIR}/atlas/segmentation3/segmentation3NodeNames.txt"
+[[ ${#seg_class[@]} == 6 ]]   &&    class_names="-n ${XCPEDIR}/atlas/segmentation6/segmentation6NodeNames.txt"
 exec_xcp voxts.R                    \
    -i    ${intermediate}-pp-rs.nii.gz${dn_arg} \
    -r    ${intermediate}-onion-rs.nii.gz \
    -o    ${fcqa[cxt]}               \
-   ${ts_1d}
+   ${ts_1d}                         \
+   ${class_names}
 
 routine_end
 
