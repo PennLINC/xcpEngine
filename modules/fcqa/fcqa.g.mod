@@ -147,12 +147,14 @@ for map in ${atlas_names[@]}
    ################################################################
    subroutine                 @2.1  Atlas: ${a[Name]}
    subroutine                 @2.2  Scanning subject-level atlas metadata
+   exec_sys rm -f                            ${intermediate}-${a[Name]}-subjects.csv
+   echo ${ids[0]},connectivity,motion     >> ${intermediate}-${a[Name]}-subjects.csv
    for sub in ${subjects[@]}
       do
       load_atlas     ${atlas[sub]}
       atlas_parse    ${map}
       edges[sub]=${a[MatrixFC]}
-      echo ${ids[sub]},${edges[sub]},${motion[sub]} >> ${intermediate}-subjects.csv
+      echo ${ids[sub]},${edges[sub]},${motion[sub]}   >> ${intermediate}-${a[Name]}-subjects.csv
    done
    load_atlas        ${atlas_orig}
    atlas_parse       ${map}
@@ -170,7 +172,7 @@ for map in ${atlas_names[@]}
    [[ -e ${fcqa_confmat[cxt]} ]] \
       && confound="-n ${fcqa_confmat[cxt]}"
    echo exec_xcp qcfc.R                                    \
-      -c    ${intermediate}-subjects.csv              \
+      -c    ${intermediate}-${a[Name]}-subjects.csv   \
       -s    ${fcqa_sig[cxt]}                          \
       -n    ${a[Name]}                                \
       -o    ${qcfc_correlation[cxt]}_${a[Name]}       \
