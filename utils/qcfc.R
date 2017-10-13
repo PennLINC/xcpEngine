@@ -21,6 +21,7 @@
 ###################################################################
 suppressMessages(suppressWarnings(library(optparse)))
 suppressMessages(suppressWarnings(library(pracma)))
+suppressMessages(suppressWarnings(library(methods)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -38,14 +39,21 @@ option_list = list(
                   correction: either fdr [default], bonferroni, or none)."),
    make_option(c("-t", "--threshold"), action="store", default=0.05, type='numeric',
               help="Threshold for establishing significance [default 0.05]."),
-   make_option(c("-n", "--name"), action="store", default=NA, type='character',
-              help="The name of the network or parcellation for which this
-                  computation is being run."),
    make_option(c("-n", "--confound"), action="store", default=NA, type='character',
               help="Path to a file containing subject identifiers as well
                   as variables that should be controlled for in the model.
                   Subject identifiers should be marked with column headers
-                  id0,id1,... matched to the cohort."),
+                  id0,id1,... matched to the cohort. Must also supply
+                  -y / --conformula flag."),
+   make_option(c("-y", "--conformula"), action="store", default=NA, type='character',
+              help="Right-hand side of the formula expressing variables
+                  from the confound matrix that should be controlled for
+                  in the model. Categorical variables should be specified
+                  using 'factor(var_name)'. For example,
+                  
+                     -y 'age+factor(sex)+factor(diagnosis)'
+                     
+                  This argument uses standard R formula syntax."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The base output path."),
    make_option(c("-r", "--threshmat"), action="store", default=TRUE, type='logical',
@@ -75,7 +83,6 @@ if (is.na(opt$out)) {
 cohort                  <- read.csv(opt$cohort,header=TRUE,stringsAsFactors=FALSE)
 sig                     <- opt$significance
 thr                     <- opt$threshold
-name                    <- opt$name
 out                     <- paste(opt$out,'.txt',sep='')
 if (opt$threshmat) {
    out_thr              <- paste(opt$out,'_thr.txt',sep='')
@@ -90,7 +97,30 @@ if (opt$outfig) {
 }
 if (!is.na(opt$confound)) {
    confound             <- read.csv(opt$confound,header=TRUE)
+   conformula           <- opt$conformula
+   if (is.na(conformula)) {
+      write(paste('[Warning: A confound matrix was provided, but the   ]','\n',
+          '[         model formula was not specified. Variables]','\n',
+          '[         from the confound matrix will not be      ]','\n',
+          '[         controlled for in the model.              ]','\n',
+          sep=''),stderr())
+      confound          <- NA
+   }
 } else { confound       <- NA }
+
+if (! "ggplot2"   %in% rownames(installed.packages())){
+   outfig               <- NA
+}
+if (! "reshape2"  %in% rownames(installed.packages())){
+   outfig               <- NA
+}
+
+
+
+
+
+PLOTXMIN                <- -0.30
+PLOTXMAX                <- 0.45
 
 
 
@@ -152,7 +182,6 @@ cohort                  <- cbind(cohort,edges)
 # Read in confounds, if they exist, and merge the confound matrix
 # with the motion vector.
 ###################################################################
-lmform                  <- ' ~ motion'
 residuals               <- FALSE
 if (any(!is.na(confound)) && !is.na(conformula)) {
    cohort               <- merge(x=cohort,y=confound,all.x=TRUE)
@@ -160,6 +189,7 @@ if (any(!is.na(confound)) && !is.na(conformula)) {
    cohort$motion        <- lm(parform, data=cohort)$residuals
    residuals            <- TRUE
 }
+cohort$moperm           <- randperm(cohort$motion)
 
 
 
@@ -168,6 +198,7 @@ if (any(!is.na(confound)) && !is.na(conformula)) {
 ###################################################################
 # Fit the edgewise model.
 ###################################################################
+rvecperm                <- vector(length=nEdges)
 rvec                    <- vector(length=nEdges)
 pvec                    <- vector(length=nEdges)
 for (i in 1:nEdges) {
@@ -177,6 +208,8 @@ for (i in 1:nEdges) {
       cohort[edge]      <- lm(parform, data=cohort)$residuals
    }
    c                    <- cor.test(cohort$motion, unlist(unname(cohort[edge])))
+   cperm                <- cor.test(cohort$moperm, unlist(unname(cohort[edge])))
+   rvecperm[i]          <- cperm$estimate
    rvec[i]              <- c$estimate
    pvec[i]              <- c$p.value
 }
@@ -233,28 +266,29 @@ if (opt$quality) {
 ###################################################################
 if (opt$outfig) {
    suppressMessages(suppressWarnings(library(ggplot2)))
-   distribs             <- data.frame(cbind(rvec,rvecperm))
-   names(distribs)[1]   <- 'Empirical'
-   names(distribs)[2]   <- 'Permuted'
-   distribs             <- stack(distribs)
-   names(distribs)[2]   <- 'Distribution'
+   suppressMessages(suppressWarnings(library(reshape2)))
+#   distribs             <- data.frame(Empirical=rvec,Permuted=rvecperm)
+#   names(distribs)[1]   <- 'Empirical'
+#   names(distribs)[2]   <- 'Permuted'
+#   distribs             <- melt(distribs)
+   distribs             <- melt(rvec)
+#   distribs$col[which(distribs$variable=='Empirical')] <- '#42B6F4'
+#   distribs$col[which(distribs$variable=='Permuted')]  <- '#CCCCCC'
    
    labels               <- data.frame(
-      xcoor             =  c(-0.3,0.45),
+      xcoor             =  c(PLOTXMIN,PLOTXMAX),
       ycoor             =  c(0,0),
-      lab               =  c('-0.3','0.45'),
+      lab               =  c('-0.30','0.45'),
       hj                =  c(-0.25,1.25),
       variable          =  c('dummy','dummy')
    )
    
-   opath                <- paste(outfig,'DistPlot.svg',sep='')
    i <-  ggplot(data=distribs, aes(value, fill=variable)) + 
-         geom_density(colour='#42B6F4',fill='#42B6F4') + 
-         geom_hline(yintercept=0,size=2) + 
+         geom_density(fill='#42B6F4', colour='#42B6F4') + 
          geom_vline(xintercept=0,size=2) + 
          scale_x_continuous(expand=c(0,0)) + 
          scale_y_continuous(expand=c(0,0)) + 
-         coord_cartesian(xlim=c(-0.3,0.45)) +
+         coord_cartesian(xlim=c(PLOTXMIN,PLOTXMAX)) +
          geom_text(data=labels,aes(x=xcoor,y=ycoor,hjust=hj,label=lab),vjust=-1,color='black',size=5) +
          theme(axis.ticks=element_blank(),
                axis.title.x=element_blank(),
@@ -262,7 +296,8 @@ if (opt$outfig) {
                axis.text.x=element_blank(),
                axis.text.y=element_blank(),
                legend.position="none",
+               panel.border=element_rect(colour='black', fill=NA),
                panel.background=element_blank(),panel.grid.major=element_blank(),
                panel.grid.minor=element_blank(),plot.background=element_blank())
-   ggsave(file=opath, plot=i, width=8, height=8)
+   ggsave(file=outfig, plot=i, width=4, height=4)
 }
