@@ -51,28 +51,27 @@ rescale           <- opt$rescale
 ###################################################################
 # 1. Obtain the library's scaling factor if it is in voxel space.
 ###################################################################
-rescale <- as.numeric(unlist(strsplit(rescale,',')))
+rescale           <- as.numeric(unlist(strsplit(rescale,',')))
 
 ###################################################################
 # 2. Read in all coordinates, and rescale them if necessary.
 ###################################################################
-coor <- readLines(coorPath)[grep('^#',readLines(coorPath))]
-coor <- lapply(coor, function(x) unlist(strsplit(x,'#'))[3])
-coor <- lapply(coor, function(x) as.numeric(unlist(strsplit(x,','))))
+coor              <- readLines(coorPath)[grep('^#',readLines(coorPath))]
+coor              <- lapply(coor, function(x) unlist(strsplit(x,'#'))[3])
+coor              <- lapply(coor, function(x) as.numeric(unlist(strsplit(x,','))))
 if (!is.na(rescale[1])){
-   coor <- lapply(coor, function(x) x*rescale)
+   coor           <- lapply(coor, function(x) x*rescale)
 }
 
 ###################################################################
 # 3. Compute the pairwise distance.
 ###################################################################
-coor <- t(Reshape(unlist(coor),3,))
-distmat <- as.matrix(dist(coor,upper = TRUE,method=metric))
+coor              <- t(Reshape(unlist(coor),3,))
+distmat           <- squareform(as.matrix(dist(coor,upper = TRUE,method=metric)))
 
 ###################################################################
 # 4. Print the distance matrix
 ###################################################################
-for (row in seq(1,dim(distmat)[1])) {
-   cat(distmat[row,])
-   cat('\n')
+for (i in 1:length(distmat)) {
+   cat(distmat[i],'\n')
 }
