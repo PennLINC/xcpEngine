@@ -27,6 +27,10 @@ option_list = list(
    make_option(c("-s", "--timeseries"), action="store", default=NA, type='character',
               help="1D timeseries to which the censoring regime should
                   also be applied."),
+   make_option(c("-u", "--uncensor"), action="store", default=FALSE, type='logical',
+              help="If this flag is set (-u TRUE or -u 1), then the
+                  input time series will instead be uncensored via
+                  insertion of null volumes."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path")
 )
@@ -52,6 +56,7 @@ impath            <- opt$img
 tspath            <- opt$timeseries
 derivspath        <- opt$derivatives
 tmaskpath         <- opt$tmask
+uncensor          <- opt$uncensor
 out               <- opt$out
 
 ###################################################################
@@ -59,15 +64,22 @@ out               <- opt$out
 ###################################################################
 sink("/dev/null")
 tmask             <- as.logical(unlist(read.table(tmaskpath,header=F)))
+
 ###################################################################
 # 2. Load in any BOLD timeseries to be censored
 ###################################################################
 if (!is.na(impath)) {
    img            <- readNifti(impath)
    ################################################################
-   # Censor the image using the temporal mask
+   # Censor or uncensor the image using the temporal mask
    ################################################################
-   img_censored   <- img[,,,tmask]
+   if (uncensor) {
+      img_censored <- rep(0,prod(c(dim(img)[1:3],length(tmask))))
+      dim(img_censored) <-       c(dim(img)[1:3],length(tmask))
+      img_censored[,,,tmask] <- img
+   } else {
+      img_censored   <- img[,,,tmask]
+   }
    ################################################################
    # Write the censored image
    ################################################################
@@ -84,12 +96,18 @@ if (!is.na(tspath)) {
    tspaths        <- strsplit(tspath,split=',')
    outbase        <- sub('[.].*$','',out)
    for (path in tspaths) {
-      tscur       <- unlist(as.matrix(read.table(path)))
+      tscur       <- unlist(as.matrix(read.table(path,header=FALSE)))
       tsname      <- basename(path)
       if (is.null(dim(tscur)) && !is.null(length(tscur))) {
          dim(tscur)<- c(length(tscur),1)
       }
-      tsrev       <- tscur[tmask,]
+      if (uncensor) {
+         tsrev    <- rep(0,prod(length(tmask),dim(tscur)[2]))
+         dim(tsrev)<- c(length(tmask),dim(tscur)[2])
+         tsrev[tmask,] <- tscur
+      } else {
+         tsrev    <- tscur[tmask,]
+      }
       tsname      <- paste(outbase,tsname,sep='_')
       write.table(tsrev, file = tsname, quote=FALSE, col.names = F, row.names = F)
    }
