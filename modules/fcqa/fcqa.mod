@@ -75,6 +75,9 @@ DICTIONARY
 
 
 
+###################################################################
+# Generate a tissue-wise depth map in anatomical space.
+###################################################################
 routine                       @1    Preparing depth map
 subroutine                    @1.1  Segmentation: ${segmentation[sub]}
 subroutine                    @1.2  Output: ${depthMap[cxt]}
@@ -92,6 +95,12 @@ routine_end
 
 
 
+###################################################################
+# Align all images to downsampled sequence space. The linear
+# downsampling should be somewhat similar to the spatial smoothing
+# that Power applies, with the additional benefit of improving
+# plotting speed.
+###################################################################
 routine                       @2    Aligning depth map
 
 subroutine                    @2.1  Resampling to 6mm isotropic: minimally preprocessed
@@ -99,7 +108,7 @@ exec_afni   3dresample              \
    -dxyz    6 6 6                   \
    -prefix  ${intermediate}-pp-rs.nii.gz \
    -inset   ${preprocessed[sub]}    \
-   -rmode   NN
+   -rmode   Li
 
 if is_image ${denoised[cxt]}
    then
@@ -110,11 +119,26 @@ if is_image ${denoised[cxt]}
    exec_afni   3dresample                 \
       -dxyz    6 6 6                      \
       -prefix  ${intermediate}-dn-rs.nii.gz \
-      -inset   ${intermediate}-dn.nii.gz \
-      -rmode   NN
+      -inset   ${intermediate}-dn.nii.gz  \
+      -rmode   Li
+   ################################################################
+   # The existence of the uncensored variable indicates that the
+   # time series has been censored. In this case, it will be
+   # necessary to reinsert the censored volumes in order to
+   # ensure proper alignment.
+   ################################################################
+   if is_image ${uncensored[sub]}
+      then
+      subroutine              @2.3  Realigning censored volumes
+      exec_xcp censor.R \
+         -i    ${intermediate}-dn-rs.nii.gz \
+         -t    ${tmask[sub]} \
+         -u    TRUE \
+         -o    ${intermediate}-dn-rs.nii.gz
+   fi
 fi
 
-subroutine                    @2.3  Aligning depth map to functional space
+subroutine                    @2.4  Aligning depth map to sequence space
 warpspace   ${depthMap[cxt]}              \
             ${intermediate}-onion.nii.gz  \
             ${structural[sub]}:${preprocessed_space[sub]} \
