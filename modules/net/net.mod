@@ -23,11 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   for g in ${gammas[@]}
-      do
-      gf=${g//\./-}
-      atlas_add   ${a[Name]}   CommunityRes${g}  ${netbase[cxt]}_CommunityRes${gf}_community.1D
-   done
+   atlas_add   ${a[Name]}   CommunityRes${gamme_filename}  ${netbase[cxt]}_CommunityRes${gf}_community.1D
 }
 
 completion() {
@@ -148,16 +144,8 @@ for net in ${atlas_names[@]}
                community_detection
             fi
             update_networks
-            communities=( ${communities[@]} CommunityRes${gamma} )
-            a[CommunityRes${gamma}]=${community[cxt]}
-            if [[ ! -s ${com_root[cxt]}_wbOverall.csv ]] \
-            || rerun
-               then
-               exec_xcp withinBetween.R \
-                  -m    ${adjacency} \
-                  -c    ${community[cxt]} \
-                  -o    ${com_root[cxt]}
-            fi
+            communities=( ${communities[@]} CommunityRes${gamma_filename} )
+            a[CommunityRes${gamma_filename}]=${community[cxt]}
          done
          ;;
       none)
