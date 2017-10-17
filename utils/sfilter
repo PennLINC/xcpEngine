@@ -217,5 +217,7 @@ susan)
       ${out} \
       -mul ${mask} \
       ${out}
+   is_image          ${out}_usan_size.nii.gz \
+   && exec_sys rm -f ${out}_usan_size.nii.gz
    ;;
 esac
