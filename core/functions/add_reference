@@ -5,6 +5,6 @@ add_reference() {
    rm -f ${image_target}
    if is_image ${!image_var}
       then
-      exec_sys ln -s ${!image_var} ${image_target}
+      exec_sys ln -sf ${!image_var} ${image_target}
    fi
 }

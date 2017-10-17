@@ -120,6 +120,7 @@ routine                       @0    Generating confound matrix
 if (( ${confound_rp[cxt]} == 1 ))
    then
    subroutine                 @1    [Including realignment parameters]
+   require rps
    exec_xcp mbind.R \
       -x ${confmat[cxt]} \
       -y ${rps[sub]} \
@@ -139,6 +140,7 @@ fi
 if (( ${confound_rms[cxt]} == 1 ))
    then
    subroutine                 @2    Including relative RMS displacement
+   require relrms
    exec_xcp mbind.R \
       -x ${confmat[cxt]} \
       -y ${relrms[sub]} \
