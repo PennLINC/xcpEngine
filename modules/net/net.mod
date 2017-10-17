@@ -115,7 +115,7 @@ for net in ${atlas_names[@]}
    atlas_parse ${net}
    atlas_check
    unset matrix communities
-   matrix=(    $(matching Matrix    ${!a[@]}) )
+   matrix=(      $(matching Matrix    ${!a[@]}) )
    communities=( $(matching Community ${!a[@]}) )
    [[ -z ${matrix} ]] && continue
    routine                    @1    Network analysis: ${a[Name]}
@@ -147,6 +147,9 @@ for net in ${atlas_names[@]}
                subroutine     @1.1.2
                community_detection
             fi
+            update_networks
+            communities=( ${communities[@]} CommunityRes${gamma} )
+            a[CommunityRes${gamma}]=${community[cxt]}
             if [[ ! -s ${com_root[cxt]}_wbOverall.csv ]] \
             || rerun
                then
@@ -184,7 +187,6 @@ for net in ${atlas_names[@]}
          fi
       done
    done
-   update_networks
    routine_end
 done
 
