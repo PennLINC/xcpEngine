@@ -68,9 +68,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  referenceVolume         ${prefix}_referenceVolume
 derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
-derivative  meanIntensity           ${prefix}_meanIntensity
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
 
@@ -87,6 +85,8 @@ output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 output      confmat                 ${prefix}_confmat.1D
+output      referenceVolume         ${prefix}_referenceVolume.nii.gz
+output      meanIntensity           ${prefix}_meanIntensity.nii.gz
 
 configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
 configure   censored                0
@@ -313,7 +313,7 @@ while (( ${#rem} > 0 ))
          # exists. If it does not, extract it from the timeseries
          # midpoint for use as a reference in realignment.
          ##########################################################
-         if ! is_image ${referenceVolume[cxt]} \
+         if ! is_image ${referenceVolume[sub]} \
          || rerun
             then
             subroutine        @2.1.1 [Extracting reference volume]
@@ -324,9 +324,9 @@ while (( ${#rem} > 0 ))
                ${intermediate}-reference.nii.gz \
                ${midpt} 1
          else
-            subroutine        @2.1.2 [Reference volume: ${referenceVolume[cxt]}]
-            add_reference     referenceVolume[$cxt] ${prefix}_referenceVolume
-            exec_sys ln -sf   ${referenceVolume[cxt]} \
+            subroutine        @2.1.2 [Reference volume: ${referenceVolume[sub]}]
+            add_reference     referenceVolume[$sub] ${prefix}_referenceVolume
+            exec_sys ln -sf   ${referenceVolume[sub]} \
                               ${intermediate}-reference.nii.gz
          fi
          if ! is_image ${intermediate}_${cur}.nii.gz \
@@ -926,8 +926,10 @@ while (( ${#rem} > 0 ))
          subroutine           @10.3 [Computing mask]
          exec_fsl fslmaths ${meanIntensity[cxt]}   -bin ${mask[cxt]}
          subroutine           @10.4 [Adding link references]
-         exec_sys ln -s    ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
-         exec_sys ln -s    ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
+         exec_sys ln -sf   ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
+         exec_sys ln -sf   ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
+         exec_sys ln -sf   ${intermediate}.nii.gz  ${intermediate}_${cur}.nii.gz
+         intermediate=${intermediate}_${cur}
          routine_end
          ;;
       
@@ -959,7 +961,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${preprocessed[cxt]}
+   exec_fsl imcp ${processed} ${preprocessed[cxt]}
    completion
 else
    subroutine                 @0.3
