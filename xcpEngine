@@ -343,7 +343,6 @@ for module in ${modules[@]}
    level=group
    if [[ -n ${modG} ]]
       then
-      source ${XCPEDIR}/core/validateGroup
       mod_cmd="
       ${modG} 
          -s ${incohort}
@@ -351,6 +350,7 @@ for module in ${modules[@]}
          -o ${out_super}
          -t ${trace}
          "
+      source ${XCPEDIR}/core/validateGroup
       case ${mode} in
       s)
          ${mod_cmd}

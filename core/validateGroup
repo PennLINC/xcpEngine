@@ -13,3 +13,12 @@ if [[ ! -e ${out_group}/log ]]
    then
    mkdir -p ${out_group}/log
 fi
+
+###################################################################
+# Don't run a group-level module if there's only one subject.
+###################################################################
+nsub=${#cohort[@]}
+if (( nsub < 2 ))
+   then
+   unset mod_cmd
+fi

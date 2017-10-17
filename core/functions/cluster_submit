@@ -1,4 +1,5 @@
 cluster_submit() {
+   (( $# == 0 )) && return
    local id logfile
    case ${level} in
    subject)
