@@ -23,6 +23,8 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
+   quality_metric    estimatedLostTemporalDOF         t_dof
+   
    write_output      depthMap
    
    source ${XCPEDIR}/core/auditComplete
@@ -38,6 +40,7 @@ completion() {
 # OUTPUTS
 ###################################################################
 output      voxts                   ${prefix}_voxts.png
+output      t_dof                   ${prefix}_tdof.txt
 derivative  depthMap                ${prefix}_depthMap
 
 input       depthMap
@@ -178,6 +181,38 @@ exec_xcp voxts.R                    \
    ${ts_1d}                         \
    ${class_names}
 
+routine_end
+
+
+
+
+
+routine                       @4    Estimating loss of temporal degrees of freedom
+unset    v  q
+declare -A  q
+for v in "${!qvars[@]}"
+   do
+   vn=${qvars[v]}
+   q[${vn}]=${qvals[${v}]}
+done
+tDOF=0
+if [[ -n ${q[nNuisanceParameters]}  ]]
+   then
+   subroutine                 @4.1  ${q[nNuisanceParameters]} nuisance parameters regressed
+   tDOF=$(( ${tDOF}           +     ${q[nNuisanceParameters]}  ))
+fi
+if [[ -n ${q[nICsNoise]}            ]]
+   then
+   subroutine                 @4.2  ${q[nICsNoise]} IC time series flagged as noise
+   tDOF=$(( ${tDOF}           +     ${q[nICsNoise]}            ))
+fi
+if [[ -n ${q[nVolCensored]}         ]]
+   then
+   subroutine                 @4.3  ${q[nVolCensored]} volumes censored
+   tDOF=$(( ${tDOF}           +     ${q[nVolCensored]}         ))
+fi
+subroutine                    @4.4  Total lost tDOF: ${tDOF}
+echo ${tDOF}                  >>    ${t_dof[cxt]}
 routine_end
 
 
