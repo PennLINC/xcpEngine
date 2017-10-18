@@ -10,40 +10,83 @@
 #
 # As of 3 May 2017, this is a cluster-only utility.
 ###################################################################
+source ${XCPEDIR}/core/global
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
 ###################################################################
-# Constants
+# Usage function
 ###################################################################
-# none yet
-
-###################################################################
-# Default settings
-###################################################################
-run=1,2,3,4
-out=$(pwd)
-name=template
+Usage(){
+cat << endstream
+___________________________________________________________________
 
 
+Usage: `basename $0` -c <cohort> -o <output> <options>
 
+`basename $0` constructs a sample-specific template given a cohort
+file.
 
+Compulsory arguments:
+ -c : Cohort file for pipeline input:
+      A comma-separated catalogue of the analytic sample.
+      Each row corresponds to a subject, and each column
+      corresponds either to an identifier or to an input.
+ -o : Parent directory for pipeline output:
+      A valid path on the current filesystem specifying
+      the directory wherein all output from the current
+      analysis will be written.
+ -n : Template name
+      The name of the template to be created.
+
+Optional arguments:
+ -r : Run stages [default 1,2,3]
+      The stages of the template construction protocol
+      that are to be run.
+      
+      1 : Coarse initialisation of target template
+      2 : Targeted registration of cohort brains
+      3 : Preliminary masking
+      4 : Atlas priors
+      5 : Prior renormalisation
+      6 : Resampling to 2mm isotropic
+      7 : Registration to MNI
+      8 : Construct metadata and import to pipeline
+      
+      By default, stages 1-3 will be run in order to allow
+      manual edits to the mask before the protocol runs to
+      completion.
+      
+      Specify run stages as a comma-separated list. For
+      instance, -r 3,4,5,6 will run stages 3-6.
+
+ -l : OASIS label cohort [default All]
+      The OASIS subjects to include in brain extraction and
+      prior generation steps. Cohort characteristics and
+      options are available in:
+      \${XCPEDIR}/thirdparty/oasis30/Cohorts/subjectDemographics 
+      By default, all subjects will be included.
+
+endstream
+}
 
 ###################################################################
+# Define defaults and parse arguments.
 ###################################################################
-# BEGIN HEADER
-###################################################################
-###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
-###################################################################
+run=1,2,3
+labelcohort=All
 trace=0
-while getopts "c:o:r:n:t:" OPTION
+
+
+
+
+
+while getopts "c:o:r:n:" OPTION
    do
    case $OPTION in
    c)
-      cohort=${OPTARG}
+      incohort=${OPTARG}
       ;;
    o)
       out=${OPTARG}
@@ -54,12 +97,17 @@ while getopts "c:o:r:n:t:" OPTION
    n)
       name=${OPTARG}
       ;;
+   l)
+      labelcohort=${OPTARG}
+      ;;
    t)
       trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
+      if (( ${trace} != 0 )) \
+      && (( ${trace} != 1 )) \
+      && (( ${trace} != 2 )) \
+      && (( ${trace} != 3 ))
          then
-         ${XCPEDIR}/xcpModusage mod
-         exit
+         usage_flag=1
       fi
       ;;
    *)
@@ -70,522 +118,593 @@ while getopts "c:o:r:n:t:" OPTION
 done
 shift $((OPTIND-1))
 ###################################################################
-# Ensure that the compulsory cohort variable has been defined
+# Ensure that the compulsory variables have been defined
 ###################################################################
-[[ -z ${cohort} ]] && Usage && exit
-[[ -z $(cat ${cohort}) ]] && Usage && exit
+[[   -z ${out}       ]] && Usage && exit
+[[   -z ${name}      ]] && Usage && exit
+[[ ! -s ${incohort}  ]] && Usage && exit
+
+
+
+
 
 cxt=0
+subroutine                    @0.1  [n][${name}]
+subroutine                    @0.2  [o][${out}]
 ###################################################################
 # Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
 ###################################################################
-[[ ${trace} == "1" ]] && set -x
+case ${trace} in
+0)
+   trace=0
+   ;;
+1)
+   trace=1
+   ;;
+2)
+   export trace=1
+   ;;
+3)
+   set -x
+   export SHELLOPTS
+   ;;
+esac
 ###################################################################
 # Assemble the list of input images.
 ###################################################################
-inputs=$(cat ${cohort})
+source   ${XCPEDIR}/core/validateCohort
+for sub in ${!cohort[@]}
+   do
+   subject=${cohort[sub]}
+   subject_parse        ${subject} ${incohort}
+done
 ###################################################################
 # Initialise the top-level output directory
 ###################################################################
-out=${out}/${name}
-mkdir -p ${out}
-echo "Template construction directory:"
-echo "${out}"
+out=$(abspath     ${out}/${name})
+exec_sys mkdir -p ${out}
 
 
 
 
-
-cxt=$(expr $cxt + 1)
-###################################################################
-# Initialise the unguided stage of template construction.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templateInit/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
 
 ###################################################################
-# Define paths to the potential outputs of the unguided template-
-# building step.
+# Variable declarations
 ###################################################################
-warpInit=${outdir}/warp
-warpedInit=${outdir}/warpedToTemplate
-affineInit=${outdir}/affine
-repairedInit=${outdir}/repaired
-inverseWarpInit=${outdir}/inverseWarp
-logInit=${outdir}/log
-templateInitDir=${outdir}
-templateInitUnpadded=${outdir}/template_unpadded.nii.gz
-templateInit=${outdir}/template0.nii.gz
-templatePadded=${outdir}/template.nii.gz
-
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭           CONSTRUCTING TEMPLATE: INITIALISATION           ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
-   echo "Output directory is $outdir"
-
-   mkdir -p ${warpInit}
-   mkdir -p ${warpedInit}
-   mkdir -p ${affineInit}
-   mkdir -p ${repairedInit}
-   mkdir -p ${inverseWarpInit}
-   mkdir -p ${logInit}
-
-   ################################################################
-   # Perform the unguided template-building procedure.
-   ################################################################
-   $ANTSPATH/antsMultivariateTemplateConstruction.sh \
-      -d 3 \
-      -m 1x1x0 \
-      -r 1 \
-      -c 1 \
-      -o ${outdir} \
-      ${inputs}
-   ################################################################
-   # Reorganise the output of the unguided template-building step.
-   ################################################################
-   immv ${outdir}/*template* ${templateInitDir}/
-   immv ${outdir}/*InverseWarp* ${inverseWarpInit}/
-   immv ${outdir}/*WarpedToTemplate* ${warpInit}/
-   immv ${outdir}/*Warp* ${warpInit}/
-   immv ${outdir}/*warp* ${warpInit}/
-   immv ${outdir}/*Repaired* ${repairedInit}/
-   mv ${outdir}/*Affine* ${affineInit}/
-   mv ${outdir}/job*.sh ${logInit}/
-   mv ${outdir}/*log.txt ${logInit}/
-
-   ################################################################
-   # Add padding to the initial template.
-   ################################################################
-   immv ${templateInit} ${templateInitUnpadded}
-   $ANTSPATH/ImageMath 3 \
-      ${templatePadded} \
-      PadImage ${templateInitUnpadded} 5
-
-fi
+define() {
+   eval ${1}=\${2}
+}
 
 
 
 
-
-cxt=$(expr $cxt + 1)
-###################################################################
-# Initialise the targeted stage of template construction.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templateTarg/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
 
 ###################################################################
-# Define paths to the potential outputs of the targeted template-
-# building step.
-#
-# Potential outputs include:
-#  * warpTarg: 
-#  * affineTarg: 
-#  * deformedTarg: 
-#  * inverseWarpTarg: 
-#  * templateTarg: 
-#  * templateTargUnpadded: 
-#  * templateTargDir: 
+# Start a new stage of template construction
 ###################################################################
-warpTarg=${outdir}/warp
-warpedTarg=${outdir}/warpedToTemplate
-affineTarg=${outdir}/affine
-repairedTarg=${outdir}/repaired
-inverseWarpTarg=${outdir}/inverseWarp
-logTarg=${outdir}/log
-templateTargDir=${outdir}
-templateTarg=${outdir}/template.nii.gz
-
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭        CONSTRUCTING TEMPLATE: TARGETED REGISTRATION       ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
-   echo "Output directory is $outdir"
-
-   mkdir -p ${warpTarg}
-   mkdir -p ${warpedTarg}
-   mkdir -p ${affineTarg}
-   mkdir -p ${repairedTarg}
-   mkdir -p ${inverseWarpTarg}
-   mkdir -p ${logTarg}
-
-   ################################################################
-   # Perform the targeted template-building procedure.
-   ################################################################
-    $ANTSPATH/antsMultivariateTemplateConstruction.sh \
-      -d 3 \
-      -z ${templatePadded} \
-      -o ${outdir} \
-      ${inputs}
-
-   ################################################################
-   # Reorganise the output of the targeted template-building step.
-   ################################################################
-   immv ${outdir}/*template* ${templateTargDir}/
-   immv ${outdir}/*InverseWarp* ${inverseWarpTarg}/
-   immv ${outdir}/*WarpedToTemplate* ${warpTarg}/
-   immv ${outdir}/*Warp* ${warpTarg}/
-   immv ${outdir}/*warp* ${warpTarg}/
-   immv ${outdir}/*Repaired* ${repairedTarg}/
-   immv ${outdir}/*template0 ${templateTarg}
-   mv ${outdir}/*Affine* ${affineTarg}/
-   mv ${outdir}/job*.sh ${logTarg}/
-   mv ${outdir}/*log.txt ${logTarg}/
-   mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/
-
-fi
+new_stage() {
+   cxt=$(expr $cxt + 1)
+   (( NUMOUT == 1 )) && prep=${cxt}_
+   define   outdir   ${out}/${prep}${1}/
+   exec_sys mkdir -p ${outdir}
+}
 
 
 
 
 
-cxt=$(expr $cxt + 1)
 ###################################################################
-# Initialise the masking stage of template construction.
-#
-# This is by far the worst-performing stage, and its output should
-# always be evaluated qualitatively (and probably edited manually).
+# Template construction: unguided (for coarse first pass)
 ###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templateMask/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-   
-###################################################################
-# Define paths to the potential outputs of the masking stage.
-#
-# Potential outputs include:
-###################################################################
-templateMask=${outdir}/templateMask.nii.gz
-templateMaskD=${outdir}/templateMaskMD.nii.gz
-templateMasked=${outdir}/templateBrain.nii.gz
-templateMaskedD=${outdir}/templateBrain_dilMasked.nii.gz
-
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭           CONSTRUCTING TEMPLATE: MASKING BRAIN            ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
-   echo "Output directory is $outdir"
-   
+construct_unguided() {
+   local mod_name='CONSTRUCTING TEMPLATE: INITIALISATION'
    ################################################################
-   # Assemble all of the ground truth images for atlas
-   # construction.
+   # Initialise the unguided stage of template construction.
    ################################################################
-   oasis=$(cat $XCPEDIR/thirdparty/oasis30/subjects)
-   unset jlfReg
-   for o in ${oasis}
-      do
-      jlfReg="${jlfReg} -g ${XCPEDIR}/thirdparty/oasis30/Heads/${o}.nii.gz"
-      jlfReg="${jlfReg} -l ${XCPEDIR}/thirdparty/oasis30/Segmentations6Class/${o}_seg.nii.gz"
-   done
-   
+   new_stage   templateInit
+
    ################################################################
-   # Perform the JLF routine to generate an anatomical atlas.
+   # Define paths to the potential outputs of the unguided
+   # template- building step.
    ################################################################
-   mkdir -p ${outdir}/labels
-   ${ANTSPATH}/antsJointLabelFusion.sh \
-      -d 3 \
-      -o ${outdir}/labels/ \
-      -t ${templateTarg} \
-      -c 1 \
-      -k 1 \
-      -q 0 \
-      -p ${outdir}/jlf_Posteriors%02d.nii.gz \
-      ${jlfReg}
-   
-   ################################################################
-   # Use the output of JLF to generate an extraction mask.
-   ################################################################
-   fslmaths ${outdir}/labels/Labels.nii.gz \
-      -bin ${templateMask}
-   fslmaths ${templateTarg} \
-      -mul ${templateMask} \
-      ${templateMasked}
-   ImageMath 3 ${templateMaskD} \
-      MD ${templateMask} 1
-   fslmaths ${templateTarg} \
-      -mul ${templateMaskD} \
-      ${templateMaskedD}
-   
-fi
+   define      warpInit                ${outdir}/warp
+   define      warpedInit              ${outdir}/warpedToTemplate
+   define      affineInit              ${outdir}/affine
+   define      repairedInit            ${outdir}/repaired
+   define      inverseWarpInit         ${outdir}/inverseWarp
+   define      logInit                 ${outdir}/log
+   define      templateInitDir         ${outdir}
+   define      templateInitUnpadded    ${outdir}/template_unpadded.nii.gz
+   define      templateInit            ${outdir}/template0.nii.gz
+   define      templatePadded          ${outdir}/template.nii.gz
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @1    Template construction: unguided phase
+      subroutine              @1.1  [o][${outdir}]
+
+      exec_sys mkdir -p ${warpInit}
+      exec_sys mkdir -p ${warpedInit}
+      exec_sys mkdir -p ${affineInit}
+      exec_sys mkdir -p ${repairedInit}
+      exec_sys mkdir -p ${inverseWarpInit}
+      exec_sys mkdir -p ${logInit}
+
+      ################################################################
+      # Perform the unguided template-building procedure.
+      ################################################################
+      subroutine              @1.2a Executing template construction
+      subroutine              @1.2b Delegating control to antsMultivariateTemplateConstruction
+      exec_ants   antsMultivariateTemplateConstruction.sh   \
+         -d       3                                         \
+         -m       1x1x0                                     \
+         -r       1                                         \
+         -c       1                                         \
+         -o       ${outdir}                                 \
+         ${img[@]}
+      ################################################################
+      # Reorganise the output of the unguided template-building step.
+      ################################################################
+      subroutine              @1.3  Organising outputs
+      exec_fsl immv ${outdir}/*template*           ${templateInitDir}/
+      exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpInit}/
+      exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpInit}/
+      exec_fsl immv ${outdir}/*Warp*               ${warpInit}/
+      exec_fsl immv ${outdir}/*warp*               ${warpInit}/
+      exec_fsl immv ${outdir}/*Repaired*           ${repairedInit}/
+      exec_sys   mv ${outdir}/*Affine*             ${affineInit}/
+      exec_sys   mv ${outdir}/job*.sh              ${logInit}/
+      exec_sys   mv ${outdir}/*log.txt             ${logInit}/
+
+      ################################################################
+      # Add padding to the initial template.
+      ################################################################
+      subroutine              @1.4  Padding template
+      exec_sys    immv        ${templateInit} ${templateInitUnpadded}
+      exec_ants   ImageMath 3 ${templatePadded} \
+         PadImage ${templateInitUnpadded} 5
+      routine_end
+
+   fi
+}
 
 
 
 
 
-cxt=$(expr $cxt + 1)
 ###################################################################
-# Initialise the atlas priors stage of template construction.
+# Template construction: guided (primary template construction)
 ###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templatePriors/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-###################################################################
-# Define paths to the potential outputs of the production of
-# atlas priors.
-#
-# Potential outputs include:
-###################################################################
-labels=${outdir}/labels/Labels.nii.gz
-intensity=${outdir}/labels/Intensity.nii.gz
-posteriors=${outdir}/jlf_Posteriors
+construct_guided() {
+   local mod_name='CONSTRUCTING TEMPLATE: TARGETED REGISTRATION'
+   ################################################################
+   # Initialise the targeted stage of template construction.
+   ################################################################
+   new_stage   templateTarg
 
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-   
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭            CONSTRUCTING TEMPLATE: ATLAS PRIORS            ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
+   ################################################################
+   # Define paths to the potential outputs of the targeted 
+   # template-building step.
+   ################################################################
+   define      warpTarg                ${outdir}/warp
+   define      warpedTarg              ${outdir}/warpedToTemplate
+   define      affineTarg              ${outdir}/affine
+   define      repairedTarg            ${outdir}/repaired
+   define      inverseWarpTarg         ${outdir}/inverseWarp
+   define      logTarg                 ${outdir}/log
+   define      templateTargDir         ${outdir}
+   define      templateTarg            ${outdir}/template.nii.gz
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @2    Template construction: guided phase
+      subroutine              @2.1  [o][${outdir}]
+
+      exec_sys mkdir -p ${warpTarg}
+      exec_sys mkdir -p ${warpedTarg}
+      exec_sys mkdir -p ${affineTarg}
+      exec_sys mkdir -p ${repairedTarg}
+      exec_sys mkdir -p ${inverseWarpTarg}
+      exec_sys mkdir -p ${logTarg}
+
+      #############################################################
+      # Perform the targeted template-building procedure.
+      #############################################################
+      subroutine              @2.2a Executing template construction
+      subroutine              @2.2b Delegating control to antsMultivariateTemplateConstruction
+      exec_ants   antsMultivariateTemplateConstruction.sh   \
+         -d       3                                         \
+         -z       ${templatePadded}                         \
+         -o       ${outdir}                                 \
+         ${img[@]}
+
+      #############################################################
+      # Reorganise the output of the targeted template-building
+      # step.
+      #############################################################
+      subroutine              @2.3  Organising outputs
+      exec_fsl immv ${outdir}/*template*           ${templateTargDir}/
+      exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/
+      exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpTarg}/
+      exec_fsl immv ${outdir}/*Warp*               ${warpTarg}/
+      exec_fsl immv ${outdir}/*warp*               ${warpTarg}/
+      exec_fsl immv ${outdir}/*Repaired*           ${repairedTarg}/
+      exec_fsl immv ${outdir}/*template0           ${templateTarg}
+      exec_sys   mv ${outdir}/*Affine*             ${affineTarg}/
+      exec_sys   mv ${outdir}/job*.sh              ${logTarg}/
+      exec_sys   mv ${outdir}/*log.txt             ${logTarg}/
+      exec_sys   mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/
+      routine_end
+
+   fi
+}
+
+
+
+
+construct_mask() {
+   local mod_name='CONSTRUCTING TEMPLATE: MASKING BRAIN'
+   ################################################################
+   # Initialise the masking stage of template construction.
+   #
+   # This is by far the worst-performing stage, and its output
+   # should always be evaluated qualitatively (and probably edited
+   # manually).
+   ################################################################
+   new_stage   templateMask
+      
+   ################################################################
+   # Define paths to the potential outputs of the masking stage.
+   #
+   # Potential outputs include:
+   ################################################################
+   define      templateMask            ${outdir}/templateMask.nii.gz
+   define      templateMaskD           ${outdir}/templateMaskMD.nii.gz
+   define      templateMasked          ${outdir}/templateBrain.nii.gz
+   define      templateMaskedD         ${outdir}/templateBrain_dilMasked.nii.gz
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @3    Template construction: masking
+      subroutine              @3.1  [o][${outdir}]
+      
+      #############################################################
+      # Assemble all of the ground truth images for atlas
+      # construction.
+      #############################################################
+      subroutine              @3.2  [OASIS cohort][${labelcohort}]
+      local oasis=$(cat $XCPEDIR/thirdparty/oasis30/Cohorts/${labelcohort})
+      for o in ${oasis}
+         do
+         local jlfReg="${jlfReg} -g ${XCPEDIR}/thirdparty/oasis30/Heads/${o}.nii.gz"
+         local jlfReg="${jlfReg} -l ${XCPEDIR}/thirdparty/oasis30/Segmentations6Class/${o}_seg.nii.gz"
+      done
+      
+      #############################################################
+      # Perform the JLF routine to generate an anatomical atlas.
+      #############################################################
+      subroutine              @3.3  Delegating control to antsJointLabelFusion
+      exec_sys    mkdir -p ${outdir}/labels
+      exec_ants   antsJointLabelFusion.sh             \
+         -d       3                                   \
+         -o       ${outdir}/labels/                   \
+         -t       ${templateTarg}                     \
+         -c       1                                   \
+         -k       1                                   \
+         -q       0                                   \
+         -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
+         ${jlfReg}
+      
+      #############################################################
+      # Use the output of JLF to generate an extraction mask.
+      #############################################################
+      subroutine              @3.4  Organising output
+      exec_fsl    fslmaths ${outdir}/labels/Labels.nii.gz \
+         -bin     ${templateMask}
+      exec_fsl    fslmaths ${templateTarg}            \
+         -mul     ${templateMask}                     \
+                  ${templateMasked}
+      exec_ants   ImageMath 3 ${templateMaskD}        \
+          MD      ${templateMask} 1
+      exec_fsl    fslmaths ${templateTarg}            \
+         -mul     ${templateMaskD}                    \
+                  ${templateMaskedD}
+      routine_end
+      
+   fi
+}
+
+
+
+
+construct_priors() {
+   local mod_name='CONSTRUCTING TEMPLATE: ATLAS_PRIORS'
+   ################################################################
+   # Initialise the atlas priors stage of template construction.
+   ################################################################
+   new_stage   templatePriors
    
    ################################################################
-   # Assemble all of the ground truth images for the second round
-   # of atlas construction.
+   # Define paths to the potential outputs of the production of
+   # atlas priors.
+   #
+   # Potential outputs include:
    ################################################################
-   oasis=$(cat $XCPEDIR/thirdparty/oasis30/subjects)
-   unset jlfReg
-   for o in ${oasis}
-      do
-      jlfReg="${jlfReg} -g ${XCPEDIR}/thirdparty/oasis30/Brains/${o}.nii.gz"
-      jlfReg="${jlfReg} -l ${XCPEDIR}/thirdparty/oasis30/Segmentations6Class/${o}_seg.nii.gz"
-   done
-   
+   define      labels                  ${outdir}/labels/Labels.nii.gz
+   define      intensity               ${outdir}/labels/Intensity.nii.gz
+   define      posteriors              ${outdir}/jlf_Posteriors
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @4    Template construction: atlas priors
+      subroutine              @4.1  [o][${outdir}]
+      
+      #############################################################
+      # Assemble all of the ground truth images for the second round
+      # of atlas construction.
+      #############################################################
+      subroutine              @4.2  [OASIS cohort][${labelcohort}]
+      local oasis=$(cat $XCPEDIR/thirdparty/oasis30/Cohorts/${labelcohort})
+      for o in ${oasis}
+         do
+         local jlfReg="${jlfReg} -g ${XCPEDIR}/thirdparty/oasis30/Brains/${o}.nii.gz"
+         local jlfReg="${jlfReg} -l ${XCPEDIR}/thirdparty/oasis30/Segmentations6Class/${o}_seg.nii.gz"
+      done
+      
+      #############################################################
+      # Perform the JLF routine on brain-only images to generate an
+      # improved anatomical atlas.
+      #############################################################
+      subroutine              @4.3  Delegating control to antsJointLabelFusion
+      exec_sys    mkdir -p ${outdir}/labels
+      exec_ants   antsJointLabelFusion.sh             \
+         -d       3                                   \
+         -o       ${outdir}/labels/                   \
+         -t       ${templateMasked}                   \
+         -x       ${templateMask}                     \
+         -c       1                                   \
+         -k       1                                   \
+         -q       0                                   \
+         -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
+         ${jlfReg}
+      routine_end
+      
+   fi
+}
+
+
+
+
+
+renorm_priors() {
+   local mod_name='CONSTRUCTING TEMPLATE: RENORMALISING ATLAS PRIORS'
    ################################################################
-   # Perform the JLF routine on brain-only images to generate an
-   # improved anatomical atlas.
+   # Initialise the third stage of atlas priors generation for
+   # template construction.
    ################################################################
-   mkdir -p ${outdir}/labels
-   ${ANTSPATH}/antsJointLabelFusion.sh \
-      -d 3 \
-      -o ${outdir}/labels/ \
-      -t ${templateMasked} \
-      -x ${templateMask} \
-      -c 1 \
-      -k 1 \
-      -q 0 \
-      -p ${outdir}/jlf_Posteriors%02d.nii.gz \
-      ${jlfReg}
-   
-fi
+   new_stage   templatePriorsRenorm
 
-
-
-
-
-cxt=$(expr $cxt + 1)
-###################################################################
-# Initialise the third stage of atlas priors generation for
-# template construction.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templatePriorsRenorm/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-
-###################################################################
-# Define paths to the potential outputs of the renormalisation of
-# atlas priors.
-#
-# Potential outputs include:
-###################################################################
-binRoot=${outdir}/binary_
-priorRoot=${outdir}/prior
-priorPrenorm=${outdir}/priorPrenorm
-kmeansDir=${outdir}/kmeans
-
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-   
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭     CONSTRUCTING TEMPLATE: RENORMALISING ATLAS PRIORS     ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
-   
    ################################################################
-   # Prepare non-CSF atlas priors.
+   # Define paths to the potential outputs of the renormalisation
+   # of atlas priors.
+   #
+   # Potential outputs include:
    ################################################################
-   priorNum=(2 3 4 5 6) 
-	for i in "${priorNum[@]}"
-	   do
-		${ANTSPATH}/ThresholdImage 3 ${labels} ${binRoot}${i}.nii.gz ${i} ${i}
-		${ANTSPATH}/SmoothImage 3 ${binRoot}${i}.nii.gz 1.0 ${priorPrenorm}${i}.nii.gz
-		imcall="${imcall} ${priorPrenorm}${i}.nii.gz"
-	done
-	imcall=$(echo ${imcall}|sed s@' '@','@g)
+   define      binRoot                 ${outdir}/binary_
+   define      priorRoot               ${outdir}/prior
+   define      priorPrenorm            ${outdir}/priorPrenorm
+   define      kmeansDir               ${outdir}/kmeans
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @5    Template construction: prior renormalisation
+      subroutine              @5.1  [o][${outdir}]
+      
+      #############################################################
+      # Prepare non-CSF atlas priors.
+      #############################################################
+      subroutine              @5.2  Preprocessing atlas priors
+      local priorNum=(2 3 4 5 6) 
+	   for i in "${priorNum[@]}"
+	      do
+		   exec_ants   ThresholdImage 3 ${labels}             \
+		               ${binRoot}${i}.nii.gz ${i} ${i}
+		   exec_ants   SmoothImage    3 ${binRoot}${i}.nii.gz \
+		               1.0 ${priorPrenorm}${i}.nii.gz
+		   local imcall="${imcall} ${priorPrenorm}${i}.nii.gz"
+	   done
+	   local imcall=${imcall// /,}
+
+      #############################################################
+      # Prepare CSF atlas prior.
+      #############################################################
+      subroutine              @5.3  Preparing the cerebrospinal fluid prior
+      exec_sys    mkdir ${kmeansDir}
+	   exec_ants   Atropos                                \
+	      -d       3                                      \
+	      -a       ${templateMasked}                      \
+	      -i       KMeans[3]                              \
+	      -o       [${kmeansDir}/kmeansSeg.nii.gz,${kmeansDir}/kmeansPosterior%02d.nii.gz] \
+	      -v                                              \
+	      -x       ${templateMask}
+	   local csfPath=$(exec_sys ls -d1 ${kmeansDir}/kmeansPosterior*1.nii.gz)
 	
+      #############################################################
+	   # Renormalise all priors.
+      #############################################################
+      subroutine              @5.4  Renormalising priors with respect to CSF
+      exec_xcp renormalisePriorsPreserveCSF.R            \
+         -m    ${templateMask}                           \
+         -i    ${imcall}                                 \
+         -c    ${csfPath}                                \
+         -o    ${priorRoot}
+      priors=
+      routine_end
+      
+   fi
+}
+
+
+
+
+
+resample_template() {
+   local mod_name='CONSTRUCTING TEMPLATE: RESAMPLING'
    ################################################################
-   # Prepare CSF atlas prior.
+   # Initialise the resampling stage of template construction.
    ################################################################
-   mkdir ${kmeansDir}
-	${ANTSPATH}/Atropos -d 3 \
-	   -a ${templateMasked} \
-	   -i KMeans[3] \
-	   -o [${kmeansDir}/kmeansSeg.nii.gz,${kmeansDir}/kmeansPosterior%02d.nii.gz] \
-	   -v \
-	   -x ${templateMask}
-	csfPath=$(ls -d1 ${kmeansDir}/kmeansPosterior*1.nii.gz)
-	
+   new_stage   templateResample
+
    ################################################################
-	# Renormalise all priors.
+   # Define paths to the potential outputs of the template resample
+   # procedure.
+   #
+   # Potential outputs include:
    ################################################################
-   ${XCPEDIR}/utils/renormalisePriorsPreserveCSF.R \
-      -m ${templateMask} \
-      -i ${imcall} \
-      -c ${csfPath} \
-      -o ${priorRoot}
+   define      templateResampled       ${outdir}/template_brain_2mm.nii.gz
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @6    Template construction: resampling
+      subroutine              @6.1  [o][${outdir}]
+      subroutine              @6.2  Resampling to 2mm isotropic space
+      exec_fsl flirt                                     \
+         -in   ${templateMasked}                         \
+         -ref  ${templateMasked}                         \
+         -applyisoxfm 2                                  \
+         -out  ${templateResampled}
+      routine_end
+   fi
+}
+
+
+
+
+
+register_template() {
+   local mod_name='CONSTRUCTING TEMPLATE: REGISTERING TO MNI'
+   ###################################################################
+   # Initialise the MNI registration stage of template construction.
+   ###################################################################
+   new_stage   templateTransforms
+
+   ###################################################################
+   # Define paths to the potential outputs of the registrations
+   # between the template and MNI space.
+   #
+   # Potential outputs include:
+   ###################################################################
+   define      warpTarg                ${outdir}/warp
+   define      mniBrain                ${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz
+   define      transform               ${outdir}/transform
+   define      xfmScript               ${outdir}/antsRegisterMNI.sh
+   define      xfmLog                  ${outdir}/antsRegisterMNI_log
+
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @7    Template construction: registration
+      subroutine              @7.1  [o][${outdir}]
+      
+      exec_sys rm -f ${xfmScript}
+      exec_sys rm -f ${xfmLog}
+      subroutine              @7.2  Writing transformation script
+      local register="${templateMasked},${mniBrain}"
+      echo \
+"#!/usr/bin/env bash
+
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/global
+source ${XCPEDIR}/core/functions/library.sh
+
+exec_ants   antsRegistration                          \
+   -d       3                                         \
+   -o       ${transform}                              \
+   -u       1                                         \
+   -w       [0.01,0.99]                               \
+	-r       [${register},1]                           \
+	-m       MI[${register},1,32,Regular,0.25]         \
+	-c       [1000x500x250x100,1e-8,10]                \
+	-t       Rigid[0.1]                                \
+	-f       8x4x2x1                                   \
+	-s       3x2x1x0                                   \
+	-m       MI[${register},1,32,Regular,0.25]         \
+	-c       [1000x500x250x100,1e-8,10]                \
+	-t       Affine[0.1]                               \
+	-f       8x4x2x1                                   \
+	-s       3x2x1x0                                   \
+	-m       CC[${register},1,4]                       \
+	-c       [100x100x70x20,1e-9,15]                   \
+	-t       SyN[0.1,3,0]                              \
+	-f       6x4x2x1                                   \
+	-s       3x2x1x0
+	"                                      >> ${xfmScript}
+	   subroutine              @7.3  Executing registration
+	   id=$(qsub -V -S /bin/bash -cwd -j y -o ${xfmLog} \
+         ${xfmScript})
+      id=$(echo ${id}|tr -dc '0-9')
+      ${XCPEDIR}/utils/qstatus -e ${id}
+      xfms=
+      ixfms=
+      routine_end
+      
+   fi
+}
+
+
+
+
+
+build_metadata() {
+   local mod_name='CONSTRUCTING TEMPLATE: ASSEMBLING METADATA'
+   ################################################################
+   # Initialise the metadata/import stage of template construction
+   ################################################################
+   new_stage   templateMetadata
    
-fi
+   if contains ${run} ${cxt}
+      then
+
+      printx   ${mod_head}
+      routine                 @8    Template construction: metadata and import
+      subroutine              @8.1  Producing multi-resolution metadata
+      subroutine              @8.2  Localising space to space/${name}
+      
+      exec_xcp standardSpace                          \
+         -s    ${name}:${templateMasked}              \
+         -s    ${name}:${templateResampled}           \
+         -p    ${priors}                              \
+         -x    ${xfms}                                \
+         -i    ${ixfms}
+      routine_end
+   fi
+}
 
 
 
 
-
-cxt=$(expr $cxt + 1)
-###################################################################
-# Initialise the resampling stage of template construction.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templateResample/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-
-###################################################################
-# Define paths to the potential outputs of the template resample
-# procedure.
-#
-# Potential outputs include:
-###################################################################
-templateResampled=${outdir}/template_brain_2mm.nii.gz
-priorResampled=${outdir}/priors/
-
-
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-   
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭             CONSTRUCTING TEMPLATE: RESAMPLING             ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
-   flirt \
-      -in ${templateMasked} \
-      -ref ${templateMasked} \
-      -applyisoxfm 2 \
-      -out ${templateResampled}
-   mkdir -p ${priorResampled}
-   for p in $(seq 6)
-      do
-      flirt \
-         -in $(ls -d1 ${priorRoot}*0${p}.nii.gz) \
-         -ref $(ls -d1 ${priorRoot}*0${p}.nii.gz) \
-         -applyisoxfm 2 \
-         -out ${priorResampled}/prior_2mm_${p}.nii.gz
-   done
-fi
-
-
-
-
-
-cxt=$(expr $cxt + 1)
-###################################################################
-# Initialise the MNI registration stage of template construction.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}templateTransforms/
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
 
 ###################################################################
-# Define paths to the potential outputs of the registrations
-# between the template and MNI space.
-#
-# Potential outputs include:
+# Control sequence
 ###################################################################
-mniBrain=${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz
-transform=${outdir}/transform
-xfmScript=${outdir}/antsRegisterMNI.sh
-xfmLog=${outdir}/antsRegisterMNI_log
-
-if [[ -n $(echo $run|grep ${cxt}) ]]
-   then
-   
-   echo ""; echo ""; echo ""
-   echo "###################################################################"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭         CONSTRUCTING TEMPLATE: REGISTERING TO MNI         ☭  #"
-   echo "#                                                                 #"
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-   echo "###################################################################"
-   echo ""
-   
-   rm -f ${xfmScript}
-   rm -f ${xfmLog}
-   register="${templateMasked},${mniBrain}"
-   echo "#!/usr/bin/env bash" >> ${xfmScript}
-   echo "antsRegistration \
-	   -d 3 \
-	   -o ${transform} \
-	   -u 1 \
-	   -w [0.01,0.99] \
-	   -r [${register},1] \
-	   -m MI[${register},1,32,Regular,0.25] \
-	   -c [1000x500x250x100,1e-8,10] \
-	   -t Rigid[0.1] \
-	   -f 8x4x2x1 \
-	   -s 3x2x1x0 \
-	   -m MI[${register},1,32,Regular,0.25] \
-	   -c [1000x500x250x100,1e-8,10] \
-	   -t Affine[0.1] \
-	   -f 8x4x2x1 \
-	   -s 3x2x1x0 \
-	   -m CC[${register},1,4] \
-	   -c [100x100x70x20,1e-9,15] \
-	   -t SyN[0.1,3,0] \
-	   -f 6x4x2x1 \
-	   -s 3x2x1x0" >> ${xfmScript}
-	id=$(qsub -V -S /bin/bash -cwd -j y -o ${xfmLog} \
-      ${xfmScript})
-   id=$(echo ${id}|cut -d' ' -f3)
-   ${XCPEDIR}/utils/qstatus -e ${id}
-fi
+construct_unguided
+construct_guided
+construct_mask
+construct_priors
+renorm_priors
+resample_template
+register_template
+build_metadata
