@@ -40,6 +40,7 @@ apply_exec() {
          process_specific=${process_generic//%INPUT/${d[Map]}}
          process_specific=${process_specific//%OUTPUT/${output_long}}
          process_specific=${process_specific//%NAME/${d[Name]}}
+         process_specific=${process_specific//%CAPNAME/${d[Name]^}}
          exec_${process_specific}
          if is_image ${output_long}
             then
