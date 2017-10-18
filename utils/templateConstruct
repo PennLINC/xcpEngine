@@ -514,7 +514,7 @@ renorm_priors() {
       # Prepare non-CSF atlas priors.
       #############################################################
       subroutine              @5.2  Preprocessing atlas priors
-      local priorNum=(2 3 4 5 6) 
+      local priorNum=(2 3 4 5 6)
 	   for i in "${priorNum[@]}"
 	      do
 		   exec_ants   ThresholdImage 3 ${labels}             \
@@ -548,7 +548,12 @@ renorm_priors() {
          -i    ${imcall}                                 \
          -c    ${csfPath}                                \
          -o    ${priorRoot}
-      priors=
+      local priorNum=(1 2 3 4 5 6)
+	   for i in "${priorNum[@]}"
+	      do
+         priors=(${priors[@]} $(ls ${priorRoot}*${i}.nii.gz))
+      done
+      priors=$(join_by ',' ${priors[@]})
       routine_end
       
    fi
@@ -657,8 +662,22 @@ exec_ants   antsRegistration                          \
          ${xfmScript})
       id=$(echo ${id}|tr -dc '0-9')
       ${XCPEDIR}/utils/qstatus -e ${id}
-      xfms=
-      ixfms=
+      local xfmNum=(0 1)
+	   for i in "${xfmNum[@]}"
+	      do
+         local xs=$(ls ${transform}${i}*)
+         for x in ${xs}
+            do
+            if contains ${x} Inverse
+               then
+               ixfms=( ${ixfms[@]} ${x} )
+            else
+               xfms=(   ${xfms[@]} ${x} )
+            fi
+         done
+         xfms=$( join_by ','  ${xfms[@]})
+         ixfms=$(join_by ',' ${ixfms[@]})
+      done
       routine_end
       
    fi
