@@ -589,9 +589,9 @@ done
 if [[ ! -e ${outdir}/${prefix}_str2std.png ]] \
 || rerun
    then
-   routine                 @2    Quality assessment
+   routine                 @8    Quality assessment
    exec_fsl fslmaths ${struct_std[cxt]} -bin ${str2stdmask[cxt]}
-   subroutine              @2.1  [Computing registration quality metrics]
+   subroutine              @8.1  [Computing registration quality metrics]
    registration_quality=( $(exec_xcp \
       maskOverlap.R \
       -m ${str2stdmask[cxt]} \
@@ -600,7 +600,7 @@ if [[ ! -e ${outdir}/${prefix}_str2std.png ]] \
    echo  ${registration_quality[1]} > ${reg_coverage[cxt]}
    echo  ${registration_quality[2]} > ${reg_jaccard[cxt]}
    echo  ${registration_quality[3]} > ${reg_dice[cxt]}
-   subroutine              @2.2  [Preparing slicewise rendering]
+   subroutine              @8.2  [Preparing slicewise rendering]
    exec_xcp regslicer \
       -s ${struct_std[cxt]} \
       -t ${template} \
@@ -622,12 +622,23 @@ fi
 ###################################################################
 if is_image ${intermediate_root}${buffer}.nii.gz
    then
-   subroutine                 @0.2
+   subroutine                 @0.3
    processed=$(readlink -f    ${intermediate}.nii.gz)
-   exec_sys ln -sf ${processed} ${struct[cxt]}
+   exec_sys imcp ${processed} ${struct[cxt]}
+   ################################################################
+   # Ensure that a mask is available for future modules. If one
+   # hasn't been generated, assume that the input was already
+   # masked.
+   ################################################################
+   if ! is_image ${mask[cxt]}
+      then
+      subroutine                 @0.2
+      exec_fsl fslmaths ${struct[cxt]} \
+         -bin  ${mask[cxt]}
+   fi
    completion
 else
-   subroutine                 @0.3
+   subroutine                 @0.4
    abort_stream \
 "Expected output not present.]
 [Expected: ${buffer}]
