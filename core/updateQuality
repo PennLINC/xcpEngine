@@ -9,5 +9,7 @@
 # course of processing.
 ###################################################################
 rm -f ${quality[sub]}
+qvars=$(join_by ',' ${qvars[@]})
+qvals=$(join_by ',' ${qvals[@]})
 echo ${qvars} >> ${quality[sub]}
 echo ${qvals} >> ${quality[sub]}

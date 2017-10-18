@@ -2,7 +2,7 @@ quality_metric() {
    local quality_value_file=${2}[${cxt}]
    if [[ -e ${!quality_value_file} ]]
       then
-      qvars=${qvars},${1}
-      qvals=${qvals},$(<${!quality_value_file})
+      qvars=( ${qvars[@]} ${1} )
+      qvals=( ${qvals[@]} $(<${!quality_value_file}) )
    fi
 }

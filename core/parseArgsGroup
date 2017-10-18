@@ -132,8 +132,8 @@ ${sequence}" \
    >> ${quality_group}
 fi
 mapfile  quality_lines < ${quality_group}
-qvars=$(echo ${quality_lines[0]})
-qvals=$(echo ${quality_lines[1]})
+qvars=( ${quality_lines[0]//,/ } )
+qvals=( ${quality_lines[1]//,/ } )
 ###################################################################
 # Begin mapping the module workflow.
 ###################################################################
