@@ -106,13 +106,13 @@ for class in "${!tissue_classes[@]}"
    # This mask will be based on a user-specified input value
    # and a user-specified image in the subject's structural space.
    ################################################################
-   class_val='strucQA_'${class}'_val['${cxt}']'
+   class_val='qcstruc_'${class}'_val['${cxt}']'
    class_mask=${class}'Mask['${cxt}']'
    if is_image ${segmentationQA[cxt]} \
    && [[ -n ${!class_val} ]]
       then
       exec_xcp val2mask.R              \
-         -i    ${strucQA_seg[cxt]}     \
+         -i    ${qcstruc_seg[cxt]}     \
          -v    ${!class_val}           \
          -o    ${!class_mask}
       (( allValsCheck++ ))
@@ -129,7 +129,7 @@ done
 ###################################################################
 if (( ${allValsCheck} < 3))
    then
-   if [[ ${strucQASeg[${cxt}]} == "FAST" ]] 
+   if [[ ${qcstrucSeg[${cxt}]} == "FAST" ]] 
       then
       exec_fsl fast -g \
          -o    ${outdir}/${prefix}_ \
@@ -200,7 +200,7 @@ exec_ants   antsRegistration           \
 ###################################################################
 exec_ants   antsApplyTransformsToPoints \
    -d       3                           \
-   -i       ${XCPEDIR}/modules/strucQA/mniCoords.csv \
+   -i       ${XCPEDIR}/modules/qcstruc/mniCoords.csv \
    -o       ${coordsCSV[cxt]}           \
    -t       ${affineFiles[cxt]}
   
@@ -209,7 +209,7 @@ exec_ants   antsApplyTransformsToPoints \
 ###################################################################  
 exec_ants   antsApplyTransforms  \
    -d       3                    \
-   -i       ${XCPEDIR}/modules/strucQA/mniForeGroundMask.nii.gz \
+   -i       ${XCPEDIR}/modules/qcstruc/mniForeGroundMask.nii.gz \
    -o       ${foreground[cxt]}   \
    -r       ${img[sub]}          \
    -n       MultiLabel           \
@@ -254,7 +254,7 @@ if is_image ${cortMask[cxt]}
    then
    argCortMask="-c ${cortMask[cxt]}"
 fi
-exec_xcp strucQA.R \
+exec_xcp qcstruc.R \
    -i    ${img[sub]} \
    -o    ${outdir}/${prefix}_qualityMetrics.csv \
    -m    ${gmMask[cxt]} \

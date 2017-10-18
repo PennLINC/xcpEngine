@@ -8,7 +8,7 @@
 # SPECIFIC MODULE HEADER
 # This module assesses quality of functional connectivity data
 ###################################################################
-mod_name_short=fcqa
+mod_name_short=qcfc
 mod_name='FUNCTIONAL QUALITY ASSESSMENT MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
@@ -174,14 +174,14 @@ for map in ${atlas_names[@]}
    ################################################################
    subroutine                 @2.3  QC-FC matrix: correlations with motion
    rm -f ${outbase}quality
-   [[ -e ${fcqa_confmat[cxt]} ]] \
-      && confound="  -n ${fcqa_confmat[cxt]}" \
-      && conformula="-y ${fcqa_conformula[cxt]}"
+   [[ -e ${qcfc_confmat[cxt]} ]] \
+      && confound="  -n ${qcfc_confmat[cxt]}" \
+      && conformula="-y ${qcfc_conformula[cxt]}"
    if [[ ! -s ${qcfc_correlation[cxt]} ]]
       then
       exec_xcp qcfc.R                                    \
          -c    ${intermediate}-${a[Name]}-subjects.csv   \
-         -s    ${fcqa_sig[cxt]}                          \
+         -s    ${qcfc_sig[cxt]}                          \
          -o    ${qcfc_base[cxt]}                         \
          ${confound} ${conformula}
       exec_sys mv ${qcfc_base[cxt]}_absMedCor.txt \

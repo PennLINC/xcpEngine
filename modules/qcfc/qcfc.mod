@@ -8,7 +8,7 @@
 # SPECIFIC MODULE HEADER
 # This module assesses quality of functional connectivity data
 ###################################################################
-mod_name_short=fcqa
+mod_name_short=qcfc
 mod_name='FUNCTIONAL QUALITY ASSESSMENT MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
@@ -37,7 +37,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-output      fcqa                    ${prefix}_fcqa.png
+output      voxts                   ${prefix}_voxts.png
 derivative  depthMap                ${prefix}_depthMap
 
 input       depthMap
@@ -48,10 +48,10 @@ input       residualised_space \
    or       icaDenoised_space  \
    as       dn_space
 
-if [[ -s ${fcqa[cxt]} ]] \
+if [[ -s ${voxts[cxt]} ]] \
 && ! rerun
    then
-   subroutine                 @0.1  fcqa has already run to completion
+   subroutine                 @0.1  qcfc has already run to completion
    completion
 fi
 
@@ -60,7 +60,7 @@ fi
 depthMap
    A layered segmentation, wherein each voxel has a value equal to
    its depth in its assigned tissue class.
-fcqa
+voxts
    A graphical summary of quality assessment measures for
    functional connectivity processing.
 
@@ -164,7 +164,7 @@ is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:50,"
 is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:0.5,"
 is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:1,"
 
-[[ -n ${fcqa_custom[cxt]} ]]  &&  ts_1d="${ts_1d}${fcqa_custom[cxt]},"
+[[ -n ${qcfc_custom[cxt]} ]]  &&  ts_1d="${ts_1d}${qcfc_custom[cxt]},"
 
 [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
 
@@ -174,7 +174,7 @@ subroutine                    @3.2  Generating visuals
 exec_xcp voxts.R                    \
    -i    ${intermediate}-pp-rs.nii.gz${dn_arg} \
    -r    ${intermediate}-onion-rs.nii.gz \
-   -o    ${fcqa[cxt]}               \
+   -o    ${qcfc[cxt]}               \
    ${ts_1d}                         \
    ${class_names}
 
