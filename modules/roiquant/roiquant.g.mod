@@ -85,11 +85,15 @@ for map in ${atlas_names[@]}
    done
    for r in ${!V[@]}
       do
-      subroutine              @1.3  Collating ${r}
-      vallist=$(join_by ',' ${V[$r]})
-      exec_xcp combineOutput.R   \
-         -i    ${vallist}        \
-         -o    ${outdir}/${sequence}${r}.csv
+      if [[ ! -s ${outdir}/${sequence}${r}.csv ]] \
+      || rerun
+         then
+         subroutine           @1.3  Collating ${r}
+         vallist=$(join_by ',' ${V[$r]})
+         exec_xcp combineOutput.R   \
+            -i    ${vallist}        \
+            -o    ${outdir}/${sequence}${r}.csv
+      fi
    done
    routine_end
 done
