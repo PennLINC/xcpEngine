@@ -6,7 +6,7 @@
 
 ###################################################################
 # SPECIFIC MODULE HEADER
-# This module aligns the analyte image to a high-resolution target.
+# This module performs regional quantification of voxelwise maps.
 ###################################################################
 mod_name_short=roiquant
 mod_name='ATLAS-BASED QUANTIFICATION MODULE'
@@ -218,7 +218,7 @@ for map in ${atlas_names[@]}
       -n       ${a[Name]}
       -i       ${intermediate}_${a[Name]}_idx.1D
       -r       ${intermediate}_${a[Name]}_names.1D
-      -p       ${prefix//_/,}"
+      -p       ${ids[sub]}"
    ################################################################
    # Perform the quantification: Mean
    ################################################################
