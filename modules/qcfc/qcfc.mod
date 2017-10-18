@@ -174,7 +174,7 @@ subroutine                    @3.2  Generating visuals
 exec_xcp voxts.R                    \
    -i    ${intermediate}-pp-rs.nii.gz${dn_arg} \
    -r    ${intermediate}-onion-rs.nii.gz \
-   -o    ${qcfc[cxt]}               \
+   -o    ${voxts[cxt]}              \
    ${ts_1d}                         \
    ${class_names}
 
