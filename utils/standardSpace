@@ -36,7 +36,7 @@ Compulsory arguments:
       
                      spaceName:pathToImage
                               e.g.,
-      MNI%2x2x2:${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+      MNI:${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
       
       Multiple -s arguments may be provided, in which case each 
       will be treated as a different resolution of the new standard
@@ -282,11 +282,11 @@ itransforms=${itransforms// /,}
 ###################################################################
 subroutine                    @u.6
 space_path=${stddir}/${name}_space.json
-exec_xcp spaceMetadata                 \
-   -m    ${template[0]}:${template[1]} \
-   -f    MNI%1x1x1:${mni}              \
-   -x    ${transforms}                 \
-   -i    ${itransforms}                \
+exec_xcp spaceMetadata                           \
+   -m    ${template[0]}'%'${dims}:${template[1]} \
+   -f    MNI%1x1x1:${mni}                        \
+   -x    ${transforms}                           \
+   -i    ${itransforms}                          \
    -o    ${space_path}
 ###################################################################
 # Add any other resolutions.
@@ -305,7 +305,7 @@ for i in ${idx}
    exec_fsl imcp ${template[i+1]} \
                  ${stddir}/${name}-${dims}.nii.gz
    template[i+1]=${stddir}/${name}-${dims}.nii.gz
-   space_config  ${space_path} ${template[i]} Map ${template[i+1]}
+   space_config  ${space_path} ${template[i]}'%'${dims} Map ${template[i+1]}
 done
 unset space
 space=$(cat ${space_path})
