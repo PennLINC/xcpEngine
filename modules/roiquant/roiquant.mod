@@ -223,73 +223,94 @@ for map in ${atlas_names[@]}
    # Perform the quantification: Mean
    ################################################################
    subroutine              @1.3.4   Computing atlas statistics
-   apply_exec  Statistic:mean       /dev/null \
-      xcp      quantifyAtlas \
-      -v       %INPUT \
-      -s       mean \
-      -o       ${rstatbase[cxt]}_mean_%NAME.csv \
+   apply_exec  Statistic:mean       /dev/null      \
+      xcp      quantifyAtlas                       \
+      -v       %INPUT                              \
+      -s       mean                                \
+      -o       ${rstatbase[cxt]}_mean_%NAME.csv    \
       -t       ${intermediate}_${a[Name]}_mean_%NAME \
-      -d       ${sequence}%NAME \
+      -d       ${sequence}%NAME                    \
       ${qargs}
+   apply_exec  Statistic:mean       /dev/null      \
+      sys      atlas_add ${a[Name]}                \
+               RegionalMean%CAPNAME                \
+               ${rstatbase[cxt]}_mean_%NAME.csv
    ################################################################
    # Perform the quantification: Median
    ################################################################
    subroutine              @1.3.5
-   apply_exec  Statistic:median     /dev/null \
-      xcp      quantifyAtlas \
-      -v       %INPUT \
-      -s       median \
-      -o       ${rstatbase[cxt]}_median_%NAME.csv \
+   apply_exec  Statistic:median     /dev/null      \
+      xcp      quantifyAtlas                       \
+      -v       %INPUT                              \
+      -s       median                              \
+      -o       ${rstatbase[cxt]}_median_%NAME.csv  \
       -t       ${intermediate}_${a[Name]}_median_%NAME \
-      -d       ${sequence}%NAME \
+      -d       ${sequence}%NAME                    \
       ${qargs}
+   apply_exec  Statistic:median       /dev/null    \
+      sys      atlas_add ${a[Name]}                \
+               RegionalMedian%CAPNAME              \
+               ${rstatbase[cxt]}_median_%NAME.csv
    ################################################################
    # Perform the quantification: Mode
    ################################################################
    subroutine              @1.3.6
-   apply_exec  Statistic:mode       /dev/null \
-      xcp      quantifyAtlas \
-      -v       %INPUT \
-      -s       mode \
-      -o       ${rstatbase[cxt]}_mode_%NAME.csv \
+   apply_exec  Statistic:mode       /dev/null      \
+      xcp      quantifyAtlas                       \
+      -v       %INPUT                              \
+      -s       mode                                \
+      -o       ${rstatbase[cxt]}_mode_%NAME.csv    \
       -t       ${intermediate}_${a[Name]}_mode_%NAME \
-      -d       ${sequence}%NAME \
+      -d       ${sequence}%NAME                    \
       ${qargs}
+   apply_exec  Statistic:mode       /dev/null      \
+      sys      atlas_add ${a[Name]}                \
+               RegionalMode%CAPNAME                \
+               ${rstatbase[cxt]}_mode_%NAME.csv
    ################################################################
    # Perform the quantification: Min/Max
    ################################################################
    subroutine              @1.3.7
-   apply_exec  Statistic:minmax     /dev/null \
-      xcp      quantifyAtlas \
-      -v       %INPUT \
-      -s       minmax \
-      -o       ${rstatbase[cxt]}_minmax_%NAME.csv \
+   apply_exec  Statistic:minmax     /dev/null      \
+      xcp      quantifyAtlas                       \
+      -v       %INPUT                              \
+      -s       minmax                              \
+      -o       ${rstatbase[cxt]}_minmax_%NAME.csv  \
       -t       ${intermediate}_${a[Name]}_minmax_%NAME \
-      -d       ${sequence}%NAME \
+      -d       ${sequence}%NAME                    \
       ${qargs}
+   apply_exec  Statistic:minmax     /dev/null      \
+      sys      atlas_add ${a[Name]}                \
+               RegionalMinMax%CAPNAME              \
+               ${rstatbase[cxt]}_minmax_%NAME.csv
    ################################################################
    # Perform the quantification: Standard deviation
    ################################################################
    subroutine              @1.3.8
-   apply_exec  Statistic:stdev      /dev/null \
-      xcp      quantifyAtlas \
-      -v       %INPUT \
-      -s       stdev \
-      -o       ${rstatbase[cxt]}_stdev_%NAME.csv \
+   apply_exec  Statistic:stdev      /dev/null      \
+      xcp      quantifyAtlas                       \
+      -v       %INPUT                              \
+      -s       stdev                               \
+      -o       ${rstatbase[cxt]}_stdev_%NAME.csv   \
       -t       ${intermediate}_${a[Name]}_stdev_%NAME \
-      -d       ${sequence}%NAME \
+      -d       ${sequence}%NAME                    \
       ${qargs}
+   apply_exec  Statistic:stdev      /dev/null      \
+      sys      atlas_add ${a[Name]}                \
+               RegionalSD%CAPNAME                  \
+               ${rstatbase[cxt]}_stdev_%NAME.csv
    ################################################################
    # Perform the quantification: Volume
    ################################################################
    if (( ${roiquant_vol[cxt]} == 1 ))
       then
       subroutine           @1.3.9
-      exec_xcp quantifyAtlas \
-      -s       vol \
-      -o       ${rstatbase[cxt]}_vol.csv \
-      -t       ${intermediate}_${a[Name]}_vol_%NAME \
+      exec_xcp quantifyAtlas                       \
+      -s       vol                                 \
+      -o       ${rstatbase[cxt]}_vol.csv           \
+      -t       ${intermediate}_${a[Name]}_vol      \
       ${qargs}
+      atlas_add ${a[Name]} RegionalVolume ${rstatbase[cxt]}_vol.csv
    fi
    update_networks
    routine_end
