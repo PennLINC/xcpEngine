@@ -41,7 +41,7 @@ standard=PNC%2x2x2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,roiquant,seed,norm,fcqa
+pipeline=prestats,coreg,confound,regress,fcon,reho,alff,net,roiquant,seed,norm,qcfc
 
 ###################################################################
 # 1 PRESTATS
@@ -170,7 +170,7 @@ alff_cleanup[7]=1
 ###################################################################
 net_atlas[8]=Power264,Gordon,Glasser,AAL,MICCAI,Schaefer
 net_com[8]=genlouvain
-net_gamma[8]=1,7
+net_gamma[8]=1,1.5,7
 net_consensus[8]=1
 net_rerun[8]=0
 net_cleanup[8]=1
@@ -204,11 +204,11 @@ norm_rerun[11]=0
 norm_cleanup[11]=1
 
 ###################################################################
-# 12 FCQA
+# 12 QCFC
 ###################################################################
 
-fcqa_atlas[12]=Power264,Gordon
-fcqa_sig[12]=fdr
-fcqa_custom[12]=
-fcqa_rerun[12]=0
-fcqa_cleanup[12]=0
+qcfc_atlas[12]=Power264,Gordon
+qcfc_sig[12]=fdr
+qcfc_custom[12]=
+qcfc_rerun[12]=0
+qcfc_cleanup[12]=0
