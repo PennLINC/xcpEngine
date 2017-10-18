@@ -3,7 +3,7 @@ derivative_config() {
    local dfloat_names=( $(echo ${derivatives_floating}|$JQ_PATH --raw-output 'keys[]') )
    for i in "${dfloat_names[@]}"
       do
-      [[ ${d_name} == ${i} ]] && dfloat=1 && break
+      [[ ${1} == ${i} ]] && dfloat=1 && break
    done
    (( dfloat == 0 )) && deriv[${cxt}]=$(echo ${deriv[${cxt}]}\
                      |$JQ_PATH '.'\"${1}\"' += {'"${2}"': "'"${3}"'"}')
