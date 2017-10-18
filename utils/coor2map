@@ -35,7 +35,7 @@ Compulsory arguments:
 
  -o : Output network"
       The path to the file where the output network will
-      be written."
+      be written.
 
 Optional arguments:
  -r : Override radius. If this argument is passed to the

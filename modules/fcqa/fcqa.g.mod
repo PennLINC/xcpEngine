@@ -20,7 +20,7 @@ source ${XCPEDIR}/core/functions/library.sh
 source ${XCPEDIR}/core/parseArgsGroup
 
 ###################################################################
-# MODULE COMPLETION ANF ANCILLARY FUNCTIONS
+# MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 atlas_complete() {
    quality_metric    QCFCnSigEdges${a[Name]}          qcfc_n_sig_edges
@@ -140,7 +140,6 @@ routine_end
 # Iterate through each brain atlas. Compute the QC-FC measures for
 # each.
 ###################################################################
-routine                       @2    QC-FC
 for map in ${atlas_names[@]}
    do
    atlas_parse       ${map}
@@ -150,6 +149,7 @@ for map in ${atlas_names[@]}
    ################################################################
    # Iterate over all subjects's atlantes.
    ################################################################
+   routine                    @2    QC-FC: ${a[Name]}
    subroutine                 @2.1  Atlas: ${a[Name]}
    subroutine                 @2.2  Scanning subject-level atlas metadata
    exec_sys rm -f                            ${intermediate}-${a[Name]}-subjects.csv
@@ -232,8 +232,8 @@ for map in ${atlas_names[@]}
       -f    ${outdir}/${analysis}_distDepend_${a[Name]}.svg \
       >>    ${qcfc_dist_dependence[cxt]}
    atlas_complete
+   routine_end
 done
-routine_end
 
 
 
