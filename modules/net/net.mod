@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_add   ${a[Name]}   CommunityRes${gamma_filename}  ${netbase[cxt]}_CommunityRes${gf}_community.1D
+   atlas_add   ${a[Name]}   CommunityRes${gamma_x}  ${netbase[cxt]}_CommunityRes${gamma_x}_community.1D
 }
 
 completion() {
@@ -134,8 +134,8 @@ for net in ${atlas_names[@]}
          subroutine           @1.1.1   Detecting community structure
          for gamma in ${gammas[@]}
             do
-            gamma_filename=${gamma//\./-}
-            configure   com_root       ${netbase[cxt]}_CommunityRes${gamma_filename}
+            gamma_x=${gamma//\./x}
+            configure   com_root       ${netbase[cxt]}_CommunityRes${gamma_x}
             configure   community      ${com_root[cxt]}_community.1D
             if [[ ! -s  ${community[cxt]} ]] \
             || rerun
@@ -144,8 +144,8 @@ for net in ${atlas_names[@]}
                community_detection
             fi
             update_networks
-            communities=( ${communities[@]} CommunityRes${gamma_filename} )
-            a[CommunityRes${gamma_filename}]=${community[cxt]}
+            communities=( ${communities[@]} CommunityRes${gamma_x} )
+            a[CommunityRes${gamma_x}]=${community[cxt]}
          done
          ;;
       none)
