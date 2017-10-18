@@ -36,7 +36,7 @@ completion() {
    
    write_config      demeaned
    
-   quality_metric    numICsNoise             ic_noise
+   quality_metric    nICsNoise               ic_noise
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality

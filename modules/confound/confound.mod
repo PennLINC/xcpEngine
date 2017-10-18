@@ -33,6 +33,8 @@ completion() {
    
    write_output      confmat
    
+   quality_metric    nNuisanceParameters     nuisance_ct
+   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -54,6 +56,8 @@ derivative  gmLocal                 ${prefix}_gmLocal
 derivative  wmLocal                 ${prefix}_wmLocal
 derivative  csfLocal                ${prefix}_csfLocal
 derivative  lmsLocal                ${prefix}_meanLocal
+
+output      nuisance_ct             ${prefix}_modelParameterCount.txt
 
 derivative_config   gmLocal         Type              timeseries-confound
 derivative_config   wmLocal         Type              timeseries-confound
@@ -673,9 +677,15 @@ subroutine                    @11.1b   [Observed confounds: ${obs}]
 if (( ${obs} == ${exp} ))
    then
    subroutine                 @11.1 [Confound matrix dimensions validated]
+   [[ ${confound_gm[cxt]}  == local  ]] && exp=$(( ${exp} + 1 ))
+   [[ ${confound_wm[cxt]}  == local  ]] && exp=$(( ${exp} + 1 ))
+   [[ ${confound_csf[cxt]} == local  ]] && exp=$(( ${exp} + 1 ))
+   [[ ${confound_gsr[cxt]} == local  ]] && exp=$(( ${exp} + 1 ))
+   exec_sys                   rm -f ${nuisance_ct[cxt]}
+   echo ${exp}                >>    ${nuisance_ct[cxt]}
 else
    subroutine                 @11.2 [Dimensions of the existing confound matrix are incorrect]
-   exit 1
+   abort_stream                      Dimensions of the existing confound matrix are incorrect
 fi
 routine_end
 
