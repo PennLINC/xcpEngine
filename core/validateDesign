@@ -35,5 +35,9 @@ source ${indesign}            2>/dev/null
 if [[ ${indesign} != ${design} ]]
    then
    sed -i -e s@'^design=.*$'@'design='${indesign}@ ${indesign}
-   source ${indesign} 2>/dev/null
+   source ${indesign}         2>/dev/null
 fi
+###################################################################
+# Perform any direct assignments. Override design variables.
+###################################################################
+source ${XCPEDIR}/core/assignDirect

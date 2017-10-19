@@ -29,12 +29,7 @@ routine                       @1    Localising subject metadata...
 # Parse subject
 ###################################################################
 subroutine                    @1.1  [Parsing subject identifiers]
-   for a in "${asgt[@]}"
-      do
-      a_var=$(strslice ${a} 1 =)
-      a_val=$(strslice ${a} 2 =)
-      eval ${a_var}=\${a_val}
-   done
+   source ${XCPEDIR}/core/assignDirect
    
 ###################################################################
 # Create output directory
