@@ -1,9 +1,16 @@
 import_image() {
    local ori=1
+   local interpol='linear'
    local var=${1}
    local tgt=${2}
    local src=${!var}
-   [[ -n ${3} ]] && local ori=${3}
+   shift 2
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--ORIENT='    && local ori=${1/--ORIENT=}
+      contains ${1} '^--INTERPOL='  && local interpol=${1/--INTERPOL=}
+      shift
+   done
    
    ################################################################
    # Test #1:
@@ -45,24 +52,31 @@ import_image() {
          ln -sf ${src} ${tgt}
          ;;
       01)
-         exec_afni   3dresample \
-            -orient  RPI \
-            -inset   ${src} \
+         exec_afni   3dWarp -${interpol} -prefix ${tgt} -deoblique ${src}
+         [[ ${interpol} == linear ]] && interpol=Linear
+         exec_afni   3dresample           \
+            -overwrite                    \
+            -rmode   ${interpol}          \
+            -orient  RPI                  \
+            -inset   ${tgt}               \
             -prefix  ${tgt}
          ;;
       10)
-         exec_fsl fslchfiletype NIFTI_GZ \
-            ${src} \
+         exec_fsl fslchfiletype NIFTI_GZ  \
+            ${src}                        \
             ${tgt}
          ;;
       11)
-         exec_fsl fslchfiletype NIFTI_GZ \
-            ${src} \
+         exec_fsl fslchfiletype NIFTI_GZ  \
+            ${src}                        \
             ${tgt}
-         exec_afni   3dresample \
-            -overwrite \
-            -orient  RPI \
-            -inset   ${tgt} \
+         exec_afni   3dWarp -${interpol} -prefix ${tgt} -deoblique ${tgt}
+         [[ ${interpol} == linear ]] && interpol=Linear
+         exec_afni   3dresample           \
+            -overwrite                    \
+            -rmode   ${interpol}          \
+            -orient  RPI                  \
+            -inset   ${tgt}               \
             -prefix  ${tgt}
          ;;
    esac
