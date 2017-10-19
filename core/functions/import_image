@@ -1,5 +1,18 @@
+###################################################################
+###################################################################
+# IMPORTANT COMMENT : REORIENTATION IS DISABLED
+#------------------------------------------------------------------
+# As of this edit (18 October 2017), it appears that reorienting
+# secondary images to RPI is unnecessary for full pipeline
+# functionality. In fact, this procedure unnecessarily slows a
+# number of registration steps.
+#
+# Consequently, this feature has been disabled. However, the code
+# remains in place, should the need arise in the future.
+###################################################################
+###################################################################
 import_image() {
-   local ori=1
+   local ori=0
    local interpol='linear'
    local var=${1}
    local tgt=${2}
@@ -11,6 +24,7 @@ import_image() {
       contains ${1} '^--INTERPOL='  && local interpol=${1/--INTERPOL=}
       shift
    done
+   
    
    ################################################################
    # Test #1:
@@ -49,7 +63,7 @@ import_image() {
    ################################################################
    case ${flag_imtype}${flag_orient} in
       00)
-         ln -sf ${src} ${tgt}
+         ln -sf ${src} ${tgt}             2>/dev/null
          ;;
       01)
          exec_afni   3dWarp -${interpol} -prefix ${tgt} -deoblique ${src}

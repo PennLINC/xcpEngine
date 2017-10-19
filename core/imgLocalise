@@ -30,13 +30,14 @@ done
 
 for i in ${imgs}
    do
-   ori=1
+   ori=0
+   #ori=1
    ipl=NN
    var=$(strslice ${i} 1 ':')
    tgt=$(strslice ${i} 2 ':')
-   [[ ${sequence} == anatomical       ]]  && ori=0
-   [[ ${var}      == 'img['$sub']'    ]]  && ori=0
-   [[ ${var}      == 'struct['$sub']' ]]  && ipl=linear
-   [[ ${var}      == 'img['$sub']'    ]]  && ipl=linear
+   #[[ ${sequence} == anatomical       ]]  && ori=0
+   #[[ ${var}      == 'img['$sub']'    ]]  && ori=0
+   #[[ ${var}      == 'struct['$sub']' ]]  && ipl=linear
+   #[[ ${var}      == 'img['$sub']'    ]]  && ipl=linear
    import_image ${var} ${tgt} --ORIENT=${ori} --INTERPOL=${ipl}
 done

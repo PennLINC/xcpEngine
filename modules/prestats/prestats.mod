@@ -679,7 +679,7 @@ while (( ${#rem} > 0 ))
          fi # run check statement
          intermediate=${intermediate}_${cur}
          to_reorient=${intermediate}.nii.gz
-         import_image         to_reorient            ${intermediate}.nii.gz
+         import_image   to_reorient ${intermediate}.nii.gz  --ORIENT=1
          routine_end
          ;;
       
