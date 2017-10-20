@@ -1,0 +1,459 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Incorporates atlas metadata into the appropriate file given
+# either specific atlas files or a formatted directory.
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+${1}
+___________________________________________________________________
+
+
+Usage: atlasMetadata -a <atlasName> -m <atlasMap:atlasSpace> <options>
+                              or
+       atlasMetadata -a <atlasName> -d <atlasDirectory>
+
+Compulsory arguments:
+ -a : Atlas name
+      The name of the parcellation or brain atlas.
+
+               -  -  -  -  -  -  -  -  -  -  -  -
+Either argument set 1 or argument set 2 must also be provided.
+               -  -  -  -  -  -  -  -  -  -  -  -
+
+Argument set 1:
+ -d : Atlas directory. If the atlas was retrieved from GitHub
+      (brainspaces), then use this argument set. Otherwise,
+      explicitly pass atlas characteristics using argument set
+      2.
+                     
+Argument set 2 [compulsory]:
+ -m : Atlas map paired to atlas space, in the format:
+               
+                     atlasMap:atlasSpace
+                     wherein
+      atlasMap
+      A voxelwise map of the label set, wherein each
+      unique intensity corresponds to a different region of
+      interest. Alternatively, this can be a hash-delimited
+      .sclib file.
+      
+      atlasSpace
+      The name of the standard space in which the provided map
+      (-m argument) is situated. This space should have a
+      corresponding definition in $BRAINSPACE.
+      
+      Any number of -m arguments must be provided, but at least
+      one is necessary. All arguments must have the same nodes,
+      but may for instance be in different spaces or have
+      different representations (e.g., NIfTI volume or spatial
+      library).
+                     
+Argument set 2 [optional]:
+
+ -c : (optional) Community affiliation vector. A 1D column
+      vector specifying nodal community assignments. The nth
+      row contains the index of the nth's node's a priori
+      community assignment. A file containing community names
+      can also be provided. It will be assumed that the names
+      in the file are ordered according to the numeric values
+      in the affiliation vector. Multiple vectors may be
+      provided, in which case they may be named by passing an
+      argument of the form
+
+      communityVector,NAME=vectorName,IDS=communityNamesFile
+      
+ -n : (optional) Node names. A 1D column vector in which the
+      nth row specifies the name of the nth node. If this
+      argument is not provided, nodes will automatically be
+      names according to the first provided community assignment
+      vector; if no community assignment vector is provided,
+      nodes will be named Node%INTENSITY, where %INTENSITY is
+      replaced with the node's intensity value.
+      
+ -i : (optional) Node intensity. A 1D column vector in which
+      the nth row specifies the intensity of the nth node in
+      the provided map (-m argument). If this argument is not
+      provided, then it will be generated automatically by
+      detecting all unique nodes in the provided atlas.
+
+ -r : (optional) Reference/citation
+      DOI for a citation for the current atlas.
+
+ -l : (optional) License
+      Path to a license for use of the current atlas.
+
+
+endstream
+}
+
+
+###################################################################
+# Parse arguments
+###################################################################
+combine_only=0
+while getopts "a:d:m:c:n:i:r:l:" OPTION
+   do
+   case $OPTION in
+   a)
+      atlas_n=${OPTARG}
+      atlasj='${BRAINATLAS}'/${atlas_n}/${atlas_n}
+      ;;
+   d)
+      atlas_dir=$(abspath ${OPTARG})
+      [[ ! -d ${atlas_dir} ]]                   && Usage && exit
+      ;;
+   m)
+      q=( ${OPTARG//:/ } )
+      atlas_map=$(abspath ${q[0]})
+         ! is_image ${atlas_map} \
+      && ! contains ${atlas_map} '.sclib$'      && Usage && exit
+      space=${q[1]//\%*}
+      [[   -z ${space}               ]]         && Usage && exit
+      [[ ! -d ${BRAINSPACE}/${space} ]]         && Usage && exit
+      args=( "${args[@]}" "${atlas_map}:${space}" )
+      ;;
+   c)
+      community=( ${OPTARG} ${community[@]} )
+      ;;
+   n)
+      names=${OPTARG}
+      [[ ! -s ${names} ]]                       && Usage && exit
+      ;;
+   i)
+      index=${OPTARG}
+      [[ ! -s ${index} ]]                       && Usage && exit
+      ;;
+   r)
+      ref=${OPTARG}
+      ;;
+   l)
+      license=${OPTARG}
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[    -z ${atlas_n}     ]] && Usage && exit
+[[    -z ${atlas_dir} ]] && [[ -z ${atlas_map} ]] && Usage && exit
+if [[ -n ${atlas_map} ]]
+   then
+   meta=from_raw
+else
+   meta=from_dir
+fi
+
+
+
+
+
+###################################################################
+# Parse a community argument
+###################################################################
+parse_community() {
+   local l=0
+   local i
+   local c=( ${1//,/ } )
+   unset c_ids c_name c_path
+   for i in ${!c[@]}
+      do
+      contains ${c[i]} '^IDS='   &&  c_ids=${c[i]/IDS=} && continue
+      contains ${c[i]} '^NAME='  && c_name=${c[i]/NAME=} && continue
+      (( l == 0 )) && c_path=${c[i]} && l=1
+   done
+}
+
+
+
+
+
+###################################################################
+# Organise the atlas subdirectory in the $BRAINATLAS directory.
+###################################################################
+case $meta in
+from_raw)
+   subroutine                 @u.1
+   atlas_dir=${BRAINATLAS}/${atlas_n}
+   exec_sys mkdir -p ${atlas_dir}
+   ################################################################
+   # Node indices -- generate de novo if necessary
+   ################################################################
+   exec_sys rm -f ${atlas_dir}/${atlas_n}NodeIndex.1D
+   if [[ -s ${index} ]]
+      then
+      subroutine              @u.1.1
+      exec_sys   cp  ${index} \
+                     ${atlas_dir}/${atlas_n}NodeIndex.1D
+   elif is_image ${atlas_map}
+      then
+      subroutine              @u.1.2
+      exec_xcp unique.R \
+               -i    ${atlas_map} \
+               >>    ${atlas_dir}/${atlas_n}NodeIndex.1D
+   else
+      subroutine              @u.1.3
+      nlabs=$(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null|wc -l)
+      uniqs=$(eval echo {1..${nlabs}})
+      for u in ${uniqs}
+         do
+         echo $u  >> ${atlas_dir}/${atlas_n}NodeIndex.1D
+      done
+   fi
+   index=${atlas_dir}/${atlas_n}NodeIndex.1D
+   ################################################################
+   # Parcellation map or sclib
+   ################################################################
+   for q in ${!args[@]}
+      do
+      m=( ${args[q]//:/ } )
+      atlas_map=${m[0]}
+      space=${m[1]}
+      exec_sys rm -f ${atlas_dir}/${atlas_n}${space}.nii.gz
+      exec_sys rm -f ${atlas_dir}/${atlas_n}${space}.sclib
+      if is_image ${atlas_map}
+         then
+         subroutine           @u.1.4
+         exec_fsl imcp  ${atlas_map} \
+                        ${atlas_dir}/${atlas_n}${space}.nii.gz
+      else
+         subroutine           @u.1.5
+         exec_sys   cp  ${atlas_map} \
+                        ${atlas_dir}/${atlas_n}Coor${space}.sclib
+      fi
+      args[q]=${atlas_map}:${space}
+   done
+   ################################################################
+   # Community affiliation vectors, if any
+   ################################################################
+   exec_sys rm -f ${atlas_dir}/${atlas_n}${cxname}Community*
+   for i in ${!community[@]}
+      do
+      parse_community ${community[i]}
+      #############################################################
+      # Name of overall community partition
+      #############################################################
+      if [[ -n ${c_name} ]]
+         then
+         subroutine           @u.1.6.1
+         cxname='x'${c_name}
+         ccname=',NAME=APriori'${c_name}
+      else
+         subroutine           @u.1.6.2
+         unset cxname ccname
+         ccname=',NAME=APriori'
+      fi
+      #############################################################
+      # Names of communities within partition
+      #############################################################
+      if [[ -n ${c_ids} ]]
+         then
+         subroutine           @u.1.7.1
+         exec_sys cp  ${c_ids} \
+                      ${atlas_dir}/${atlas_n}${cxname}CommunityNames.txt
+         ccids=',IDS='${atlasj}${cxname}CommunityNames.txt
+      else
+         subroutine           @u.1.7.2
+         unset ccids
+      fi
+      #############################################################
+      # Rebuild the argument with the new paths
+      #############################################################
+      exec_sys   cp  ${c_path} \
+                     ${atlas_dir}/${atlas_n}${cxname}CommunityAffiliation.1D
+      community[i]=${atlasj}${cxname}CommunityAffiliation.1D${ccname}${ccids}
+   done
+   ################################################################
+   # Node names -- generate de novo if necessary
+   ################################################################
+   exec_sys rm -f ${atlas_dir}/${atlas_n}NodeNames.txt
+   if [[ -s ${names} ]]
+      then
+      subroutine              @u.1.8
+      exec_sys   cp  ${names} \
+                     ${atlas_dir}/${atlas_n}NodeNames.txt
+   elif [[ -n ${community[i]} ]]
+      then
+      subroutine              @u.1.9
+      unset       com
+      declare -A  com
+      mapfile     cix < ${community[i]}
+      for i in ${!cix[@]}
+         do
+         j=$(echo ${cix[i]})
+         is_integer ${j} && j=Network${j}
+         if [[ -z ${com[j]} ]]
+            then
+            com[j]=1
+         else
+            com[j]=$(( com[j]++ ))
+         fi
+         echo ${j}_${com[j]} >> ${atlas_dir}/${atlas_n}NodeNames.txt
+      done
+   else
+      subroutine              @u.1.10
+      mapfile     cix < ${index}
+      for i in ${!cix[@]}
+         do
+         echo Node_${cix[i]} >> ${atlas_dir}/${atlas_n}NodeNames.txt
+      done
+   fi
+   ################################################################
+   # Citation
+   ################################################################
+   if [[ -n ${ref} ]]
+      then
+      subroutine              @u.1.11
+      exec_sys rm -f    ${atlas_dir}/${atlas_n}Reference.bib
+      doi2bib ${ref} >> ${atlas_dir}/${atlas_n}Reference.bib
+      ref=${atlas_dir}/${atlas_n}Reference.bib
+   fi
+   ################################################################
+   # License
+   ################################################################
+   if [[ -n ${license} ]]
+      then
+      subroutine              @u.1.11
+      exec_sys rm -f          ${atlas_dir}/LICENSE.txt
+      exec_sys cp ${license}  ${atlas_dir}/LICENSE.txt
+      license=${atlas_dir}/LICENSE.txt
+   fi
+   ;;
+###################################################################
+# No need to organise if the directory's already provided.
+###################################################################
+from_dir)
+   subroutine                 @u.2
+   if [[ ! -d ${BRAINATLAS}/${atlas_n} ]]
+      then
+      subroutine              @u.2.1
+      exec_sys cp -r ${atlas_dir} \
+                     ${BRAINATLAS}/${atlas_n}
+   else
+      subroutine              @u.2.2a  ${atlas_n} is already installed: ${BRAINATLAS}/${atlas_n}
+      subroutine              @u.2.2b  Updating ${atlas_n} metadata instead
+   fi
+   if [[ -s ${atlas_dir}/${atlas_n}Reference.bib ]]
+      then
+      ref=${atlas_dir}/${atlas_n}Reference.bib
+   fi
+   if [[ -s ${atlas_dir}/LICENSE.txt ]]
+      then
+      license=${atlas_dir}/LICENSE.txt
+   fi
+   ################################################################
+   # Build the arguments list: maps and spaces.
+   ################################################################
+   subroutine                 @u.2.3
+   atlas_dir=${BRAINATLAS}/${atlas_n}
+   maps=( $(ls -d ${atlas_dir}/*.nii.gz 2>/dev/null) )
+   libs=( $(ls -d ${atlas_dir}/*.sclib  2>/dev/null) )
+   for m in ${!maps[@]}
+      do
+      subroutine              @u.2.4
+      argsm[m]=${maps[m]}:${maps[m]//${atlas_dir}\/${atlas_n}/}
+      argsm[m]=${argsm[m]%\.nii\.gz}
+   done
+   for l in ${!libs[@]}
+      do
+      subroutine              @u.2.5
+      argsl[l]=${libs[l]}:${libs[l]//${atlas_dir}\/${atlas_n}/}
+      argsl[l]=${argsl[l]%\.sclib/}
+   done
+   args=( "${argsm[@]}" "${argsl[@]}" )
+   ################################################################
+   # Build the arguments list: communities.
+   ################################################################
+   coms=( $(ls -d ${atlas_dir}/${atlas_n}*CommunityAffiliation.1D) )
+   for c in ${!coms[@]}
+      do
+      subroutine              @u.2.6
+      unset c_name cxname c_idx ccidx ccname
+      ccname=',NAME=APriori'
+      c_name=${coms[c]//CommunityAffiliation.1D/}
+      cxname=${c_name//${atlas_dir}\/${atlas_n}/}
+      c_name=${c_name//${atlas_dir}\/${atlas_n}x/}
+      c_idx=$(ls -d ${atlas_dir}/${atlas_n}${cxname}CommunityNames.1D 2>/dev/null)
+      [[ -n ${c_name} ]] && ccname=${ccname}${c_name}
+      [[ -s ${c_idx}  ]] && ccidx='IDS='${c_idx}
+      community[c]=${coms[c]//${atlas_dir}\/${atlas_n}/${atlasj}}${ccname}${ccidx}
+   done
+   ;;
+esac
+
+
+
+
+
+###################################################################
+# Update the metadata file: helper function.
+###################################################################
+meta_update() {
+   local cxt=0
+   local sub=1
+   atlas[sub]=$(abspath ${BRAINSPACE}/${space}/${space}_atlas.json)
+   load_atlas ${atlas[sub]}
+   atlas[cxt]=$(echo ${atlas[cxt]}\
+                  |$JQ_PATH    '. + {"'${atlas_m}'" : {} }')
+   atlas_config ${atlas_m} Map            ${atlas_map}
+   atlas_config ${atlas_m} Space          ${space}
+   atlas_config ${atlas_m} SpaceNative    ${space}
+   atlas_config ${atlas_m} Type           ${type}
+   atlas_config ${atlas_m} NodeIndex      ${index}
+   atlas_config ${atlas_m} NodeNames      ${names}
+   for i in ${!community[@]}
+      do
+      parse_community ${community[i]}
+      atlas_config ${atlas_m} CommunityPartition${c_name} ${c_path}
+      [[ -n ${c_ids} ]] \
+      && atlas_config ${atlas_m} CommunityNames${c_name}  ${c_ids}
+   done
+   [[ -n ${ref} ]] \
+   && atlas_config ${atlas_m} Citation    ${atlasj}Reference.bib
+   write_atlas ${atlas[sub]}
+}
+names=${atlasj}NodeNames.txt
+index=${atlasj}NodeIndex.1D
+
+###################################################################
+# Update the metadata file.
+###################################################################
+for q in ${!args[@]}
+   do
+   q=( ${args[q]//:/ } )
+   atlas_map=${q[0]}
+   space=${q[1]}
+   if is_image ${atlas_dir}/${atlas_n}${space}.nii.gz
+      then
+      subroutine              @u.3.1
+      type=Map
+      atlas_map=${atlasj}${space}.nii.gz
+      atlas_m=${atlas_n}
+   else
+      subroutine              @u.3.2
+      type=Coor
+      atlas_map=${atlasj}Coor${space}.sclib
+      atlas_m=${atlas_n}Coor
+   fi
+   subroutine                 @u.3.3
+   meta_update
+done
