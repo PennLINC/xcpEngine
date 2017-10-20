@@ -46,5 +46,5 @@ uniq                 <- sort(unique(refImg))
 sink(file=NULL)
 
 for (i in 1:length(uniq)) {
-   cat(uniq[i],'\n')
+   cat(uniq[i],'\n',sep='')
 }

@@ -57,5 +57,5 @@ adjmat                  <- squareform(adjmat*(matrix(!diag(dim(adjmat)[1]),nrow=
 # 3. Print the adjacency matrix
 ###################################################################
 for (i in 1:length(adjmat)) {
-   cat(adjmat[i],'\n')
+   cat(adjmat[i],'\n',sep='')
 }
