@@ -25,6 +25,7 @@ source ${LIBRARY}/contains
 source ${LIBRARY}/derivative
 source ${LIBRARY}/derivative_config
 source ${LIBRARY}/derivative_parse
+source ${LIBRARY}/doi2bib
 source ${LIBRARY}/echo_cmd
 source ${LIBRARY}/exec_afni
 source ${LIBRARY}/exec_ants

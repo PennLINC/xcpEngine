@@ -1,0 +1,12 @@
+###################################################################
+# Convert a DOI to BibTeX format. Based on a gist from mlund
+###################################################################
+
+doi2bib() {
+   while (( $# > 0 ))
+      do
+      curl -LH "Accept: application/x-bibtex;q=1" http://dx.doi.org/${1} 2>/dev/null
+      echo
+      shift
+   done
+}
