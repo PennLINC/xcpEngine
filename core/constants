@@ -16,6 +16,12 @@ readonly NBASE=2.71828182846
 readonly PHI=1.61803398875
 
 ###################################################################
+# Fill in BRAINSPACE and BRAINATLAS directories if unspecified
+###################################################################
+[[ ! -d ${BRAINSPACE} ]] && readonly BRAINSPACE=${XCPEDIR}/space
+[[ ! -d ${BRAINATLAS} ]] && readonly BRAINATLAS=${XCPEDIR}/atlas
+
+###################################################################
 # Prime space, derivative, and atlas arrays. (bash v<4.2)
 ###################################################################
 unset       s d a
