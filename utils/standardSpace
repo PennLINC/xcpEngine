@@ -13,7 +13,7 @@
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
-mni=${XCPEDIR}/space/MNI/MNI-1x1x1.nii.gz
+mni='${BRAINSPACE}'/MNI/MNI-1x1x1.nii.gz
 
 ###################################################################
 # Usage function
@@ -41,6 +41,14 @@ Compulsory arguments:
       Multiple -s arguments may be provided, in which case each 
       will be treated as a different resolution of the new standard
       space.
+      
+      Additional attributes may be passed to each -s argument as
+      follows:
+      
+      spaceName:pathToImage,Mask=pathToMask,DilatedMask=pathToDilated
+      
+      If no attribute is specified, the attribute 'Map' will be
+      assigned, denoting the map of the named space.
 
  -x : A comma-separated index of paths to transforms from
       the new standard space into MNI space. The transforms
@@ -59,10 +67,9 @@ Compulsory arguments:
       names. Priors should be passed as follows for custom naming:
       priorName1:pathToPrior1,priorName2,pathToPrior2, . . .
 
-Optional arguments:
  -t : Trace
       If this flag is set, then any commands called by the
-      erodespare routine will be explicitly printed to the
+      standardSpace routine will be explicitly printed to the
       console or log.
 
 
@@ -73,13 +80,29 @@ endstream
 ###################################################################
 # Parse arguments
 ###################################################################
-combine_only=0
+unset        sourceSpace
+declare -A   sourceSpace
+arg2source() {
+   sourceSpace=()
+   for i in ${1//,/ }
+      do
+      i=( ${i//\=/ } )
+      if [[ -z ${i[1]} ]]
+         then
+         i[1]=${i[0]}
+         i[0]=Map
+      fi
+      sourceSpace[${i[0]}]=${i[1]}
+   done
+}
 while getopts "s:x:i:p:m:t" OPTION
    do
    case $OPTION in
    s)
       template=( ${template[@]} ${OPTARG//:/ } )
-      ! is_image ${template[1]} && Usage && exit
+      (( ${#template[@]} == 2 )) \
+      && arg2source ${template[1]}
+      echo ${!sourceSpace[@]}
       ;;
    x)
       transforms=${OPTARG}
@@ -102,10 +125,11 @@ done
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${template} ]]          && Usage && exit 1
-[[ -z ${transforms} ]]        && Usage && exit 1
-[[ -z ${itransforms} ]]       && Usage && exit 1
-[[ -z ${priors} ]]            && Usage && exit 1
+[[ -z ${template}    ]]          && Usage && exit 1
+[[ -z ${transforms}  ]]          && Usage && exit 2
+[[ -z ${itransforms} ]]          && Usage && exit 3
+[[ -z ${priors}      ]]          && Usage && exit 4
+! is_image ${sourceSpace[Map]}   && Usage && exit 5
 
 
 
@@ -153,21 +177,28 @@ dim_format() {
 ###################################################################
 subroutine                    @u.1
 name=${template[0]//\%*}
-stddir=${XCPEDIR}/space/${name}
+dims=${template[0]//*\%}
+[[ ${name} == ${dims} ]]      &&    unset dims
+stddir=${BRAINSPACE}/${name}
 mkdir -p ${stddir}/${name}_priors
 mkdir -p ${stddir}/${name}_transforms
 ###################################################################
 # Obtain image dimensions
 ###################################################################
 subroutine                    @u.2
-dim_format ${template[1]}
+[[ -z ${dims} ]] && dim_format ${sourceSpace[Map]}
 ###################################################################
 # Import the template to the application directory.
 ###################################################################
-subroutine                    @u.3
-exec_fsl imcp ${template[1]} \
-            ${stddir}/${name}-${dims}.nii.gz
-template[1]=${stddir}/${name}-${dims}.nii.gz
+for i in ${!sourceSpace[@]}
+   do
+   subroutine                 @u.3
+   i_path=${i//Map/}
+   exec_fsl imcp ${sourceSpace[$i]} \
+            ${stddir}/${name}-${dims}${i_path}.nii.gz
+   spaceMetadataArgs=( "${spaceMetadataArgs[@]}" ${i}'=${BRAINSPACE}'/${name}/${name}-${dims}${i_path}.nii.gz )
+done
+spaceMetadataArgs=$(join_by ',' spaceMetadataArgs)
 
 
 
@@ -282,11 +313,11 @@ itransforms=${itransforms// /,}
 ###################################################################
 subroutine                    @u.6
 space_path=${stddir}/${name}_space.json
-exec_xcp spaceMetadata                           \
-   -m    ${template[0]}'%'${dims}:${template[1]} \
-   -f    MNI%1x1x1:${mni}                        \
-   -x    ${transforms}                           \
-   -i    ${itransforms}                          \
+exec_xcp spaceMetadata                                      \
+   -m    ${template[0]}'%'${dims}:${spaceMetadataArgs}      \
+   -f    MNI%1x1x1:${mni}                                   \
+   -x    ${transforms//${stddir}/'${BRAINSPACE}'\/${name}}  \
+   -i    ${itransforms//${stddir}/'${BRAINSPACE}'\/${name}} \
    -o    ${space_path}
 ###################################################################
 # Add any other resolutions.
@@ -301,13 +332,18 @@ while (( i < ${#template[@]} ))
 done
 for i in ${idx}
    do
-   dim_format    ${template[i+1]}
-   exec_fsl imcp ${template[i+1]} \
+   unset dims
+   dims=${template[i]//*\%}
+   template[i]=${template[i]//\%*}
+   [[ ${template[i]} == ${dims} ]]     &&    unset dims
+   arg2source ${template[i+1]}
+   [[ -z ${dims} ]] &&  dim_format     ${sourceSpace[Map]}
+   exec_fsl imcp ${sourceSpace[Map]} \
                  ${stddir}/${name}-${dims}.nii.gz
-   template[i+1]=${stddir}/${name}-${dims}.nii.gz
-   space_config  ${space_path} ${template[i]}'%'${dims} Map ${template[i+1]}
+   sourceSpace[Map]='${BRAINSPACE}'/${name}/${name}-${dims}.nii.gz
+   for i in ${!sourceSpace[@]}
+      do
+      sourceSpace[i]=${sourceSpace[i]//${stddir}/'${BRAINSPACE}'\/${name}}
+      space_config  ${space_path} ${template[i]}'%'${dims} ${i} ${sourceSpace[$i]}
+   done
 done
-unset space
-space=$(cat ${space_path})
-exec_sys rm -f ${space_path}
-echo "${space//${XCPEDIR}/\$XCPEDIR}" >> ${space_path}
