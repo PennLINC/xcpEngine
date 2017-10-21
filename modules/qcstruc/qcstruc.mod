@@ -190,8 +190,8 @@ exec_ants   antsRegistration           \
    -t       Affine[0.1]                \
    -f       8x4x2x1                    \
    -s       4x2x1x0                    \
-   -r       [${struc[sub]},${XCPEDIR}/space/MNI/MNI-1x1x1.nii.gz,1] \
-   -m       MI[${struc[sub]},${XCPEDIR}/space/MNI/MNI-1x1x1.nii.gz,1,32,Regular,0.25] \
+   -r       [${struc[sub]},${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz,1] \
+   -m       MI[${struc[sub]},${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz,1,32,Regular,0.25] \
    --float  1 \
    --verbose 1
 

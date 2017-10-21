@@ -45,11 +45,11 @@ atlas_ref() {
    local standard=( ${standard//_via_/ } )
    atlas[cxt]='{}'
    atlas[sub]=${out_group}/atlas.json
-   load_atlas        $(abspath ${XCPEDIR}/space/MNI/MNI_atlas.json)
+   load_atlas        $(abspath ${BRAINSPACE}/MNI/MNI_atlas.json)
    for i in "${!standard[@]}"
       do
       std=${standard[i]//\%*/}
-      atlas_standard=$(abspath ${XCPEDIR}/space/${std}/${std}_atlas.json)
+      atlas_standard=$(abspath ${BRAINSPACE}/${std}/${std}_atlas.json)
       [[ ! -s     ${atlas_standard} ]] && continue
       load_atlas  ${atlas_standard}
    done

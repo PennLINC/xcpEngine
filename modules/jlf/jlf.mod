@@ -39,8 +39,8 @@ completion() {
    atlas_add         JLF-MICCAI     Map         ${jlfLabels}
    atlas_add         JLF-MICCAI     Space       ${structural[sub]}
    atlas_add         JLF-MICCAI     Type        Map
-   atlas_add         JLF-MICCAI     NodeIndex   ${XCPEDIR}/atlas/miccai/miccaiNodeIndex.1D 
-   atlas_add         JLF-MICCAI     NodeNames   ${XCPEDIR}/atlas/miccai/miccaiNodeNames.txt 
+   atlas_add         JLF-MICCAI     NodeIndex   ${BRAINATLAS}/miccai/miccaiNodeIndex.1D 
+   atlas_add         JLF-MICCAI     NodeNames   ${BRAINATLAS}/miccai/miccaiNodeNames.txt 
    atlas_add         JLF-MICCAI     Citation    Wang2013
    
    source ${XCPEDIR}/core/auditComplete

@@ -36,7 +36,7 @@ standard=( ${standard//_via_/ } )
 for i in "${!standard[@]}"
    do
    std=${standard[i]//\%*/}
-   space_standard=$(abspath ${XCPEDIR}/space/${std}/${std}_space.json)
+   space_standard=$(abspath ${BRAINSPACE}/${std}/${std}_space.json)
    if (( i == 0 )) && [[ -s ${space_standard} ]]
       then
       subroutine                 ${tag}.2a   [Standard space: ${std}]

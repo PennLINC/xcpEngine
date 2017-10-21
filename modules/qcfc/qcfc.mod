@@ -172,8 +172,8 @@ is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:1,"
 [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
 
 subroutine                    @3.2  Generating visuals
-[[ ${#seg_class[@]} == 3 ]]   &&    class_names="-n ${XCPEDIR}/atlas/segmentation3/segmentation3NodeNames.txt"
-[[ ${#seg_class[@]} == 6 ]]   &&    class_names="-n ${XCPEDIR}/atlas/segmentation6/segmentation6NodeNames.txt"
+[[ ${#seg_class[@]} == 3 ]]   &&    class_names="-n ${BRAINATLAS}/segmentation3/segmentation3NodeNames.txt"
+[[ ${#seg_class[@]} == 6 ]]   &&    class_names="-n ${BRAINATLAS}/segmentation6/segmentation6NodeNames.txt"
 exec_xcp voxts.R                    \
    -i    ${intermediate}-pp-rs.nii.gz${dn_arg} \
    -r    ${intermediate}-onion-rs.nii.gz \
