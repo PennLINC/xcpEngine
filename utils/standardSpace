@@ -198,7 +198,7 @@ for i in ${!sourceSpace[@]}
             ${stddir}/${name}-${dims}${i_path}.nii.gz
    spaceMetadataArgs=( "${spaceMetadataArgs[@]}" ${i}'=${BRAINSPACE}'/${name}/${name}-${dims}${i_path}.nii.gz )
 done
-spaceMetadataArgs=$(join_by ',' spaceMetadataArgs)
+spaceMetadataArgs=$(join_by ',' ${spaceMetadataArgs[@]})
 
 
 
@@ -238,10 +238,7 @@ for i in ${!priors[@]}
    ################################################################
    # Pad the prior index with leading zeros.
    ################################################################
-   while (( ${#i} < 3 ))
-      do
-      i=0${i}
-   done
+   i=$(printf '%03d' ${i})
    ################################################################
    # Parse the prior name and path.
    ################################################################
@@ -257,11 +254,20 @@ for i in ${!priors[@]}
       || p_name=-${p_name}
    if [[ -z ${p_name} ]]
       then
-      (( ${#priors[@]} == 3 )) && p_name=${p3[i]}
-      (( ${#priors[@]} == 6 )) && p_name=${p6[i]}
+      (( ${#priors[@]} == 3 )) && p_name=-${p3[i]}
+      (( ${#priors[@]} == 6 )) && p_name=-${p6[i]}
    fi
-   exec_fsl imcp ${p_path} \
-      ${stddir}/${name}_priors/${name}-priors-${i}${p_name}.nii.gz
+   p_base=${name}-priors-${i}${p_name}.nii.gz
+   p_targ=${stddir}/${name}_priors/${p_base}
+   p_nonm=${stddir}/${name}_priors/${name}-priors-${i}.nii.gz
+   p_form='${BRAINSPACE}'/${name}/${name}-priors-'%03d'.nii.gz
+   exec_fsl imcp     ${p_path} \
+                     ${p_targ}
+   pushd ${stddir}/${name}_priors   >/dev/null
+   exec_sys ln -sf   ${p_base} \
+                     ${p_nonm}
+   popd                             >/dev/null
+   spaceMetadataArgs=${spaceMetadataArgs},Priors'='${p_form}
 done
 
 
@@ -343,7 +349,10 @@ for i in ${idx}
    sourceSpace[Map]='${BRAINSPACE}'/${name}/${name}-${dims}.nii.gz
    for i in ${!sourceSpace[@]}
       do
-      sourceSpace[i]=${sourceSpace[i]//${stddir}/'${BRAINSPACE}'\/${name}}
+   i_path=${i//Map/}
+      exec_fsl imcp ${sourceSpace[$i]} \
+               ${stddir}/${name}-${dims}${i_path}.nii.gz
+      sourceSpace[$i]='${BRAINSPACE}'/${name}/${name}-${dims}${i_path}.nii.gz
       space_config  ${space_path} ${template[i]}'%'${dims} ${i} ${sourceSpace[$i]}
    done
 done
