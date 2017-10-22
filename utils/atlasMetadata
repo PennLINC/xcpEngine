@@ -228,8 +228,6 @@ from_raw)
       m=( ${args[q]//:/ } )
       atlas_map=${m[0]}
       space=${m[1]}
-      exec_sys rm -f ${atlas_dir}/${atlas_n}${space}.nii.gz
-      exec_sys rm -f ${atlas_dir}/${atlas_n}${space}.sclib
       if is_image ${atlas_map}
          then
          subroutine           @u.1.4
@@ -323,8 +321,8 @@ from_raw)
    if [[ -n ${ref} ]]
       then
       subroutine              @u.1.11
-      exec_sys rm -f    ${atlas_dir}/${atlas_n}Reference.bib
-      doi2bib ${ref} >> ${atlas_dir}/${atlas_n}Reference.bib
+      exec_sys rm -f          ${atlas_dir}/${atlas_n}Reference.bib
+      doi2bib ${ref//,/ } >>  ${atlas_dir}/${atlas_n}Reference.bib
       ref=${atlas_dir}/${atlas_n}Reference.bib
    fi
    ################################################################
@@ -410,6 +408,8 @@ esac
 meta_update() {
    local cxt=0
    local sub=1
+   [[      ! -s         ${BRAINSPACE}/${space}/${space}_atlas.json ]] \
+      && echo '{}'   >> ${BRAINSPACE}/${space}/${space}_atlas.json
    atlas[sub]=$(abspath ${BRAINSPACE}/${space}/${space}_atlas.json)
    load_atlas ${atlas[sub]}
    atlas[cxt]=$(echo ${atlas[cxt]}\
@@ -431,18 +431,18 @@ meta_update() {
    && atlas_config ${atlas_m} Citation    ${atlasj}Reference.bib
    write_atlas ${atlas[sub]}
 }
-names=${atlasj}NodeNames.txt
-index=${atlasj}NodeIndex.1D
 
 ###################################################################
 # Update the metadata file.
 ###################################################################
+names=${atlasj}NodeNames.txt
+index=${atlasj}NodeIndex.1D
 for q in ${!args[@]}
    do
    q=( ${args[q]//:/ } )
    atlas_map=${q[0]}
    space=${q[1]}
-   if is_image ${atlas_dir}/${atlas_n}${space}.nii.gz
+   if is_image ${q[0]}
       then
       subroutine              @u.3.1
       type=Map
@@ -457,3 +457,4 @@ for q in ${!args[@]}
    subroutine                 @u.3.3
    meta_update
 done
+exec_sys chmod -R 755 ${atlas_dir}
