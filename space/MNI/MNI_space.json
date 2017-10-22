@@ -1,0 +1,21 @@
+{
+  "MNI%1x1x1": {
+    "Map": "${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz",
+    "MaskDilated": "${BRAINSPACE}/MNI/MNI-1x1x1MaskDilated.nii.gz",
+    "BrainPrior": "${BRAINSPACE}/MNI/MNI-1x1x1BrainPrior.nii.gz",
+    "MapHead": "${BRAINSPACE}/MNI/MNI-1x1x1Head.nii.gz",
+    "Mask": "${BRAINSPACE}/MNI/MNI-1x1x1Mask.nii.gz",
+    "Priors": "${BRAINSPACE}/MNI/MNI_priors/MNI-priors-%03d.nii.gz",
+    "Citation": "${BRAINSPACE}/MNI/MNI_reference.bib"
+  },
+  "MNI%2x2x2": {
+    "Map": "${BRAINSPACE}/MNI/MNI-2x2x2.nii.gz",
+    "MapHead": "${BRAINSPACE}/MNI/MNI-2x2x2Head.nii.gz"
+  },
+  "MNI:MNI": {
+    "TransformANTs": [
+      "${BRAINSPACE}/MNI/MNI_transforms/MNI-MNI_0Affine.mat",
+      "${BRAINSPACE}/MNI/MNI_transforms/MNI-MNI_1Warp.nii.gz"
+    ]
+  }
+}

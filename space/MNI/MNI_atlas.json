@@ -1,0 +1,92 @@
+{
+  "aal116": {
+    "Citation": "${BRAINATLAS}/aal116/aal116Reference.bib",
+    "Map": "${BRAINATLAS}/aal116/aal116MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/aal116/aal116NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/aal116/aal116NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "glasser360": {
+    "Citation": "${BRAINATLAS}/glasser360/glasser360Reference.bib",
+    "Map": "${BRAINATLAS}/glasser360/glasser360MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/glasser360/glasser360NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/glasser360/glasser360NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "gordon333": {
+    "Citation": "${BRAINATLAS}/gordon333/gordon333Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/gordon333/gordon333CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/gordon333/gordon333CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/gordon333/gordon333MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/gordon333/gordon333NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/gordon333/gordon333NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "power264": {
+    "Citation": "${BRAINATLAS}/power264/power264Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/power264/power264CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/power264/power264CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/power264/power264MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/power264/power264NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/power264/power264NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "power264Coor": {
+    "Citation": "${BRAINATLAS}/power264/power264Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/power264/power264CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/power264/power264CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/power264/power264CoorMNI.sclib",
+    "NodeIndex": "${BRAINATLAS}/power264/power264NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/power264/power264NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Coor"
+  },
+  "schaefer100": {
+    "Citation": "${BRAINATLAS}/schaefer100/schaefer100Reference.bib",
+    "CommunityNamesAPriori17": "${BRAINATLAS}/schaefer100/schaefer100x17CommunityNames.txt",
+    "CommunityNamesAPriori7": "${BRAINATLAS}/schaefer100/schaefer100x7CommunityNames.txt",
+    "CommunityPartitionAPriori17": "${BRAINATLAS}/schaefer100/schaefer100x17CommunityAffiliation.1D",
+    "CommunityPartitionAPriori7": "${BRAINATLAS}/schaefer100/schaefer100x7CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer100/schaefer100MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer100/schaefer100NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer100/schaefer100NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "schaefer200": {
+    "Citation": "${BRAINATLAS}/schaefer200/schaefer200Reference.bib",
+    "CommunityNamesAPriori17": "${BRAINATLAS}/schaefer200/schaefer200x17CommunityNames.txt",
+    "CommunityNamesAPriori7": "${BRAINATLAS}/schaefer200/schaefer200x7CommunityNames.txt",
+    "CommunityPartitionAPriori17": "${BRAINATLAS}/schaefer200/schaefer200x17CommunityAffiliation.1D",
+    "CommunityPartitionAPriori7": "${BRAINATLAS}/schaefer200/schaefer200x7CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer200/schaefer200MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer200/schaefer200NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer200/schaefer200NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "schaefer400": {
+    "Citation": "${BRAINATLAS}/schaefer400/schaefer400Reference.bib",
+    "CommunityNamesAPriori17": "${BRAINATLAS}/schaefer400/schaefer400x17CommunityNames.txt",
+    "CommunityNamesAPriori7": "${BRAINATLAS}/schaefer400/schaefer400x7CommunityNames.txt",
+    "CommunityPartitionAPriori17": "${BRAINATLAS}/schaefer400/schaefer400x17CommunityAffiliation.1D",
+    "CommunityPartitionAPriori7": "${BRAINATLAS}/schaefer400/schaefer400x7CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer400/schaefer400MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer400/schaefer400NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer400/schaefer400NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  }
+}
