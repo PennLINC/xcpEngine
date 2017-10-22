@@ -67,6 +67,18 @@ Compulsory arguments:
       names. Priors should be passed as follows for custom naming:
       priorName1:pathToPrior1,priorName2,pathToPrior2, . . .
 
+Optional arguments
+ -c : Sample characteristics
+      A csv or tab-delimited file denoting the characteristics or
+      demographics of the sample used to define the standard
+      space.
+
+ -r : Reference/citation
+      DOI or list of DOIs for a citation for the standard space.
+
+ -l : License
+      Path to a license for use of the standard atlas.
+
  -t : Trace
       If this flag is set, then any commands called by the
       standardSpace routine will be explicitly printed to the
@@ -95,7 +107,7 @@ arg2source() {
       sourceSpace[${i[0]}]=${i[1]}
    done
 }
-while getopts "s:x:i:p:m:t" OPTION
+while getopts "s:x:i:p:c:r:t" OPTION
    do
    case $OPTION in
    s)
@@ -112,6 +124,15 @@ while getopts "s:x:i:p:m:t" OPTION
       ;;
    p)
       priors=( ${OPTARG//,/ } )
+      ;;
+   r)
+      ref=${OPTARG}
+      ;;
+   c)
+      cohort=${OPTARG}
+      ;;
+   l)
+      license=${OPTARG}
       ;;
    t)
       set -x
@@ -260,7 +281,7 @@ for i in ${!priors[@]}
    p_base=${name}-priors-${i}${p_name}.nii.gz
    p_targ=${stddir}/${name}_priors/${p_base}
    p_nonm=${stddir}/${name}_priors/${name}-priors-${i}.nii.gz
-   p_form='${BRAINSPACE}'/${name}/${name}-priors-'%03d'.nii.gz
+   p_form='${BRAINSPACE}'/${name}/${name}_priors/${name}-priors-'%03d'.nii.gz
    exec_fsl imcp     ${p_path} \
                      ${p_targ}
    pushd ${stddir}/${name}_priors   >/dev/null
@@ -319,8 +340,9 @@ itransforms=${itransforms// /,}
 ###################################################################
 subroutine                    @u.6
 space_path=${stddir}/${name}_space.json
+space_name=${template[0]}'%'${dims}
 exec_xcp spaceMetadata                                      \
-   -m    ${template[0]}'%'${dims}:${spaceMetadataArgs}      \
+   -m    ${space_name}:${spaceMetadataArgs}                 \
    -f    MNI%1x1x1:${mni}                                   \
    -x    ${transforms//${stddir}/'${BRAINSPACE}'\/${name}}  \
    -i    ${itransforms//${stddir}/'${BRAINSPACE}'\/${name}} \
@@ -343,16 +365,44 @@ for i in ${idx}
    template[i]=${template[i]//\%*}
    [[ ${template[i]} == ${dims} ]]     &&    unset dims
    arg2source ${template[i+1]}
-   [[ -z ${dims} ]] &&  dim_format     ${sourceSpace[Map]}
-   exec_fsl imcp ${sourceSpace[Map]} \
-                 ${stddir}/${name}-${dims}.nii.gz
-   sourceSpace[Map]='${BRAINSPACE}'/${name}/${name}-${dims}.nii.gz
+   [[ -z ${dims} ]] &&  dim_format     ${sourceSpace[Map]}=
    for i in ${!sourceSpace[@]}
       do
-   i_path=${i//Map/}
+      i_path=${i//Map/}
       exec_fsl imcp ${sourceSpace[$i]} \
                ${stddir}/${name}-${dims}${i_path}.nii.gz
       sourceSpace[$i]='${BRAINSPACE}'/${name}/${name}-${dims}${i_path}.nii.gz
       space_config  ${space_path} ${template[i]}'%'${dims} ${i} ${sourceSpace[$i]}
    done
 done
+
+
+
+
+
+###################################################################
+# Import cohort, citation, and license
+###################################################################
+if [[ -n ${cohort} ]]
+   then
+   subroutine                 @u.8
+   exec_sys rm -f ${stddir}/${name}_sample.csv
+   cp ${cohort} ${stddir}/${name}_sample.csv
+   cohort='${BRAINSPACE}'/${name}/${name}_sample.csv
+   space_config ${space_path} ${space_name} Sample ${cohort}
+fi
+if [[ -n ${ref} ]]
+   then
+   subroutine                 @u.9
+   exec_sys rm -f ${stddir}/${name}_reference.bib
+   doi2bib ${ref//,/ } >> ${stddir}/${name}_reference.bib
+   ref='${BRAINSPACE}'/${name}/${name}_reference.bib
+   space_config ${space_path} ${space_name} Citation ${ref}
+fi
+if [[ -n ${license} ]]
+   then
+   exec_sys rm -f ${stddir}/LICENSE.txt
+   subroutine                 @u.10
+   cp ${license} ${stddir}/LICENSE.txt
+fi
+exec_sys chmod -R 755 ${stddir}
