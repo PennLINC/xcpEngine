@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_add   ${a[Name]}   CommunityRes${gamma_x}  ${netbase[cxt]}_CommunityRes${gamma_x}_community.1D
+   atlas_add   ${a[Name]}   CommunityPartitionRes${gamma_x}  ${netbase[cxt]}_CommunityRes${gamma_x}_community.1D
 }
 
 completion() {
@@ -111,8 +111,8 @@ for net in ${atlas_names[@]}
    atlas_parse ${net}
    atlas_check
    unset matrix communities
-   matrix=(      $(matching ^Matrix    ${!a[@]}) )
-   communities=( $(matching ^Community ${!a[@]}) )
+   matrix=(      $(matching ^Matrix             ${!a[@]}) )
+   communities=( $(matching ^CommunityPartition ${!a[@]}) )
    [[ -z ${matrix} ]] && continue
    routine                    @1    Network analysis: ${a[Name]}
    configure   netdir               ${outdir}/${a[Name]}
@@ -145,7 +145,7 @@ for net in ${atlas_names[@]}
             fi
             update_networks
             communities=( ${communities[@]} CommunityRes${gamma_x} )
-            a[CommunityRes${gamma_x}]=${community[cxt]}
+            a[CommunityPartitionRes${gamma_x}]=${community[cxt]}
          done
          ;;
       none)
