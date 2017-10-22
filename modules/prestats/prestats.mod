@@ -74,7 +74,7 @@ derivative  mask                    ${prefix}_mask
 
 output      mcdir                   mc
 output      rps                     mc/${prefix}_realignment.1D
-output      dvars                   mc/${prefix}_dvars.1D
+output      dvars                   mc/${prefix}_dvars-std.1D
 output      abs_rms                 mc/${prefix}_absRMS.1D
 output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
 output      rel_rms                 mc/${prefix}_relRMS.1D
@@ -789,10 +789,11 @@ while (( ${#rem} > 0 ))
          || rerun
             then
             subroutine        @5.7  Computing DVARS
-            exec_xcp dvars.R \
+            exec_xcp dvars                         \
                -i    ${intermediate}_${cur}.nii.gz \
-               -m    ${mask[cxt]} \
-               >>    ${dvars[cxt]}
+               -o    mc/${prefix}_dvars            \
+               -s    ${intermediate}_${cur}        \
+               -b    ${meanIntensityBrain[cxt]}
          fi
          intermediate=${intermediate}_${cur}
          routine_end

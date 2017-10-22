@@ -68,6 +68,7 @@ while getopts "l:o:i:t" OPTION
       echo "Option not recognised: ${OPTARG}"
       Usage
       exit
+      ;;
    esac
 done
 ###################################################################
