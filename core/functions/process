@@ -6,4 +6,5 @@ process() {
       then
       exec_sys ln -sf ${out}/${prefix}.nii.gz ${intermediate}.nii.gz
    fi
+   declared_p=${1}
 }
