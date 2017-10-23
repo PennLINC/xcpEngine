@@ -69,10 +69,11 @@ endstream
 # Define defaults
 ###################################################################
 [[ -z ${intermediate} ]] && intermediate=$(pwd)/dvars~TEMP~
+demeaned=0
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:s:m:b:d" OPTION
+while getopts "i:o:s:m:b:d:" OPTION
    do
    case $OPTION in
    i)
@@ -94,7 +95,8 @@ while getopts "i:o:s:m:b:d" OPTION
       ! is_image ${meanIntensityBrain} && Usage && exit
       ;;
    d)
-      demeaned=1
+      demeaned=${OPTARG}
+      (( demeaned != 1 )) && (( demeaned != 0 )) && Usage && exit
       ;;
    *)
       echo "Option not recognised: ${OPTARG}"
@@ -241,8 +243,8 @@ printf '%f\n' 0 >> ${output}-std.1D
 printf '%f\n' 0 >> ${output}-vox.1D
 for i in ${!dvars_raw[@]}
    do
-   dvars_std[i]=$(arithmetic "sqrt(${dvars_raw[i]}) / ${predictedSDMean}")
-   dvars_vox[i]=$(arithmetic "sqrt(${dvars_vox[i]})")
+   dvars_std[i]=$(arithmetic "sqrt(${dvars_raw[i]}) / ${predictedSDMean}" 2>/dev/null)
+   dvars_vox[i]=$(arithmetic "sqrt(${dvars_vox[i]})" 2>/dev/null)
    printf '%f\n' ${dvars_raw[i]} >> ${output}-raw.1D
    printf '%f\n' ${dvars_std[i]} >> ${output}-std.1D
    printf '%f\n' ${dvars_vox[i]} >> ${output}-vox.1D
