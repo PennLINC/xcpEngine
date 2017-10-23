@@ -1,3 +1,5 @@
 json_set_array() {
-   (( ${#} == 4 )) && eval ${1}=$(echo ${!1}|$JQ_PATH '."'"${2}"'" += {"'"${3}"'": [ "'"${4}"'" ] }')
+   local elements=${4//,/\",\"}
+   local json_new=( $(echo ${!1}|$JQ_PATH '."'"${2}"'" += {"'"${3}"'": [ "'"${elements}"'" ] }') )
+   (( ${#} == 4 )) && eval ${1}=\${json_new[@]}
 }

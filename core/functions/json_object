@@ -1,4 +1,4 @@
 json_object() {
-   [[ ! -f ${2} ]] && return
-   eval ${1}=$(echo ${!1}|$JQ_PATH '. + {"'"${2}"'" : {} }')
+   local json_new=( $(echo ${!1}|$JQ_PATH '. + {"'"${2}"'" : {} }') )
+   eval ${1}=\${json_new[@]}
 }

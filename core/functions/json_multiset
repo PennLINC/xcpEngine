@@ -1,5 +1,5 @@
 json_multiset() {
-   local i asgt key val
+   local i asgt json_new key val
    local multiset=()
    local json=${1}
    local object=${2}
@@ -10,7 +10,9 @@ json_multiset() {
       key=$(strslice ${asgt} 1 ':')
       val=$(strslice ${asgt} 2 ':')
       multiset=( "${multiset[@]}" '"'"${key}"'":"'"${val}"'"' )
+      shift
    done
    multiset=$(join_by ', ' "${multiset[@]}")
-   eval ${json}=$(echo ${!json}|$JQ_PATH '."'"${object}"'" += { '"${multiset}"' }')
+   json_new=( $(echo ${!json}|$JQ_PATH '."'"${object}"'" += { '"${multiset}"' }') )
+   eval ${json}=\${json_new[@]}
 }
