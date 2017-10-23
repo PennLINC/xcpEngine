@@ -1,14 +1,17 @@
 # new home directory for the XCP Engine
 
 ##### Change log
-v0.6.0 2017.09 (target)
-* Operational modules (17): alff, benchmark, antsCT, confound, coreg, fcon, gmd, jlf, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
-* Internal-only modules (3): asl, dico, dti2xcp
-* Modules added (1): fcon
+v0.6.0 2017.10 (target)
+* Operational modules (18): alff, confound, cbf, coreg, fcon, gmd, jlf, net, norm, prestats, qcfc, qcstruc, regress, reho, roiquant, seed, struc, task
+* Internal-only modules (2): dico, dti2xcp
+* Modules added (1): fcon, cbf
+* Modules renamed (3): benchmark => qcfc, strucQA => qcstruc, antsCT => struc
 * Modules assimilated (1): locreg (into confound)
 * A metadata system has been implemented for derivative neuroimages, parcellation schemes, and coordinate spaces.
+* A standardised atlas and space organisation scheme with builder utilities supports rapid retrieval of metadata and easy warping between any coordinate spaces.
+* Group-level processing is now supported by a delocaliser operation.
 * Development for the XCP system is now easier. The generalised module header (and other cumbersome code) has been encapsulated in a new directory for core scripts, functions, and text blocks.
-* The code has been extensively rewritten. 
+* The code has been extensively rewritten.
 
 v0.5.1 2017.06
 * Operational modules (20): asl, alff, benchmark, antsCT, confound, coreg, dico, dti2xcp, gmd, jlf, locreg, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
