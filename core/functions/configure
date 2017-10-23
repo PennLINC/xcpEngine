@@ -1,4 +1,5 @@
 configure() {
+   local i
    eval ${1}[${cxt}]=\"\${@:2}\"
-   declared_c=( ${declared_c[@]} ${1} )
+   declared_c[${1}]=${1}
 }

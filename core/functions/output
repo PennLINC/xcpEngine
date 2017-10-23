@@ -7,5 +7,5 @@ output() {
       path=${outdir}/${2}
    fi
    eval ${1}[${cxt}]=\${path}
-   declared_o=( ${declared_o[@]} ${1} )
+   declared_o[${1}]=${1}
 }
