@@ -24,38 +24,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         preprocessed
-   
-   write_derivative  meanIntensityBrain
-   write_derivative  referenceVolumeBrain
-   write_derivative  mask
-   
-   write_output      meanIntensity
-   write_output      referenceVolume
-   write_output      mcdir
-   write_output      rps
-   write_output      rel_rms
-   write_output      fd
-   write_output      dvars
-   write_output      tmask
-   
-   write_config_safe censor
-   write_config      demeaned
-   if is_1D ${tmask[cxt]}
-      then
-      configure      censored       1
-      write_config   censored
-   fi
-   
-   apply_exec        timeseries              ${prefix}_%NAME \
-      sys            ls %OUTPUT              >/dev/null
-   apply_exec        timeseries              ${prefix}_%NAME \
-      sys            write_derivative        %NAME
-   
-   quality_metric    relMeanRMSMotion        rel_mean_rms
-   quality_metric    relMaxRMSMotion         rel_max_rms
-   quality_metric    nFramesHighMotion       motion_vols
-   
+   is_1D ${tmask[cxt]} && configure censored 1
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -72,14 +41,14 @@ derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
 
+derivative_set    mask Type         Mask
+
 output      mcdir                   mc
 output      rps                     mc/${prefix}_realignment.1D
 output      dvars                   mc/${prefix}_dvars-std.1D
 output      abs_rms                 mc/${prefix}_absRMS.1D
 output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
 output      rel_rms                 mc/${prefix}_relRMS.1D
-output      rel_max_rms             mc/${prefix}_relMaxRMS.txt
-output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt
 output      rmat                    mc/${prefix}.mat
 output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
@@ -88,11 +57,21 @@ output      confmat                 ${prefix}_confmat.1D
 output      referenceVolume         ${prefix}_referenceVolume.nii.gz
 output      meanIntensity           ${prefix}_meanIntensity.nii.gz
 
-configure   censor                  ${prestats_censor[cxt]}
+configures  censor                  ${prestats_censor[cxt]}
 configure   censored                0
 configure   demeaned                0
 
+qc rel_max_rms    relMaxRMSMotion   mc/${prefix}_relMaxRMS.txt
+qc rel_mean_rms   relMeanRMSMotion  mc/${prefix}_relMeanRMS.txt
+qc n_spikes_dv    nSpikesDV         mc/${prefix}_spikesDVct.txt
+qc n_spikes_fd    nSpikesFD         mc/${prefix}_spikesFDct.txt
+qc n_spikes_rms   nSpikesRMS        mc/${prefix}_spikesRMSct.txt
+qc pct_spikes_dv  pctSpikesDV       mc/${prefix}_spikesDVpct.txt
+qc pct_spikes_fd  pctSpikesFD       mc/${prefix}_spikesFDpct.txt
+qc pct_spikes_rms pctSpikesRMS      mc/${prefix}_spikesRMSpct.txt
+
 smooth_spatial_prime                ${prestats_smo[cxt]}
+filter_temporal_prime
 
 input       censor
 input       censored
@@ -423,10 +402,10 @@ while (( ${#rem} > 0 ))
             if ! is_1D  ${dvars[cxt]} \
             || rerun
                then
-               subroutine     @2.7  Computing DVARS
+               subroutine     @2.7  [Computing DVARS]
                exec_xcp dvars                         \
-                  -i    ${intermediate}_${cur}.nii.gz \
-                  -o    mc/${prefix}_dvars            \
+                  -i    ${intermediate}_mc.nii.gz \
+                  -o    ${outdir}/mc/${prefix}_dvars  \
                   -s    ${intermediate}_${cur}
             fi
             #######################################################
@@ -437,10 +416,10 @@ while (( ${#rem} > 0 ))
             # Define framewise quality criteria.
             #######################################################
             subroutine        @2.8  [Selecting quality criteria]
-            q_criteria=( ${prestats_censor_cr[cxt]//,/ } )
+            q_criteria=( ${prestats_framewise[cxt]//,/ } )
             q_mask_sum=${intermediate}_${cur}-nFlags.1D
             exec_sys    rm -f ${q_mask_sum}
-            unset       dict_criteria flag_ct
+            unset       dict_criteria
             declare -A  dict_criteria=(
                [fd]='fd,framewise displacement'
                [rms]='rel_rms,relative RMS displacement'
@@ -454,17 +433,16 @@ while (( ${#rem} > 0 ))
                ####################################################
                # Parse quality criterion
                ####################################################
-               q_criterion=$(strslice ${q_criteria[i]} ':' 1)
-               q_threshold=$(strslice ${q_criteria[i]} ':' 2)
-               q_cr_var=$(strslice ${dict_criteria[$q_criterion]} 1)
-               q_crname=$(strslice ${dict_criteria[$q_criterion]} 2)
+               q_criterion=$(strslice ${q_criteria[i]} 1 ':')
+               q_threshold=$(strslice ${q_criteria[i]} 2 ':')
+               criterion_val=( ${dict_criteria[$q_criterion]//,/ } )
                ####################################################
                # Compute a framewise inclusion mask
                ####################################################
-               subroutine     @2.9  [Quality criterion: "${q_crname} < ${q_threshold}"]
-               q_spkvar=${q_cr_var}'_n_spikes['${cxt}']'
-               q_spkpct=${q_cr_var}'_pct_spikes['${cxt}']'
-               q_cr_var=${q_cr_var}'['${cxt}']'
+               subroutine     @2.9  [Quality criterion: "${criterion_val[@]:1:} < ${q_threshold}"]
+               q_spkvar='n_spikes_'${q_criterion}'['${cxt}']'
+               q_spkpct='pct_spikes_'${q_criterion}'['${cxt}']'
+               q_cr_var=${criterion_val[0]}'['${cxt}']'
                q_mask=${intermediate}_${cur}-${q_criterion}Mask.1D
                q_masks=( ${q_masks[@]} ${q_mask} )
                exec_xcp tmask.R                                \
@@ -483,8 +461,8 @@ while (( ${#rem} > 0 ))
                   flag_ct=( $(repeat ${n_volume} ' 0') )
                fi
                pct_spikes=$(arithmetic "${n_spikes}/${n_volume}")
-               echo ${n_spikes}                 >> ${q_spkvar}
-               echo ${pct_spikes}               >> ${q_spkpct}
+               echo ${n_spikes}                 >> ${!q_spkvar}
+               echo ${pct_spikes}               >> ${!q_spkpct}
                ####################################################
                # Update the total number of times that each frame
                # has been flagged.
