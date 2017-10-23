@@ -4,6 +4,9 @@ warpspace() {
          layer       n           node_chk    nodes       o \
          objects     output      route       source      t \
          target      v           x           xfm
+   [[ -n ${atlas[sub]}    ]] && local a_json=$(cat ${atlas[sub]})
+   [[ -n ${aux_imgs[sub]} ]] && local d_json=$(cat ${aux_imgs[sub]})
+   [[ -n ${spaces[sub]}   ]] && local s_json=$(cat ${spaces[sub]})
    declare -A        s           d           a
    ################################################################
    # [1] PARSE INPUTS
@@ -41,8 +44,8 @@ warpspace() {
       #############################################################
       elif ! is_image ${i}
          then
-         source=$(   json_query  ${i}  Space    "${aux_imgs[sub]}")
-         i=$(        json_query  ${i}  Map      "${aux_imgs[sub]}")
+         source=$( json_get a_json Space ${i})
+         i=$(      json_get a_json Map   ${i})
       #############################################################
       #     Case 3: The source is otherwise unspecified. Default to
       #     analyte space.
@@ -62,7 +65,7 @@ warpspace() {
    #---------------------------------------------------------------
    #        Parse available spaces (nodes) and transforms (edges)
    ################################################################
-   objects=$(cat  ${spaces[sub]}   |$JQ_PATH      'keys[]')
+   objects=$(json_keys s_json)
    for k    in    $objects
       do
       #############################################################
@@ -70,41 +73,41 @@ warpspace() {
       #     is a space or a transform. Spaces include the 'Map'
       #     property, while transforms do not.
       #############################################################
-      node_chk=$( json_query  ${k}  Map               ${spaces[sub]})
+      node_chk=$(json_get s_json Map ${k})
       k=${k//\"/}
       #############################################################
       #     Add spaces to the list of available nodes.
       #     First ensure that the space is not already listed.
       #############################################################
-      if [[       -n ${node_chk} ]]
+      if [[   -n ${node_chk} ]]
          then
          k=${k//\%*/}
-         [[ ${nodes//${k}/} == ${nodes} ]] && nodes="${nodes} ${k}"
+         [[ ${nodes[@]//${k}/} == ${nodes} ]] && nodes=("${nodes[@]}" ${k})
       #############################################################
       #     Add transforms to the list of available edges.
       #     First ensure that the transform is not already listed.
       #############################################################
       else
-         [[ ${edges//${k}/} == ${edges} ]] && edges="${edges} ${k}" || continue
+         [[ ${edges[@]//${k}/} == ${edges} ]] && edges=("${edges[@]}" ${k}) || continue
          ##########################################################
          #  TODO
          #  Multilayer matrix support. Transforms contributed by
          #  different programs should be routed differently.
          ##########################################################
-         a_chk=$( json_query  \"${k}\"  TransformANTs     ${spaces[sub]})
-         f_chk=$( json_query  \"${k}\"  TransformFSL      ${spaces[sub]})
-         d_chk=$( json_query  \"${k}\"  TransformDRAMMS   ${spaces[sub]})
-         if [[    -n ${a_chk}    ]]
+         a_chk=$( json_get s_json ${k} TransformANTs  )
+         f_chk=$( json_get s_json ${k} TransformFSL   )
+         d_chk=$( json_get s_json ${k} TransformDRAMMS)
+         if [[    -n  ${a_chk}    ]]
             then
-            a_edges="${a_edges} ${k}"
+            a_edges=("${a_edges[@]}" ${k})
          fi
-         if [[    -n ${f_chk}    ]]
+         if [[    -n  ${f_chk}    ]]
             then
-            f_edges="${a_edges} ${k}"
+            f_edges=("${f_edges[@]}" ${k})
          fi
-         if [[    -n ${d_chk}    ]]
+         if [[    -n  ${d_chk}    ]]
             then
-            d_edges="${a_edges} ${k}"
+            d_edges=("${d_edges[@]}" ${k})
          fi
       fi
    done
@@ -117,10 +120,8 @@ warpspace() {
    #        This routing uses Dijkstra's algorithm on the graph
    #        defined from the metadata above.
    ################################################################
-   nodes=$(echo $nodes)
-   edges=$(echo $edges)
-   nodes=${nodes// /,}
-   edges=${edges// /,}
+   nodes=$(join_by ',' "${nodes[@]}")
+   edges=$(join_by ',' "${edges[@]}")
    ################################################################
    #        If the source and target spaces are identical, then
    #        apply only the identity transform.
@@ -154,8 +155,7 @@ warpspace() {
    #---------------------------------------------------------------
    #        Obtain the target reference and perform the warp.
    ################################################################
-   target=$(json_query \"${target}\" Map ${spaces[sub]})
-   target=$(eval echo ${target})
+   target=$(json_get s_json ${target} Map)
    layer=${route[0]}
    route=( "${route[@]:1}" )
    ################################################################
@@ -166,11 +166,9 @@ warpspace() {
       then
       for e in "${route[@]}"
          do
-         t=$(json_query \"${e}\" TransformANTs ${spaces[sub]})
-         t=$(echo ${t}|${JQ_PATH} --raw-output '.[]')
+         t=$(json_get_array s_json ${e} TransformANTs)
          for x in ${t}
             do
-            x=$(eval echo ${x})
             xfm="-t ${x} ${xfm}"
          done
       done
@@ -184,12 +182,11 @@ warpspace() {
    #        source.
    ################################################################
    else
-      source=$(json_query \"${source}\" Map ${spaces[sub]})
+      source=$(json_get s_json ${source} Map)
       source=$(eval echo ${source})
       for e in "${route[@]}"
          do
-         t=$(json_query \"${e}\" TransformANTs ${spaces[sub]})
-         t=$(echo ${t}|${JQ_PATH} --raw-output '.[]')
+         t=$(json_get_array s_json ${e} TransformANTs)
          for x in ${t}
             do
             x=$(eval echo ${x})
