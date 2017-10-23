@@ -6,7 +6,7 @@ write_derivative() {
       then
       dfloat=$(derivative_floats ${1})
       (( dfloat == 0 )) && local d_cur=$(json_get deriv[cxt]            ${1})
-      (( dfloat == 1 )) && local d_cur=$(json_get derivatives_floating} ${1})
+      (( dfloat == 1 )) && local d_cur=$(json_get derivatives_floating  ${1})
       local deriv=$(cat ${aux_imgs[sub]} 2>/dev/null)
       local deriv="$(json_merge deriv d_cur)"
       rm -f ${aux_imgs[sub]}
