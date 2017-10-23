@@ -179,7 +179,7 @@ if [[ -n ${space} ]]
    for s in "${space[@]}"
       do
       subroutine              @u.2.1
-      space_config   ${out}   ${s}
+      space_set      ${out}   ${s}
    done
 fi
 (( ${combine_only} == 1 )) && exit
@@ -244,17 +244,17 @@ esac
 # to the output path.
 ###################################################################
 subroutine                    @u.5
-[[       ! -s        ${out}   ]] && echo     '{}'        >> ${out}
-space_config         ${out}   ${fixed[0]}    Map            ${fixed[1]}
+[[       ! -s     ${out}   ]] && echo     '{}'        >> ${out}
+space_set         ${out}   ${fixed[0]}    Map            ${fixed[1]}
 for i in ${!sourceSpace[@]}
    do
-   space_config      ${out}   ${moving[0]}   ${i}           ${sourceSpace[$i]}
+   space_set      ${out}   ${moving[0]}   ${i}           ${sourceSpace[$i]}
 done
 moving[0]=${moving[0]//\%*}
 fixed[0]=${fixed[0]//\%*}
-transform_config     ${out}   "itk:${transforms}"  ${moving[0]}   ${fixed[0]}
+transform_set     ${out}   "itk:${transforms}"  ${moving[0]}   ${fixed[0]}
 if [[ -n ${itransforms} ]]
    then
    subroutine                 @u.6
-   transform_config  ${out}   "itk:${itransforms}" ${fixed[0]}    ${moving[0]}
+   transform_set  ${out}   "itk:${itransforms}" ${fixed[0]}    ${moving[0]}
 fi

@@ -412,23 +412,22 @@ meta_update() {
       && echo '{}'   >> ${BRAINSPACE}/${space}/${space}_atlas.json
    atlas[sub]=$(abspath ${BRAINSPACE}/${space}/${space}_atlas.json)
    load_atlas ${atlas[sub]}
-   atlas[cxt]=$(echo ${atlas[cxt]}\
-                  |$JQ_PATH    '. + {"'${atlas_m}'" : {} }')
-   atlas_config ${atlas_m} Map            ${atlas_map}
-   atlas_config ${atlas_m} Space          ${space}
-   atlas_config ${atlas_m} SpaceNative    ${space}
-   atlas_config ${atlas_m} Type           ${type}
-   atlas_config ${atlas_m} NodeIndex      ${index}
-   atlas_config ${atlas_m} NodeNames      ${names}
+   atlas[cxt]=$(atlas ${atlas_m})
+   atlas_set ${atlas_m} Map            ${atlas_map}
+   atlas_set ${atlas_m} Space          ${space}
+   atlas_set ${atlas_m} SpaceNative    ${space}
+   atlas_set ${atlas_m} Type           ${type}
+   atlas_set ${atlas_m} NodeIndex      ${index}
+   atlas_set ${atlas_m} NodeNames      ${names}
    for i in ${!community[@]}
       do
       parse_community ${community[i]}
-      atlas_config ${atlas_m} CommunityPartition${c_name} ${c_path}
+      atlas_set ${atlas_m} CommunityPartition${c_name} ${c_path}
       [[ -n ${c_ids} ]] \
-      && atlas_config ${atlas_m} CommunityNames${c_name}  ${c_ids}
+      && atlas_set ${atlas_m} CommunityNames${c_name}  ${c_ids}
    done
    [[ -n ${ref} ]] \
-   && atlas_config ${atlas_m} Citation    ${atlasj}Reference.bib
+   && atlas_set ${atlas_m} Citation    ${atlasj}Reference.bib
    write_atlas ${atlas[sub]}
 }
 

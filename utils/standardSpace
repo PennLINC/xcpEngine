@@ -372,7 +372,7 @@ for i in ${idx}
       exec_fsl imcp ${sourceSpace[$i]} \
                ${stddir}/${name}-${dims}${i_path}.nii.gz
       sourceSpace[$i]='${BRAINSPACE}'/${name}/${name}-${dims}${i_path}.nii.gz
-      space_config  ${space_path} ${template[i]}'%'${dims} ${i} ${sourceSpace[$i]}
+      space_set  ${space_path} ${template[i]}'%'${dims} ${i} ${sourceSpace[$i]}
    done
 done
 
@@ -389,7 +389,7 @@ if [[ -n ${cohort} ]]
    exec_sys rm -f ${stddir}/${name}_sample.csv
    cp ${cohort} ${stddir}/${name}_sample.csv
    cohort='${BRAINSPACE}'/${name}/${name}_sample.csv
-   space_config ${space_path} ${space_name} Sample ${cohort}
+   space_set ${space_path} ${space_name} Sample ${cohort}
 fi
 if [[ -n ${ref} ]]
    then
@@ -397,7 +397,7 @@ if [[ -n ${ref} ]]
    exec_sys rm -f ${stddir}/${name}_reference.bib
    doi2bib ${ref//,/ } >> ${stddir}/${name}_reference.bib
    ref='${BRAINSPACE}'/${name}/${name}_reference.bib
-   space_config ${space_path} ${space_name} Citation ${ref}
+   space_set ${space_path} ${space_name} Citation ${ref}
 fi
 if [[ -n ${license} ]]
    then
