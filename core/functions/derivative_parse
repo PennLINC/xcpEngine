@@ -2,9 +2,9 @@ derivative_parse() {
    local key keys
    d=()
    d[Name]=${1}
-   keys=$(echo "${deriv[${cxt}]}"|$JQ_PATH --raw-output '.'${d[Name]}'|keys[]')
+   keys=$(       json_keys deriv[cxt]  ${d[Name]})
    for key in $keys
       do
-      d[${key}]=$(eval echo $(echo "${deriv[${cxt}]}"|$JQ_PATH --raw-output '.'"${d[Name]}"'.'"${key}"))
+      d[${key}]=$(json_get deriv[cxt]  ${d[Name]} ${key})
    done
 }
