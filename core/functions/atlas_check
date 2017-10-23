@@ -6,11 +6,13 @@ atlas_check() {
       do
       contains ${a[Name]} ${i} && return 0
    done
-   aorig=$(cat   $atlas_orig|$JQ_PATH '.'"${a[Name]}")
-   a_loc=$(cat ${atlas[sub]}|$JQ_PATH '.'"${a[Name]}")
+   aorig=$(cat ${atlas_orig})
+   a_loc=$(cat ${atlas[sub]})
+   aorig=$(json_get aorig ${a[Name]})
+   a_loc=$(json_get a_loc ${a[Name]})
    if [[ ${aorig} == ${a_loc} ]]
       then
-      json_rm ${a[Name]} from atlas[${cxt}]
+      json_rm ${a[Name]} from atlas[cxt]
    fi
    return 1
 }

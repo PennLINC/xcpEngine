@@ -5,5 +5,5 @@ write_atlas() {
       local path=${1}
    fi
    rm -f ${path}
-   echo ${atlas[cxt]}|$JQ_PATH --sort-keys . >> ${path}
+   json_print atlas[cxt] >> ${path}
 }

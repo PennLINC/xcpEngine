@@ -2,9 +2,9 @@ atlas_parse() {
    local key keys
    a=()
    a[Name]=${1}
-   keys=$(echo "${atlas[${cxt}]}"|$JQ_PATH --raw-output '.'${a[Name]}'|keys[]')
+   keys=$(       json_keys atlas[cxt]  ${a[Name]})
    for key in $keys
       do
-      a[${key}]=$(eval echo $(echo "${atlas[${cxt}]}"|$JQ_PATH --raw-output '.'"${a[Name]}"'.'"${key}"))
+      a[${key}]=$(json_get atlas[cxt]  ${a[Name]}  ${key})
    done
 }
