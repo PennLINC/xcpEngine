@@ -1,0 +1,23 @@
+space_set() {
+   local space_chk space_new space_old spaces_fixed spaces_floating spaces_path
+   spaces_path=${1}
+   shift
+   spaces_fixed=$(cat ${spaces_path})
+   if (( ${#} == 1 ))
+      then
+      space_new=$(cat ${1})
+      spaces_floating="$(json_merge spaces_fixed space_new)"
+   else
+      space_chk=$(json_get ${spaces_fixed} ${1})
+      if [[ ${space_chk} == null ]]
+         then
+         spaces_floating=$(json_object spaces_fixed    ${1})
+         spaces_floating=$(json_set    spaces_floating ${1} ${2} ${3})
+      else
+         spaces_floating=$(json_set    spaces_fixed    ${1} ${2} ${3})
+      fi
+   fi
+   rm -f ${spaces_path}
+   json_print spaces_floating >> ${spaces_path}
+
+}

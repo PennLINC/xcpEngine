@@ -1,0 +1,5 @@
+derivative_set() {
+   local dfloat=$(derivative_floats ${1})
+   (( dfloat == 0 )) && json_set deriv[cxt]           ${@}
+   (( dfloat == 1 )) && json_set derivatives_floating ${@}
+}
