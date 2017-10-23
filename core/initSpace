@@ -41,8 +41,7 @@ for i in "${!standard[@]}"
       then
       subroutine                 ${tag}.2a   [Standard space: ${std}]
       printx ${space_standard}   >>          ${spaces[cxt]}
-      template=$(abspath         $(eval      echo $(cat ${spaces[cxt]}\
-                 |$JQ_PATH       --raw-output '.'\"${standard[i]}\"'.Map')))
+      template=$(abspath         $(space_get ${standard[i]} Map))
       normalise=1
    elif (( i == 0 ))
       then
@@ -58,8 +57,7 @@ for i in "${!standard[@]}"
 done
 standard=${standard[0]}
 str_targ=${standard[i]}
-str_temp=$(abspath               $(eval      echo $(cat ${spaces[cxt]}\
-                 |$JQ_PATH       --raw-output '.'\"${standard[i]}\"'.Map')))
+str_temp=$(abspath               $(space_get ${standard[i]} Map))
 
 ###################################################################
 # (3) ANATOMICAL SPACE.
@@ -77,14 +75,13 @@ configure         structural        ${prefix[sub]}_anatomical
 if [[ -d ${antsct[sub]} ]]
    then
    subroutine                 ${tag}.3a   [Anatomical space: ${structural[cxt]//\%*/}]
-   ${XCPEDIR}/utils/spaceMetadata -o ${spaces[cxt]} \
-      -f ${str_targ}:${str_temp} \
-      -d ${structural[cxt]}:${antsct[sub]} \
+   exec_xcp spaceMetadata -o ${spaces[cxt]}  \
+      -f ${str_targ}:${str_temp}             \
+      -d ${structural[cxt]}:${antsct[sub]}   \
       -s ${spaces[cxt]}
-   struct[$sub]=$(abspath     $(eval      echo $(cat ${spaces[cxt]}\
-              |$JQ_PATH       --raw-output '.'\"${structural[cxt]}\"'.Map')))
+   struct[$sub]=$(abspath     $(space_get ${structural[cxt]} Map))
    cohort_vars+=(struct[$sub])
-   [[ -z ${segmentation[sub]} ]] \
+   [[ -z ${segmentation[sub]} ]]             \
         && segmentation[$sub]=$(ls ${antsct[sub]}/*BrainSegmentation.nii.gz) \
         && cohort_vars+=(segmentation[$sub])
 ###################################################################
@@ -99,12 +96,12 @@ elif is_image ${xfm_warp[sub]}
    ixfms=$(echo ${ixfms})
    xfms=${xfms// /,}
    ixfms=${ixfms// /,}
-   ${XCPEDIR}/utils/spaceMetadata \
-      -o ${spaces[cxt]} \
-      -f ${str_targ}:${str_temp} \
+   ${XCPEDIR}/utils/spaceMetadata         \
+      -o ${spaces[cxt]}                   \
+      -f ${str_targ}:${str_temp}          \
       -m ${structural[cxt]}:${struct[sub]} \
-      -x ${xfms} \
-      -i ${ixfms} \
+      -x ${xfms}                          \
+      -i ${ixfms}                         \
       -s ${spaces[cxt]}
 ###################################################################
 #     Case 3: Nothing is provided. This might be the case for
