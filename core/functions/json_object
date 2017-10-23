@@ -1,0 +1,4 @@
+json_object() {
+   [[ ! -f ${2} ]] && return
+   eval ${1}=$(echo ${!1}|$JQ_PATH '. + {"'"${2}"'" : {} }')
+}
