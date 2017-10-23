@@ -163,7 +163,7 @@ routine                       @3    Preparing summary graphics
 subroutine                    @3.1  Acquiring arguments
 is_image ${intermediate}-dn-rs.nii.gz \
                               && dn_arg=",${intermediate}-dn-rs.nii.gz"
-is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:50,"
+is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:1.5,"
 is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:0.5,"
 is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:1,"
 
