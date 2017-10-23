@@ -88,7 +88,7 @@ output      confmat                 ${prefix}_confmat.1D
 output      referenceVolume         ${prefix}_referenceVolume.nii.gz
 output      meanIntensity           ${prefix}_meanIntensity.nii.gz
 
-configure   censor                  $(strslice ${prestats_censor[cxt]} 1)
+configure   censor                  ${prestats_censor[cxt]}
 configure   censored                0
 configure   demeaned                0
 
@@ -109,10 +109,9 @@ abs_mean_rms
 abs_rms
    Absolute root mean square displacement.
 censor
-   A set of instructions specifying the type of censoring to be
-   performed in the current pipeline: 'none', 'iter[ative]', or
-   'final'. This instruction is passed to the regress module,
-   which handles the censoring protocol.
+   A flag indicating whether the current pipeline should include
+   framewise censoring. This instruction is passed to the regress
+   module, which handles the censoring protocol.
 censored
    A variable that specifies whether censoring has been primed in
    the current module.
@@ -134,7 +133,7 @@ mask
    tissue is often fairly liberal.
 meanIntensity
    The mean intensity over time of functional data, after it has
-   been realigned to the example volume
+   been realigned to the example volume.
 motion_vols
    A quality control file that specifies the number of volumes that
    exceeded the maximum motion criterion. If censoring is enabled,
@@ -418,19 +417,90 @@ while (( ${#rem} > 0 ))
             exec_xcp fd.R \
                -r    ${rps[cxt]} \
                -o    ${fd[cxt]}
-            if [[ ${prestats_censor_cr[cxt]} == fd ]]
+            ##########################################################
+            # Compute DVARS.
+            ##########################################################
+            if ! is_1D  ${dvars[cxt]} \
+            || rerun
                then
-               subroutine     @2.7  [Quality criterion: FD]
-               censor_criterion='fd['${cxt}']'
-            elif [[ ${prestats_censor_cr[cxt]} == rms ]]
-               then
-               subroutine     @2.8  [Quality criterion: RMS]
-               censor_criterion='rel_rms['${cxt}']'
+               subroutine     @2.7  Computing DVARS
+               exec_xcp dvars                         \
+                  -i    ${intermediate}_${cur}.nii.gz \
+                  -o    mc/${prefix}_dvars            \
+                  -s    ${intermediate}_${cur}
             fi
+            #######################################################
+            # Determine what criteria should be used to generate
+            # framewise quality variables and, if censoring is
+            # enabled, the temporal mask.
+            #
+            # Define framewise quality criteria.
+            #######################################################
+            subroutine        @2.8  [Selecting quality criteria]
+            q_criteria=( ${prestats_censor_cr[cxt]//,/ } )
+            q_mask_sum=${intermediate}_${cur}-nFlags.1D
+            exec_sys    rm -f ${q_mask_sum}
+            unset       dict_criteria flag_ct
+            declare -A  dict_criteria=(
+               [fd]='fd,framewise displacement'
+               [rms]='rel_rms,relative RMS displacement'
+               [dv]='dvars,standardised DVARS'
+            )
+            #######################################################
+            # Loop through the framewise quality metrics.
+            #######################################################
+            for i in ${!q_criteria[@]}
+               do
+               ####################################################
+               # Parse quality criterion
+               ####################################################
+               q_criterion=$(strslice ${q_criteria[i]} ':' 1)
+               q_threshold=$(strslice ${q_criteria[i]} ':' 2)
+               q_cr_var=$(strslice ${dict_criteria[$q_criterion]} 1)
+               q_crname=$(strslice ${dict_criteria[$q_criterion]} 2)
+               ####################################################
+               # Compute a framewise inclusion mask
+               ####################################################
+               subroutine     @2.9  [Quality criterion: "${q_crname} < ${q_threshold}"]
+               q_spkvar=${q_cr_var}'_n_spikes['${cxt}']'
+               q_spkpct=${q_cr_var}'_pct_spikes['${cxt}']'
+               q_cr_var=${q_cr_var}'['${cxt}']'
+               q_mask=${intermediate}_${cur}-${q_criterion}Mask.1D
+               q_masks=( ${q_masks[@]} ${q_mask} )
+               exec_xcp tmask.R                                \
+                  -s    ${!q_cr_var}                           \
+                  -t    ${q_threshold}                         \
+                  -o    ${q_mask}
+               ####################################################
+               # Count the number and rate of occurrences of
+               # superthreshold values.
+               ####################################################
+               mapfile q_ts                     <  ${q_mask}
+               n_spikes=$(ninstances 0             ${q_ts[@]})
+               n_volume=${#q_ts[@]}
+               if [[ -z ${flag_ct[@]} ]]
+                  then
+                  flag_ct=( $(repeat ${n_volume} ' 0') )
+               fi
+               pct_spikes=$(arithmetic "${n_spikes}/${n_volume}")
+               echo ${n_spikes}                 >> ${q_spkvar}
+               echo ${pct_spikes}               >> ${q_spkpct}
+               ####################################################
+               # Update the total number of times that each frame
+               # has been flagged.
+               ####################################################
+               for i in ${!q_ts[@]}
+                  do
+                  (( ${q_ts[i]} == 0 )) && (( flag_ct[i]++ ))
+               done
+            done
+            printf '%d\n' ${flag_ct[@]}         >> ${q_mask_sum}
             #######################################################
             # Determine whether motion censoring is enabled. If it
             # is, then prepare to create a temporal mask indicating
-            # whether each volume survives censoring.
+            # whether each volume survives censoring. This temporal
+            # mask will be generated as the union of all framewise
+            # flagging masks.
             #
             # Before creating a temporal mask, ensure that
             # censoring has not already been primed in the course
@@ -441,34 +511,32 @@ while (( ${#rem} > 0 ))
             #    type of censoring requested will be stored in one
             #    of the variables: censor[cxt] or censor[subjidx]
             #######################################################
-            censor_threshold=$(strslice ${prestats_censor[cxt]} 2)
             if (( ${censored[cxt]} != 1 ))
                then
-               subroutine     @2.9  [Applying motion threshold to volumes]
+               subroutine     @2.10 [Applying framewise threshold to time series]
                ####################################################
                # Create and write the temporal mask.
                # Use the criterion dimension and threshold
                # specified by the user to determine whether each
                # volume should be masked out.
                ####################################################
-               exec_xcp tmask.R \
-                  -s    ${!censor_criterion} \
-                  -t    ${censor_threshold} \
-                  -o    ${tmask[cxt]} \
+               exec_xcp tmask.R                    \
+                  -s    ${q_mask_sum}              \
+                  -t    0.5                        \
+                  -o    ${tmask[cxt]}              \
                   -m    ${prestats_censor_contig[cxt]}
                configure      censored    1
                ####################################################
                # Determine the number of volumes that fail the
                # motion criterion and print this.
                ####################################################
-               subroutine        @2.10 [Evaluating data quality]
-               censor_ts=$(  echo               $(<${tmask[cxt]}))
-               n_spikes=$(ninstances 0             ${censor_ts// /})
-               echo  ${n_spikes}             >> ${motion_vols[cxt]}
-               if (( ${n_spikes} ==  0 ))
+               subroutine        @2.11 [Evaluating data quality]
+               mapfile                 censor_ts < ${tmask[cxt]}
+               n_spikes=$(ninstances 0             ${censor_ts[@]})
+               if (( n_spikes ==  0 ))
                   then
-                  subroutine     @2.11 [Data is spike-free: deactivating censor]
-                  configure      censor         none
+                  subroutine     @2.12 [Data is spike-free: deactivating censor]
+                  configure            censor      none
                fi
             fi
          fi # run check statement
@@ -482,9 +550,9 @@ while (( ${#rem} > 0 ))
          #   successfully.
          # * Update the image pointer.
          ##########################################################
-         exec_sys rm -f ${intermediate}_${cur}.nii.gz
+         exec_sys rm -f  ${intermediate}_${cur}.nii.gz
          exec_sys rm -rf ${intermediate}_mc*.mat
-         exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+         exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
          intermediate=${intermediate}_${cur}
          routine_end
          ;;
@@ -674,7 +742,7 @@ while (( ${#rem} > 0 ))
                   ${st_arguments}
             else
                subroutine     @4.9
-               exec_sys ln -s ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+               exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
             fi
          fi # run check statement
          intermediate=${intermediate}_${cur}
@@ -781,19 +849,6 @@ while (( ${#rem} > 0 ))
                fslmaths ${intermediate}.nii.gz \
                -mas ${mask[cxt]} \
                ${intermediate}_${cur}.nii.gz
-         fi
-         ##########################################################
-         # Use the brain mask to compute DVARS.
-         ##########################################################
-         if ! is_1D  ${dvars[cxt]} \
-         || rerun
-            then
-            subroutine        @5.7  Computing DVARS
-            exec_xcp dvars                         \
-               -i    ${intermediate}_${cur}.nii.gz \
-               -o    mc/${prefix}_dvars            \
-               -s    ${intermediate}_${cur}        \
-               -b    ${meanIntensityBrain[cxt]}
          fi
          intermediate=${intermediate}_${cur}
          routine_end
