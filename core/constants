@@ -22,7 +22,7 @@ readonly PHI=1.61803398875
 [[ ! -d ${BRAINATLAS} ]] && readonly BRAINATLAS=${XCPEDIR}/atlas
 
 ###################################################################
-# Prime space, derivative, and atlas arrays. (bash v<4.2)
+# Prime space, derivative, atlas, and QC arrays. (bash v<4.2)
 ###################################################################
-unset       s d a
-declare  -A s d a
+unset       s d a qc
+declare  -A s d a qc

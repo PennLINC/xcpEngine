@@ -1,0 +1,11 @@
+qc() {
+   local path
+   if [[ ${3:0:1} == '/' ]]
+      then
+      path=${3}
+   else
+      path=${outdir}/${3}
+   fi
+   eval ${1}[${cxt}]=\${path}
+   qc[${2}]=${1}
+}
