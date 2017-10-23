@@ -22,34 +22,18 @@ source ${XCPEDIR}/core/parseArgsMod
 ###################################################################
 # MODULE COMPLETION
 ###################################################################
-completion() {
-   processed         remasked
-   
-   write_derivative  meanIntensityBrain
-   write_derivative  referenceVolumeBrain
-   write_derivative  mask
-   
-   write_output      seq2struct
-   write_output      struct2seq
-   write_output      e2smat
-   write_output      s2emat
-   
-   quality_metric    coregCoverage           coreg_coverage
-   quality_metric    coregCrossCorr          coreg_cross_corr
-   quality_metric    coregJaccard            coreg_jaccard
-   quality_metric    coregDice               coreg_dice
-   
-   transform_config  ${spaces[sub]} \
-                     itk:${seq2struct[cxt]} \
+completion() {   
+   transform_set     ${spaces[sub]}             \
+                     itk:${seq2struct[cxt]}     \
                      ${space[sub]}  ${structural[sub]}
-   transform_config  ${spaces[sub]} \
-                     fsl:${e2smat[cxt]} \
+   transform_set     ${spaces[sub]}             \
+                     fsl:${seq2struct_mat[cxt]} \
                      ${space[sub]}  ${structural[sub]}
-   transform_config  ${spaces[sub]} \
-                     itk:${struct2seq[cxt]} \
+   transform_set     ${spaces[sub]}             \
+                     itk:${struct2seq[cxt]}     \
                      ${structural[sub]}  ${space[sub]}
-   transform_config  ${spaces[sub]} \
-                     fsl:${s2emat[cxt]} \
+   transform_set     ${spaces[sub]}             \
+                     fsl:${struct2seq_mat[cxt]} \
                      ${structural[sub]}  ${space[sub]}
    
    source ${XCPEDIR}/core/auditComplete
@@ -82,8 +66,8 @@ esac
 
 require image  struct                  \
      as        targetReference
-space_config   ${spaces[sub]}   ${space[sub]} \
-         Map   ${sourceReference[cxt]}
+space_set      ${spaces[sub]}   ${space[sub]} \
+     Map       ${sourceReference[cxt]}
 
 add_reference  sourceReference[$cxt] ${prefix}_source
 add_reference  targetReference[$cxt] ${prefix}_target
@@ -95,19 +79,18 @@ configure   altreg2                 mutualinfo
 derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
-derivative  e2simg                  ${prefix}_seq2struct
-derivative  s2eimg                  ${prefix}_struct2seq
-derivative  e2smask                 ${prefix}_seq2structMask
-derivative  s2emask                 ${prefix}_struct2seqMask
 
 output      seq2struct              ${prefix}_seq2struct.txt
 output      struct2seq              ${prefix}_struct2seq.txt
-output      e2smat                  ${prefix}_seq2struct.mat
-output      s2emat                  ${prefix}_struct2seq.mat
-output      coreg_cross_corr        ${prefix}_coregCrossCorr.txt
-output      coreg_coverage          ${prefix}_coregCoverage.txt
-output      coreg_jaccard           ${prefix}_coregJaccard.txt
-output      coreg_dice              ${prefix}_coregDice.txt
+output      seq2struct_mat          ${prefix}_seq2struct.mat
+output      struct2seq_mat          ${prefix}_struct2seq.mat
+output      seq2struct_img          ${prefix}_seq2struct.nii.gz
+output      struct2seq_img          ${prefix}_struct2seq.nii.gz
+
+qc coreg_cross_corr  coregCrossCorr ${prefix}_coregCrossCorr.txt
+qc coreg_coverage    coregCoverage  ${prefix}_coregCoverage.txt
+qc coreg_jaccard     coregJaccard   ${prefix}_coregJaccard.txt
+qc coreg_dice        coregDice      ${prefix}_coregDice.txt
 
 process     remasked                ${prefix}_remasked
 
@@ -132,13 +115,10 @@ coreg_dice
    The Dice coefficient between structural and aligned analyte.
 coreg_jaccard
    The Jaccard coefficient between structural and aligned analyte.
-e2simg
+seq2struct_img
    The reference volume from the analyte sequence, aligned into
    structural space.
-e2smask
-   A binarised version of e2simg. Used to estimate the quality
-   of coregistration.
-e2smat
+seq2struct_mat
    The FSL-formatted affine transformation matrix containing a
    map from analyte space to structural space.
 fit
@@ -161,12 +141,9 @@ sourceReference
    anatomical image. This can either be an exemplar volume from the
    subject's 4D timeseries or the mean over all included volumes
    in the subject's 4D timeseries.
-s2eimg
+struct2seq_img
    The subject's structural image, aligned into analyte space.
-s2emask
-   A binarised version of s2eimg. Used to estimate the quality
-   of coregistration.
-s2emat
+struct2seq_mat
    The FSL-formatted affine transformation matrix containing a
    map from structural space to analyte space.
 seq2struct
@@ -197,7 +174,7 @@ DICTIONARY
 # must be extracted from the user-specified tissue segmentation.
 ###################################################################
 if [[ ${coreg_cfunc[cxt]} == bbr ]]; then
-if [[ ! -e ${e2smat[cxt]} ]] \
+if [[ ! -e ${seq2struct_mat[cxt]} ]] \
 || rerun
    then
    wm_mask=${intermediate}_t1wm.nii.gz
@@ -214,10 +191,10 @@ if [[ ! -e ${e2smat[cxt]} ]] \
       *)
          subroutine           @2.2a [Voxels with value ${coreg_wm[cxt]} correspond to white matter]
          subroutine           @2.2b [Thresholding out all other voxels and binarising image]
-         exec_xcp \
-            val2mask.R \
+         exec_xcp                \
+            val2mask.R           \
             -i ${coreg_seg[cxt]} \
-            -v ${coreg_wm[cxt]} \
+            -v ${coreg_wm[cxt]}  \
             -o ${wm_mask}
          ;;
       esac
@@ -271,7 +248,7 @@ routine_end
 ###################################################################
 routine                       @4    Executing affine coregistration
 registered=0
-if [[ ! -e ${e2smat[cxt]} ]] \
+if [[ ! -e ${seq2struct_mat[cxt]} ]] \
 || rerun
    then
    subroutine                 @4.1a [Cost function]
@@ -281,15 +258,15 @@ if [[ ! -e ${e2smat[cxt]} ]] \
    subroutine                 @4.1e [Reference volume]
    subroutine                 @4.1f [${struct[sub]}]
    subroutine                 @4.1g [Output volume]
-   subroutine                 @4.1h [${e2simg[cxt]}]
+   subroutine                 @4.1h [${seq2struct_img[cxt]}]
    exec_fsl flirt -in ${sourceReference[cxt]} \
-      -ref  ${struct[sub]} \
-      -dof  6 \
-      -out  ${e2simg[cxt]} \
-      -omat ${e2smat[cxt]} \
-      -cost ${coreg_cfunc[cxt]} \
-      ${refwt} \
-      ${inwt} \
+      -ref  ${struct[sub]}          \
+      -dof  6                       \
+      -out  ${seq2struct_img[cxt]}  \
+      -omat ${seq2struct_mat[cxt]}  \
+      -cost ${coreg_cfunc[cxt]}     \
+      ${refwt}                      \
+      ${inwt}                       \
       ${wm_mask_cmd}
    registered=1
 else
@@ -304,16 +281,18 @@ routine_end
 ###################################################################
 # Compute metrics of coregistration quality.
 ###################################################################
+seq2struct_mask=${intermediate}-seq2structMask.nii.gz
+struct2seq_mask=${intermediate}-struct2seqMask.nii.gz
 flag=0
 if [[ ! -e ${coreg_dice[cxt]} ]] \
 || rerun
    then
    routine                    @5    Quality assessment
    subroutine                 @5.1
-   exec_fsl fslmaths ${e2simg[cxt]} -bin ${e2smask[cxt]}
+   exec_fsl fslmaths ${seq2struct_img[cxt]} -bin ${seq2struct_mask}
    registration_quality=( $(exec_xcp \
-      maskOverlap.R \
-      -m ${e2smask[cxt]} \
+      maskOverlap.R           \
+      -m ${seq2struct_mask}   \
       -r ${struct[sub]}) )
    echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
    echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
@@ -379,13 +358,13 @@ if (( ${flag} == 1 ))
    ################################################################
    # Re-compute coregistration.
    ################################################################
-   exec_fsl flirt -in ${sourceReference[cxt]} \
-      -ref  ${struct[sub]} \
-      -dof  6 \
-      -out  ${intermediate}_seq2struct_alt \
-      -omat ${intermediate}_seq2struct_alt.mat \
-      -cost ${coreg_cfunc[cxt]} \
-      ${refwt} \
+   exec_fsl flirt -in ${sourceReference[cxt]}   \
+      -ref  ${struct[sub]}                      \
+      -dof  6                                   \
+      -out  ${intermediate}_seq2struct_alt      \
+      -omat ${intermediate}_seq2struct_alt.mat  \
+      -cost ${coreg_cfunc[cxt]}                 \
+      ${refwt}                                  \
       ${inwt}
    registered=1
    ################################################################
@@ -394,8 +373,8 @@ if (( ${flag} == 1 ))
    exec_fsl \
       fslmaths ${intermediate}_seq2struct_alt.nii.gz \
       -bin     ${intermediate}_seq2struct_alt_mask.nii.gz
-   registration_quality_alt=( $(exec_xcp \
-      maskOverlap.R \
+   registration_quality_alt=( $(
+   exec_xcp    maskOverlap.R  \
       -m       ${intermediate}_seq2struct_alt_mask.nii.gz \
       -r       ${struct[sub]}) )
    ################################################################
@@ -409,13 +388,12 @@ if (( ${flag} == 1 ))
       then
       subroutine              @6.5a [The coregistration result improved. However, you]
       subroutine              @6.5b [are encouraged to verify the results]
-      exec_sys mv    ${intermediate}_seq2struct_alt.mat  ${e2smat[cxt]}
-      exec_fsl immv  ${intermediate}_seq2struct_alt      ${e2simg[cxt]}
-      exec_fsl immv  ${intermediate}_seq2struct_alt_mask ${e2smask[cxt]}
-      exec_sys rm -f ${s2emat[cxt]}
+      exec_sys mv    ${intermediate}_seq2struct_alt.mat  ${seq2struct_mat[cxt]}
+      exec_fsl immv  ${intermediate}_seq2struct_alt      ${seq2struct_img[cxt]}
+      exec_sys rm -f ${struct2seq_mat[cxt]}
       exec_sys rm -f ${seq2struct[cxt]}
       exec_sys rm -f ${struct2seq[cxt]}
-      exec_sys rm -f ${s2eimg[cxt]}
+      exec_sys rm -f ${struct2seq_img[cxt]}
       exec_sys rm -f ${coreg_cross_corr[cxt]}
       exec_sys rm -f ${coreg_coverage[cxt]}
       exec_sys rm -f ${coreg_jaccard[cxt]}
@@ -424,7 +402,6 @@ if (( ${flag} == 1 ))
       echo     ${registration_quality_alt[1]} >> ${coreg_coverage[cxt]}
       echo     ${registration_quality_alt[2]} >> ${coreg_jaccard[cxt]}
       echo     ${registration_quality_alt[3]} >> ${coreg_dice[cxt]}
-      write_config            coreg_cfunc
    else
       subroutine              @6.6a [Coregistration failed to improve. This may be]
       subroutine              @6.6b [attributable to incomplete acquisition coverage]
@@ -444,10 +421,10 @@ if (( ${registered} == 1  ))
    then
    routine                    @7    Coregistration visual aids
    subroutine                 @7.1  [Slicewise rendering]
-   exec_xcp regslicer         \
-      -s    ${e2simg[cxt]}    \
-      -t    ${struct[sub]}    \
-      -i    ${intermediate}   \
+   exec_xcp regslicer               \
+      -s    ${seq2struct_img[cxt]}  \
+      -t    ${struct[sub]}          \
+      -i    ${intermediate}         \
       -o    ${outdir}/${prefix}_seq2struct
    routine_end
 fi
@@ -464,13 +441,13 @@ fi
 # pipelines and reduced disk usage.
 ###################################################################
 routine                       @8    Derivative transformations
-if [[ ! -e ${s2emat[cxt]} ]] \
+if [[ ! -e ${struct2seq_mat[cxt]} ]]   \
 || rerun
    then
    subroutine                 @8.1  [Computing inverse transformation]
-   exec_fsl    convert_xfm \
-      -omat    ${s2emat[cxt]} \
-      -inverse ${e2smat[cxt]}
+   exec_fsl    convert_xfm             \
+      -omat    ${struct2seq_mat[cxt]}  \
+      -inverse ${seq2struct_mat[cxt]}
 fi
 ###################################################################
 # The coregistration module uses an ITK-based helper script to
@@ -480,11 +457,11 @@ if [[ ! -e ${seq2struct[cxt]} ]] \
 || rerun
    then
    subroutine                 @8.2  [Converting coregistration .mat to ANTs format]
-   exec_c3d c3d_affine_tool \
+   exec_c3d c3d_affine_tool         \
       -src  ${sourceReference[cxt]} \
-      -ref  ${struct[sub]} \
-      ${e2smat[cxt]} \
-      -fsl2ras \
+      -ref  ${struct[sub]}          \
+      ${seq2struct_mat[cxt]}        \
+      -fsl2ras                      \
       -oitk ${seq2struct[cxt]}
 fi
 ###################################################################
@@ -494,29 +471,28 @@ if [[ ! -e ${struct2seq[cxt]} ]] \
 || rerun
    then
    subroutine                 @8.3  [Converting inverse coregistration .mat to ANTs format]
-   exec_c3d c3d_affine_tool \
-      -src  ${struct[sub]} \
+   exec_c3d c3d_affine_tool         \
+      -src  ${struct[sub]}          \
       -ref  ${sourceReference[cxt]} \
-      ${s2emat[cxt]} \
-      -fsl2ras \
+      ${struct2seq_mat[cxt]}        \
+      -fsl2ras                      \
       -oitk ${struct2seq[cxt]}
 fi
 ###################################################################
 # Compute the structural image in analytic space, and generate
 # a mask for that image.
 ###################################################################
-if ! is_image ${s2emask[cxt]} \
+if ! is_image ${struct2seq_img[cxt]} \
 || rerun
    then
-   subroutine                 @8.4  [Preparing inverse mask]
-   exec_ants \
-      antsApplyTransforms \
-      -e 3 -d 3 \
-      -r ${sourceReference[cxt]} \
-      -o ${s2eimg[cxt]} \
-      -i ${struct[sub]} \
+   subroutine                 @8.4  [Preparing inverse map]
+   exec_ants                        \
+      antsApplyTransforms           \
+      -e 3 -d 3                     \
+      -r ${sourceReference[cxt]}    \
+      -o ${struct2seq_img[cxt]}     \
+      -i ${struct[sub]}             \
       -t ${struct2seq[cxt]}
-   exec_fsl fslmaths ${s2eimg[cxt]} -bin ${s2emask[cxt]}
 fi
 routine_end
 
@@ -535,17 +511,19 @@ if (( ${coreg_mask[cxt]} == 1 ))
       then
       routine                 @9    Refining brain boundaries
       subroutine              @9.1  Refining brain boundary
-      exec_fsl fslmaths ${mask[sub]}                  \
-         -mul  ${s2emask[cxt]}   ${mask[cxt]}
+      exec_fsl fslmaths             ${struct2seq_img[cxt]}  \
+               -bin                 ${struct2seq_mask}
+      exec_fsl fslmaths             ${mask[sub]}            \
+         -mul  ${struct2seq_mask}   ${mask[cxt]}
       subroutine              @9.2  Applying refined mask
-      exec_fsl fslmaths ${intermediate}.nii.gz        \
-         -mul  ${mask[cxt]} ${remasked[cxt]}
-      ! is_image ${referenceVolumeBrain[sub]}         \
-      && exec_fsl fslmaths ${referenceVolume[sub]}    \
-            -mul  ${mask[cxt]} ${referenceVolumeBrain[cxt]}
-      ! is_image ${meanIntensityBrain[sub]}           \
-      && exec_fsl fslmaths ${meanIntensity[sub]}      \
-            -mul  ${mask[cxt]} ${meanIntensityBrain[cxt]}
+      exec_fsl    fslmaths          ${intermediate}.nii.gz  \
+         -mul     ${mask[cxt]}      ${remasked[cxt]}
+      ! is_image  ${referenceVolumeBrain[sub]}              \
+      && exec_fsl fslmaths          ${referenceVolume[sub]} \
+            -mul  ${mask[cxt]}      ${referenceVolumeBrain[cxt]}
+      ! is_image ${meanIntensityBrain[sub]}                 \
+      && exec_fsl fslmaths          ${meanIntensity[sub]}   \
+            -mul  ${mask[cxt]}      ${meanIntensityBrain[cxt]}
       routine_end
    fi
 fi
