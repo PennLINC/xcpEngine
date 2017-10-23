@@ -1,6 +1,7 @@
 ninstances() {
-   char=$1
+   local char=$1
    shift
-   reduced="${@//[^${char}]}"
+   local string=$(echo ${@})
+   reduced="${string//[^${char}]}"
    printf ${#reduced}
 }
