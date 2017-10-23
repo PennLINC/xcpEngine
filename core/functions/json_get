@@ -1,0 +1,4 @@
+json_get() {
+   (( ${#@} == 3 )) && eval echo $(echo "${!1}"|$JQ_PATH --raw-output '."'"${2}"'"."'"${3}"'"')
+   (( ${#@} == 2 )) && eval echo $(echo "${!1}"|$JQ_PATH --raw-output '."'"${2}"'"')
+}
