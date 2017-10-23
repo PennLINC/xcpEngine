@@ -32,10 +32,6 @@ for i in ${!declared_s[@]}
    do
    write_config_safe    ${declared_s[${i}]}
 done
-for i in ${!declared_q[@]}
-   do
-   quality_metric ${i}  ${declared_q[${i}]}
-done
 
 ###################################################################
 # Print workflow and clean up
