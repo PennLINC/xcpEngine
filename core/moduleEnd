@@ -9,6 +9,37 @@
 # GENERAL MODULE END
 ###################################################################
 
+###################################################################
+# Write outputs
+###################################################################
+for i in ${!declared_p[@]}
+   do
+   processed         ${declared_p[i]}
+done
+for i in ${!declared_d[@]}
+   do
+   write_derivative  ${declared_d[i]}
+done
+for i in ${!declared_o[@]}
+   do
+   write_output      ${declared_o[i]}
+done
+for i in ${!declared_c[@]}
+   do
+   write_config      ${declared_c[i]}
+done
+for i in ${!declared_s[@]}
+   do
+   write_config_safe ${declared_s[i]}
+done
+for i in ${!qc[@]}
+   do
+   quality_metric    ${i} ${qc[${i}]}
+done
+
+###################################################################
+# Print workflow and clean up
+###################################################################
 verbose && echo "
 
 
