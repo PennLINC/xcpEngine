@@ -1,4 +1,4 @@
-rep_pattern() {
+repeat() {
    local ct=$(eval echo {1..${1}})
    shift
    local pattern=${@}
