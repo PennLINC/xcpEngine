@@ -1,0 +1,4 @@
+json_keys() {
+   (( ${#@} == 1 )) && echo ${!1}|$JQ_PATH --raw-output 'keys[]'
+   (( ${#@} == 2 )) && echo ${!1}|$JQ_PATH --raw-output '."'"${2}"'"|keys[]'
+}
