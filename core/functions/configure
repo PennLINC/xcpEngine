@@ -1,3 +1,4 @@
 configure() {
    eval ${1}[${cxt}]=\"\${@:2}\"
+   declared_c=( ${declared_c[@]} ${1} )
 }

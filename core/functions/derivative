@@ -8,11 +8,12 @@ derivative() {
    fi
    vname=${1//[![:alnum:]|_]}
    eval ${vname}[${cxt}]=\${path}
-   export derivatives_floating=$(json_multiset derivatives_floating ${1} \
-                                 Map:${path}                      \
-                                 Space:${space[sub]}              \
-                                 ProvenanceName:${mod_name_short} \
-                                 ProvenanceIndex:${cxt}           \
-                                 Statistic:null                   \
-                                 Type:map )
+   json_multiset derivatives_floating ${1}         \
+                 Map:${path}                       \
+                 Space:${space[sub]}               \
+                 ProvenanceName:${mod_name_short}  \
+                 ProvenanceIndex:${cxt}            \
+                 Statistic:null                    \
+                 Type:Map
+   declared_d=( ${declared_d[@]} ${vname} )
 }

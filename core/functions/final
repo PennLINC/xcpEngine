@@ -2,6 +2,7 @@ final() {
    local path=${outdir}/${2}.nii.gz
    eval ${1}[${cxt}]=\${path}
    local output=${1}[${cxt}]
+   declared_p=${1}
    if is_image ${!output} \
    && ! rerun
       then
