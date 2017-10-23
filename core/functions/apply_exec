@@ -46,9 +46,9 @@ apply_exec() {
             then
             output_long=${output_long//.nii.gz/}
             derivative        ${d[Name]}              ${output_long//%NAME/${d[Name]}}
-            derivative_config ${d[Name]}  Type        ${d[Type]}
-            derivative_config ${d[Name]}  Space       ${d[Space]}
-            derivative_config ${d[Name]}  Statistic   ${d[Statistic]}
+            derivative_set    ${d[Name]}  Type        ${d[Type]}
+            derivative_set    ${d[Name]}  Space       ${d[Space]}
+            derivative_set    ${d[Name]}  Statistic   ${d[Statistic]}
          fi
       fi
    done
