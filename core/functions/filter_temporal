@@ -223,21 +223,21 @@ No censoring will be performed."
       subroutine           ${tag}.12a  [${tmpf} filter]
       subroutine           ${tag}.12b  [High pass frequency: ${hipass}]
       subroutine           ${tag}.12c  [Low pass frequency: ${lopass}]
-      exec_xcp tfilter \
-         -i    ${img_i}.nii.gz \
-         -o    ${img_o}.nii.gz \
-         -f    ${tmpf} \
-         -h    ${hipass} \
-         -l    ${lopass} \
+      exec_xcp tfilter           \
+         -i    ${img_i}.nii.gz   \
+         -o    ${img_o}.nii.gz   \
+         -f    ${tmpf}           \
+         -h    ${hipass}         \
+         -l    ${lopass}         \
          ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \
          ${tf_p_rip}    ${tf_s_rip}    ${ts1d}
-      apply_exec        timeseries     ${img_o}_%NAME \
-         xcp   tfilter \
-         -i    %INPUT \
-         -o    %OUTPUT \
-         -f    ${tmpf} \
-         -h    ${hipass} \
-         -l    ${lopass} \
+      apply_exec        TimeSeries     ${prefix}_%NAME \
+         xcp   tfilter           \
+         -i    %INPUT            \
+         -o    %OUTPUT           \
+         -f    ${tmpf}           \
+         -h    ${hipass}         \
+         -l    ${lopass}         \
          ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \
          ${tf_p_rip}    ${tf_s_rip}
       #############################################################

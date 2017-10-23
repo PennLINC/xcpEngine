@@ -1,0 +1,17 @@
+filter_temporal_prime() {
+
+<<USAGE
+
+This function is used to prime derivatives and inputs for temporal
+filtering.
+
+filter_temporal_prime
+
+It prepares module-level output paths for all derivatives of type
+time series.
+
+USAGE
+
+derivative_cxt Type:TimeSeries
+
+}

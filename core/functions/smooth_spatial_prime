@@ -20,7 +20,7 @@ shift
 for k in ${kernel[cxt]}
    do
    derivative        img_sm${k}     ${prefix}_img_sm${k}
-   derivative_config img_sm${k}     Type     timeseries
+   derivative_set    img_sm${k}     Type     TimeSeries
    for a in "${@}"
       do
       derivative     ${a}_sm${k}    ${prefix}_${a}_sm${k}
