@@ -24,7 +24,8 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   is_1D ${tmask[cxt]} && configure censored 1
+   unset  confproc
+   is_1D  ${tmask[cxt]} && configure censored 1
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -503,7 +504,7 @@ while (( ${#rem} > 0 ))
                   -t    0.5                        \
                   -o    ${tmask[cxt]}              \
                   -m    ${prestats_censor_contig[cxt]}
-               configure      censored    1
+               configure               censored    1
                ####################################################
                # Determine the number of volumes that fail the
                # motion criterion and print this.

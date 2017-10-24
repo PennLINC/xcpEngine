@@ -24,24 +24,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         residualised
-   
-   write_output      confmat
-   write_output      confcor
-   write_output      uncensored
-   
-   quality_metric    nVolCensored            n_volumes_censored
-
-   for k in ${kernel[cxt]}
-      do
-      write_derivative  img_sm${k}
-   done
-   
-   apply_exec        timeseries              ${prefix}_%NAME \
-      sys            ls %OUTPUT              >/dev/null 2>&1
-   apply_exec        timeseries              ${prefix}_%NAME \
-      sys            write_derivative        %NAME 2>/dev/null
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -56,14 +38,16 @@ completion() {
 ###################################################################
 output      confmat                 ${prefix}_confmat.1D
 output      confcor                 ${prefix}_confcor.txt
-output      n_volumes_censored      ${prefix}_nVolumesCensored.txt
 output      tmask                   ${prefix}_tmask.1D
 output      uncensored              ${prefix}_uncensored.nii.gz
+
+qc n_volumes_censored nVolCensored  ${prefix}_nVolumesCensored.txt
 
 input       confmat as confproc
 input       censor
 
 smooth_spatial_prime                ${regress_smo[cxt]}
+filter_temporal_prime
 
 process     residualised            ${prefix}_residualised
 
@@ -311,7 +295,6 @@ to ensure that this is intentional.
 Overriding user input:
 No censoring will be performed."
       configure               censor   none
-      write_config            censor
       routine_end
    fi
 fi

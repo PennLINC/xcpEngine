@@ -23,18 +23,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   write_derivative  gmMask
-   write_derivative  wmMask
-   write_derivative  csfMask
-   write_derivative  gmLocal
-   write_derivative  wmLocal
-   write_derivative  csfLocal
-   write_derivative  lmsLocal
-   
-   write_output      confmat
-   
-   quality_metric    nNuisanceParameters     nuisance_ct
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -47,7 +35,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   confmat                 null
+output      confmat                 null
 
 derivative  gmMask                  ${prefix}_gmMask
 derivative  wmMask                  ${prefix}_wmMask
@@ -57,12 +45,15 @@ derivative  wmLocal                 ${prefix}_wmLocal
 derivative  csfLocal                ${prefix}_csfLocal
 derivative  lmsLocal                ${prefix}_meanLocal
 
-output      nuisance_ct             ${prefix}_modelParameterCount.txt
+qc nuisance_ct nNuisanceParameters  ${prefix}_modelParameterCount.txt
 
-derivative_config   gmLocal         Type              timeseries-confound
-derivative_config   wmLocal         Type              timeseries-confound
-derivative_config   csfLocal        Type              timeseries-confound
-derivative_config   lmsLocal        Type              timeseries-confound
+derivative_set    gmLocal  Type     TimeSeries-Confound
+derivative_set    wmLocal  Type     TimeSeries-Confound
+derivative_set    csfLocal Type     TimeSeries-Confound
+derivative_set    lmsLocal Type     TimeSeries-Confound
+derivative_set    gmMask   Type     Mask
+derivative_set    wmMask   Type     Mask
+derivative_set    csfMask  Type     Mask
 
 << DICTIONARY
 
@@ -125,9 +116,9 @@ if (( ${confound_rp[cxt]} == 1 ))
    then
    subroutine                 @1    [Including realignment parameters]
    require rps
-   exec_xcp mbind.R \
-      -x ${confmat[cxt]} \
-      -y ${rps[sub]} \
+   exec_xcp mbind.R           \
+      -x ${confmat[cxt]}      \
+      -y ${rps[sub]}          \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
@@ -145,9 +136,9 @@ if (( ${confound_rms[cxt]} == 1 ))
    then
    subroutine                 @2    Including relative RMS displacement
    require relrms
-   exec_xcp mbind.R \
-      -x ${confmat[cxt]} \
-      -y ${relrms[sub]} \
+   exec_xcp mbind.R           \
+      -x ${confmat[cxt]}      \
+      -y ${relrms[sub]}       \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
@@ -211,9 +202,9 @@ for class in "${!tissue_classes[@]}"
          # standardised, then instead move it to standard space.
          ##########################################################
          subroutine           @3.2
-         warpspace \
-            ${mask}.nii.gz \
-            ${!class_mask} \
+         warpspace            \
+            ${mask}.nii.gz    \
+            ${!class_mask}    \
             ${structural[sub]}:${space[sub]} \
             NearestNeighbor
       fi
@@ -230,13 +221,13 @@ for class in "${!tissue_classes[@]}"
          # transformed mask.
          ##########################################################
          subroutine           @3.3
-         exec_fsl \
-            fslmeants   -i ${img} \
-            -o          ${ts}.1D \
+         exec_fsl                   \
+            fslmeants   -i ${img}   \
+            -o          ${ts}.1D    \
             -m          ${!class_mask}
-         exec_xcp mbind.R \
-            -x    ${confmat[cxt]} \
-            -y    ${ts}.1D \
+         exec_xcp mbind.R           \
+            -x    ${confmat[cxt]}   \
+            -y    ${ts}.1D          \
             -o    ${confmat_path}
          output   confmat        ${prefix}_confmat.1D
       elif is+integer ${!class_include}
@@ -246,10 +237,10 @@ for class in "${!tissue_classes[@]}"
          # Fixed number of PCs.
          ##########################################################
          subroutine           @3.4
-         exec_afni      3dpc \
-            -prefix     ${ts} \
+         exec_afni      3dpc              \
+            -prefix     ${ts}             \
             -pcsave     ${!class_include} \
-            -mask       ${!class_mask} \
+            -mask       ${!class_mask}    \
             ${img}
          cc_components=$(( ${cc_components} + ${!class_include} ))
       elif [[ ${!class_include} == all ]]
@@ -260,9 +251,9 @@ for class in "${!tissue_classes[@]}"
          # Please don't do this?
          ##########################################################
          subroutine           @3.5
-         exec_afni      3dpc \
-            -prefix     ${ts} \
-            -pcsave     99999 \
+         exec_afni      3dpc           \
+            -prefix     ${ts}          \
+            -pcsave     99999          \
             -mask       ${!class_mask} \
             ${img}
          vidx=$(tail    -n1 ${ts}.1D|wc -w)
@@ -274,8 +265,8 @@ for class in "${!tissue_classes[@]}"
          # Cumulative variance explained.
          ##########################################################
          subroutine           @3.6
-         exec_afni      3dpc \
-            -prefix     ${ts} \
+         exec_afni      3dpc           \
+            -prefix     ${ts}          \
             -mask       ${!class_mask} \
             ${img}
          readarray      variance_explained < ${ts}_eig.1D
@@ -288,9 +279,9 @@ for class in "${!tissue_classes[@]}"
             ((       vidx++      ))
          done
          subroutine           @3.7  [Retaining ${vidx} components from ${class_name}]
-         exec_afni      3dpc \
-            -prefix     ${ts} \
-            -pcsave     ${vidx} \
+         exec_afni      3dpc           \
+            -prefix     ${ts}          \
+            -pcsave     ${vidx}        \
             -mask       ${!class_mask} \
             ${img}
          cc_components=$(( ${cc_components} + ${vidx} ))
@@ -299,24 +290,24 @@ for class in "${!tissue_classes[@]}"
          subroutine           @3.8  Modelling voxelwise ${class_name} signal
          class_radius='confound_'${class}'_rad['${cxt}']'
          class_local=${class}'Local['${cxt}']'
-         if ! is_image        ${!class_local} \
+         if ! is_image        ${!class_local}   \
          || rerun
             then
             subroutine        @3.9  Radius of influence: ${!class_radius} mm
             exec_sys          rm -f ${!class_local}
-            exec_afni         3dLocalstat \
-               -prefix        ${!class_local} \
+            exec_afni         3dLocalstat       \
+               -prefix        ${!class_local}   \
                -nbhd          'SPHERE('"${!class_radius}"')' \
-               -stat          mean \
-               -mask          ${!class_mask} \
-               -use_nonmask \
+               -stat          mean              \
+               -mask          ${!class_mask}    \
+               -use_nonmask                     \
                ${img}
             #######################################################
             # . . . and confine the nuisance signal to the existing
             # brain mask.
             #######################################################
-            exec_fsl fslmaths ${!class_local} \
-               -mul ${mask[sub]} \
+            exec_fsl fslmaths ${!class_local}   \
+               -mul ${mask[sub]}                \
                ${!class_local}
          fi
       fi
@@ -351,10 +342,10 @@ if [[ ${confound_gsr[cxt]} != N ]]
       subroutine              @4.2a Unable to identify mask
       subroutine              @4.2b Generating a mask using 3dAutomask
       maskpath=${intermediate}_mask.nii.gz
-      exec_afni   3dAutomask \
+      exec_afni   3dAutomask  \
          -prefix  ${maskpath} \
-         -dilate  3 \
-         -q \
+         -dilate  3           \
+         -q                   \
          ${referenceVolume[sub]}
    fi
    ################################################################
@@ -366,9 +357,9 @@ if [[ ${confound_gsr[cxt]} != N ]]
       subroutine              @4.3  Including mean global signal
       ts=${intermediate}_phys_gsr
       exec_fsl fslmeants   -i ${img} -o ${ts} -m ${maskpath}
-      exec_xcp mbind.R \
-         -x    ${confmat[cxt]} \
-         -y    ${ts} \
+      exec_xcp mbind.R           \
+         -x    ${confmat[cxt]}   \
+         -y    ${ts}             \
          -o    ${confmat_path}
       output   confmat                 ${prefix}_confmat.1D
    elif [[ ${confound_gsr[cxt]} ==  local ]]
@@ -380,19 +371,19 @@ if [[ ${confound_gsr[cxt]} != N ]]
          subroutine           @4.5  "Modelling local signal: All voxels"
          subroutine           @4.6  Radius of influence: ${confound_gsr_rad[cxt]}
          exec_sys             rm -f ${lmsLocal[cxt]}
-         exec_afni            3dLocalstat \
-            -prefix           ${lmsLocal[cxt]} \
+         exec_afni            3dLocalstat       \
+            -prefix           ${lmsLocal[cxt]}  \
             -nbhd             'SPHERE('"${confound_lms_rad[cxt]}"')' \
-            -stat             mean \
-            -mask             ${mask[sub]} \
-            -use_nonmask \
+            -stat             mean              \
+            -mask             ${mask[sub]}      \
+            -use_nonmask                        \
             ${img}
          ##########################################################
          # . . . and confine the nuisance signal to the existing
          # brain mask.
          ##########################################################
-         exec_fsl fslmaths ${lmsLocal[cxt]} \
-            -mul  ${mask[sub]} \
+         exec_fsl fslmaths ${lmsLocal[cxt]}     \
+            -mul  ${mask[sub]}                  \
             ${lmsLocal[cxt]}
       fi
    fi
@@ -420,8 +411,8 @@ fi
 if (( ${confound_past[cxt]} > 0 ))
    then
    subroutine                 @5    "Including ${confound_past[cxt]} prior time point(s)"
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
       -y    OPprev${confound_past[cxt]} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
@@ -449,8 +440,8 @@ fi
 if (( ${confound_dx[cxt]} > 0 ))
    then
    subroutine                 @6    "[Including ${confound_dx[cxt]} derivative(s)]"
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
       -y    OPdx${confound_dx[cxt]} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
@@ -478,8 +469,8 @@ fi
 if (( ${confound_sq[cxt]} > 1 ))
    then
    subroutine                 @7    "[Including ${confound_sq[cxt]} power(s)]"
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
       -y    OPpower${confound_sq[cxt]} \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
@@ -512,10 +503,10 @@ if (( ${confound_cc[cxt]} > 0 ))
       subroutine              @8.2  Unable to identify mask.
       subroutine              @8.3  Generating a mask using 3dAutomask
       maskpath=${intermediate}_mask.nii.gz
-      exec_afni   3dAutomask \
+      exec_afni   3dAutomask  \
          -prefix  ${maskpath} \
-         -dilate  3 \
-         -q \
+         -dilate  3           \
+         -q                   \
          ${referenceVolume[sub]}
    fi
    ################################################################
@@ -529,8 +520,8 @@ if (( ${confound_cc[cxt]} > 0 ))
    cc=${intermediate}_compcor.1D
    exec_sys          rm       -f ${cc}
    exec_ants         ImageMath 4 ${intermediate}_confound.nii.gz \
-      CompCorrAuto   ${img} \
-      ${maskpath} \
+      CompCorrAuto   ${img}   \
+      ${maskpath}             \
       ${confound_cc[cxt]}
    readarray      ccdata   <  ${intermediate}_confound_compcorr.csv
    for (( cidx=1; ${cidx}  <= $(( ${#ccdata[@]} - 1));   cidx++ ))
@@ -542,9 +533,9 @@ if (( ${confound_cc[cxt]} > 0 ))
    ################################################################
    # Add the component timeseries to the confound matrix.
    ################################################################
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
-      -y    ${cc} \
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${cc}             \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
@@ -564,27 +555,27 @@ fi
 if is+numeric ${confound_gm[cxt]}
    then
    subroutine                 @9.1  "[Including ${confound_gm[cxt]} GM aCompCor signal(s)]"
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
-      -y    ${gm} \
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${gm}             \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
 if is+numeric ${confound_wm[cxt]}
    then
    subroutine                 @9.2  "[Including ${confound_wm[cxt]} WM aCompCor signal(s)]"
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
-      -y    ${wm} \
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${wm}             \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
 if is+numeric ${confound_csf[cxt]}
    then
    subroutine                 @9.3  "Including ${confound_csf[cxt]} CSF aCompCor signal(s)"
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
-      -y    ${csf} \
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${csf}            \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
@@ -621,10 +612,10 @@ for cts  in ${confound_custom_ts}
    if (( ${stick} == 1 ))
       then
       subroutine              @10.1
-      exec_xcp stick2lm.R \
-         -i    ${img} \
-         -s    ${cts} \
-         -d    FALSE \
+      exec_xcp stick2lm.R     \
+         -i    ${img}         \
+         -s    ${cts}         \
+         -d    FALSE          \
          >>    ${intermediate}convts.1D
    else
       subroutine              @10.2
@@ -635,9 +626,9 @@ for cts  in ${confound_custom_ts}
    # Identify the row in which the timeseries matrix proper
    # begins if the input is an FSL-style design matrix.
    ################################################################
-   exec_xcp mbind.R \
-      -x    ${confmat[cxt]} \
-      -y    ${cts} \
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${cts}            \
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
    exec_sys rm -f             ${intermediate}convts.1D

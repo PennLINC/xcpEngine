@@ -35,7 +35,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-define      voxts                   ${prefix}_voxts.png
+define      voxts                   ${outdir}/${prefix}_voxts.png
 output      depthMap                ${prefix}_depthMap.nii.gz
 qc t_dof  estimatedLostTemporalDOF  ${prefix}_tdof.txt
 
