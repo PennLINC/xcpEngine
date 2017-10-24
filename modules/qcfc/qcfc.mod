@@ -22,11 +22,7 @@ source ${XCPEDIR}/core/parseArgsMod
 ###################################################################
 # MODULE COMPLETION
 ###################################################################
-completion() {
-   quality_metric    estimatedLostTemporalDOF         t_dof
-   
-   write_output      depthMap
-   
+completion() {   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -39,13 +35,13 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-output      voxts                   ${prefix}_voxts.png
-output      t_dof                   ${prefix}_tdof.txt
-derivative  depthMap                ${prefix}_depthMap
+define      voxts                   ${prefix}_voxts.png
+output      depthMap                ${prefix}_depthMap.nii.gz
+qc t_dof  estimatedLostTemporalDOF  ${prefix}_tdof.txt
 
 input       depthMap
-input       residualised \
-   or       icaDenoised  \
+input       residualised       \
+   or       icaDenoised        \
    as       denoised
 input       residualised_space \
    or       icaDenoised_space  \

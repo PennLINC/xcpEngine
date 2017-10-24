@@ -42,14 +42,14 @@ completion() {
 # OUTPUTS
 ###################################################################
 declare_atlas_outputs() {
-   output   qcfc_n_sig_edges        ${sequence}_QC-FC_nSigEdges_${a[Name]}.txt
-   output   qcfc_pct_sig_edges      ${sequence}_QC-FC_pctSigEdges_${a[Name]}.txt
-   output   qcfc_abs_med_cor        ${sequence}_QC-FC_absMedCor_${a[Name]}.txt
-   output   qcfc_base               ${sequence}_QC-FC_correlation_${a[Name]}
-   output   qcfc_dist_dependence    ${sequence}_QC-FC_distanceDependence_${a[Name]}.txt
-   output   qcfc_correlation        ${sequence}_QC-FC_correlation_${a[Name]}.txt
-   output   qcfc_correlation_thr    ${sequence}_QC-FC_correlation_thr_${a[Name]}.txt
-   output   node_distance           ${sequence}_node_distance_${a[Name]}.txt
+   define   qcfc_n_sig_edges        ${sequence}_QC-FC_nSigEdges_${a[Name]}.txt
+   define   qcfc_pct_sig_edges      ${sequence}_QC-FC_pctSigEdges_${a[Name]}.txt
+   define   qcfc_abs_med_cor        ${sequence}_QC-FC_absMedCor_${a[Name]}.txt
+   define   qcfc_base               ${sequence}_QC-FC_correlation_${a[Name]}
+   define   qcfc_dist_dependence    ${sequence}_QC-FC_distanceDependence_${a[Name]}.txt
+   define   qcfc_correlation        ${sequence}_QC-FC_correlation_${a[Name]}.txt
+   define   qcfc_correlation_thr    ${sequence}_QC-FC_correlation_thr_${a[Name]}.txt
+   define   node_distance           ${sequence}_node_distance_${a[Name]}.txt
 }
 
 <<DICTIONARY
