@@ -100,6 +100,10 @@ case ${trace} in
    ;;
 esac
 ###################################################################
+# Prime indices of variables declared in the module context.
+###################################################################
+declare -A declared_d declared_o declared_c declared_s declared_q
+###################################################################
 # Initialise the module.
 ###################################################################
 subject_parse     ${subject}  ${subjinfo[1]}
