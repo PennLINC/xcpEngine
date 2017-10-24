@@ -15,6 +15,7 @@ source ${LIBRARY}/add_reference
 source ${LIBRARY}/apply_exec
 source ${LIBRARY}/arithmetic
 source ${LIBRARY}/assign
+source ${LIBRARY}/atlas
 source ${LIBRARY}/atlas_add
 source ${LIBRARY}/atlas_check
 source ${LIBRARY}/atlas_config
@@ -22,9 +23,12 @@ source ${LIBRARY}/atlas_parse
 source ${LIBRARY}/atlas_set
 source ${LIBRARY}/cleanup
 source ${LIBRARY}/configure
+source ${LIBRARY}/configures
 source ${LIBRARY}/contains
+source ${LIBRARY}/define
 source ${LIBRARY}/derivative
 source ${LIBRARY}/derivative_config
+source ${LIBRARY}/derivative_cxt
 source ${LIBRARY}/derivative_floats
 source ${LIBRARY}/derivative_parse
 source ${LIBRARY}/derivative_set
@@ -68,6 +72,7 @@ source ${LIBRARY}/printx
 source ${LIBRARY}/proc_afni
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
+source ${LIBRARY}/qc
 source ${LIBRARY}/quality_metric
 source ${LIBRARY}/repeat
 source ${LIBRARY}/require
@@ -76,6 +81,8 @@ source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
 source ${LIBRARY}/set_space
 source ${LIBRARY}/space_config
+source ${LIBRARY}/space_get
+source ${LIBRARY}/space_set
 source ${LIBRARY}/strslice
 source ${LIBRARY}/subroutine
 source ${LIBRARY}/subject_parse

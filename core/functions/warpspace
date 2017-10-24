@@ -73,13 +73,13 @@ warpspace() {
       #     is a space or a transform. Spaces include the 'Map'
       #     property, while transforms do not.
       #############################################################
-      node_chk=$(json_get s_json Map ${k})
+      node_chk=$(json_get s_json ${k} Map)
       k=${k//\"/}
       #############################################################
       #     Add spaces to the list of available nodes.
       #     First ensure that the space is not already listed.
       #############################################################
-      if [[   -n ${node_chk} ]]
+      if [[ ${node_chk} != null ]]
          then
          k=${k//\%*/}
          [[ ${nodes[@]//${k}/} == ${nodes} ]] && nodes=("${nodes[@]}" ${k})

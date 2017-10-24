@@ -3,6 +3,9 @@ output() {
    if [[ ${2:0:1} == '/' ]]
       then
       path=${2}
+   elif [[ ${2} == null ]]
+      then
+      path=null
    else
       path=${outdir}/${2}
    fi
