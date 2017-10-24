@@ -61,6 +61,20 @@ qc rel_max_rms  relMaxRMSMotion     mc/${prefix}_relMaxRMS.txt
 qc rel_mean_rms relMeanRMSMotion    mc/${prefix}_relMeanRMS.txt
 qc fd           nFramesHighMotion   mc/${prefix}_fd.1D
 
+declare_copes() {
+for i in ${!cpe[@]}
+   do
+   derivative     contrast${i}_${cpe[i]}                 \
+                  contrasts/${prefix}_contrast${i}_${cpe[i]}
+   derivative     sigchange_contrast${i}_${cpe[i]}       \
+                  sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
+   derivative     varcope${i}_${cpe[i]}                  \
+                  varcopes/${prefix}_varcope${i}_${cpe[i]}
+   derivative_set sigchange_contrast${i}_${cpe[i]}       \
+                  Statistic      mean
+done
+}
+
 process     processed               ${prefix}_processed
 
 << DICTIONARY
@@ -255,17 +269,7 @@ routine_end
 ###################################################################
 # Declare each contrast and % signal change map as a derivative.
 ###################################################################
-for i in ${!cpe[@]}
-   do
-   derivative     contrast${i}_${cpe[i]} \
-                  contrasts/${prefix}_contrast${i}_${cpe[i]}
-   derivative     sigchange_contrast${i}_${cpe[i]} \
-                  sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
-   derivative     varcope${i}_${cpe[i]} \
-                  varcopes/${prefix}_varcope${i}_${cpe[i]}
-   derivative_set sigchange_contrast${i}_${cpe[i]} \
-                  Statistic      mean
-done
+declare_copes
 
 
 
@@ -353,16 +357,16 @@ if [[ -d ${featout} ]]
       exec_sys mv -f ${featout}/mc/*abs_mean.rms   ${abs_mean_rms[cxt]}
       exec_sys mv -f ${featout}/mc/*.mat           ${rmat[cxt]}
       exec_sys mv -f ${featout}/mc/*.png           ${mcdir[cxt]}
-      exec_xcp 1dTool.R \
-         -i    ${rel_rms[cxt]} \
-         -o    max \
+      exec_xcp 1dTool.R             \
+         -i    ${rel_rms[cxt]}      \
+         -o    max                  \
          -f    ${rel_max_rms[cxt]}
-      exec_xcp fd.R \
-         -r    ${rps[cxt]} \
+      exec_xcp fd.R                 \
+         -r    ${rps[cxt]}          \
          -o    ${fd[cxt]}
-      exec_xcp tmask.R \
+      exec_xcp tmask.R              \
          -s    ${!censor_criterion} \
-         -t    ${censor_threshold} \
+         -t    ${censor_threshold}  \
          -o    ${intermediate}-tmask.1D \
          -m    ${prestats_censor_contig[cxt]}
       censor_ts=$(  echo               $(<${intermediate}-tmask.1D))
