@@ -23,34 +23,11 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         processed
-   
-   write_derivative  meanIntensity
-   write_derivative  meanIntensityBrain
-   write_derivative  referenceVolume
-   write_derivative  referenceVolumeBrain
-   write_derivative  mask
-   
-   write_output      mcdir
-   write_output      rps
-   write_output      rel_rms
-   write_output      fd
-   
-   for i in ${!cpe[@]}
-      do
-      write_derivative  contrast${i}_${cpe[i]}
-      write_derivative  sigchange_contrast${i}_${cpe[i]}
-      write_derivative  varcope${i}_${cpe[i]}
-   done
    if is_image ${referenceVolumeBrain[cxt]}
       then
-      space_config   ${spaces[sub]}   ${space[sub]} \
-               Map   ${referenceVolumeBrain[cxt]}
+      space_set   ${spaces[sub]}   ${space[sub]} \
+            Map   ${referenceVolumeBrain[cxt]}
    fi
-   
-   quality_metric    relMeanRMSMotion        rel_mean_rms
-   quality_metric    relMaxRMSMotion         rel_max_rms
-   quality_metric    nFramesHighMotion       motion_vols
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -77,11 +54,12 @@ output      rps                     mc/${prefix}_realignment.1D
 output      abs_rms                 mc/${prefix}_absRMS.1D
 output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
 output      rel_rms                 mc/${prefix}_relRMS.1D
-output      rel_max_rms             mc/${prefix}_relMaxRMS.txt
-output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt
 output      rmat                    mc/${prefix}.mat
-output      fd                      mc/${prefix}_fd.1D
 output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
+
+qc rel_max_rms  relMaxRMSMotion     mc/${prefix}_relMaxRMS.txt
+qc rel_mean_rms relMeanRMSMotion    mc/${prefix}_relMeanRMS.txt
+qc fd           nFramesHighMotion   mc/${prefix}_fd.1D
 
 process     processed               ${prefix}_processed
 
@@ -279,14 +257,14 @@ routine_end
 ###################################################################
 for i in ${!cpe[@]}
    do
-   derivative  contrast${i}_${cpe[i]} \
-               contrasts/${prefix}_contrast${i}_${cpe[i]}
-   derivative  sigchange_contrast${i}_${cpe[i]} \
-               sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
-   derivative  varcope${i}_${cpe[i]} \
-               varcopes/${prefix}_varcope${i}_${cpe[i]}
-   derivative_config sigchange_contrast${i}_${cpe[i]} \
-               Statistic      mean
+   derivative     contrast${i}_${cpe[i]} \
+                  contrasts/${prefix}_contrast${i}_${cpe[i]}
+   derivative     sigchange_contrast${i}_${cpe[i]} \
+                  sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
+   derivative     varcope${i}_${cpe[i]} \
+                  varcopes/${prefix}_varcope${i}_${cpe[i]}
+   derivative_set sigchange_contrast${i}_${cpe[i]} \
+                  Statistic      mean
 done
 
 

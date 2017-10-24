@@ -23,23 +23,10 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         struct
-   
-   write_derivative  mask
-   write_derivative  segmentation
-   write_derivative  biasCorrected
-   write_derivative  corticalThickness
-   write_derivative  corticalContrast
-   
-   write_output      meanIntensity
-   write_output      meanIntensityBrain
-   write_output      referenceVolume
-   write_output      referenceVolumeBrain
-   
    if is_image ${referenceVolumeBrain[cxt]}
       then
-      space_config   ${spaces[sub]}   ${space[sub]} \
-               Map   ${referenceVolumeBrain[cxt]}
+      space_set   ${spaces[sub]}   ${space[sub]} \
+            Map   ${referenceVolumeBrain[cxt]}
    fi
    
    exec_xcp spaceMetadata \
@@ -49,11 +36,6 @@ completion() {
       -x    ${xfm_affine[cxt]},${xfm_warp[cxt]} \
       -i    ${ixfm_warp[cxt]},${ixfm_affine[cxt]} \
       -s    ${spaces[sub]}
-   
-   quality_metric    regCoverage            reg_coverage
-   quality_metric    regCrossCorr           reg_cross_corr
-   quality_metric    regJaccard             reg_jaccard
-   quality_metric    regDice                reg_dice
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -77,8 +59,8 @@ for i in {1..6}
    derivative  segmentationPosteriors  ${prefix}_BrainSegmentationPosteriors${i}
 done
 
-derivative_config    corticalThickness        Statistic        mean
-derivative_config    corticalContrast         Statistic        mean
+derivative_set corticalThickness    Statistic        mean
+derivative_set corticalContrast     Statistic        mean
 
 output      struct_std              ${prefix}_BrainNormalizedToTemplate.nii.gz
 output      corticalThickness_std   ${prefix}_CorticalThicknessNormalizedToTemplate.nii.gz
@@ -87,11 +69,12 @@ output      referenceVolume         ${prefix}_BrainSegmentation0N4.nii.gz
 output      referenceVolumeBrain    ${prefix}_ExtractedBrain0N4.nii.gz
 output      meanIntensity           ${prefix}_BrainSegmentation0N4.nii.gz
 output      meanIntensityBrain      ${prefix}_ExtractedBrain0N4.nii.gz
-output      reg_cross_corr          ${prefix}_regCrossCorr.txt
-output      reg_coverage            ${prefix}_regCoverage.txt
-output      reg_jaccard             ${prefix}_regJaccard.txt
-output      reg_dice                ${prefix}_regDice.txt
 output      str2stdmask             ${prefix}_str2stdmask.nii.gz
+
+qc reg_cross_corr regCrossCorr      ${prefix}_regCrossCorr.txt
+qc reg_coverage   regCoverage       ${prefix}_regCoverage.txt
+qc reg_jaccard    regJaccard        ${prefix}_regJaccard.txt
+qc reg_dice       regDice           ${prefix}_regDice.txt
 
 output      xfm_affine              ${prefix}_SubjectToTemplate0GenericAffine.mat
 output      xfm_warp                ${prefix}_SubjectToTemplate1Warp.nii.gz
