@@ -23,8 +23,8 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_config   ${a[Name]}   Map                 ${nodemap[cxt]}
-   atlas_config   ${a[Name]}   Space               ${space[sub]}
+   atlas_set   ${a[Name]}   Map                 ${nodemap[cxt]}
+   atlas_set   ${a[Name]}   Space               ${space[sub]}
 }
 
 completion() {

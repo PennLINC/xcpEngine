@@ -24,8 +24,9 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
+   contains ${prestats_process[cxt]} 'DMT' && configure demeaned 1
+   is_1D    ${tmask[cxt]}                  && configure censored 1
    unset  confproc
-   is_1D  ${tmask[cxt]} && configure censored 1
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd

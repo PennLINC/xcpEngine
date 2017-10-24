@@ -188,7 +188,6 @@ if ! is_image ${reho[cxt]} \
             else
                subroutine     @2.4.3
                configure      reho_sptf      uniform
-               write_config   reho_sptf
             fi
          fi
          ##########################################################
