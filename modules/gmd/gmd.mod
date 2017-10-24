@@ -27,14 +27,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   write_derivative  gmd
-   write_derivative  probabilityCSF
-   write_derivative  probabilityGM
-   write_derivative  probabilityWM
-   write_derivative  segmentation3class
-   
-   quality_metric    meanGMD                mean_gmd
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -53,9 +45,9 @@ derivative  probabilityWM           ${prefix}_probabilityWM
 derivative  segmentation3class      ${prefix}_segmentation3class
 derivative  gmd                     ${prefix}_gmd
 
-derivative_config gmd               Statistic mean
+derivative_set    gmd Statistic     mean
 
-output      mean_gmd                ${prefix}_mean_gmd
+qc          mean_gmd meanGMD        ${prefix}_mean_gmd
 
 add_reference                       img[$sub] ${prefix}_raw
 

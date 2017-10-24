@@ -24,20 +24,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         icaDenoised
-   
-   write_derivative  ic_maps
-   write_derivative  ic_maps_thr
-   write_derivative  ic_maps_thr_mni
-   
-   write_output      melodir
-   write_output      ic_class
-   write_output      ic_mix
-   
-   write_config      demeaned
-   
-   quality_metric    nICsNoise               ic_noise
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -60,12 +46,13 @@ output      ic_ft                   ${prefix}_ic_ft.1D
 output      ic_ts                   ${prefix}_ic_ts.1D
 output      ic_confmat              ${prefix}_ic_confmat.1D
 output      ic_class                ${prefix}_ic_class.csv
-output      ic_noise                ${prefix}_nICsNoise.txt
 
-derivative_config   ic_maps         Type              maps
-derivative_config   ic_maps_thr     Type              maps
-derivative_config   ic_maps_thr_mni Type              maps
-derivative_config   ic_maps_thr_mni Space             MNI
+qc          ic_noise nICsNoise      ${prefix}_nICsNoise.txt
+
+derivative_set   ic_maps            Type              maps
+derivative_set   ic_maps_thr        Type              maps
+derivative_set   ic_maps_thr_mni    Type              maps
+derivative_set   ic_maps_thr_mni    Space             MNI
 
 configure   demeaned                0
 input       demeaned

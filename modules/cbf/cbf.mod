@@ -23,15 +23,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         perfusion
-   
-   write_derivative  meanPerfusion
-   
-   write_output      tag_mask
-   
-   quality_metric    negativeVoxels          negative_voxels
-   quality_metric    negativeVoxelsTS        negative_voxels_ts
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -44,15 +35,16 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  meanPerfusion           ${prefix}_meanPerfusion
+derivative            meanPerfusion    ${prefix}_meanPerfusion
 
-output      tag_mask                ${prefix}_tag_mask.txt
-output      negative_voxels         ${prefix}_negativeVoxels.txt
-output      negative_voxels_ts      ${prefix}_negativeVoxelsTS.txt
+output                tag_mask         ${prefix}_tag_mask.txt
 
-derivative_config meanPerfusion     Statistic         mean
+qc negative_voxels    negativeVoxels   ${prefix}_negativeVoxels.txt
+qc negative_voxels_ts negativeVoxelsTS ${prefix}_negativeVoxelsTS.txt
 
-process     perfusion               ${prefix}_perfusion
+derivative_set        meanPerfusion    Statistic         mean
+
+process               perfusion        ${prefix}_perfusion
 
 <<DICTIONARY
 

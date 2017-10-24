@@ -36,12 +36,12 @@ completion() {
        or            labels[cxt] \
        as            jlfLabels
    
-   atlas_add         JLF-MICCAI     Map         ${jlfLabels}
-   atlas_add         JLF-MICCAI     Space       ${structural[sub]}
-   atlas_add         JLF-MICCAI     Type        Map
-   atlas_add         JLF-MICCAI     NodeIndex   ${BRAINATLAS}/miccai/miccaiNodeIndex.1D 
-   atlas_add         JLF-MICCAI     NodeNames   ${BRAINATLAS}/miccai/miccaiNodeNames.txt 
-   atlas_add         JLF-MICCAI     Citation    Wang2013
+   atlas_set         jlfMICCAI Map         ${jlfLabels}
+   atlas_set         jlfMICCAI Space       ${structural[sub]}
+   atlas_set         jlfMICCAI Type        Map
+   atlas_set         jlfMICCAI NodeIndex   ${BRAINATLAS}/miccai/miccaiNodeIndex.1D 
+   atlas_set         jlfMICCAI NodeNames   ${BRAINATLAS}/miccai/miccaiNodeNames.txt 
+   atlas_set         jlfMICCAI Citation    ${BRAINATLAS}/miccai/miccaiReference.bib
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality

@@ -124,9 +124,9 @@ for derivative in ${derivatives[@]}
          ${d[Space]}:${standard} \
          ${interpol}
    fi
-   derivative_config       ${d[Name]}     Map      ${outdir}/${prefix}_${d[Name]}Std.nii.gz
-   derivative_config       ${d[Name]}     Space    ${standard}
-   write_derivative        ${d[Name]}
+   derivative_set       ${d[Name]} Map       ${outdir}/${prefix}_${d[Name]}Std.nii.gz
+   derivative_set       ${d[Name]} Space     ${standard}
+   write_derivative     ${d[Name]}
 done
 routine_end
 ###################################################################
