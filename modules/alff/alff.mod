@@ -27,16 +27,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   write_derivative  alff
-   write_derivative  alffZ
-   
-   for k in ${kernel[cxt]}
-      do
-      write_derivative  alff_sm${k}
-      write_derivative  alffZ_sm${k}
-      write_derivative  img_sm${k}
-   done
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -49,11 +39,11 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  alff                    ${prefix}_alff
-derivative  alffZ                   ${prefix}_alffZ
+derivative     alff                    ${prefix}_alff
+derivative     alffZ                   ${prefix}_alffZ
 
-derivative_config    alff           Statistic         mean
-derivative_config    alffZ          Statistic         mean
+derivative_set alff     Statistic      mean
+derivative_set alffZ    Statistic      mean
 
 smooth_spatial_prime ${alff_smo[cxt]//,/ }            alff alffZ
 
@@ -137,10 +127,10 @@ for k in ${kernels}
       if (( ${isOdd} == 1 ))
          then
          subroutine           @2.2  Odd volume count: Excising first volume
-         exec_fsl \
-            fslroi ${i} \
+         exec_fsl             \
+            fslroi ${i}       \
             ${intermediate}EVEN.nii.gz \
-            1 \
+            1                 \
             ${nvol}
       else
          subroutine           @2.3

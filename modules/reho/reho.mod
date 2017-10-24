@@ -24,15 +24,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   write_derivative  reho
-   write_derivative  rehoZ
-   
-   for k in ${kernel[cxt]}
-      do
-      write_derivative  reho_sm${k}
-      write_derivative  rehoZ_sm${k}
-   done
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -56,10 +47,10 @@ for k in ${kernel[cxt]}
    derivative     rehoZ_sm${k}      ${prefix}_rehoZ_sm${k}
 done
 
-add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
+derivative_set    reho              Statistic         mean
+derivative_set    rehoZ             Statistic         mean
 
-derivative_config reho              Statistic         mean
-derivative_config rehoZ             Statistic         mean
+add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
 
 << DICTIONARY
 
@@ -120,9 +111,9 @@ if ! is_image ${reho[cxt]} \
       nneigh="-neigh_X ${xdim} -neigh_Y ${ydim} -neigh_Z ${zdim}"
    fi
    subroutine                 @1.3 "Computing regional homogeneity (ReHo)"
-   exec_afni 3dReHo \
-      -prefix ${reho[cxt]} \
-      -inset ${img} \
+   exec_afni 3dReHo           \
+      -prefix ${reho[cxt]}    \
+      -inset ${img}           \
       ${nneigh}
    ################################################################
    # Convert the raw ReHo output values to standard scores.
@@ -164,8 +155,8 @@ if ! is_image ${reho[cxt]} \
          else
             subroutine        @2.3  Generating a mask using 3dAutomask
             exec_afni 3dAutomask -prefix ${intermediate}_fmask.nii.gz \
-               -dilate 3 \
-               -q \
+               -dilate 3      \
+               -q             \
                ${img}
             mask=${intermediate}_fmask.nii.gz
          fi
@@ -182,8 +173,8 @@ if ! is_image ${reho[cxt]} \
             if is_image ${reho_usan[cxt]}
                then
                subroutine     @2.4.1  Warping USAN
-               warpspace \
-                  ${reho_usan[cxt]} \
+               warpspace                     \
+                  ${reho_usan[cxt]}          \
                   ${intermediate}usan.nii.gz \
                   ${reho_usan_space[cxt]}:${space[sub]} \
                   NearestNeighbor
@@ -206,12 +197,12 @@ if ! is_image ${reho[cxt]} \
          #    implemented smoothing routines: gaussian, susan,
          #    and uniform.
          ##########################################################
-         exec_xcp sfilter \
-            -i    ${reho[cxt]} \
-            -o    ${!output_var} \
+         exec_xcp sfilter           \
+            -i    ${reho[cxt]}      \
+            -o    ${!output_var}    \
             -s    ${reho_sptf[cxt]} \
-            -k    ${k} \
-            -m    ${mask} \
+            -k    ${k}              \
+            -m    ${mask}           \
             ${usan} ${hardseg}
          ##########################################################
          # Convert the raw ReHo output values to standard scores.

@@ -24,27 +24,6 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   for seed in ${seeds[cxt]}
-      do
-      seed=(               ${seed//\#/ } )
-      seed[0]=$(           eval echo            ${seed[0]})
-      write_output         ${seed[0]}_ts
-      write_derivative     ${seed[0]}_seed
-      write_derivative     ${seed[0]}
-      write_derivative     ${seed[0]}Z
-   done
-   for k in ${kernel[cxt]}
-      do
-      for seed in ${seeds[cxt]}
-         do
-         seed=(            ${seed//\#/ } )
-         seed[0]=$(        eval echo            ${seed[0]})
-         write_derivative  ${seed[0]}_sm${k}
-         write_derivative  ${seed[0]}Z_sm${k}
-      done
-      write_derivative     img_sm${k}
-   done
-   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -57,20 +36,20 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
-configure   kernel                  ${seed_smo[cxt]//,/ }
+define   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
+define   kernel                  ${seed_smo[cxt]//,/ }
 
 for seed in ${seeds[cxt]}
    do
    seed=(            ${seed//\#/ } )
    seed[0]=$(        eval echo            ${seed[0]})
-   configure         mapdir               ${outdir}/${seed[0]}/
-   exec_sys          mkdir -p             ${mapdir[cxt]}
-   configure         mapbase              ${mapdir[cxt]}/${prefix}_connectivity
-   output            ${seed[0]}_ts        ${mapbase[cxt]}_${seed[0]}_ts.1D
-   derivative        ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed
+   define            mapdir               ${outdir}/${seed[0]}/
+   define            mapbase              ${mapdir[cxt]}/${prefix}_connectivity
+   define            ${seed[0]}_ts        ${mapbase[cxt]}_${seed[0]}_ts.1D
+   output            ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed
    derivative        ${seed[0]}           ${mapbase[cxt]}_${seed[0]}
    derivative        ${seed[0]}Z          ${mapbase[cxt]}_${seed[0]}Z
+   exec_sys          mkdir -p             ${mapdir[cxt]}
 done
 for k in ${kernel[cxt]}
    do
@@ -78,18 +57,15 @@ for k in ${kernel[cxt]}
       do
       seed=(         ${seed//\#/ } )
       seed[0]=$(     eval echo            ${seed[0]})
-      configure      mapbase              ${outdir}/${seed[0]}/${prefix}_connectivity
+      define         mapbase              ${outdir}/${seed[0]}/${prefix}_connectivity
       derivative     ${seed[0]}_sm${k}    ${mapbase[cxt]}_${seed[0]}_sm${k}
       derivative     ${seed[0]}Z_sm${k}   ${mapbase[cxt]}_${seed[0]}Z_sm${k}
    done
    derivative        img_sm${k}           ${prefix}_sm${k}
-   derivative_config img_sm${k}           Type     timeseries
+   derivative_set    img_sm${k}           Type     TimeSeries
 done
 
 << DICTIONARY
-
-THE OUTPUTS OF SEED-BASED CORRELATION ANALYSIS ARE PRIMARILY
-DEFINED IN THE LOOP OVER SEEDS.
 
 img_sm
    The smoothed input timeseries.
@@ -215,10 +191,10 @@ for seed in ${seeds[cxt]}
       # largely because of the stringent orientation requirements
       # within ANTs, and it is wrapped in the warpspace function.
       #############################################################
-      warpspace \
-         ${seed[1]} \
+      warpspace                     \
+         ${seed[1]}                 \
          ${intermediate}_coor_${seed[0]}.sclib \
-         ${libspace}:${space[sub]} \
+         ${libspace}:${space[sub]}  \
          ${seed_voxel[cxt]}
       #############################################################
       # Obtain the warped coordinates.
@@ -233,14 +209,14 @@ for seed in ${seeds[cxt]}
       #############################################################
       subroutine              @2.3.3
       rm -f ${intermediate}_coor_${seed[0]}.sclib
-      echo \
+      echo                                         \
 "SPACE::${space[sub]}
 :#ROIName#X,Y,Z#radius
-#""${seed[0]}#${seed[1]}#${seed[2]}" \
+#""${seed[0]}#${seed[1]}#${seed[2]}"               \
          >> ${intermediate}_coor_${seed[0]}.sclib
-      exec_xcp coor2map \
-         -i ${intermediate}_coor_${seed[0]}.sclib \
-         -t ${referenceVolumeBrain[sub]} \
+      exec_xcp coor2map                            \
+         -i ${intermediate}_coor_${seed[0]}.sclib  \
+         -t ${referenceVolumeBrain[sub]}           \
          -o ${!sca_seed}
       ;;
    mask)
@@ -251,10 +227,10 @@ for seed in ${seeds[cxt]}
       # seed[1] stores the path to the seed mask.
       # seed[2] stores the space of the seed mask.
       #############################################################
-      warpspace \
-         ${seed[1]} \
-         ${!sca_seed} \
-         ${seed[2]}:${space[sub]} \
+      warpspace                     \
+         ${seed[1]}                 \
+         ${!sca_seed}               \
+         ${seed[2]}:${space[sub]}   \
          NearestNeighbor
       ;;
    esac
@@ -264,14 +240,14 @@ for seed in ${seeds[cxt]}
    # next stage is extracting a (weighted) mean timeseries from
    # the seed map.
    ################################################################
-   if [[ ! -s ${!sca_ts} ]] \
+   if [[ ! -s ${!sca_ts} ]]   \
    || rerun
       then
       subroutine              @3    Extracting mean timeseries
       exec_sys rm -f ${!sca_ts}
-      exec_xcp tswmean.R \
-         -i    ${img} \
-         -r    ${!sca_seed} \
+      exec_xcp tswmean.R      \
+         -i    ${img}         \
+         -r    ${!sca_seed}   \
          >>    ${!sca_ts}
    fi
    ################################################################
@@ -289,9 +265,9 @@ for seed in ${seeds[cxt]}
          then
          subroutine           @4    SCA at smoothness ${k} mm
          exec_sys             rm -f    ${!sca_map}
-         exec_afni            3dfim+ \
-            -input            ${i} \
-            -ideal_file       ${!sca_ts} \
+         exec_afni            3dfim+      \
+            -input            ${i}        \
+            -ideal_file       ${!sca_ts}  \
             -out              Correlation \
             -bucket           ${!sca_map}
          ##########################################################
@@ -299,8 +275,8 @@ for seed in ${seeds[cxt]}
          # reversed, but it has worked this way
          ##########################################################
          exec_sys             rm -f ${!sca_zmap}
-         exec_afni            3dcalc \
-            -a                ${!sca_map} \
+         exec_afni            3dcalc               \
+            -a                ${!sca_map}          \
             -expr             'log((a+1)/(a-1))/2' \
             -prefix           ${!sca_zmap}
       fi
