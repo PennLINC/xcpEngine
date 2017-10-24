@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_set   ${a[Name]}   CommunityPartitionRes${gamma_x}  ${netbase[cxt]}_CommunityRes${gamma_x}_community.1D
+   atlas_set   ${a[Name]}   CommunityPartitionRes${gamma_x}  ${community[cxt]}
 }
 
 completion() {
@@ -53,13 +53,27 @@ community_detection() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-gammas=( ${net_gamma[cxt]//,/ } )
+declare_atlas_outputs() {
+   define      net_dir              ${outdir}/${a[Name]}
+   define      net_root             ${netdir[cxt]}/${prefix}_${a[Name]}
+   exec_sys    mkdir -p             ${netdir[cxt]}
+}
+declare_community_outputs() {
+   define      com_dir              ${net_dir[cxt]}/${1}
+   define      com_root             ${com_dir[cxt]}/${prefix}_${1}
+   define      community            ${com_root[cxt]}_partition.1D
+   define      wbOverall            ${com_root[cxt]}_wbOverall.csv
+   define      modularity           ${com_root[cxt]}_modularity.txt
+   exec_sys    mkdir -p             ${com_dir[cxt]}
+   [[ -z       ${a[${1}]} ]] &&     a[${1}]=${community[cxt]}
+}
 
 << DICTIONARY
 
-gammas
-   Not strictly an output. An array specifying all resolution
-   parameters for the community detection procedure.
+com_dir/com_root
+   
+net_dir/net_root
+   
 
 DICTIONARY
 
@@ -96,6 +110,56 @@ fi
 
 
 ###################################################################
+# Parse gamma values
+###################################################################
+gammas=()
+giv=${net_gamma[cxt]//,/ }
+for i in $giv
+   do i=(${i//:/ })
+   case ${#i[@]} in
+   ################################################################
+   # Single gamma value
+   ################################################################
+   1)
+      gammas=( ${gammas[@]} ${i} )
+      ;;
+   ################################################################
+   # Sequence with increment of 1 (e.g., 1:7)
+   ################################################################
+   2)
+      ll=${i[0]}
+      ul=${i[1]}
+      g=${ll}
+      while (( $(arithmetic "${g} <= ${ul}" ) == 1 ))
+         do gammas=( ${gammas[@]} ${g} )
+         g=$(arithmetic $g + 1)
+         while contains $g '0$';  do g=${g%0}; done
+         while contains $g '\.$'; do g=${g%.}; done
+      done
+      ;;
+   3)
+   ################################################################
+   # Sequence with user-specified increment (e.g., 1:0.1:7)
+   ################################################################
+      ll=${i[0]}
+      iv=${i[1]}
+      ul=${i[2]}
+      g=${ll}
+      while (( $(arithmetic "${g} <= ${ul}") == 1 ))
+         do gammas=( ${gammas[@]} ${g} )
+         g=$(arithmetic $g + ${iv})
+         while contains $g '0$';  do g=${g%0}; done
+         while contains $g '\.$'; do g=${g%.}; done
+      done
+      ;;
+   esac
+done
+
+
+
+
+
+###################################################################
 # Iterate through all networks.
 #
 # In brief, the network analysis process consists of the
@@ -115,9 +179,7 @@ for net in ${atlas_names[@]}
    communities=( $(matching ^CommunityPartition ${!a[@]}) )
    [[ -z ${matrix} ]] && continue
    routine                    @1    Network analysis: ${a[Name]}
-   define      netdir               ${outdir}/${a[Name]}
-   define      netbase              ${netdir[cxt]}/${prefix}_${a[Name]}
-   exec_sys    mkdir -p             ${netdir[cxt]}
+   declare_atlas_outputs
 
 
 
@@ -135,8 +197,7 @@ for net in ${atlas_names[@]}
          for gamma in ${gammas[@]}
             do
             gamma_x=${gamma//\./x}
-            define      com_root       ${netbase[cxt]}_CommunityRes${gamma_x}
-            define      community      ${com_root[cxt]}_community.1D
+            declare_community_outputs CommunityPartitionRes${gamma_x}
             if [[ ! -s  ${community[cxt]} ]] \
             || rerun
                then
@@ -145,7 +206,6 @@ for net in ${atlas_names[@]}
             fi
             update_networks
             communities=( ${communities[@]} CommunityPartitionRes${gamma_x} )
-            a[CommunityPartitionRes${gamma_x}]=${community[cxt]}
          done
          ;;
       none)
@@ -159,19 +219,20 @@ for net in ${atlas_names[@]}
       for com in ${communities[@]}
          do
          subroutine           @1.2.1
-         if [[ ! -s ${netbase[cxt]}_${com}_wbOverall.csv ]] \
+         declare_community_outputs ${com}
+         if [[ ! -s ${wbOverall[cxt]} ]] \
          || rerun
             then
             subroutine        @1.2.2
-            exec_sys rm -f ${netbase[cxt]}_${com}Quality.txt
+            exec_sys rm -f ${modularity[cxt]}
             exec_xcp quality.R \
                -m    ${adjacency} \
                -c    ${a[$com]} \
-               >>    ${netbase[cxt]}_${com}Quality.txt
+               >>    ${modularity[cxt]}
             exec_xcp withinBetween.R \
                -m    ${adjacency} \
                -c    ${a[$com]} \
-               -o    ${netbase[cxt]}_${com}
+               -o    ${com_root[cxt]}
          fi
       done
    done
