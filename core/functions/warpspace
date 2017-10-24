@@ -44,8 +44,8 @@ warpspace() {
       #############################################################
       elif ! is_image ${i}
          then
-         source=$( json_get a_json Space ${i})
-         i=$(      json_get a_json Map   ${i})
+         source=$( json_get d_json ${i} Space)
+         i=$(      json_get d_json Map   ${i})
       #############################################################
       #     Case 3: The source is otherwise unspecified. Default to
       #     analyte space.
@@ -82,13 +82,13 @@ warpspace() {
       if [[ ${node_chk} != null ]]
          then
          k=${k//\%*/}
-         [[ ${nodes[@]//${k}/} == ${nodes} ]] && nodes=("${nodes[@]}" ${k})
+         [[ ${nodes[@]//${k}/} == ${nodes[@]} ]] && nodes=("${nodes[@]}" ${k})
       #############################################################
       #     Add transforms to the list of available edges.
       #     First ensure that the transform is not already listed.
       #############################################################
       else
-         [[ ${edges[@]//${k}/} == ${edges} ]] && edges=("${edges[@]}" ${k}) || continue
+         [[ ${edges[@]//${k}/} == ${edges[@]} ]] && edges=("${edges[@]}" ${k}) || continue
          ##########################################################
          #  TODO
          #  Multilayer matrix support. Transforms contributed by
@@ -183,7 +183,6 @@ warpspace() {
    ################################################################
    else
       source=$(json_get s_json ${source} Map)
-      source=$(eval echo ${source})
       for e in "${route[@]}"
          do
          t=$(json_get_array s_json ${e} TransformANTs)
