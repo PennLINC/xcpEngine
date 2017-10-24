@@ -23,13 +23,13 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_add      ${a[Name]}   Map               ${nodemap[cxt]}
-   atlas_add      ${a[Name]}   Timeseries        ${ts[cxt]}
-   atlas_add      ${a[Name]}   MatrixFC          ${adjacency[cxt]}
-   atlas_add      ${a[Name]}   Pajek             ${pajek[cxt]}
-   atlas_add      ${a[Name]}   MissingCoverage   ${missing[cxt]}
-   atlas_add      ${a[Name]}   DynamicFC         ${ts_edge[cxt]}
-   atlas_config   ${a[Name]}   Space             ${space[sub]}
+   atlas_set      ${a[Name]}   Map               ${nodemap[cxt]}
+   atlas_set      ${a[Name]}   Timeseries        ${ts[cxt]}
+   atlas_set      ${a[Name]}   MatrixFC          ${adjacency[cxt]}
+   atlas_set      ${a[Name]}   Pajek             ${pajek[cxt]}
+   atlas_set      ${a[Name]}   MissingCoverage   ${missing[cxt]}
+   atlas_set      ${a[Name]}   DynamicFC         ${ts_edge[cxt]}
+   atlas_set      ${a[Name]}   Space             ${space[sub]}
 }
 
 completion() {
@@ -47,12 +47,20 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure      mapbase                 ${out}/${prefix}_atlas
+define      mapbase              ${out}/${prefix}_atlas
+
+declare_atlas_outputs() {
+   define   fcdir                ${outdir}/${a[Name]}
+   define   fcbase               ${fcdir[cxt]}/${prefix}_${a[Name]}
+   define   nodemap              ${mapbase[cxt]}/${prefix}_${a[Name]}.nii.gz
+   define   ts                   ${fcbase[cxt]}_ts.1D
+   define   adjacency            ${fcbase[cxt]}_network.txt
+   define   pajek                ${fcbase[cxt]}.net
+   define   missing              ${fcbase[cxt]}_missing.txt
+   define   ts_edge              ${fcbase[cxt]}_tsEdge.1D
+}
 
 << DICTIONARY
-
-THE OUTPUTS OF FUNCTIONAL CONNECTOME ANALYSIS ARE PRIMARILY
-DEFINED IN THE LOOP OVER NETWORKS.
 
 adjacency
    The connectivity matrix or functional connectome.
@@ -124,22 +132,15 @@ for net in ${atlas_names[@]}
    do
    atlas_parse ${net}
    atlas_check || continue
-   [[ ! -s    ${a[Map]} ]] \
-   && json_rm ${a[Name]} from atlas[${cxt}] \
+   [[ ! -s    ${a[Map]} ]]                   \
+   && json_rm ${a[Name]} from atlas[${cxt}]  \
    && continue
    routine                    @1    Functional connectome: ${a[Name]}
    ################################################################
    # Define the paths to the potential outputs of the current
    # network analysis.
    ################################################################
-   configure   fcdir                ${outdir}/${a[Name]}
-   configure   fcbase               ${fcdir[cxt]}/${prefix}_${a[Name]}
-   configure   nodemap              ${mapbase[cxt]}/${prefix}_${a[Name]}.nii.gz
-   configure   ts                   ${fcbase[cxt]}_ts.1D
-   configure   adjacency            ${fcbase[cxt]}_network.txt
-   configure   pajek                ${fcbase[cxt]}.net
-   configure   missing              ${fcbase[cxt]}_missing.txt
-   configure   ts_edge              ${fcbase[cxt]}_tsEdge.1D
+   declare_atlas_outputs
    ################################################################
    # [1]
    # Based on the type of network map and the space of the primary
@@ -172,20 +173,15 @@ for net in ${atlas_names[@]}
          subroutine           @1.2.3   Skipping ${a[Name]}: Not a well-formed node system
          continue
       fi
-      import_image              a[Map]   ${intermediate}-${a[Name]}.nii.gz
+      import_image            a[Map]   ${intermediate}-${a[Name]}.nii.gz
       warpspace               ${a[Map]}                  \
                               ${nodemap[cxt]}            \
                               ${a[Space]}:${space[sub]}  \
                               MultiLabel
       ;;
-   Coordinates)
+   Coor)
       subroutine              @1.2.4
-      output      node_sclib           ${mapbase[cxt]}${a[Name]}.sclib
-      if (( ${a[NodeCount]} <= 1 ))
-         then
-         subroutine           @1.2.5
-         continue
-      fi
+      output      node_sclib           ${mapbase[cxt]}/${a[Name]}.sclib
       #############################################################
       # If the primary BOLD timeseries is in native space, use
       # ANTs to transform spatial coordinates into native space.
@@ -194,9 +190,9 @@ for net in ${atlas_names[@]}
       # within ANTs, and it is wrapped in the warpspace function.
       #############################################################
       subroutine              @1.2.6
-      warpspace \
-         ${a[Map]} \
-         ${node_sclib[cxt]} \
+      warpspace                    \
+         ${a[Map]}                 \
+         ${node_sclib[cxt]}        \
          ${a[Space]}:${space[sub]} \
          ${a[VoxelCoordinates]}
       #############################################################
@@ -204,9 +200,9 @@ for net in ${atlas_names[@]}
       # of the network.
       #############################################################
       subroutine              @1.2.7
-      exec_xcp coor2map \
-         -i    ${node_sclib[cxt]} \
-         -t    ${referenceVolumeBrain[sub]} \
+      exec_xcp coor2map                      \
+         -i    ${node_sclib[cxt]}            \
+         -t    ${referenceVolumeBrain[sub]}  \
          -o    ${nodemap[cxt]}
       ;;
    done)
@@ -232,10 +228,10 @@ for net in ${atlas_names[@]}
       then
       subroutine              @1.3  Computing network timeseries
       exec_sys rm -f ${ts[cxt]}
-      exec_xcp roi2ts.R \
-         -i    ${img} \
-         -r    ${nodemap[cxt]} \
-         -l    ${a[NodeIndex]} \
+      exec_xcp roi2ts.R                      \
+         -i    ${img}                        \
+         -r    ${nodemap[cxt]}               \
+         -l    ${a[NodeIndex]}               \
          >>    ${ts[cxt]}
    fi
 
@@ -248,7 +244,7 @@ for net in ${atlas_names[@]}
    # Compute the adjacency matrix based on the mean local
    # timeseries.
    ################################################################
-   if [[ ! -s ${pajek[cxt]} ]] \
+   if [[ ! -s ${pajek[cxt]} ]]   \
    || rerun
       then
       subroutine              @1.4  Computing adjacency matrix
@@ -256,9 +252,9 @@ for net in ${atlas_names[@]}
       exec_sys rm -f ${pajek[cxt]}
       exec_sys rm -f ${missing[cxt]}
       exec_xcp ts2adjmat.R -t ${ts[cxt]} >> ${adjacency[cxt]}
-      exec_xcp adjmat2pajek.R \
+      exec_xcp adjmat2pajek.R    \
          -a    ${adjacency[cxt]} \
-         -t    ${fcon_thr[cxt]} \
+         -t    ${fcon_thr[cxt]}  \
          >>    ${pajek[cxt]}
       ################################################################
       # Flag nodes that fail to capture any signal variance.
@@ -268,7 +264,7 @@ for net in ${atlas_names[@]}
       badnodes=$(exec_xcp missingIdx.R -i ${adjacency[cxt]})
       if [[ -n ${badnodes} ]]
          then
-         echo "${badnodes}" >> ${missing[cxt]} \
+         echo "${badnodes}" >> ${missing[cxt]}
          missing_arg=",'missing','${missing[cxt]}'"
       fi
    fi
@@ -285,15 +281,15 @@ for net in ${atlas_names[@]}
    if (( ${fcon_window[cxt]} != 0 ))
       then
       subroutine              @1.6  Computing dynamic connectome
-      if [[ ! -s ${ts_edge[cxt]} ]] \
+      if [[ ! -s ${ts_edge[cxt]} ]]    \
       || rerun
          then
          subroutine           @1.6.1   Window: ${fcon_window[cxt]} TRs
          exec_sys rm -f ${ts_edge[cxt]}
-         exec_xcp mtd.R \
-            -t    ${ts[cxt]} \
-            -w    ${fcon_window[cxt]} \
-            -p    ${fcon_pad[cxt]} \
+         exec_xcp mtd.R                \
+            -t    ${ts[cxt]}           \
+            -w    ${fcon_window[cxt]}  \
+            -p    ${fcon_pad[cxt]}     \
             >>    ${ts_edge[cxt]}
       fi
    fi

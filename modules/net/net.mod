@@ -23,7 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 update_networks() {
-   atlas_add   ${a[Name]}   CommunityPartitionRes${gamma_x}  ${netbase[cxt]}_CommunityRes${gamma_x}_community.1D
+   atlas_set   ${a[Name]}   CommunityPartitionRes${gamma_x}  ${netbase[cxt]}_CommunityRes${gamma_x}_community.1D
 }
 
 completion() {
@@ -115,8 +115,8 @@ for net in ${atlas_names[@]}
    communities=( $(matching ^CommunityPartition ${!a[@]}) )
    [[ -z ${matrix} ]] && continue
    routine                    @1    Network analysis: ${a[Name]}
-   configure   netdir               ${outdir}/${a[Name]}
-   configure   netbase              ${netdir[cxt]}/${prefix}_${a[Name]}
+   define      netdir               ${outdir}/${a[Name]}
+   define      netbase              ${netdir[cxt]}/${prefix}_${a[Name]}
    exec_sys    mkdir -p             ${netdir[cxt]}
 
 
@@ -135,8 +135,8 @@ for net in ${atlas_names[@]}
          for gamma in ${gammas[@]}
             do
             gamma_x=${gamma//\./x}
-            configure   com_root       ${netbase[cxt]}_CommunityRes${gamma_x}
-            configure   community      ${com_root[cxt]}_community.1D
+            define      com_root       ${netbase[cxt]}_CommunityRes${gamma_x}
+            define      community      ${com_root[cxt]}_community.1D
             if [[ ! -s  ${community[cxt]} ]] \
             || rerun
                then
@@ -144,7 +144,7 @@ for net in ${atlas_names[@]}
                community_detection
             fi
             update_networks
-            communities=( ${communities[@]} CommunityRes${gamma_x} )
+            communities=( ${communities[@]} CommunityPartitionRes${gamma_x} )
             a[CommunityPartitionRes${gamma_x}]=${community[cxt]}
          done
          ;;

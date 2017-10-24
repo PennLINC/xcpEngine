@@ -42,7 +42,13 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-configure      mapbase                 ${out}/${prefix}_atlas
+define      mapbase              ${out}/${prefix}_atlas
+
+declare_atlas_outputs() {
+   define   rstatdir             ${outdir}/${a[Name]}
+   define   rstatbase            ${rstatdir[cxt]}/${prefix}_${a[Name]}
+   define   nodemap              ${mapbase[cxt]}/${prefix}_${a[Name]}.nii.gz
+}
 
 << DICTIONARY
 
@@ -110,11 +116,9 @@ for map in ${atlas_names[@]}
    routine                    @1    Regional quantification: ${a[Name]}
    ################################################################
    # Define the paths to the potential outputs of the current
-   # network analysis.
+   # regional quantification.
    ################################################################
-   configure   rstatdir             ${outdir}/${a[Name]}
-   configure   rstatbase            ${rstatdir[cxt]}/${prefix}_${a[Name]}
-   configure   nodemap              ${mapbase[cxt]}/${prefix}_${a[Name]}.nii.gz
+   declare_atlas_outputs
    
    
    
@@ -166,9 +170,9 @@ for map in ${atlas_names[@]}
       # within ANTs, and it is wrapped in the warpspace function.
       #############################################################
       subroutine              @1.2.5
-      warpspace \
-         ${a[Map]} \
-         ${node_sclib[cxt]} \
+      warpspace                    \
+         ${a[Map]}                 \
+         ${node_sclib[cxt]}        \
          ${a[Space]}:${space[sub]} \
          ${a[VoxelCoordinates]}
       #############################################################
@@ -176,8 +180,8 @@ for map in ${atlas_names[@]}
       # of the network.
       #############################################################
       subroutine              @1.2.6
-      exec_xcp coor2map \
-         -i    ${node_sclib[cxt]} \
+      exec_xcp coor2map            \
+         -i    ${node_sclib[cxt]}  \
          -t    ${referenceVolumeBrain[sub]} \
          -o    ${nodemap[cxt]}
       ;;
@@ -203,9 +207,9 @@ for map in ${atlas_names[@]}
    ################################################################
    subroutine              @1.3.3
    cover=( $(exec_xcp nodeCoverage.R \
-      -i    ${mask[sub]} \
-      -r    ${nodemap[cxt]} \
-      -x    ${a[NodeIndex]} \
+      -i    ${mask[sub]}        \
+      -r    ${nodemap[cxt]}     \
+      -x    ${a[NodeIndex]}     \
       -n    ${a[NodeNames]}) )
    ################################################################
    # Perform the quantification: Initialise
@@ -232,7 +236,7 @@ for map in ${atlas_names[@]}
       -d       ${sequence}%NAME                    \
       ${qargs}
    apply_exec  Statistic:mean       /dev/null      \
-      sys      atlas_add ${a[Name]}                \
+      sys      atlas_set ${a[Name]}                \
                RegionalMean%CAPNAME                \
                ${rstatbase[cxt]}_mean_%NAME.csv
    ################################################################
@@ -248,7 +252,7 @@ for map in ${atlas_names[@]}
       -d       ${sequence}%NAME                    \
       ${qargs}
    apply_exec  Statistic:median       /dev/null    \
-      sys      atlas_add ${a[Name]}                \
+      sys      atlas_set ${a[Name]}                \
                RegionalMedian%CAPNAME              \
                ${rstatbase[cxt]}_median_%NAME.csv
    ################################################################
@@ -264,7 +268,7 @@ for map in ${atlas_names[@]}
       -d       ${sequence}%NAME                    \
       ${qargs}
    apply_exec  Statistic:mode       /dev/null      \
-      sys      atlas_add ${a[Name]}                \
+      sys      atlas_set ${a[Name]}                \
                RegionalMode%CAPNAME                \
                ${rstatbase[cxt]}_mode_%NAME.csv
    ################################################################
@@ -280,7 +284,7 @@ for map in ${atlas_names[@]}
       -d       ${sequence}%NAME                    \
       ${qargs}
    apply_exec  Statistic:minmax     /dev/null      \
-      sys      atlas_add ${a[Name]}                \
+      sys      atlas_set ${a[Name]}                \
                RegionalMinMax%CAPNAME              \
                ${rstatbase[cxt]}_minmax_%NAME.csv
    ################################################################
@@ -296,7 +300,7 @@ for map in ${atlas_names[@]}
       -d       ${sequence}%NAME                    \
       ${qargs}
    apply_exec  Statistic:stdev      /dev/null      \
-      sys      atlas_add ${a[Name]}                \
+      sys      atlas_set ${a[Name]}                \
                RegionalSD%CAPNAME                  \
                ${rstatbase[cxt]}_stdev_%NAME.csv
    ################################################################
@@ -310,7 +314,7 @@ for map in ${atlas_names[@]}
       -o       ${rstatbase[cxt]}_vol.csv           \
       -t       ${intermediate}_${a[Name]}_vol      \
       ${qargs}
-      atlas_add ${a[Name]} RegionalVolume ${rstatbase[cxt]}_vol.csv
+      atlas_set ${a[Name]} RegionalVolume ${rstatbase[cxt]}_vol.csv
    fi
    update_networks
    routine_end
