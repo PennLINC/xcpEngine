@@ -162,12 +162,6 @@ subroutine                    @3.2  [Evaluating subject variables]
    (( ${normalise} == 1      )) \
    && echo "template=${template}"               >> ${design[sub]} \
    && echo "standard=${standard[0]}"            >> ${design[sub]}
-   if [[ -d ${antsct[sub]} ]]
-      then
-      echo "struct[$sub]=${struct[sub]}"        >> ${design[sub]}
-      echo "segmentation[$sub]=${segmentation[sub]}" \
-                                                >> ${design[sub]}
-   fi
 routine_end
 
 ###################################################################
