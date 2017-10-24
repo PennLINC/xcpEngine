@@ -23,14 +23,7 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
-   processed         std
-   
    set_space         ${standard}
-   
-   quality_metric    normCoverage            norm_coverage
-   quality_metric    normCrossCorr           norm_cross_corr
-   quality_metric    normJaccard             norm_jaccard
-   quality_metric    normDice                norm_dice
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -45,19 +38,15 @@ completion() {
 # OUTPUTS
 ###################################################################
 output      e2smask                 ${prefix}_seq2stdMask.nii.gz
-output      norm_cross_corr         ${prefix}_normCrossCorr.txt
-output      norm_coverage           ${prefix}_normCoverage.txt
-output      norm_jaccard            ${prefix}_normJaccard.txt
-output      norm_dice               ${prefix}_normDice.txt
+qc norm_cross_corr normCrossCorr    ${prefix}_normCrossCorr.txt
+qc norm_coverage   normCoverage     ${prefix}_normCoverage.txt
+qc norm_jaccard    normJaccard      ${prefix}_normJaccard.txt
+qc norm_dice       normDice         ${prefix}_normDice.txt
 
 process     std                     ${prefix}_std
 
 << DICTIONARY
 
-e2smask
-   The reference volume from the analyte sequence, aligned into
-   structural space and binarised. Used to estimate the quality
-   of normalisation.
 norm_coverage
    The percentage of the template image that is covered by the
    normalised analyte image.
@@ -91,13 +80,13 @@ add_reference        template       template
 
 routine                    @1    Normalising using ANTs
 subroutine                 @1.1  [Selecting transforms to apply]
-if ! is_image ${std[cxt]} \
+if ! is_image ${std[cxt]}  \
 || rerun
    then
    subroutine              @1.3  [Applying composite diffeomorphism to primary dataset]
-   warpspace \
-      ${img} \
-      ${std[cxt]} \
+   warpspace               \
+      ${img}               \
+      ${std[cxt]}          \
       ${space[sub]}:${standard}
 fi
 ###################################################################
@@ -106,7 +95,7 @@ fi
 ###################################################################
 load_derivatives
 subroutine                 @1.4  [Applying composite diffeomorphism to derivative images:]
-mv    ${aux_imgs[sub]} \
+mv    ${aux_imgs[sub]}     \
       ${out}/${prefix}_derivatives-${space[sub]}.json
 echo  '{}'     >>        ${aux_imgs[sub]}
 for derivative in ${derivatives[@]}
@@ -129,8 +118,8 @@ for derivative in ${derivatives[@]}
       || rerun
       then
       subroutine           @1.7
-      warpspace \
-         ${d[Map]} \
+      warpspace                  \
+         ${d[Map]}               \
          ${outdir}/${prefix}_${d[Name]}Std.nii.gz \
          ${d[Space]}:${standard} \
          ${interpol}
@@ -152,21 +141,22 @@ if [[ ! -e ${outdir}/${prefix}_seq2std.png ]] \
 || rerun
    then
    routine                 @2    Quality assessment
-   exec_fsl fslmaths ${referenceVolumeBrain[cxt]} -bin ${e2smask[cxt]}
+   seq2std_mask=${intermediate}-seq2std_mask.nii.gz
+   exec_fsl fslmaths ${referenceVolumeBrain[cxt]} -bin ${seq2std_mask}
    subroutine              @2.1  [Computing registration quality metrics]
    registration_quality=( $(exec_xcp \
-      maskOverlap.R \
-      -m ${e2smask[cxt]} \
+      maskOverlap.R                  \
+      -m ${seq2std_mask}             \
       -r ${template}) )
    echo  ${registration_quality[0]} > ${norm_cross_corr[cxt]}
    echo  ${registration_quality[1]} > ${norm_coverage[cxt]}
    echo  ${registration_quality[2]} > ${norm_jaccard[cxt]}
    echo  ${registration_quality[3]} > ${norm_dice[cxt]}
    subroutine              @2.2  [Preparing slicewise rendering]
-   exec_xcp regslicer \
+   exec_xcp regslicer            \
       -s    ${referenceVolumeBrain[cxt]} \
-      -t    ${template} \
-      -i    ${intermediate} \
+      -t    ${template}          \
+      -i    ${intermediate}      \
       -o    ${outdir}/${prefix}_seq2std
    routine_end
 fi
