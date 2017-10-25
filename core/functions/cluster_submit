@@ -20,7 +20,7 @@ cluster_submit() {
       ${cspec[cxt]} \
       $@)
    id=$(echo ${id}|tr -dc '0-9')
-   ids="${ids} -e ${id}"
+   ids="${ids} ${id}"
 }
 
 # THIS IS NOT A LIBRARY FUNCTION.
