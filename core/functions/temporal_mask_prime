@@ -1,0 +1,30 @@
+temporal_mask_prime() {
+
+<<USAGE
+
+This function is used to prime derivatives and inputs for the
+temporal masking procedure.
+
+USAGE
+
+define      dvars_root              mc/${prefix}_dvars
+
+output      rps                     mc/${prefix}_realignment.1D
+output      dvars                   ${dvars_root[cxt]}-std.1D
+output      fd                      mc/${prefix}_fd.1D
+output      tmask                   mc/${prefix}_tmask.1D
+
+configures  censor                  ${prestats_censor[cxt]}
+configure   censored                0
+
+qc n_spikes_dv    nSpikesDV         mc/${prefix}_spikesDVct.txt
+qc n_spikes_fd    nSpikesFD         mc/${prefix}_spikesFDct.txt
+qc n_spikes_rms   nSpikesRMS        mc/${prefix}_spikesRMSct.txt
+qc pct_spikes_dv  pctSpikesDV       mc/${prefix}_spikesDVpct.txt
+qc pct_spikes_fd  pctSpikesFD       mc/${prefix}_spikesFDpct.txt
+qc pct_spikes_rms pctSpikesRMS      mc/${prefix}_spikesRMSpct.txt
+
+input       censor
+input       censored
+
+}
