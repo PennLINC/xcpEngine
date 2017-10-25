@@ -82,7 +82,7 @@ USAGE
    # Define framewise quality criteria.
    ################################################################
    subroutine              ${tag}.3  [Selecting quality criteria]
-   q_criteria=( ${prestats_framewise[cxt]//,/ } )
+   q_criteria=( ${framewise[cxt]//,/ } )
    q_mask_sum=${img_i}-nFlags.1D
    exec_sys    rm -f ${q_mask_sum}
    declare -A  dict_criteria=(
@@ -162,7 +162,7 @@ USAGE
       -s    ${q_mask_sum}              \
       -t    0.5                        \
       -o    ${tmask[cxt]}              \
-      -m    ${prestats_censor_contig[cxt]}
+      -m    ${censor_contig[cxt]}
    configure               censored    1
    ################################################################
    # Determine the number of volumes that fail the motion criterion
@@ -176,7 +176,5 @@ USAGE
       subroutine           ${tag}.7 [Data are spike-free: deactivating censor]
       configure            censor      none
    fi
-fi
-   
-   
+
 }

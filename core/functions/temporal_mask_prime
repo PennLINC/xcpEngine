@@ -7,14 +7,20 @@ temporal masking procedure.
 
 USAGE
 
-define      dvars_root              mc/${prefix}_dvars
+local censor_var=${mod_name_short}'_censor['${cxt}']'
+local censor_ctg=${mod_name_short}'_censor_contig['${cxt}']'
+local fwise=${mod_name}'_framewise['${cxt}']'
+
+define      dvars_root              ${outdir}/mc/${prefix}_dvars
+define      censor_contig           ${!censor_ctg}
+define      framewise               ${!fwise}
 
 output      rps                     mc/${prefix}_realignment.1D
 output      dvars                   ${dvars_root[cxt]}-std.1D
 output      fd                      mc/${prefix}_fd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 
-configures  censor                  ${prestats_censor[cxt]}
+configures  censor                  ${!censor_var}
 configure   censored                0
 
 qc n_spikes_dv    nSpikesDV         mc/${prefix}_spikesDVct.txt
