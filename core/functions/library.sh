@@ -55,13 +55,11 @@ source ${LIBRARY}/json_merge
 source ${LIBRARY}/json_multiset
 source ${LIBRARY}/json_object
 source ${LIBRARY}/json_print
-source ${LIBRARY}/json_query
 source ${LIBRARY}/json_rm
 source ${LIBRARY}/json_set
 source ${LIBRARY}/json_set_array
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
-source ${LIBRARY}/load_transforms
 source ${LIBRARY}/matching
 source ${LIBRARY}/ninstances
 source ${LIBRARY}/output
