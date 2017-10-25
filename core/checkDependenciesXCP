@@ -147,8 +147,7 @@ echo "· · RNifti version       ${RpackageChk[0]}"
 echo "· · optparse version     ${RpackageChk[1]}"
 echo "· · pracma version       ${RpackageChk[2]}"
 echo "· · signal version       ${RpackageChk[3]}"
-[[ ! -z $(echo ${RpackageChk}|grep -i failed) ]] \
-   && dc_FAIL=1
+[[ -z ${RpackageChk[@]} ]]  && dc_FAIL=1
 
 (( ${dc_FAIL} == 1 )) && echo "[Aborting]" && echo "" && exit 1
 echo "····································································
