@@ -204,9 +204,9 @@ while (( ${#rem} > 0 ))
          then
          routine              @3    Censoring: preparing spike regressors
          subroutine           @3.1  Adding delta functions to model
-         exec_xcp tmask2spkreg.R \
-            -t    ${tmask[sub]} \
-            -r    ${confproc[cxt]} \
+         exec_xcp tmask2spkreg.R    \
+            -t    ${tmask[sub]}     \
+            -r    ${confproc[cxt]}  \
             >>    ${intermediate}_SPKREG
          exec_sys mv ${intermediate}_SPKREG ${confproc[cxt]}
          subroutine           @3.2  Masking high-motion epochs from correlation
@@ -236,7 +236,7 @@ while (( ${#rem} > 0 ))
          # matrix.
          ##########################################################
          subroutine           @4.5  [Computing confound correlations]
-         exec_xcp ts2adjmat.R \
+         exec_xcp ts2adjmat.R                 \
             -t    ${confproc[cxt]} ${cormask} \
             >>    ${confcor[cxt]}
          ##########################################################

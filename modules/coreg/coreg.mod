@@ -60,7 +60,7 @@ require image  meanIntensityBrain      \
      as        sourceReference
      ;;
 *)
-stream_abort   Invalid reference for coregistration
+abort_stream   Invalid reference for coregistration
      ;;
 esac
 
