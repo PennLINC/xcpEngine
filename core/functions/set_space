@@ -1,4 +1,4 @@
 set_space() {
-   space[$sub]=${1}
+   space[sub]=${1}
    echo "space[$sub]=${1}" >> ${design[sub]}
 }
