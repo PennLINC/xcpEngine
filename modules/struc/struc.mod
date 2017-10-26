@@ -54,6 +54,7 @@ derivative  corticalThickness       ${prefix}_CorticalThickness
 derivative  corticalContrast        ${prefix}_CorticalContrast
 derivative  mask                    ${prefix}_BrainExtractionMask
 derivative  segmentation            ${prefix}_BrainSegmentation
+
 for i in {1..6}
    do
    derivative  segmentationPosteriors  ${prefix}_BrainSegmentationPosteriors${i}
@@ -70,16 +71,17 @@ output      referenceVolumeBrain    ${prefix}_ExtractedBrain0N4.nii.gz
 output      meanIntensity           ${prefix}_BrainSegmentation0N4.nii.gz
 output      meanIntensityBrain      ${prefix}_ExtractedBrain0N4.nii.gz
 output      str2stdmask             ${prefix}_str2stdmask.nii.gz
+output      xfm_affine              ${prefix}_SubjectToTemplate0GenericAffine.mat
+output      xfm_warp                ${prefix}_SubjectToTemplate1Warp.nii.gz
+output      ixfm_affine             ${prefix}_TemplateToSubject1GenericAffine.mat
+output      ixfm_warp               ${prefix}_TemplateToSubject0Warp.nii.gz
+
+configure   template_priors         $(space_get ${standard} Priors)
 
 qc reg_cross_corr regCrossCorr      ${prefix}_regCrossCorr.txt
 qc reg_coverage   regCoverage       ${prefix}_regCoverage.txt
 qc reg_jaccard    regJaccard        ${prefix}_regJaccard.txt
 qc reg_dice       regDice           ${prefix}_regDice.txt
-
-output      xfm_affine              ${prefix}_SubjectToTemplate0GenericAffine.mat
-output      xfm_warp                ${prefix}_SubjectToTemplate1Warp.nii.gz
-output      ixfm_affine             ${prefix}_TemplateToSubject1GenericAffine.mat
-output      ixfm_warp               ${prefix}_TemplateToSubject0Warp.nii.gz
 
 input image mask
 input image segmentation
@@ -159,9 +161,10 @@ DICTIONARY
 
 
 
-priors_format=${struc_template_priors[cxt]#*\%}
-priors_format=${priors_format%%d*}
 #(( ${trace} > 1 )) && ants_verbose=1 || ants_verbose=0
+priors=$(echo ${template_priors[cxt]//\%03d/\?\?\?})
+priors=( $(eval ls ${priors_list}) )
+prior_space=${standard}
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
 # already complete; it becomes the expected ending for the final
@@ -217,7 +220,7 @@ while (( ${#rem} > 0 ))
          -a       ${intermediate}.nii.gz           \
          -e       ${struc_template_head[cxt]}      \
          -m       ${struc_template_mask[cxt]}      \
-         -p       ${struc_template_priors[cxt]}    \
+         -p       ${template_priors[cxt]}          \
          -o       ${ctroot[cxt]}                   \
          -s       'nii.gz'                         \
          -t       ${template}                      \
@@ -341,17 +344,19 @@ while (( ${#rem} > 0 ))
 
 
    SEG)
-      subroutine              @E.1     Invalid option detected: ${cur}
-      continue
-<<NOT_FUNCTIONAL_CODE
       #############################################################
       # SEG runs ANTs tissue-class segmentation via antsAtroposN4
       #############################################################
+      anat[0]=${intermediate}.nii.gz
       if ! is_image ${segmentation[cxt]}
          then
          for i in ${!priors[@]}
             do
-            (( i != 1 )) && priors_include="${priors_include} -y ${i}"
+            contains "$(readlink -f ${priors[i]})" '[CSF|csf]' && continue
+            warprior=$(printf ${intermediate}'-priorWarped%03d.nii.gz' ${i})
+            warpspace   ${priors[i]} \
+               ${warprior} \
+               ${prior_space}:${space[sub]}
          done
          exec_ants   antsAtroposN4.sh                    \
             -d       3                                   \
@@ -360,40 +365,15 @@ while (( ${#rem} > 0 ))
             -x       ${mask[cxt]}                        \
             -m       3                                   \
             -n       5                                   \
-            -c       ${#priors[cxt]}                     \
-            -p       ${ctroot[cxt]}BrainSegmentationPriorWarped${priors_format} \
+            -c       ${#priors[@]}                       \
+            -p       ${intermediate}'-priorWarped%03d.nii.gz' \
             -w       ${struc_prior_weight[cxt]}          \
             -u       ${struc_random_seed[cxt]}           \
             -g       ${struc_denoise_anat[cxt]}          \
             -s       'nii.gz'                            \
-            ${additional_images}                         \
             ${label_propagation}                         \
             ${priors_include}                            \
             -o       ${intermediate}_${cur}_
-         unset additional_images
-         for (( i=1; i<=${#anat[@]}; i++ ))
-            do
-            anat[i]=${intermediate}_${cur}_Segmentation${i}N4.nii.gz
-            additional_images="${additional_images} ${anat[i]}"
-         done
-         exec_ants   antsAtroposN4.sh                    \
-            -d       3                                   \
-            -b       ${struc_posterior_formulation[cxt]} \
-            -a       ${intermediate}_${cur}_Segmentation0N4.nii.gz \
-            -x       ${mask[cxt]}                        \
-            -m       2                                   \
-            -n       5                                   \
-            -c       ${#priors[cxt]}                     \
-            -p       ${ctroot[cxt]}BrainSegmentationPriorWarped${priors_format} \
-            -w       ${struc_prior_weight[cxt]}          \
-            -u       ${struc_random_seed[cxt]}           \
-            -g       ${struc_denoise_anat[cxt]}          \
-            -s       'nii.gz'                            \
-            ${additional_images} \
-            ${label_propagation} \
-            ${priors_include}    \
-            -o       ${intermediate}_${cur}_
-         unset additional_images
          for (( i=1; i<=${#anat[@]}; i++ ))
             do
             exec_fsl immv  ${intermediate}_${cur}_Segmentation${i}N4.nii.gz \
@@ -405,6 +385,8 @@ while (( ${#rem} > 0 ))
             do
             exec_fsl immv  ${intermediate}_${cur}_SegmentationPosteriors${i}.nii.gz \
                            ${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
+            priors[i]=${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
+            prior_space=${space[sub]}
          done
          exec_sys    mv -f ${intermediate}_${cur}_SegmentationTiledMosaic.png \
                            ${outdir}/${prefix}_BrainSegmentationTiledMosaic.png
@@ -415,7 +397,6 @@ while (( ${#rem} > 0 ))
          exec_fsl    immv  ${intermediate}_${cur}_Segmentation.nii.gz \
                            ${segmentation[cxt]}
       fi
-NOT_FUNCTIONAL_CODE
       ;;
 
 
@@ -476,6 +457,13 @@ NOT_FUNCTIONAL_CODE
             -o       Linear[${ixfm_affine[cxt]},1] \
             -t       ${xfm_affine[cxt]}
       fi
+      exec_xcp spaceMetadata                       \
+         -o    ${spaces[sub]}                      \
+         -f    ${standard}:${template}             \
+         -m    ${space[sub]}:${struct[cxt]}        \
+         -x    ${xfm_affine[cxt]},${xfm_warp[cxt]} \
+         -i    ${ixfm_warp[cxt]},${ixfm_affine[cxt]} \
+         -s    ${spaces[sub]}
       exec_sys ln -sf ${intermediate}.nii.gz      \
                       ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
