@@ -17,6 +17,7 @@ mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/functions/library_func.sh
 source ${XCPEDIR}/core/parseArgsMod
 
 ###################################################################
@@ -25,13 +26,14 @@ source ${XCPEDIR}/core/parseArgsMod
 completion() {
    if is_image ${referenceVolumeBrain[cxt]}
       then
-      space_set   ${spaces[sub]}   ${space[sub]} \
+      space_set   ${spaces[sub]}    ${space[sub]} \
             Map   ${referenceVolumeBrain[cxt]}
    fi
    
-   source ${XCPEDIR}/core/auditComplete
-   source ${XCPEDIR}/core/updateQuality
-   source ${XCPEDIR}/core/moduleEnd
+   output   featdir                 ${featdir[cxt]}.feat
+   source   ${XCPEDIR}/core/auditComplete
+   source   ${XCPEDIR}/core/updateQuality
+   source   ${XCPEDIR}/core/moduleEnd
 }
 
 
@@ -47,6 +49,7 @@ derivative  meanIntensity           ${prefix}_meanIntensity
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
 
+output      featdir                 fsl/${prefix}
 output      confmat                 ${prefix}_confmat.1D
 output      fsf                     model/${prefix}_design.fsf
 output      mcdir                   mc
@@ -55,11 +58,11 @@ output      abs_rms                 mc/${prefix}_absRMS.1D
 output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
 output      rel_rms                 mc/${prefix}_relRMS.1D
 output      rmat                    mc/${prefix}.mat
-output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 
 qc rel_max_rms  relMaxRMSMotion     mc/${prefix}_relMaxRMS.txt
 qc rel_mean_rms relMeanRMSMotion    mc/${prefix}_relMeanRMS.txt
-qc fd           nFramesHighMotion   mc/${prefix}_fd.1D
+
+temporal_mask_prime
 
 declare_copes() {
 for i in ${!cpe[@]}
@@ -70,7 +73,11 @@ for i in ${!cpe[@]}
                   sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
    derivative     varcope${i}_${cpe[i]}                  \
                   varcopes/${prefix}_varcope${i}_${cpe[i]}
+   derivative     zstat${i}_${cpe[i]}                    \
+                  stats/${prefix}_zstat${i}
    derivative_set sigchange_contrast${i}_${cpe[i]}       \
+                  Statistic      mean
+   derivative_set zstat${i}_${cpe[i]}                    \
                   Statistic      mean
 done
 }
@@ -190,6 +197,7 @@ for l in "${!fsf_design[@]}"
    chk_PAR=( "${line}"        'set fmri\(evtitle'           )
    chk_TDX=( "${line}"        'set fmri\(deriv_yn'          )
    chk_CPE=( "${line}"        'set fmri\(conname_real'      )
+   chk_FTW=( "${line}"        'set fmri\(featwatcher_yn'    )
    
    contains  "${chk_PAR[@]}" \
              && line=${line//set fmri\(evtitle/} \
@@ -207,7 +215,7 @@ for l in "${!fsf_design[@]}"
              && name=${name// /_}   \
              && cpe[indx]=${name//\./_} \
              && continue
-   contains  "${chk_TDX[@]}" \
+   contains  "${chk_TDX[@]}"        \
              && line=${line//set fmri\(deriv_yn/} \
              && indx=${line/%\)*/}  \
              && name=${line#*\ }    \
@@ -215,7 +223,7 @@ for l in "${!fsf_design[@]}"
              && continue
    
    contains  "${chk_OUT[@]}" \
-             && fsf_design[l]='set fmri(outputdir) '${intermediate}'-feat\n' \
+             && fsf_design[l]='set fmri(outputdir) '${featdir[cxt]}'\n' \
              && continue
    contains  "${chk_STD[@]}" \
              && fsf_design[l]='set fmri(regstandard) '${template}'\n' \
@@ -239,11 +247,14 @@ for l in "${!fsf_design[@]}"
              && fsf_design[l]='set highres_files(1) '${struct[sub]}'\n' \
              && continue
    contains  "${chk_CON[@]}" \
-             && coni=${l} \
+             && coni=${l}    \
              && conf_include=${line//set fmri(confoundevs) /} \
              && continue
    contains  "${chk_COF[@]}" \
-             && conf=${l} \
+             && conf=${l}    \
+             && continue
+   contains  "${chk_FTW[@]}" \
+             && fsf_design[l]='set fmri(featwatcher_yn) 0' \
              && continue
 done
 if (( ${conf_include} == 1 ))
@@ -281,17 +292,20 @@ declare_copes
 ###################################################################
 if ! is_image ${processed[cxt]} \
 || rerun
-   routine                    @2    Executing FEAT analysis
    then
+   routine                    @2    Executing FEAT analysis
    subroutine                 @2.1  Preparing environment
    buffer=${SGE_ROOT}
    unset    SGE_ROOT
-   exec_sys rm -rf            ${intermediate}-feat.feat
+   exec_sys rm -rf            ${featdir[cxt]}
    subroutine                 @2.2a Processing FEAT design:
    subroutine                 @2.2b ${fsf[cxt]}
    exec_fsl feat                    ${fsf[cxt]}          >/dev/null
    SGE_ROOT=${buffer}
+   featout=$(ls -d1 ${featdir[cxt]}.feat 2>/dev/null)
    routine_end
+else
+   featout=/dev/null
 fi
 
 
@@ -301,21 +315,15 @@ fi
 ###################################################################
 # Reorganise the FEAT output.
 ###################################################################
-featout=$(ls -d1 ${intermediate}-feat.feat 2>/dev/null)
-
-
-
-
-
 if [[ -d ${featout} ]]
    then
    routine                    @3    Reorganising FEAT output
    ################################################################
    # * Image localisation
    ################################################################
-   exec_fsl immv ${featout}/mask.nii.gz         ${mask[cxt]}
-   exec_fsl immv ${featout}/example_func.nii.gz ${referenceVolume[cxt]}
-   exec_fsl immv ${featout}/mean_func.nii.gz    ${meanIntensity[cxt]}
+   exec_sys ln -sf ${featout}/mask.nii.gz         ${mask[cxt]}
+   exec_sys ln -sf ${featout}/example_func.nii.gz ${referenceVolume[cxt]}
+   exec_sys ln -sf ${featout}/mean_func.nii.gz    ${meanIntensity[cxt]}
    ################################################################
    # * Brain extraction
    ################################################################
@@ -340,7 +348,7 @@ if [[ -d ${featout} ]]
    if [[ -s ${featout}/confoundevs.txt ]]
       then
       subroutine              @3.3
-      exec_sys mv -f ${featout}/confoundevs.txt    ${confmat[cxt]}
+      exec_sys ln -sf ${featout}/confoundevs.txt   ${confmat[cxt]}
    fi
 
    ################################################################
@@ -349,36 +357,37 @@ if [[ -d ${featout} ]]
    if [[ -e ${featout}/mc/ ]]
       then
       subroutine              @3.4  Re-localising motion metrics
+      [[ -d ${rmat[cxt]} ]] && exec_sys rm -rf     ${rmat[cxt]}
       exec_sys mkdir -p ${mcdir[cxt]}
-      exec_sys mv -f ${featout}/mc/*mcf.par        ${rps[cxt]}
-      exec_sys mv -f ${featout}/mc/*mcf_rel.rms    ${rel_rms[cxt]}
-      exec_sys mv -f ${featout}/mc/*rel_mean.rms   ${rel_mean_rms[cxt]}
-      exec_sys mv -f ${featout}/mc/*abs.rms        ${abs_rms[cxt]}
-      exec_sys mv -f ${featout}/mc/*abs_mean.rms   ${abs_mean_rms[cxt]}
-      exec_sys mv -f ${featout}/mc/*.mat           ${rmat[cxt]}
-      exec_sys mv -f ${featout}/mc/*.png           ${mcdir[cxt]}
+      exec_sys ln -sf ${featout}/mc/*mcf.par       ${rps[cxt]}
+      exec_sys ln -sf ${featout}/mc/*mcf_rel.rms   ${rel_rms[cxt]}
+      exec_sys ln -sf ${featout}/mc/*rel_mean.rms  ${rel_mean_rms[cxt]}
+      exec_sys ln -sf ${featout}/mc/*abs.rms       ${abs_rms[cxt]}
+      exec_sys ln -sf ${featout}/mc/*abs_mean.rms  ${abs_mean_rms[cxt]}
+      exec_sys ln -sf ${featout}/mc/*.mat          ${rmat[cxt]}
+      exec_sys ln -sf ${featout}/mc/*.png          ${mcdir[cxt]}
       exec_xcp 1dTool.R             \
          -i    ${rel_rms[cxt]}      \
          -o    max                  \
          -f    ${rel_max_rms[cxt]}
-      exec_xcp fd.R                 \
-         -r    ${rps[cxt]}          \
-         -o    ${fd[cxt]}
-      exec_xcp tmask.R              \
-         -s    ${!censor_criterion} \
-         -t    ${censor_threshold}  \
-         -o    ${intermediate}-tmask.1D \
-         -m    ${prestats_censor_contig[cxt]}
-      censor_ts=$(  echo               $(<${intermediate}-tmask.1D))
-      n_spikes=$(ninstances 0          ${censor_ts// /})
-      echo  ${n_spikes}             >> ${motion_vols[cxt]}
+      temporal_mask  --SIGNPOST=${signpost}        \
+                     --INPUT=${featout}/filtered_func_data.nii.gz \
+                     --RPS=${rps[cxt]}             \
+                     --RMS=${rel_rms[cxt]}         \
+                     --THRESH=${task_framewise[cxt]}
    fi
 
    ################################################################
    #  * FEAT design and model
    ################################################################
    subroutine                 @3.5  Re-localising model design
-   exec_sys    mv -f ${featout}/design*            ${outdir}/model/
+   dsnfiles=$(exec_sys ls -d ${featout}/design*)
+   for i in ${dsnfiles}
+      do
+      fname=${i//${featout}\//}
+      exec_sys mv     ${i} ${outdir}/model/${prefix}_${fname}
+      exec_sys ln -sf ${outdir}/model/${prefix}_${fname} ${i}
+   done
 
    ################################################################
    #  * Logs
@@ -386,8 +395,8 @@ if [[ -d ${featout} ]]
    if [[ -d ${featout}/logs ]]
       then
       subroutine              @3.6
-      exec_sys mv -f ${featout}/logs               ${outdir}/logs
-      exec_sys mv -f ${featout}/report_log.html    ${outdir}/logs
+      exec_sys ln -sf ${featout}/logs               ${outdir}/logs
+      exec_sys ln -sf ${featout}/report_log.html    ${outdir}/logs/report_log.html
    fi
    routine_end
 
@@ -402,7 +411,7 @@ if [[ -d ${featout} ]]
       do
       chk_MAG=( "${line}"           '/PPheights'   )
       contains  "${chk_MAG[@]}"     && break
-   done                       <     ${outdir}/model/design.mat
+   done                       <     ${outdir}/model/${prefix}_design.mat
    mag=(        ${line}       )
    unset        mag[0]
 
@@ -446,13 +455,14 @@ if [[ -d ${featout} ]]
             #######################################################
             is_dx=$(echo ${tdx[fidx]})
             cname=$(echo ${par[fidx]})
-            [[ -z ${cname}  ]] && cname=confound && is_dx=0
-            par_pe=${par_out}_${cname}.nii.gz
-            psc_pe=${par_out}_${cname}.nii.gz
-            par_dx=${par_out}_${cname}_tderiv.nii.gz
-            psc_dx=${psc_out}_${cname}_tderiv.nii.gz
+            [[ -z ${cname}       ]] && cname=confound && is_dx=0
+            par_pe=${par_out}${cname}.nii.gz
+            psc_pe=${psc_out}${cname}.nii.gz
+            par_dx=${par_out}${cname}_tderiv.nii.gz
+            psc_dx=${psc_out}${cname}_tderiv.nii.gz
             
             exec_fsl immv     ${pe} ${par_pe}
+            exec_sys ln -sf   ${par_pe} ${pe}
             #######################################################
             # Convert raw PE to percent signal change.
             #######################################################
@@ -466,6 +476,7 @@ if [[ -d ${featout} ]]
          else
             subroutine        @4.5
             exec_fsl immv     ${pe} ${par_dx}
+            exec_sys ln -sf   ${par_pe} ${pe}
             is_dx=0
             #######################################################
             # Convert raw PE to percent signal change.
@@ -488,7 +499,7 @@ if [[ -d ${featout} ]]
       do
       chk_MAG=(   "${line}"            '/PPheights'   )
       contains    "${chk_MAG[@]}"      && break
-   done                       <        ${outdir}/model/design.con
+   done                       <        ${outdir}/model/${prefix}_design.con
    mag=(          ${line}       )
    unset          mag[0]
 
@@ -505,13 +516,16 @@ if [[ -d ${featout} ]]
          do
          subroutine           @4.8  ${cpe[i]}
          cname=$(echo ${cpe[i]//[![:alnum:]|_]})
-         con_i=${featout}/stats/cope${i}
-         var_i=${featout}/stats/varcope${i}
+         [[ -z ${cname} ]] && cname=unknown && is_dx=0
+         con_i=${featout}/stats/cope${i}.nii.gz
+         var_i=${featout}/stats/varcope${i}.nii.gz
          con_o='contrast'${i}'_'${cname}'['${cxt}']'
          var_o='varcope'${i}'_'${cname}'['${cxt}']'
          psc_o='sigchange_contrast'${i}'_'${cname}'['${cxt}']'
          exec_fsl immv        ${con_i}    ${!con_o}
          exec_fsl immv        ${var_i}    ${!var_o}
+         exec_sys ln -sf      ${!con_o}   ${con_i}
+         exec_sys ln -sf      ${!var_o}   ${var_i}
          ##########################################################
          # Convert raw contrast to percent signal change.
          ##########################################################
@@ -529,8 +543,14 @@ if [[ -d ${featout} ]]
    if [[ -d ${featout}/stats/ ]]
       then
       subroutine              @4.9
-      exec_sys mkdir -p ${outdir}/${prefix}_stats
-      mv ${featout}/stats/* ${outdir}/${prefix}_stats/
+      exec_sys mkdir -p ${outdir}/stats
+      statimgs=$(exec_sys ls -d1 ${featout}/stats/*)
+      for i in ${statimgs}
+         do
+         fname=${i//${featout}\/stats\//}
+         exec_sys mv     ${i} ${outdir}/stats/${prefix}_${fname}
+         exec_sys ln -sf ${outdir}/stats/${prefix}_${fname} ${i}
+      done
    fi
 
    ###################################################################
@@ -539,7 +559,8 @@ if [[ -d ${featout} ]]
    if is_image ${featout}/filtered_func_data.nii.gz
       then
       subroutine              @4.10
-      exec_fsl immv ${featout}/filtered_func_data.nii.gz ${processed[cxt]}
+      exec_fsl immv   ${featout}/filtered_func_data.nii.gz ${processed[cxt]}
+      exec_sys ln -sf ${processed[cxt]} ${featout}/filtered_func_data.nii.gz
    fi
    routine_end
 fi
