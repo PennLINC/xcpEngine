@@ -7,6 +7,7 @@
 ###################################################################
 # General module header
 ###################################################################
+source ${XCPEDIR}/core/functions/library.sh
 
 ###################################################################
 # Input job ID string, separated by '-e ',
@@ -14,11 +15,12 @@
 # sleep time is currently hard coded; ideally, it will instead be
 # dependent on a module ping in the future
 ###################################################################
-ids=$@
+ids=$(echo ${@})
+ids=${ids// /\|}
 sleeptime=30
 
-status=$(qstat|grep ${ids} 2>/dev/null)
-remain=$(echo "${status}"|wc -l)
+status=( $(matching "${ids}" $(qstat)) )
+remain=${#status[@]}
 time=$(date '+%H:%M:%S')
 day=$(date '+%d %h %Y')
 echo ""; echo ""; echo ""
@@ -28,11 +30,11 @@ echo "at ${time} on ${day}"
 echo "..."
 echo ""; echo ""; echo ""
 
-while [[ -n ${status} ]]
+while (( remain != 0 ))
    do
    sleep $sleeptime
-   status=$(qstat|grep ${ids})
-   remain=$(echo "${status}"|wc -l)
+   status=( $(matching "${ids}" $(qstat)) )
+   remain=${#status[@]}
    [[ -z ${status} ]] && remain=0
    time=$(date '+%H:%M:%S')
    day=$(date '+%d %h %Y')
