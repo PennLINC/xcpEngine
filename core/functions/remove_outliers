@@ -66,7 +66,7 @@ USAGE
       # Derivatives
       #############################################################
       subroutine           ${tag}.2   [Executing despike: Derivative images]
-      exec_sys apply_exec  TimeSeries  ${prefix}_%NAME  ECHO:Name \
+      apply_exec  TimeSeries  ${prefix}_%NAME  ECHO:Name \
          afni     3dDespike         \
          -prefix  %OUTPUT           \
          -nomask  -quiet            \
