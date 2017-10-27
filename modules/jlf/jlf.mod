@@ -87,44 +87,48 @@ DICTIONARY
 ###################################################################
 # * Run ANTs JLF w/ OASIS label set
 ###################################################################
-routine                       @1    ANTs Joint Label Fusion
-###################################################################
-# Now create and declare the call to run the JLF pipeline
-###################################################################	
-subroutine                    @1.1  Cohort: ${jlf_cohort[cxt]}
-mapfile     oasis             < ${XCPEDIR}/thirdparty/oasis30/Cohorts/${jlf_cohort[cxt]}
-labelDir=${XCPEDIR}/thirdparty/oasis30/MICCAI2012ChallengeLabels/
-if (( ${jlf_extract[${cxt}]} == 1 ))
+if ! is_image ${labels[cxt]} \
+|| rerun
    then
-   subroutine                 @1.2  Using brains only
-   brainDir=$XCPEDIR/thirdparty/oasis30/Brains/
-else
-   subroutine                 @1.3  Using whole heads
-   brainDir=${XCPEDIR}/thirdparty/oasis30/Heads/
+   routine                    @1    ANTs Joint Label Fusion
+   ################################################################
+   # Now create and declare the call to run the JLF pipeline
+   ################################################################
+   subroutine                 @1.1  Cohort: ${jlf_cohort[cxt]}
+   mapfile     oasis             < ${XCPEDIR}/thirdparty/oasis30/Cohorts/${jlf_cohort[cxt]}
+   labelDir=${XCPEDIR}/thirdparty/oasis30/MICCAI2012ChallengeLabels/
+   if (( ${jlf_extract[${cxt}]} == 1 ))
+      then
+      subroutine              @1.2  Using brains only
+      brainDir=$XCPEDIR/thirdparty/oasis30/Brains/
+   else
+      subroutine              @1.3  Using whole heads
+      brainDir=${XCPEDIR}/thirdparty/oasis30/Heads/
+   fi
+
+   subroutine                 @1.4  Assembling cohort
+   unset jlfReg
+   for o in ${oasis[@]}
+     do
+     jlfReg="${jlfReg} -g ${brainDir}${o}.nii.gz"
+     jlfReg="${jlfReg} -l ${labelDir}${o}.nii.gz"
+   done
+
+   subroutine                 @1.5a Executing joint label fusion routine
+   subroutine                 @1.5b Delegating control to antsJointLabelFusion
+   exec_ants   antsJointLabelFusion.sh \
+      -d       3                       \
+      -q       0                       \
+      -f       0                       \
+      -j       2                       \
+      -k       ${jlf_keep_warps[cxt]}  \
+      -t       ${img}                  \
+      -o       ${outdir}/${prefix}_    \
+      -c       0                       \
+      ${jlfReg}
+
+   routine_end
 fi
-
-subroutine                    @1.4  Assembling cohort
-unset jlfReg
-for o in ${oasis[@]}
-  do
-  jlfReg="${jlfReg} -g ${brainDir}${o}.nii.gz"
-  jlfReg="${jlfReg} -l ${labelDir}${o}.nii.gz"
-done
-
-subroutine                    @1.5a Executing joint label fusion routine
-subroutine                    @1.5b Delegating control to antsJointLabelFusion
-exec_ants   antsJointLabelFusion.sh \
-   -d       3                       \
-   -q       0                       \
-   -f       0                       \
-   -j       2                       \
-   -k       ${jlf_keep_warps[cxt]}  \
-   -t       ${img}                  \
-   -o       ${outdir}/${prefix}_    \
-   -c       0                       \
-   ${jlfReg}
-
-routine_end
 
 
 
