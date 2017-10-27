@@ -566,11 +566,6 @@ while (( ${#rem} > 0 ))
                fi
                ;;
             none)
-               ####################################################
-               # If you are entering this code, you may as well
-               # have removed STM from your pipeline. But I sure
-               # made that sound quite scary, didn't I?
-               ####################################################
                st_perform=0
                ;;
             *)
