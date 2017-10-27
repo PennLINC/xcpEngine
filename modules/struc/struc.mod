@@ -77,6 +77,10 @@ output      ixfm_affine             ${prefix}_TemplateToSubject1GenericAffine.ma
 output      ixfm_warp               ${prefix}_TemplateToSubject0Warp.nii.gz
 
 configure   template_priors         $(space_get ${standard} Priors)
+configure   template_head           $(space_get ${standard} MapHead)
+configure   template_mask           $(space_get ${standard} Mask)
+configure   template_mask_dil       $(space_get ${standard} MaskDilated)
+configure   template_brain_prior    $(space_get ${standard} BrainPrior)
 
 qc reg_cross_corr regCrossCorr      ${prefix}_regCrossCorr.txt
 qc reg_coverage   regCoverage       ${prefix}_regCoverage.txt
@@ -162,8 +166,13 @@ DICTIONARY
 
 
 #(( ${trace} > 1 )) && ants_verbose=1 || ants_verbose=0
-priors=$(echo ${template_priors[cxt]//\%03d/\?\?\?})
-priors=( $(eval ls ${priors_list}) )
+priors_get=$(echo ${template_priors[cxt]//\%03d/\?\?\?})
+priors_get=( $(eval ls ${priors_get}) )
+for i in ${!priors_get[@]}
+   do
+   (( i++ ))
+   priors[i]=$(printf ${template_priors[cxt]} ${i})
+done
 prior_space=${standard}
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
@@ -218,20 +227,21 @@ while (( ${#rem} > 0 ))
       exec_ants   antsCorticalThickness.sh         \
          -d       3                                \
          -a       ${intermediate}.nii.gz           \
-         -e       ${struc_template_head[cxt]}      \
-         -m       ${struc_template_mask[cxt]}      \
+         -e       ${template_head[cxt]}            \
+         -m       ${template_brain_prior[cxt]}     \
          -p       ${template_priors[cxt]}          \
          -o       ${ctroot[cxt]}                   \
          -s       'nii.gz'                         \
          -t       ${template}                      \
-         -f       ${struc_template_mask_dil[cxt]}  \
+         -f       ${template_mask_dil[cxt]}        \
          -g       ${struc_denoise_anat[cxt]}       \
          -w       ${struc_prior_weight[cxt]}       \
          -b       ${struc_posterior_formulation[cxt]} \
          -j       ${struc_floating_point[cxt]}     \
          -u       ${struc_random_seed[cxt]}        \
          -v       ${struc_bspline[cxt]}            \
-         ${additional_images} \
+         -q       ${struc_quick[cxt]}              \
+         ${additional_images}                      \
          ${label_propagation}
       exec_sys ln -sf ${struct[cxt]} ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
@@ -284,13 +294,14 @@ while (( ${#rem} > 0 ))
          exec_ants   antsBrainExtraction.sh           \
             -d       3                                \
             -a       ${intermediate}.nii.gz           \
-            -e       ${template}                      \
-            -f       ${struc_template_mask_dil[cxt]}  \
-            -m       ${struc_extraction_prior[cxt]}   \
+            -e       ${template_head[cxt]}            \
+            -f       ${template_mask_dil[cxt]}        \
+            -m       ${template_brain_prior[cxt]}     \
+            -o       ${intermediate}_${cur}_          \
+            -s       'nii.gz'                         \
             -q       ${struc_floating_point[cxt]}     \
             -u       ${struc_random_seed[cxt]}        \
-            -s       'nii.gz'                         \
-            -o       ${intermediate}_${cur}_
+            -z       0
          [[ -d ${scratch} ]]  && popd >/dev/null
          exec_fsl immv  ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
                         ${mask[cxt]}
@@ -347,17 +358,25 @@ while (( ${#rem} > 0 ))
       #############################################################
       # SEG runs ANTs tissue-class segmentation via antsAtroposN4
       #############################################################
+      routine                 @5    ANTs Atropos segmentation
       anat[0]=${intermediate}.nii.gz
       if ! is_image ${segmentation[cxt]}
          then
+         subroutine           @5.1  Warping ${#priors[@]} template priors to anatomical space
          for i in ${!priors[@]}
             do
-            contains "$(readlink -f ${priors[i]})" '[CSF|csf]' && continue
             warprior=$(printf ${intermediate}'-priorWarped%03d.nii.gz' ${i})
-            warpspace   ${priors[i]} \
-               ${warprior} \
-               ${prior_space}:${space[sub]}
+            warpspace   ${priors[i]}   \
+               ${warprior}             \
+               ${prior_space}:${space[sub]} \
+               Gaussian
+            (( i == 1 )) && continue
+            priors_include=( "${priors_include[@]}" -y ${i} )
          done
+         subroutine           @5.2a Atropos segmentation
+         subroutine           @5.2b Input: ${intermediate}.nii.gz
+         subroutine           @5.2c Output: ${segmentation[cxt]}
+         subroutine           @5.2d Delegating control to antsAtroposN4
          exec_ants   antsAtroposN4.sh                    \
             -d       3                                   \
             -b       ${struc_posterior_formulation[cxt]} \
@@ -366,16 +385,38 @@ while (( ${#rem} > 0 ))
             -m       3                                   \
             -n       5                                   \
             -c       ${#priors[@]}                       \
+            "${priors_include[@]}"                       \
             -p       ${intermediate}'-priorWarped%03d.nii.gz' \
             -w       ${struc_prior_weight[cxt]}          \
             -u       ${struc_random_seed[cxt]}           \
             -g       ${struc_denoise_anat[cxt]}          \
             -s       'nii.gz'                            \
             ${label_propagation}                         \
-            ${priors_include}                            \
-            -o       ${intermediate}_${cur}_
-         for (( i=1; i<=${#anat[@]}; i++ ))
+            -o       ${intermediate}_${cur}_             \
+            -z       0
+         exec_ants   antsAtroposN4.sh                    \
+            -d       3                                   \
+            -b       ${struc_posterior_formulation[cxt]} \
+            -a       ${intermediate}_${cur}_Segmentation$0N4.nii.gz \
+            -x       ${mask[cxt]}                        \
+            -m       2                                   \
+            -n       5                                   \
+            -c       ${#priors[@]}                       \
+            "${priors_include[@]}"                       \
+            -p       ${intermediate}'-priorWarped%03d.nii.gz' \
+            -w       ${struc_prior_weight[cxt]}          \
+            -u       ${struc_random_seed[cxt]}           \
+            -g       ${struc_denoise_anat[cxt]}          \
+            -s       'nii.gz'                            \
+            ${label_propagation}                         \
+            -o       ${intermediate}_${cur}_             \
+            -z       0
+         subroutine           @5.3  Reorganising output
+         imgct=${#anat[@]}
+         echo ${anat[@]}
+         for (( i=1; i <= imgct; i++ ))
             do
+            echo $i
             exec_fsl immv  ${intermediate}_${cur}_Segmentation${i}N4.nii.gz \
                            ${outdir}/${prefix}_BrainSegmentation${i}N4.nii.gz
             anat[i]=${outdir}/${prefix}_BrainSegmentation${i}N4.nii.gz
@@ -396,7 +437,10 @@ while (( ${#rem} > 0 ))
                            ${biasCorrected[cxt]}
          exec_fsl    immv  ${intermediate}_${cur}_Segmentation.nii.gz \
                            ${segmentation[cxt]}
+      else
+         subroutine           @5.4  Segmentation already complete
       fi
+      routine_end
       ;;
 
 
@@ -448,25 +492,28 @@ while (( ${#rem} > 0 ))
       else
          subroutine           @6.5  Registration already completed
       fi
-      if [[ ! -s ${ixfm_affine[cxt]} ]] \
+      if [[ ! -s ${ixfm_affine[cxt]} ]]            \
       || rerun
          then
          subroutine           @6.6  Inverting affine transform
-         exec_ants   antsApplyTransforms  \
-            -d       3                    \
+         exec_ants   antsApplyTransforms           \
+            -d       3                             \
             -o       Linear[${ixfm_affine[cxt]},1] \
             -t       ${xfm_affine[cxt]}
       fi
+      #############################################################
+      # Set up provisional spatial metadata
+      #############################################################
+      exec_sys ln -sf ${intermediate}.nii.gz       \
+                      ${intermediate}_${cur}.nii.gz
+      intermediate=${intermediate}_${cur}
       exec_xcp spaceMetadata                       \
          -o    ${spaces[sub]}                      \
          -f    ${standard}:${template}             \
-         -m    ${space[sub]}:${struct[cxt]}        \
+         -m    ${space[sub]}:${intermediate}.nii.gz\
          -x    ${xfm_affine[cxt]},${xfm_warp[cxt]} \
          -i    ${ixfm_warp[cxt]},${ixfm_affine[cxt]} \
          -s    ${spaces[sub]}
-      exec_sys ln -sf ${intermediate}.nii.gz      \
-                      ${intermediate}_${cur}.nii.gz
-      intermediate=${intermediate}_${cur}
       routine_end
       ;;
 
@@ -483,8 +530,8 @@ while (( ${#rem} > 0 ))
       #############################################################
       exec_afni   3dresample \
          -dxyz    .25 .25 .25 \
-         -inset   ${segmentation[cxt]}.nii.gz \
-         -prefix  ${intermediate}-upsample.nii.gz
+         -inset   ${segmentation[cxt]} \
+         -prefix  ${intermediate}_${cur}-upsample.nii.gz
       exec_fsl    fslmaths ${intermediate}_${cur}-upsample.nii.gz \
          -thr     3  \
          -uthr    3  \
