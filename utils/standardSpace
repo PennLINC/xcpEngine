@@ -114,7 +114,6 @@ while getopts "s:x:i:p:c:r:t" OPTION
       template=( ${template[@]} ${OPTARG//:/ } )
       (( ${#template[@]} == 2 )) \
       && arg2source ${template[1]}
-      echo ${!sourceSpace[@]}
       ;;
    x)
       transforms=${OPTARG}
