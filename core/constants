@@ -8,6 +8,8 @@
 # Core constants for global use by XCP shell scripts
 ###################################################################
 readonly RED='\033[0;31m'
+readonly CYA='\033[0;36m'
+readonly LGR='\033[0;37m'
 readonly RCL='\033[0m'
 readonly ORIENTATION_ITK=RAI
 readonly SIGMA=2.35482004503
