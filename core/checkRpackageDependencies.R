@@ -8,21 +8,20 @@
 # Check all R package dependencies
 ###################################################################
 failed=FALSE
-pkg <- installed.packages()[,1]
-if(!is.element('RNifti', pkg)) {
-   write('· [Dependencies check failed: RNifti\n :::Please add RNifti to your R installation]', stderr())
+if(!suppressMessages(suppressWarnings(require('RNifti')))) {
+   write('· [Dependencies check failed: RNifti]\n· [Please add RNifti to your R installation]', stderr())
    failed=TRUE
 }
-if(!is.element('optparse', pkg)) {
-   write('· [Dependencies check failed: optparse\n :::Please add optparse to your R installation]', stderr())
+if(!suppressMessages(suppressWarnings(require('optparse')))) {
+   write('· [Dependencies check failed: optparse]\n· [Please add optparse to your R installation]', stderr())
    failed=TRUE
 }
-if(!is.element('pracma', pkg)) {
-   write('· [Dependencies check failed: pracma\n :::Please add pracma to your R installation]', stderr())
+if(!suppressMessages(suppressWarnings(require('pracma')))) {
+   write('· [Dependencies check failed: pracma]\n· [Please add pracma to your R installation]', stderr())
    failed=TRUE
 }
-if(!is.element('signal', pkg)) {
-   write('· [Dependencies check failed: signal\n :::Please add signal to your R installation]', stderr())
+if(!suppressMessages(suppressWarnings(require('signal')))) {
+   write('· [Dependencies check failed: signal]\n· [Please add signal to your R installation]', stderr())
    failed=TRUE
 }
 

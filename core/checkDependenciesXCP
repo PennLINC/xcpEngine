@@ -143,11 +143,11 @@ fi
 # R packages
 ###################################################################
 RpackageChk=( $(${XCPEDIR}/core/checkRpackageDependencies.R) )
+[[ -z ${RpackageChk[@]} ]]  && dc_FAIL=1
 echo "· · RNifti version       ${RpackageChk[0]}"
 echo "· · optparse version     ${RpackageChk[1]}"
 echo "· · pracma version       ${RpackageChk[2]}"
 echo "· · signal version       ${RpackageChk[3]}"
-[[ -z ${RpackageChk[@]} ]]  && dc_FAIL=1
 
 (( ${dc_FAIL} == 1 )) && echo "[Aborting]" && echo "" && exit 1
 echo "····································································
