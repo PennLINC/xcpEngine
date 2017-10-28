@@ -117,16 +117,18 @@ if ! is_image ${segmentation3class[cxt]} \
       fi
       pr_in=${intermediate}-atropos${i}-priorImage0%02d.nii.gz
    done
+   subroutine                 @1.4  Reorganising output
+   exec_fsl immv  ${intermediate}-atropos2.nii.gz \
+                  ${segmentation3class[cxt]}
+   exec_fsl immv  ${intermediate}-atropos2-priorImage001.nii.gz \
+                  ${probabilityCSF[cxt]}
+   exec_fsl immv  ${intermediate}-atropos2-priorImage002.nii.gz \
+                  ${probabilityGM[cxt]}
+   exec_fsl immv  ${intermediate}-atropos2-priorImage003.nii.gz \
+                  ${probabilityWM[cxt]}
+else
+   subroutine                 @1.5  GMD computed
 fi
-subroutine                    @1.4  Reorganising output
-exec_fsl immv  ${intermediate}-atropos2.nii.gz \
-               ${segmentation3class[cxt]}
-exec_fsl immv  ${intermediate}-atropos2-priorImage001.nii.gz \
-               ${probabilityCSF[cxt]}
-exec_fsl immv  ${intermediate}-atropos2-priorImage002.nii.gz \
-               ${probabilityGM[cxt]}
-exec_fsl immv  ${intermediate}-atropos2-priorImage003.nii.gz \
-               ${probabilityWM[cxt]}
 routine_end
 
 
