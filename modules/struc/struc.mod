@@ -336,11 +336,11 @@ while (( ${#rem} > 0 ))
          ${intermediate}_${cur}.nii.gz             \
          -f    ${struc_fit[${cxt}]}                \
          -m
-	   subroutine              @4.2  Reorganising output
-	   exec_fsl immv   ${intermediate}_${cur}.nii.gz \
-	                   ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
-	   exec_fsl immv   ${intermediate}_${cur}_mask.nii.gz \
-	                   ${outdir}/${prefix}_BrainExtractionMask.nii.gz
+      subroutine              @4.2  Reorganising output
+      exec_fsl immv   ${intermediate}_${cur}.nii.gz \
+                      ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
+      exec_fsl immv   ${intermediate}_${cur}_mask.nii.gz \
+                      ${outdir}/${prefix}_BrainExtractionMask.nii.gz
       exec_sys ln -sf ${outdir}/${prefix}_BrainExtractionBrain.nii.gz \
                       ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}

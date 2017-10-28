@@ -106,14 +106,14 @@ if ! is_image ${corticalContrast[${cxt}]} \
       subroutine              @1.6  Downsampling to original space
       exec_ants   antsApplyTransforms -e 3 -d 3 \
          -i       ${intermediate}_${cur}-dist-from-edge-${class}.nii.gz \
-		   -o       ${intermediate}_${cur}-ds-dist-from-edge-${class}.nii.gz \
-		   -r       ${segmentation[${cxt}]}       \
-		   -n       Gaussian
-		subroutine              @1.7  Binarising
-		exec_fsl    fslmaths ${intermediate}_${cur}-ds-dist-from-edge-${class}.nii.gz \
-		   -thr     .05            \
-		   -bin                    \
-   	${intermediate}_${cur}-ds-dist-from-edge-${class}-bin.nii.gz
+         -o       ${intermediate}_${cur}-ds-dist-from-edge-${class}.nii.gz \
+         -r       ${segmentation[${cxt}]}       \
+         -n       Gaussian
+      subroutine              @1.7  Binarising
+      exec_fsl    fslmaths ${intermediate}_${cur}-ds-dist-from-edge-${class}.nii.gz \
+         -thr     .05            \
+         -bin                    \
+      ${intermediate}_${cur}-ds-dist-from-edge-${class}-bin.nii.gz
    done
    ################################################################
    # Compute cortical contrast.
