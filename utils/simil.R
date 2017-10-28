@@ -41,6 +41,12 @@ outfig                  <- opt$outfig
 if (! "ggplot2" %in% rownames(installed.packages())){
    outfig               <- NA
 }
+if (! "reshape2" %in% rownames(installed.packages())){
+   outfig               <- NA
+}
+if (! "svglite" %in% rownames(installed.packages())){
+   outfig               <- NA
+}
 
 ###################################################################
 # 1. Verify that all inputs exist.
@@ -76,12 +82,22 @@ similmat                <- cor(ftvecs)
 similmat                <- similmat - diag(diag(similmat))
 
 ###################################################################
-# 4. Plot the featurewise similarity.
+# 4. Print the similarity matrix
+###################################################################
+similmat                <- squareform(similmat)
+for (i in seq(1,length(similmat))) {
+   cat(similmat[i])
+   cat('\n')
+}
+
+###################################################################
+# 5. Plot the featurewise similarity.
 #    (Requires ggplot2)
 ###################################################################
 if (!is.na(opt$outfig)) {
    suppressMessages(suppressWarnings(library(ggplot2)))
    suppressMessages(suppressWarnings(library(reshape2)))
+   suppressMessages(suppressWarnings(library(svglite)))
    ftvecs               <- data.frame(ftvecs)
    pkcoor               <- abs(similmat)
    pkcoor               <- which(pkcoor==max(pkcoor),arr.ind=TRUE)[1,]
@@ -112,13 +128,4 @@ if (!is.na(opt$outfig)) {
             ylim=c(quantile(ftvecs$mat2,.001), 
             quantile(ftvecs$mat2,.999)))
    ggsave(file=outfig, plot=i, width=4, height=4)
-}
-
-###################################################################
-# 5. Print the similarity matrix
-###################################################################
-similmat                <- squareform(similmat)
-for (i in seq(1,length(similmat))) {
-   cat(similmat[i])
-   cat('\n')
 }

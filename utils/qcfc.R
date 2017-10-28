@@ -114,6 +114,9 @@ if (! "ggplot2"   %in% rownames(installed.packages())){
 if (! "reshape2"  %in% rownames(installed.packages())){
    outfig               <- NA
 }
+if (! "svglite"  %in% rownames(installed.packages())){
+   outfig               <- NA
+}
 
 
 
@@ -267,6 +270,7 @@ if (opt$quality) {
 if (opt$outfig) {
    suppressMessages(suppressWarnings(library(ggplot2)))
    suppressMessages(suppressWarnings(library(reshape2)))
+   suppressMessages(suppressWarnings(library(svglite)))
 #   distribs             <- data.frame(Empirical=rvec,Permuted=rvecperm)
 #   names(distribs)[1]   <- 'Empirical'
 #   names(distribs)[2]   <- 'Permuted'
