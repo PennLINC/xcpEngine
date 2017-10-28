@@ -24,24 +24,21 @@ source ${XCPEDIR}/core/parseArgsMod
 ###################################################################
 # MODULE COMPLETION
 ###################################################################
-completion() {
-   write_output      labels
-   write_output      labelsIntersect
-   write_output      intensityImage
+completion() {   
+   atlas             miccai
    
-   atlas[${cxt}]=$(echo ${atlas[cxt]}\
-                  |$JQ_PATH '. + {"JLF-MICCAI" : {} }')
-   
-   assign image      labelsIntersect[cxt] \
+   assign image      labelsGMIntersect[cxt] \
        or            labels[cxt] \
        as            jlfLabels
    
-   atlas_set         jlfMICCAI Map         ${jlfLabels}
-   atlas_set         jlfMICCAI Space       ${structural[sub]}
-   atlas_set         jlfMICCAI Type        Map
-   atlas_set         jlfMICCAI NodeIndex   ${BRAINATLAS}/miccai/miccaiNodeIndex.1D 
-   atlas_set         jlfMICCAI NodeNames   ${BRAINATLAS}/miccai/miccaiNodeNames.txt 
-   atlas_set         jlfMICCAI Citation    ${BRAINATLAS}/miccai/miccaiReference.bib
+   atlas_set         miccai Map        ${jlfLabels}
+   atlas_set         miccai Space      ${structural[sub]}
+   atlas_set         miccai Type       Map
+   atlas_set         miccai NodeIndex  ${BRAINATLAS}/miccai/miccaiNodeIndex.1D 
+   atlas_set         miccai NodeNames  ${BRAINATLAS}/miccai/miccaiNodeNames.txt 
+   atlas_set         miccai Citation   ${BRAINATLAS}/miccai/miccaiReference.bib
+   
+   write_atlas
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -55,21 +52,22 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  labels                  ${prefix}_Labels
-derivative  labelsGMIntersect       ${prefix}_LabelsGMIntersect
-derivative  Intensity               ${prefix}_Intensity
+derivative  intensity               ${prefix}_Intensity
 
-load_atlas        ${atlas[sub]}
+output      labels                  ${prefix}_Labels.nii.gz
+output      labelsGMIntersect       ${prefix}_LabelsGMIntersect.nii.gz
+
+load_atlas  ${atlas[sub]}
 
 <<DICTIONARY
 
-intensityImage
+intensity
    The weighted, fused intensity map of all images registered to
    the target space.
 labels
    The anatomical parcellation directly produced as the output
    of the joint label fusion procedure.
-labelsIntersect
+labelsGMIntersect
    The JLF-derived parcellation after postprocessing, in the form
    of excising non-ventricular CSF fron the brain periphery.
 
@@ -97,7 +95,7 @@ if ! is_image ${labels[cxt]} \
    subroutine                 @1.1  Cohort: ${jlf_cohort[cxt]}
    mapfile     oasis             < ${XCPEDIR}/thirdparty/oasis30/Cohorts/${jlf_cohort[cxt]}
    labelDir=${XCPEDIR}/thirdparty/oasis30/MICCAI2012ChallengeLabels/
-   if (( ${jlf_extract[${cxt}]} == 1 ))
+   if (( ${jlf_extract[cxt]} == 1 ))
       then
       subroutine              @1.2  Using brains only
       brainDir=$XCPEDIR/thirdparty/oasis30/Brains/
@@ -118,7 +116,7 @@ if ! is_image ${labels[cxt]} \
    subroutine                 @1.5b Delegating control to antsJointLabelFusion
    exec_ants   antsJointLabelFusion.sh \
       -d       3                       \
-      -q       0                       \
+      -q       ${jlf_quick[cxt]}       \
       -f       0                       \
       -j       2                       \
       -k       ${jlf_keep_warps[cxt]}  \
@@ -138,42 +136,46 @@ fi
 # Now apply the intersection between the ANTsCT segmentation
 # and the output of JLF if a brain segmentation image exists
 ###################################################################
-if is_image ${segmentation[sub]}
+if ! is_image ${labelsGMIntersect[cxt]}\
+|| rerun
    then
-   routine                    @2    Preparing grey matter intersection
-   valsToBin='2:6'
-   csfValsToBin='4,11,46,51,52'
-   vdcValsToBin="61,62"
-   subroutine                 @2.1  Generating non-CSF mask
-   exec_xcp val2mask.R                                \
-      -i    ${segmentation[sub]}.nii.gz               \
-      -v    ${valsToBin}                              \
-      -o    ${intermediate}-thresholdedImage.nii.gz 
-   subroutine                 @2.2  Generating ventricular CSF mask
-   exec_xcp val2mask.R                                \
-      -i    ${labels[cxt]}                            \
-      -v    ${csfValsToBin}                           \
-      -o    ${intermediate}-binMaskCSF.nii.gz
-   subroutine                 @2.3  Generating ventral diencephalon mask
-   exec_xcp val2mask.R                                \
-      -i    ${labels[cxt]}                            \
-      -v    ${vdcValsToBin}                           \
-      -o    ${intermediate}-binMaskVD.nii.gz
-   subroutine                 @2.4  Dilating ventricular CSF mask
-   exec_afni   3dmask_tool                            \
-      -input   ${intermediate}-binMaskCSF.nii.gz      \
-      -prefix  ${intermediate}-binMaskCSF_dil.nii.gz  \
-      -dilate_input 2
-   subroutine                 @2.5  Union of vCSF, VDC, and non-CSF masks
-   exec_fsl fslmaths ${intermediate}-thresholdedImage.nii.gz \
-      -add  ${intermediate}-binMaskCSF_dil.nii.gz     \
-      -add  ${intermediate}-binMaskVD.nii.gz          \
-      -bin  ${intermediate}-thresholdedImage.nii.gz
-   subroutine                 @2.6  Excising extraventricular CSF from labels
-   exec_fsl fslmaths ${intermediate}-thresholdedImage.nii.gz \
-      -mul  ${labels[cxt]}                        \
-      ${labelsIntersect[cxt]}
-   routine_end
+   if is_image ${segmentation[sub]}
+      then
+      routine                 @2    Preparing grey matter intersection
+      valsToBin='2:6'
+      csfValsToBin='4,11,46,51,52'
+      vdcValsToBin="61,62"
+      subroutine              @2.1  Generating non-CSF mask
+      exec_xcp val2mask.R                                \
+         -i    ${segmentation[sub]}                      \
+         -v    ${valsToBin}                              \
+         -o    ${intermediate}-thresholdedImage.nii.gz 
+      subroutine              @2.2  Generating ventricular CSF mask
+      exec_xcp val2mask.R                                \
+         -i    ${labels[cxt]}                            \
+         -v    ${csfValsToBin}                           \
+         -o    ${intermediate}-binMaskCSF.nii.gz
+      subroutine              @2.3  Generating ventral diencephalon mask
+      exec_xcp val2mask.R                                \
+         -i    ${labels[cxt]}                            \
+         -v    ${vdcValsToBin}                           \
+         -o    ${intermediate}-binMaskVD.nii.gz
+      subroutine              @2.4  Dilating ventricular CSF mask
+      exec_afni   3dmask_tool                            \
+         -input   ${intermediate}-binMaskCSF.nii.gz      \
+         -prefix  ${intermediate}-binMaskCSF_dil.nii.gz  \
+         -dilate_input 2
+      subroutine              @2.5  Union of vCSF, VDC, and non-CSF masks
+      exec_fsl fslmaths ${intermediate}-thresholdedImage.nii.gz \
+         -add  ${intermediate}-binMaskCSF_dil.nii.gz     \
+         -add  ${intermediate}-binMaskVD.nii.gz          \
+         -bin  ${intermediate}-thresholdedImage.nii.gz
+      subroutine              @2.6  Excising extraventricular CSF from labels
+      exec_fsl fslmaths ${intermediate}-thresholdedImage.nii.gz \
+         -mul  ${labels[cxt]}                            \
+         ${labelsGMIntersect[cxt]}
+      routine_end
+   fi
 fi
 
 
