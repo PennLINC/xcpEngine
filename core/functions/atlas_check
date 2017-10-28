@@ -8,6 +8,7 @@ atlas_check() {
          then
          [[ ${a[Name]} == ${i} ]] && return 0
       else
+         echo ${a[Name]} ${i}
          contains ${a[Name]} ${i} && return 0
       fi
    done
@@ -15,7 +16,8 @@ atlas_check() {
    a_loc=$(cat ${atlas[sub]})
    aorig=$(json_get aorig ${a[Name]})
    a_loc=$(json_get a_loc ${a[Name]})
-   if [[ ${aorig} == ${a_loc} ]]
+   if [[ ${aorig} == ${a_loc} ]] \
+   || [[ -z ${a_loc} ]]
       then
       json_rm ${a[Name]} from atlas[cxt]
    fi
