@@ -71,7 +71,7 @@ USAGE
       assign value   censor[sub] \
           or         censor[cxt] \
           as         censor_dmdt
-      if [[ ${censor_dmdt} == iter ]]
+      if (( ${censor_dmdt} == 1 ))
          then
          subroutine     ${tag}.3
          assign 1dim    tmask[cxt] \

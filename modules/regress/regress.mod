@@ -55,7 +55,7 @@ process     residualised            ${prefix}_residualised
 
 censor
    A set of instructions specifying the type of censoring to be
-   performed in the current pipeline: 'none', 'iter[ative]', or
+   performed in the current pipeline: 0 (none), 1 (iterative), or
    'final'. This instruction is inherited from the prestats module,
    which selects volumes for censoring.
 confcor
@@ -199,7 +199,7 @@ while (( ${#rem} > 0 ))
       # Begin by adding spike regressors into the model to ensure
       # that the model fit ignores high-motion volumes.
       #############################################################
-      if [[       ${censor[cxt]} != none ]] \
+      if ((       ${censor[cxt]} != 0 )) \
       && is_1D    ${tmask[sub]}
          then
          routine              @3    Censoring: preparing spike regressors
@@ -277,7 +277,7 @@ done
 ###################################################################
 # CENSORING: First, verify that the temporal mask exists.
 ###################################################################
-if [[ ${censor[cxt]} != none ]]
+if (( ${censor[cxt]} != 0 ))
    then
    routine                    @5    Censoring BOLD timeseries
    if is_1D     ${tmask[sub]}
@@ -294,7 +294,7 @@ to ensure that this is intentional.
 
 Overriding user input:
 No censoring will be performed."
-      configure               censor   none
+      configure               censor   0
       routine_end
    fi
 fi
@@ -303,9 +303,9 @@ fi
 # Check the conditional again in case the value of censoring has
 # been changed due to a failure to locate the temporal mask.
 ###################################################################
-if [[ ${censor[cxt]} != none ]]
+if (( ${censor[cxt]} != 0 ))
    then
-   subroutine                 @5.4  [${censor[cxt]} censoring]
+   subroutine                 @5.4  [Preparing the final censor]
    cur=CEN
    buffer=${buffer}_${cur}
    exec_fsl imcp ${intermediate}.nii.gz ${uncensored[cxt]}

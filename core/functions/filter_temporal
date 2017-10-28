@@ -108,12 +108,12 @@ USAGE
       assign value   censor[sub] \
           or         censor[cxt] \
           as         censor_tmpf
-      if [[ ${censor_tmpf} == iter ]] \
+      if (( ${censor_tmpf} == 1 )) \
       && is_1D ${tmask_tmpf}
          then
          subroutine        ${tag}.4.1
          tmask_tmpf="-n ${tmask_tmpf}"
-      elif [[ ${censor_tmpf} != none ]]
+      elif (( ${censor_tmpf} != 0 ))
          then
          subroutine        ${tag}.4.2
          echo \
@@ -124,7 +124,7 @@ to ensure that this is intentional.
 
 Overriding user input:
 No censoring will be performed."
-         configure            censor   none
+         configure            censor   0
          write_output         censor
          unset tmask_tmpf
       else
