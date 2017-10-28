@@ -59,7 +59,6 @@ for i in {1..6}
 done
 
 derivative_set corticalThickness    Statistic        mean
-derivative_set corticalContrast     Statistic        mean
 derivative_set mask                 Type             Mask
 
 output      struct_std              ${prefix}_BrainNormalizedToTemplate.nii.gz
@@ -99,8 +98,6 @@ final       struct                  ${prefix}_ExtractedBrain0N4
 biasCorrected
    The bias field-corrected image, used for segmentation into
    tissue classes.
-corticalContrast
-   The voxelwise map of cortical contrast values.
 corticalThickness
    The voxelwise map of cortical thickness values.
 corticalThickness_std

@@ -40,12 +40,15 @@ derivative     corticalContrast     ${prefix}_CorticalContrast
 
 derivative_set corticalContrast     Statistic        mean
 
-input image mask
+input   image mask
 require image segmentation       \
      or       segmentation3class \
      as       segmentation
 
 <<DICTIONARY
+
+corticalContrast
+   The voxelwise map of cortical contrast values.
 
 DICTIONARY
 
@@ -117,8 +120,8 @@ if ! is_image ${corticalContrast[${cxt}]} \
    ################################################################
    subroutine                 @1.8  Computing cortical contrast
    exec_xcp cortCon.R \
-      -w    ${intermediate}_${cur}-ds-dist-from-edge-wm-bin.nii.gz \
-      -g    ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
+      -W    ${intermediate}_${cur}-ds-dist-from-edge-wm-bin.nii.gz \
+      -G    ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
       -T    ${struct[sub]} \
       -o    ${corticalContrast[${cxt}]}
    subroutine                 @1.9  Cortical contrast computed
