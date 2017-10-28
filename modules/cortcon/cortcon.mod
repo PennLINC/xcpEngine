@@ -138,7 +138,7 @@ if ! is_image ${corticalContrast[${cxt}]} \
          -o    ${intermediate}_${cur}-ds-dist-from-edge-wm-unique.nii.gz
       subroutine              @1.11 Propagating WM labels into GM
       exec_ants   ImageMath 3 ${intermediate}_${cur}-wm-dil-into-gm.nii.gz \
-          GD      ${intermediate}_${cur}-ds-dist-from-edge-wm-unique.nii.gz 5
+          GD      ${intermediate}_${cur}-ds-dist-from-edge-wm-unique.nii.gz 8
       subroutine              @1.12 Preparing GM mask
       exec_fsl fslmaths ${intermediate}_${cur}-wm-dil-into-gm.nii.gz \
          -mul  ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
