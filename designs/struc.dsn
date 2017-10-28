@@ -48,11 +48,6 @@ pipeline=struc,gmd,cortcon,jlf,roiquant #,strucQA
 # 1 STRUC
 ###################################################################
 
-struc_template_head[1]=/data/joy/BBL/studies/reward/templateCohort/template/templateTarg/template.nii.gz
-struc_template_mask[1]=/data/joy/BBL/studies/reward/templateCohort/template/templateMask/templateMask.nii.gz
-struc_template_mask_dil[1]=/data/joy/BBL/studies/reward/templateCohort/template/templateMask/templateMaskDil.nii.gz
-struc_extraction_prior[1]=/data/joy/BBL/studies/reward/templateCohort/template/templateMask/templateMaskDil.nii.gz
-struc_template_priors[1]=/data/joy/BBL/studies/reward/templateCohort/template/templatePriorsRenorm/prior00%d.nii.gz
 struc_denoise_anat[1]=1
 struc_prior_weight[1]=0.25
 struc_posterior_formulation[1]='Socrates[1]'
@@ -64,7 +59,7 @@ struc_fit[1]=0.3
 struc_quick[1]=1
 struc_rerun[1]=0
 struc_cleanup[1]=1
-struc_process[1]=BFC-ABE-REG-SEG-CCC # #ACT-CCC #BFC-ABE-REG
+struc_process[1]=BFC-ABE-REG-SEG # #ACT-CCC #BFC-ABE-REG
 
 ###################################################################
 # 2 GMD
@@ -79,6 +74,7 @@ gmd_cleanup[2]=1
 
 cortcon_gm_val[3]=2
 cortcon_wm_val[3]=3
+cortcon_formulation[3]=fast
 cortcon_rerun[3]=0
 cortcon_cleanup[3]=0
 

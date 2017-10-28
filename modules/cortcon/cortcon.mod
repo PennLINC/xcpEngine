@@ -66,8 +66,8 @@ if ! is_image ${corticalContrast[${cxt}]} \
 || rerun
    then
    subroutine                 @1.1  Resampling segmentation to high-resolution space
-   exec_afni   3dresample \
-      -dxyz    .25 .25 .25 \
+   exec_afni   3dresample           \
+      -dxyz    .25 .25 .25          \
       -inset   ${segmentation[cxt]} \
       -prefix  ${intermediate}_${cur}-upsample.nii.gz
    subroutine                 @1.2  Mapping GM-WM boundary
@@ -116,17 +116,43 @@ if ! is_image ${corticalContrast[${cxt}]} \
       ${intermediate}_${cur}-ds-dist-from-edge-${class}-bin.nii.gz
    done
    ################################################################
-   # Compute cortical contrast.
+   # Compute cortical contrast -- original
    ################################################################
-   subroutine                 @1.8  Computing cortical contrast
-   exec_xcp cortCon.R \
-      -W    ${intermediate}_${cur}-ds-dist-from-edge-wm-bin.nii.gz \
-      -G    ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
-      -T    ${struct[sub]} \
-      -o    ${corticalContrast[${cxt}]}
-   subroutine                 @1.9  Cortical contrast computed
+   if [[ ${cortcon_formulation[cxt]} == orig ]]
+      then
+      subroutine              @1.8  Computing cortical contrast
+      exec_xcp cortCon.R \
+         -W    ${intermediate}_${cur}-ds-dist-from-edge-wm-bin.nii.gz \
+         -G    ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
+         -T    ${struct[sub]} \
+         -o    ${corticalContrast[${cxt}]}
+      subroutine              @1.9  Cortical contrast computed
+   ################################################################
+   # Compute cortical contrast -- fast
+   ################################################################
+   elif [[ ${cortcon_formulation[cxt]} == fast ]]
+      then
+      subroutine              @1.10 Uniquely labelling WM voxels
+      exec_xcp uniquifyVoxels.R     \
+         -i    ${intermediate}_${cur}-ds-dist-from-edge-wm-bin.nii.gz \
+         -o    ${intermediate}_${cur}-ds-dist-from-edge-wm-unique.nii.gz
+      subroutine              @1.11 Propagating WM labels into GM
+      exec_ants   ImageMath 3 ${intermediate}_${cur}-wm-dil-into-gm.nii.gz \
+          GD      ${intermediate}_${cur}-ds-dist-from-edge-wm-unique.nii.gz 5
+      subroutine              @1.12 Preparing GM mask
+      exec_fsl fslmaths ${intermediate}_${cur}-wm-dil-into-gm.nii.gz \
+         -mul  ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
+               ${intermediate}_${cur}-gm-nearest-wm.nii.gz
+      subroutine              @1.13 Computing cortical contrast
+      exec_xcp cortCon2.R           \
+         -W    ${intermediate}_${cur}-ds-dist-from-edge-wm-unique.nii.gz \
+         -G    ${intermediate}_${cur}-gm-nearest-wm.nii.gz              \
+         -T    ${struct[sub]}       \
+         -o    ${corticalContrast[${cxt}]}
+      subroutine              @1.14 Cortical contrast computed
+   fi
 else
-   subroutine                 @1.10 Cortical contrast computed
+   subroutine                 @1.15 Cortical contrast computed
 fi
 routine_end
 

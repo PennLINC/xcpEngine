@@ -8,7 +8,6 @@ atlas_check() {
          then
          [[ ${a[Name]} == ${i} ]] && return 0
       else
-         echo ${a[Name]} ${i}
          contains ${a[Name]} ${i} && return 0
       fi
    done
