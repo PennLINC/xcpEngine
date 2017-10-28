@@ -29,10 +29,10 @@ completion() {
             Map   ${referenceVolumeBrain[cxt]}
    fi
    
-   exec_xcp spaceMetadata \
-      -o    ${spaces[sub]} \
-      -f    ${standard}:${template} \
-      -m    ${space[sub]}:${struct[cxt]} \
+   exec_xcp spaceMetadata                       \
+      -o    ${spaces[sub]}                      \
+      -f    ${standard}:${template}             \
+      -m    ${space[sub]}:${struct[cxt]}        \
       -x    ${xfm_affine[cxt]},${xfm_warp[cxt]} \
       -i    ${ixfm_warp[cxt]},${ixfm_affine[cxt]} \
       -s    ${spaces[sub]}
@@ -49,21 +49,21 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative  biasCorrected           ${prefix}_BrainSegmentation0N4
 derivative  corticalThickness       ${prefix}_CorticalThickness
-derivative  corticalContrast        ${prefix}_CorticalContrast
 derivative  mask                    ${prefix}_BrainExtractionMask
 derivative  segmentation            ${prefix}_BrainSegmentation
 
 for i in {1..6}
    do
-   derivative  segmentationPosteriors  ${prefix}_BrainSegmentationPosteriors${i}
+   output   segmentationPosteriors  ${prefix}_BrainSegmentationPosteriors${i}.nii.gz
 done
 
 derivative_set corticalThickness    Statistic        mean
 derivative_set corticalContrast     Statistic        mean
+derivative_set mask                 Type             Mask
 
 output      struct_std              ${prefix}_BrainNormalizedToTemplate.nii.gz
+output      biasCorrected           ${prefix}_BrainSegmentation0N4.nii.gz
 output      corticalThickness_std   ${prefix}_CorticalThicknessNormalizedToTemplate.nii.gz
 output      ctroot                  ${prefix}_
 output      referenceVolume         ${prefix}_BrainSegmentation0N4.nii.gz
@@ -434,12 +434,15 @@ while (( ${#rem} > 0 ))
          exec_sys    mv -f ${intermediate}_${cur}_SegmentationConvergence.txt \
                            ${outdir}/${prefix}_BrainSegmentationConvergence.txt
          exec_fsl    immv  ${intermediate}_${cur}_Segmentation0N4.nii.gz \
-                           ${biasCorrected[cxt]}
+                           ${struct[cxt]}
          exec_fsl    immv  ${intermediate}_${cur}_Segmentation.nii.gz \
                            ${segmentation[cxt]}
       else
          subroutine           @5.4  Segmentation already complete
       fi
+      exec_sys    ln -sf   ${struct[cxt]} \
+                           ${intermediate}_${cur}.nii.gz
+      intermediate=${intermediate}_${cur}
       routine_end
       ;;
 
@@ -516,74 +519,6 @@ while (( ${#rem} > 0 ))
          -s    ${spaces[sub]}
       routine_end
       ;;
-
-
-
-
-
-   CCC)
-      #############################################################
-      # CCC runs cortical contrast analysis
-      #------------------------------------------------------------
-      # First, prepare the binarised mask indicating the GM-WM
-      # interface.
-      #############################################################
-      exec_afni   3dresample \
-         -dxyz    .25 .25 .25 \
-         -inset   ${segmentation[cxt]} \
-         -prefix  ${intermediate}_${cur}-upsample.nii.gz
-      exec_fsl    fslmaths ${intermediate}_${cur}-upsample.nii.gz \
-         -thr     3  \
-         -uthr    3  \
-         -edge       \
-         -uthr    1  \
-         -bin        \
-         ${intermediate}_${cur}-upsample-edge.nii.gz
-      exec_ants   ImageMath 3    ${intermediate}_${cur}-dist-from-edge.nii.gz \
-                  MaurerDistance ${intermediate}_${cur}-upsample-edge.nii.gz 1
-      exec_fsl    fslmaths ${intermediate}_${cur}-dist-from-edge.nii.gz \
-         -thr     .75   \
-         -uthr    1.25  \
-         -bin           \
-         ${intermediate}_${cur}-dist-from-edge-bin.nii.gz
-      #############################################################
-      # Next, prepare the WM and GM masks.
-      #############################################################
-      declare           -A tissue_classes
-      tissue_classes=(  [gm]="grey matter"
-                        [wm]="white matter" )
-      for class in "${!tissue_classes[@]}"
-         do
-         class_val='struc_'${class}'_val['${cxt}']'
-         exec_fsl    fslmaths ${intermediate}-upsample.nii.gz \
-            -thr     ${!class_val} \
-            -uthr    ${!class_val} \
-            -mul     ${intermediate}_${cur}-dist-from-edge-bin.nii.gz \
-            -bin \
-            ${intermediate}_${cur}-dist-from-edge-${class}.nii.gz
-         exec_ants   antsApplyTransforms -e 3 -d 3 \
-            -i       ${intermediate}_${cur}-dist-from-edge-${class}.nii.gz \
-		      -o       ${intermediate}_${cur}-ds-dist-from-edge-${class}.nii.gz \
-		      -r       ${brainSegmentation[${cxt}]}.nii.gz \
-		      -n       Gaussian
-		   exec_fsl    fslmaths ${intermediate}_${cur}-ds-dist-from-edge-${class}.nii.gz \
-		      -thr     .05 \
-		      -bin \
-		      ${intermediate}_${cur}-ds-dist-from-edge-${class}-bin.nii.gz
-		done
-      #############################################################
-      # Compute cortical contrast.
-      #############################################################
-      exec_xcp cortCon.R \
-         -w    ${intermediate}_${cur}-ds-dist-from-edge-gm-bin.nii.gz \
-         -g    ${intermediate}_${cur}-ds-dist-from-edge-wm-bin.nii.gz \
-         -T    ${struct[cxt]} \
-         -o    ${cortConVals[${cxt}]}
-      exec_sys ln -s ${intermediate}.nii.gz \
-                     ${intermediate}_${cur}.nii.gz
-      intermediate=${intermediate}_${cur}
-      routine_end
-      ;;
       
       
       
@@ -607,9 +542,9 @@ done
 if [[ ! -e ${outdir}/${prefix}_str2std.png ]] \
 || rerun
    then
-   routine                 @8    Quality assessment
+   routine                    @8    Quality assessment
    exec_fsl fslmaths ${struct_std[cxt]} -bin ${str2stdmask[cxt]}
-   subroutine              @8.1  [Computing registration quality metrics]
+   subroutine                 @8.1  [Computing registration quality metrics]
    registration_quality=( $(exec_xcp \
       maskOverlap.R \
       -m ${str2stdmask[cxt]} \
@@ -618,7 +553,7 @@ if [[ ! -e ${outdir}/${prefix}_str2std.png ]] \
    echo  ${registration_quality[1]} > ${reg_coverage[cxt]}
    echo  ${registration_quality[2]} > ${reg_jaccard[cxt]}
    echo  ${registration_quality[3]} > ${reg_dice[cxt]}
-   subroutine              @8.2  [Preparing slicewise rendering]
+   subroutine                 @8.2  [Preparing slicewise rendering]
    exec_xcp regslicer \
       -s ${struct_std[cxt]} \
       -t ${template} \
@@ -650,7 +585,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    ################################################################
    if ! is_image ${mask[cxt]}
       then
-      subroutine                 @0.2
+      subroutine              @0.2
       exec_fsl fslmaths ${struct[cxt]} \
          -bin  ${mask[cxt]}
    fi
