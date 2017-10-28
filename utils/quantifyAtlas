@@ -126,35 +126,28 @@ done
 [[ -z ${oroot} ]]    && oroot=$(exec_fsl remove_ext ${opath})
 [[ -z ${voxel} ]]    && [[ ${stats} != vol ]] \
    && stats=vol      && subroutine @u.0 No voxelwise values -- computing regional volumes
-if [[ -z ${index} ]]
-   then
-   i=1
-   if [[ -z ${rname} ]]
-      then
-      rname=Node_${i}
-      while (( ${i} < ${maxim} ))
-         do
-         rname="${rname} Node_${i}"
-      done
-   fi
-fi
 if [[ ! -s ${index} ]]
    then
    [[ -z ${index} ]] \
       && index=( $(exec_fsl   fslstats ${atlas} -R) ) \
       && maxim=$(strslice     ${index[1]} 1 '.') \
-      && index=$(eval         echo {1..${maxim}})
-   echo ${index// /,}   >> ${oroot}_index.1D
+      && index=( $(eval       echo {1..${maxim}}) )
+   index=( ${index[@]//,/ } )
+   printf '%d\n' ${index[@]}  >> ${oroot}_index.1D
+   unset index
    index=${oroot}_index.1D
 fi
 if [[ ! -s ${rname} ]]
    then
    exec_sys rm -f ${oroot}_rname.txt
+   if [[ -z ${rname} ]]
+      then
+      mapfile indices < ${index}
+      rname=( $(printf 'Node_%d ' "${index[@]}") )
+   fi
    rname=${rname//,/ }
-   for r in $rname
-      do
-      echo ${r} >> ${oroot}_rname.txt
-   done
+   printf '%d\n' ${rname[@]}  >> ${oroot}_rname.1D
+   unset rname
    rname=${oroot}_rname.txt
 fi
 
