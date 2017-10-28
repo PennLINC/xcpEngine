@@ -515,32 +515,32 @@ renorm_priors() {
       #############################################################
       subroutine              @5.2  Preprocessing atlas priors
       local priorNum=(2 3 4 5 6)
-	   for i in "${priorNum[@]}"
-	      do
-		   exec_ants   ThresholdImage 3 ${labels}             \
-		               ${binRoot}${i}.nii.gz ${i} ${i}
-		   exec_ants   SmoothImage    3 ${binRoot}${i}.nii.gz \
-		               1.0 ${priorPrenorm}${i}.nii.gz
-		   local imcall="${imcall} ${priorPrenorm}${i}.nii.gz"
-	   done
-	   local imcall=${imcall// /,}
+      for i in "${priorNum[@]}"
+         do
+         exec_ants   ThresholdImage 3 ${labels}             \
+                     ${binRoot}${i}.nii.gz ${i} ${i}
+         exec_ants   SmoothImage    3 ${binRoot}${i}.nii.gz \
+                     1.0 ${priorPrenorm}${i}.nii.gz
+         local imcall="${imcall} ${priorPrenorm}${i}.nii.gz"
+      done
+      local imcall=${imcall// /,}
 
       #############################################################
       # Prepare CSF atlas prior.
       #############################################################
       subroutine              @5.3  Preparing the cerebrospinal fluid prior
       exec_sys    mkdir ${kmeansDir}
-	   exec_ants   Atropos                                \
-	      -d       3                                      \
-	      -a       ${templateMasked}                      \
-	      -i       KMeans[3]                              \
-	      -o       [${kmeansDir}/kmeansSeg.nii.gz,${kmeansDir}/kmeansPosterior%02d.nii.gz] \
-	      -v                                              \
-	      -x       ${templateMask}
-	   local csfPath=$(exec_sys ls -d1 ${kmeansDir}/kmeansPosterior*1.nii.gz)
-	
+      exec_ants   Atropos                                \
+         -d       3                                      \
+         -a       ${templateMasked}                      \
+         -i       KMeans[3]                              \
+         -o       [${kmeansDir}/kmeansSeg.nii.gz,${kmeansDir}/kmeansPosterior%02d.nii.gz] \
+         -v                                              \
+         -x       ${templateMask}
+      local csfPath=$(exec_sys ls -d1 ${kmeansDir}/kmeansPosterior*1.nii.gz)
+   
       #############################################################
-	   # Renormalise all priors.
+      # Renormalise all priors.
       #############################################################
       subroutine              @5.4  Renormalising priors with respect to CSF
       exec_xcp renormalisePriorsPreserveCSF.R            \
@@ -549,8 +549,8 @@ renorm_priors() {
          -c    ${csfPath}                                \
          -o    ${priorRoot}
       local priorNum=(1 2 3 4 5 6)
-	   for i in "${priorNum[@]}"
-	      do
+      for i in "${priorNum[@]}"
+         do
          priors=(${priors[@]} $(ls ${priorRoot}*${i}.nii.gz))
       done
       priors=$(join_by ',' ${priors[@]})
@@ -656,15 +656,15 @@ exec_ants   antsRegistration                          \
    -t       SyN[0.1,3,0]                              \
    -f       6x4x2x1                                   \
    -s       3x2x1x0
-	"                                      >> ${xfmScript}
-	   subroutine              @7.3  Executing registration
-	   id=$(qsub -V -S /bin/bash -cwd -j y -o ${xfmLog} \
+   "                                      >> ${xfmScript}
+      subroutine              @7.3  Executing registration
+      id=$(qsub -V -S /bin/bash -cwd -j y -o ${xfmLog} \
          ${xfmScript})
       id=$(echo ${id}|tr -dc '0-9')
       ${XCPEDIR}/utils/qstatus -e ${id}
       local xfmNum=(0 1)
-	   for i in "${xfmNum[@]}"
-	      do
+      for i in "${xfmNum[@]}"
+         do
          local xs=$(ls ${transform}${i}*)
          for x in ${xs}
             do
