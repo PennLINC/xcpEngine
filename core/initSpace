@@ -75,7 +75,8 @@ configure         structural        ${prefix[sub]}_anatomical
 if [[ -d ${antsct[sub]} ]]
    then
    subroutine                 ${tag}.3a   [Anatomical space: ${structural[cxt]//\%*/}]
-   exec_xcp spaceMetadata -o ${spaces[cxt]}  \
+   ${XCPEDIR}/utils/spaceMetadata            \
+      -o ${spaces[cxt]}                      \
       -f ${str_targ}:${str_temp}             \
       -d ${structural[cxt]}:${antsct[sub]}   \
       -s ${spaces[cxt]}

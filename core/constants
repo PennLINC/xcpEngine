@@ -22,6 +22,7 @@ readonly PHI=1.61803398875
 ###################################################################
 [[ ! -d ${BRAINSPACE} ]] && readonly BRAINSPACE=${XCPEDIR}/space
 [[ ! -d ${BRAINATLAS} ]] && readonly BRAINATLAS=${XCPEDIR}/atlas
+[[   -z ${log_proc}   ]] && log_proc=/dev/null
 
 ###################################################################
 # Prime space, derivative, atlas, and QC arrays. (bash v<4.2)

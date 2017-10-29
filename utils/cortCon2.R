@@ -9,7 +9,7 @@
 # faster but might give less accurate results. It also requires
 # the nearest WM voxel already be computed, for instance by
 # propagating unique WM voxel labels from the WM edge into the GM
-# edge using ImageMaths dilation.
+# edge.
 #
 # It finds the closest WM voxel to each GM voxel 1mm from the
 # WM-GM edge. It will then find the cortical contrast value (WM/GM)

@@ -122,7 +122,6 @@ if ! is_image ${corticalContrast[${cxt}]} \
    if [[ ${cortcon_formulation[cxt]} == orig ]]
       then
       routine                 @2    Cortical contrast -- original formulation
-      date
       subroutine              @2.1  Computing cortical contrast
       exec_xcp cortCon.R               \
          -W    ${intermediate}-ds-dist-from-edge-wm-bin.nii.gz \
@@ -130,7 +129,6 @@ if ! is_image ${corticalContrast[${cxt}]} \
          -T    ${struct[sub]}          \
          -o    ${corticalContrast[${cxt}]}
       subroutine              @2.2  Cortical contrast computed
-      date
    routine_end
    ################################################################
    # Compute cortical contrast -- fast
@@ -138,21 +136,29 @@ if ! is_image ${corticalContrast[${cxt}]} \
    elif [[ ${cortcon_formulation[cxt]} == fast ]]
       then
       routine                 @3    Cortical contrast -- fast formulation
-      date
       gmMask=${intermediate}-ds-dist-from-edge-gm-bin.nii.gz
       for i in {1..8}
          do
          subroutine           @3.1  Circling the WM boundary at ${i} mm
+         ##########################################################
+         # Map mean local WM for voxels in the current range
+         ##########################################################
          exec_afni   3dLocalstat -overwrite \
             -prefix  ${intermediate}-nearestWM${i}.nii.gz \
-            -nbhd    'SPHERE('${i}')' \
-            -stat    mean \
+            -nbhd    'SPHERE('${i}')'  \
+            -stat    mean              \
             -mask    ${intermediate}-ds-dist-from-edge-wm-bin.nii.gz \
             -use_nonmask ${struct[sub]}
+         ##########################################################
+         # Obtain cortical contrast as mean WM / GM
+         ##########################################################
          exec_fsl    fslmaths ${intermediate}-nearestWM${i}.nii.gz \
-            -div     ${struct[sub]} \
-            -mul     ${gmMask} \
+            -div     ${struct[sub]}    \
+            -mul     ${gmMask}         \
                      ${intermediate}-cortcon${i}.nii.gz
+         ##########################################################
+         # Exclude mapped regions from longer-range maps
+         ##########################################################
          exec_fsl    fslmaths ${intermediate}-cortcon${i}.nii.gz \
             -bin     ${intermediate}-exclusion.nii.gz
          exec_fsl    fslmaths ${gmMask} \
@@ -161,12 +167,14 @@ if ! is_image ${corticalContrast[${cxt}]} \
          gmMask=${intermediate}-gmMask.nii.gz
          ccvox=( "${ccvox[@]}" ${intermediate}-cortcon${i}.nii.gz )
       done
+      #############################################################
+      # Combine across all ranges to build the final CC map
+      #############################################################
       subroutine              @3.2  Collating across all sampled distances
       exec_fsl fslmaths $(join_by ' -add ' "${ccvox[@]}") \
          -mul  ${intermediate}-ds-dist-from-edge-gm-bin.nii.gz \
                ${corticalContrast[${cxt}]}
       subroutine              @3.3  Cortical contrast computed
-      date
       routine_end
    fi
 else

@@ -35,15 +35,15 @@ completion() {
 }
 
 community_detection() {
-   echo_cmd "matlab : addpath(genpath('${XCPEDIR}/thirdparty/'))"
-   echo_cmd "matlab : addpath(genpath('${XCPEDIR}/utils/'))"
-   echo_cmd "matlab : glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg})"
+   verbose && echo_cmd "matlab : addpath(genpath('${XCPEDIR}/thirdparty/'))"
+   verbose && echo_cmd "matlab : addpath(genpath('${XCPEDIR}/utils/'))"
+   verbose && echo_cmd "matlab : glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg})"
    matlab -nodesktop \
       -nosplash \
       -nojvm \
       -r "addpath(genpath('${XCPEDIR}/thirdparty/')); addpath(genpath('${XCPEDIR}/utils/')); glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg}); exit"\
       2>/dev/null 1>&2
-   echo_cmd "matlab : exit"
+   verbose && echo_cmd "matlab : exit"
 }
 
 
