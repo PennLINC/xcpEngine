@@ -65,6 +65,11 @@ source ${LIBRARY}/ninstances
 source ${LIBRARY}/output
 source ${LIBRARY}/printx
 source ${LIBRARY}/proc_afni
+source ${LIBRARY}/proc_ants
+source ${LIBRARY}/proc_c3d
+source ${LIBRARY}/proc_cmd
+source ${LIBRARY}/proc_fsl
+source ${LIBRARY}/proc_xcp
 source ${LIBRARY}/process
 source ${LIBRARY}/processed
 source ${LIBRARY}/qc
