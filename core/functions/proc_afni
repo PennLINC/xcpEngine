@@ -1,17 +1,3 @@
 proc_afni() {
-   local output=${1}.nii.gz
-   shift
-   local process_command=${@}
-   if is_image ${output} \
-   && ! rerun
-      then
-      return
-   else
-      process_command=${process_command//%OUTPUT/${output}}
-   fi
-   exec_afni   ${process_command}
-   if ! is_image ${output}
-      then
-      abort_stream "Processing failed to produce ${output}"
-   fi
+   proc_cmd afni "${@}"
 }
