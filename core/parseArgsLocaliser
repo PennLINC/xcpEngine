@@ -108,3 +108,4 @@ declare -A declared_d declared_o declared_c declared_s declared_q
 ###################################################################
 subject_parse     ${subject}  ${subjinfo[1]}
 source $design
+source ${XCPEDIR}/core/defineLogs

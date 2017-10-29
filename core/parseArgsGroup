@@ -90,6 +90,7 @@ esac
 ###################################################################
 # Source all design files.
 ###################################################################
+source ${XCPEDIR}/core/defineLogs
 source ${XCPEDIR}/core/xcpDelocaliser
 ###################################################################
 # Create the primary module output directory.

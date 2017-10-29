@@ -89,6 +89,7 @@ source ${design[sub]}
 design=${design[sub]}
 prefix=${prefix[sub]}
 out=${out[sub]}
+source ${XCPEDIR}/core/defineLogs
 ###################################################################
 # Verify that the analyte image is present.
 ###################################################################
