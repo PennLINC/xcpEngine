@@ -212,11 +212,10 @@ while (( ${#rem} > 0 ))
                vol_end=$(( ${nvol} + ${prestats_dvols[cxt]} ))
             fi
             subroutine        @1.4  [Primary analyte image]
-            exec_fsl \
+            proc_fsl  ${intermediate}_${cur}.nii.gz \
                fslroi ${intermediate}.nii.gz \
-               ${intermediate}_${cur}.nii.gz \
-               ${vol_begin} \
-               ${vol_end}
+               %OUTPUT                       \
+               ${vol_begin} ${vol_end}
          fi
          ##########################################################
          # Repeat for any derivatives of the BOLD time series that
@@ -309,13 +308,11 @@ while (( ${#rem} > 0 ))
             # MC directory.
             #######################################################
             subroutine        @2.2  [Computing realignment parameters]
-            exec_fsl \
-               mcflirt -in ${intermediate}.nii.gz \
-               -out ${intermediate}_mc \
-               -plots \
+            proc_fsl    ${intermediate}_mc.nii.gz  \
+               mcflirt -in ${intermediate}.nii.gz  \
+               -out     ${intermediate}_mc         \
                -reffile ${intermediate}-reference.nii.gz \
-               -rmsrel \
-               -rmsabs \
+               -plots      -rmsrel     -rmsabs     \
                -spline_final
             #######################################################
             # Create the MC directory, and move outputs to their
@@ -463,12 +460,11 @@ while (( ${#rem} > 0 ))
          || rerun
             then
             subroutine        @3.4  [Executing motion realignment]
-            exec_fsl \
-               mcflirt -in ${intermediate}.nii.gz \
-               -out ${intermediate}_mc \
-               -mats \
-               -reffile ${referenceVolume[cxt]} \
-               -spline_final
+            proc_fsl    ${intermediate}_mc.nii.gz  \
+               mcflirt -in ${intermediate}.nii.gz  \
+               -out     ${intermediate}_mc         \
+               -reffile ${referenceVolume[cxt]}    \
+               -mats             -spline_final
          fi
          ##########################################################
          # Realignment transforms are always retained from this
@@ -678,19 +674,18 @@ while (( ${#rem} > 0 ))
             #######################################################
             perc_98=$(exec_fsl fslstats ${intermediate}.nii.gz -p 98)
             new_thresh=$(arithmetic ${perc_98}\*${prestats_bbgthr[cxt]})
-            exec_fsl \
-               fslmaths ${intermediate}_${cur}_1.nii.gz \
-               -thr ${new_thresh} \
-               -Tmin \
-               -bin \
-               ${mask[cxt]} \
+            exec_fsl fslmaths ${intermediate}_${cur}_1.nii.gz \
+               -thr  ${new_thresh}  \
+               -Tmin                \
+               -bin                 \
+               ${mask[cxt]}         \
                -odt char
             subroutine        @5.6
             exec_fsl fslmaths ${mask[cxt]} -dilF ${mask[cxt]}
-            exec_fsl \
-               fslmaths ${intermediate}.nii.gz \
-               -mas ${mask[cxt]} \
-               ${intermediate}_${cur}.nii.gz
+            proc_fsl    ${intermediate}_${cur}.nii.gz \
+               fslmaths ${intermediate}.nii.gz        \
+               -mas     ${mask[cxt]}                  \
+               %OUTPUT
          fi
          intermediate=${intermediate}_${cur}
          routine_end
@@ -761,7 +756,7 @@ while (( ${#rem} > 0 ))
                               --USPACE=${prestats_usan_space[cxt]}
          smoothed='img_sm'${prestats_smo[cxt]}'['${cxt}']'
          intermediate=${intermediate}_${cur}
-         exec_fsl immv ${!smoothed} ${intermediate}.nii.gz
+         proc_fsl ${intermediate}.nii.gz immv ${!smoothed} %OUTPUT
          routine_end
          ;;
       
@@ -815,14 +810,17 @@ while (( ${#rem} > 0 ))
          subroutine           @10.1 [Selecting reference volume]
          nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
          midpt=$(( ${nvol} / 2))
-         exec_fsl fslroi            \
+         proc_fsl ${referenceVolume[cxt]} \
+            fslroi                  \
             ${intermediate}.nii.gz  \
-            ${referenceVolume[cxt]} \
+            %OUTPUT                 \
             ${midpt} 1
          subroutine           @10.2 [Computing mean volume]
-         exec_fsl fslmaths ${intermediate}.nii.gz  -Tmean ${meanIntensity[cxt]}
+         proc_fsl ${meanIntensity[cxt]} \
+                  fslmaths ${intermediate}.nii.gz  -Tmean   %OUTPUT
          subroutine           @10.3 [Computing mask]
-         exec_fsl fslmaths ${meanIntensity[cxt]}   -bin ${mask[cxt]}
+         proc_fsl ${mask[cxt]} \
+                  fslmaths ${meanIntensity[cxt]}   -bin     %OUTPUT
          subroutine           @10.4 [Adding link references]
          exec_sys ln -sf   ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
          exec_sys ln -sf   ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}

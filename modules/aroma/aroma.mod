@@ -381,7 +381,8 @@ exec_xcp mbind.R \
 #   between such sampled timeseries are computed 1000 times.
 ###################################################################
 subroutine                    @4.3  Computing IC-RP correlations
-echo_cmd ${XCPEDIR}/modules/aroma/aromaRPCOR.R \
+verbose && echo_cmd \
+${XCPEDIR}/modules/aroma/aromaRPCOR.R \
    -i ${ic_ts[cxt]} \
    -r ${ic_confmat[cxt]}
 classRPCOR=($(${XCPEDIR}/modules/aroma/aromaRPCOR.R \
@@ -406,7 +407,8 @@ subroutine                    @5.1a Computing midpoints of IC power spectra
 subroutine                    @5.1b Ensure that you have not performed any filtering,
 subroutine                    @5.1c as filtering will cause incorrect classifications
 exec_sys ln -s ${melodir[cxt]}/melodic_FTmix ${ic_ft[cxt]}
-echo_cmd ${XCPEDIR}/modules/aroma/aromaHIFRQ.R \
+verbose && echo_cmd \
+${XCPEDIR}/modules/aroma/aromaHIFRQ.R \
    -i ${ic_ft[cxt]} \
    -t ${trep}
 classHIFRQ=($(${XCPEDIR}/modules/aroma/aromaHIFRQ.R \
@@ -435,7 +437,8 @@ done
 # Apply the classification algorithm.
 ###################################################################
 subroutine                    @6.3  Applying the classifier
-echo_cmd ${XCPEDIR}/modules/aroma/aromaCLASS.R \
+verbose && echo_cmd \
+${XCPEDIR}/modules/aroma/aromaCLASS.R \
    -m ${ic_class[cxt]}
 noiseIdx=$(${XCPEDIR}/modules/aroma/aromaCLASS.R \
    -m ${ic_class[cxt]})
@@ -453,26 +456,28 @@ routine_end
 routine                       @7    Denoising
 noiseIdx=${noiseIdx// /,}
 subroutine                    @7.1  Non-aggressive filter
-exec_fsl fsl_regfilt \
-   --in=${img} \
+proc_fsl ${outdir}/${prefix}_icaDenoised_nonaggr.nii.gz \
+fsl_regfilt                \
+   --in=${img}             \
    --design=${ic_mix[cxt]} \
-   --filter=${noiseIdx} \
-   --out=${outdir}/${prefix}_icaDenoised_nonaggr
+   --filter=${noiseIdx}    \
+   --out=%OUTPUT
 subroutine                    @7.2  Aggressive filter
-exec_fsl fsl_regfilt \
-   --in=${img} \
+proc_fsl ${outdir}/${prefix}_icaDenoised_aggr.nii.gz \
+fsl_regfilt                \
+   --in=${img}             \
    --design=${ic_mix[cxt]} \
-   --filter=${noiseIdx} \
-   -a \
-   --out=${outdir}/${prefix}_icaDenoised_aggr
+   --filter=${noiseIdx}    \
+   -a                      \
+   --out=%OUTPUT
 if [[ ${aroma_dtype[cxt]} == aggr ]]
    then
    subroutine                 @7.3  Using aggressive filter
-   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_aggr    ${icaDenoised[cxt]}
+   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_aggr.nii.gz     ${icaDenoised[cxt]}
 elif [[ ${aroma_dtype[cxt]} == nonaggr ]]
    then
    subroutine                 @7.4  Using non-aggressive filter
-   exec_sys ln -s ${outdir}/${prefix}_icaDenoised_nonaggr ${icaDenoised[cxt]}
+   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_nonaggr.nii.gz  ${icaDenoised[cxt]}
 fi
 routine_end
 

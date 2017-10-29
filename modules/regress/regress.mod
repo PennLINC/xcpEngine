@@ -252,7 +252,7 @@ while (( ${#rem} > 0 ))
             fi
          done
          subroutine           @4.6  [Executing detrend]
-         proc_afni   ${intermediate}_${cur} \
+         proc_afni   ${intermediate}_${cur}.nii.gz \
          3dTproject                         \
             -input   ${intermediate}.nii.gz \
             -ort     ${confproc[cxt]}       \
@@ -314,10 +314,11 @@ if (( ${censor[cxt]} != 0 ))
    # left intact. Censoring is performed using the censor utility.
    ################################################################
    subroutine                 @5.5  [Applying the final censor]
-   exec_xcp censor.R               \
+   proc_xcp ${intermediate}_${cur}.nii.gz \
+      censor.R                     \
       -t    ${tmaskpath}           \
       -i    ${intermediate}.nii.gz \
-      -o    ${intermediate}_${cur}.nii.gz
+      -o    %OUTPUT
    apply_exec  timeseries  ${intermediate}_%NAME_${cur} \
       xcp   censor.R     \
       -t    ${tmaskpath} \

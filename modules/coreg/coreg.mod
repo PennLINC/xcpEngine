@@ -259,12 +259,13 @@ if [[ ! -e ${seq2struct_mat[cxt]} ]] \
    subroutine                 @4.1f [${struct[sub]}]
    subroutine                 @4.1g [Output volume]
    subroutine                 @4.1h [${seq2struct_img[cxt]}]
-   exec_fsl flirt -in ${sourceReference[cxt]} \
-      -ref  ${struct[sub]}          \
-      -dof  6                       \
-      -out  ${seq2struct_img[cxt]}  \
-      -omat ${seq2struct_mat[cxt]}  \
-      -cost ${coreg_cfunc[cxt]}     \
+   proc_fsl  ${seq2struct_img[cxt]} \
+   flirt -in ${sourceReference[cxt]}\
+      -ref   ${struct[sub]}         \
+      -dof   6                      \
+      -out   %OUTPUT                \
+      -omat  ${seq2struct_mat[cxt]} \
+      -cost  ${coreg_cfunc[cxt]}    \
       ${refwt}                      \
       ${inwt}                       \
       ${wm_mask_cmd}
