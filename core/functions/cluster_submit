@@ -3,10 +3,10 @@ cluster_submit() {
    local id logfile
    case ${level} in
    subject)
-      logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix}LOG
+      logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
       ;;
    group)
-      logfile=${out_group}/log/${analysis}_${xcp_date}_log
+      logfile=${out_group}/log/${analysis}_${xcp_date}_LOG
       ;;
    esac
    [[ ! -e ${logfile} ]] \
