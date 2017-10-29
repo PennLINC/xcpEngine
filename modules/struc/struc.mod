@@ -221,7 +221,8 @@ while (( ${#rem} > 0 ))
       subroutine              @1.1b Template: ${template}
       subroutine              @1.1c Output root: ${ctroot[cxt]}
       subroutine              @1.x  Delegating control to ANTsCT
-      exec_ants   antsCorticalThickness.sh         \
+      proc_ants   ${struct[cxt]}                   \
+                  antsCorticalThickness.sh         \
          -d       3                                \
          -a       ${intermediate}.nii.gz           \
          -e       ${template_head[cxt]}            \
@@ -259,10 +260,11 @@ while (( ${#rem} > 0 ))
          then
          subroutine           @2.1a Correcting inhomogeneities
          subroutine           @2.1b Delegating control to N4BiasFieldCorrection
-         exec_ants   N4BiasFieldCorrection            \
+         proc_ants   ${biasCorrected[cxt]}            \
+                     N4BiasFieldCorrection            \
             -d       3                                \
             -i       ${intermediate}.nii.gz           \
-            -o       ${biasCorrected[cxt]}            \
+            -o       %OUTPUT                          \
             --verbose 1
       else
          subroutine           @2.2  Bias field correction already complete
@@ -286,9 +288,10 @@ while (( ${#rem} > 0 ))
          [[ -d ${scratch} ]]  && pushd ${scratch} >/dev/null
          subroutine           @3.1a Computing brain boundaries
          subroutine           @3.1b Input: ${intermediate}.nii.gz
-         subroutine           @3.1c Output: ${intermediate}_${cur}
+         subroutine           @3.1c Output: ${outdir}/${prefix}_BrainExtractionBrain.nii.gz
          subroutine           @3.1d Delegating control to antsBrainExtraction
-         exec_ants   antsBrainExtraction.sh           \
+         proc_ants   ${intermediate}_${cur}_BrainExtractionMask.nii.gz \
+                     antsBrainExtraction.sh           \
             -d       3                                \
             -a       ${intermediate}.nii.gz           \
             -e       ${template_head[cxt]}            \
@@ -430,7 +433,8 @@ while (( ${#rem} > 0 ))
                            ${outdir}/${prefix}_BrainSegmentationTiledMosaic.png
          exec_sys    mv -f ${intermediate}_${cur}_SegmentationConvergence.txt \
                            ${outdir}/${prefix}_BrainSegmentationConvergence.txt
-         exec_fsl    immv  ${intermediate}_${cur}_Segmentation0N4.nii.gz \
+         exec_fsl fslmaths ${intermediate}_${cur}_Segmentation0N4.nii.gz \
+                           -mul ${mask[cxt]}                             \
                            ${struct[cxt]}
          exec_fsl    immv  ${intermediate}_${cur}_Segmentation.nii.gz \
                            ${segmentation[cxt]}
@@ -472,7 +476,7 @@ while (( ${#rem} > 0 ))
       || rerun
          then
          subroutine           @6.3a Input: ${intermediate}.nii.gz
-         subroutine           @6.3b Output root: ${intermediate}_${cur}.nii.gz
+         subroutine           @6.3b Output warp: ${xfm_warp[cxt]}
          subroutine           @6.3c Template: ${template}
          exec_ants   ${registration_prog}                   \
             -d       3                                      \
