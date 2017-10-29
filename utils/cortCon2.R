@@ -91,7 +91,7 @@ wmVal                <- strVal[wmBoo]
 ccVal                <- gmVal - gmVal
 
 ###################################################################
-# 3. Convert voxel indices to mm coordinates
+# 3. Compute the WM counterpart for each GM voxel.
 ###################################################################
 gmVals               <- sort(unique(gmVox))
 for (i in gmVals) {
