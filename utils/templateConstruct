@@ -23,7 +23,7 @@ cat << endstream
 ___________________________________________________________________
 
 
-Usage: `basename $0` -c <cohort> -o <output> <options>
+Usage: `basename $0` -c <cohort> -o <output> -n <name> <options>
 
 `basename $0` constructs a sample-specific template given a cohort
 file.
@@ -68,6 +68,11 @@ Optional arguments:
       \${XCPEDIR}/thirdparty/oasis30/Cohorts/subjectDemographics 
       By default, all subjects will be included.
 
+ -s : Input template
+      If you have already started the template construction
+      procedure, use this argument to complete the procedure in
+      `basename $0`. This argument may be provided instead of -c.
+
 endstream
 }
 
@@ -82,7 +87,7 @@ trace=0
 
 
 
-while getopts "c:o:r:n:" OPTION
+while getopts "c:o:r:n:l:s:t:" OPTION
    do
    case $OPTION in
    c)
@@ -99,6 +104,9 @@ while getopts "c:o:r:n:" OPTION
       ;;
    l)
       labelcohort=${OPTARG}
+      ;;
+   s)
+      intemplate=${OPTARG}
       ;;
    t)
       trace=${OPTARG}
@@ -122,7 +130,8 @@ shift $((OPTIND-1))
 ###################################################################
 [[   -z ${out}       ]] && Usage && exit
 [[   -z ${name}      ]] && Usage && exit
-[[ ! -s ${incohort}  ]] && Usage && exit
+[[ ! -s ${incohort}  ]] \
+&& ! is_image ${intemplate} && Usage && exit
 
 
 
@@ -152,17 +161,25 @@ esac
 ###################################################################
 # Assemble the list of input images.
 ###################################################################
-source   ${XCPEDIR}/core/validateCohort
-for sub in ${!cohort[@]}
-   do
-   subject=${cohort[sub]}
-   subject_parse        ${subject} ${incohort}
-done
+if [[ -s ${incohort} ]]
+   then
+   source   ${XCPEDIR}/core/validateCohort
+   for sub in ${!cohort[@]}
+      do
+      subject=${cohort[sub]}
+      subject_parse        ${subject} ${incohort}
+   done
+   ingress=1
+else
+   ingress=0
+fi
 ###################################################################
 # Initialise the top-level output directory
 ###################################################################
+exec_sys mkdir -p ${out}/${name}
 out=$(abspath     ${out}/${name})
-exec_sys mkdir -p ${out}
+mkdir -p          ${out}/log/
+export log_proc=${out}/log/${name}_$(date +%Y%m%d%H%M)_LOG
 
 
 
@@ -183,10 +200,10 @@ define() {
 # Start a new stage of template construction
 ###################################################################
 new_stage() {
-   cxt=$(expr $cxt + 1)
+   (( cxt++ ))
    (( NUMOUT == 1 )) && prep=${cxt}_
-   define   outdir   ${out}/${prep}${1}/
-   exec_sys mkdir -p ${outdir}
+   define   outdir   ${out}/${prep}${1}
+   contains ${run} ${cxt} && exec_sys mkdir -p ${outdir}
 }
 
 
@@ -283,6 +300,13 @@ construct_guided() {
    # Initialise the targeted stage of template construction.
    ################################################################
    new_stage   templateTarg
+   if (( ingress == 0 )) && contains ${run} ${cxt}
+      then
+      ingress=1
+      assign   image intemplate     \
+          or         templatePadded \
+          as         templatePadded
+   fi
 
    ################################################################
    # Define paths to the potential outputs of the targeted 
@@ -356,6 +380,13 @@ construct_mask() {
    # manually).
    ################################################################
    new_stage   templateMask
+   if (( ingress == 0 )) && contains ${run} ${cxt}
+      then
+      ingress=1
+      assign   image intemplate     \
+          or         templateTarg   \
+          as         templateTarg
+   fi
       
    ################################################################
    # Define paths to the potential outputs of the masking stage.
@@ -429,6 +460,13 @@ construct_priors() {
    # Initialise the atlas priors stage of template construction.
    ################################################################
    new_stage   templatePriors
+   if (( ingress == 0 )) && contains ${run} ${cxt}
+      then
+      ingress=1
+      assign   image intemplate     \
+          or         templateMasked \
+          as         templateMasked
+   fi
    
    ################################################################
    # Define paths to the potential outputs of the production of
@@ -491,6 +529,13 @@ renorm_priors() {
    # template construction.
    ################################################################
    new_stage   templatePriorsRenorm
+   if (( ingress == 0 )) && contains ${run} ${cxt}
+      then
+      ingress=1
+      assign   image intemplate     \
+          or         templateMasked \
+          as         templateMasked
+   fi
 
    ################################################################
    # Define paths to the potential outputs of the renormalisation
@@ -569,6 +614,13 @@ resample_template() {
    # Initialise the resampling stage of template construction.
    ################################################################
    new_stage   templateResample
+   if (( ingress == 0 )) && contains ${run} ${cxt}
+      then
+      ingress=1
+      assign   image intemplate     \
+          or         templateMasked \
+          as         templateMasked
+   fi
 
    ################################################################
    # Define paths to the potential outputs of the template resample
@@ -604,6 +656,13 @@ register_template() {
    # Initialise the MNI registration stage of template construction.
    ###################################################################
    new_stage   templateTransforms
+   if (( ingress == 0 )) && contains ${run} ${cxt}
+      then
+      ingress=1
+      assign   image intemplate     \
+          or         templateMasked \
+          as         templateMasked
+   fi
 
    ###################################################################
    # Define paths to the potential outputs of the registrations
