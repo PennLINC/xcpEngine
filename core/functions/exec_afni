@@ -1,5 +1,5 @@
 exec_afni() {
-   local process_command=${@}
-   verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
-   ${AFNI_PATH}/${process_command} 2>/dev/null
+   verbose &&  echo_cmd     "${@}"
+               echo_cmd     "${@}" 2>> ${log_proc}
+               ${AFNI_PATH}/"${@}" 2>> ${log_proc}
 }

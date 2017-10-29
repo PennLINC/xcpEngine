@@ -1,6 +1,5 @@
 exec_xcp() {
-   local process_command_abbrev=${@}
-   local process_command='${XCPEDIR}/utils/'${process_command_abbrev}
-   verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
-   ${XCPEDIR}/utils/${process_command_abbrev}
+   verbose &&  echo_cmd '${XCPEDIR}/utils/'"${@}"
+               echo_cmd '${XCPEDIR}/utils/'"${@}" 2>> ${log_proc}
+               ${XCPEDIR}/utils/"${@}"
 }

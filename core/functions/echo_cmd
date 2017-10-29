@@ -1,4 +1,4 @@
 echo_cmd() {
    local process_command=${@}
-   verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
+   (>&2 printx ${XCPEDIR}/core/CONSOLE_COMMAND)
 }
