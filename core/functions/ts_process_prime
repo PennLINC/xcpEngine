@@ -1,0 +1,30 @@
+ts_process_prime() {
+
+<<USAGE
+
+This function is used to prime derivatives and inputs for time
+series processing, including temporal filtering, despiking, and
+demeaning/detrending.
+
+ts_process_prime
+
+It prepares module-level output paths for all derivatives of type
+time series.
+
+USAGE
+
+derivative_cxt Type:TimeSeries
+
+if [[ -n ${mcdir[cxt]} ]]
+   then
+   mkdir -p       ${mcdir[cxt]}
+   output         rps_proc       ${mcdir[cxt]}/${prefix}_realignment_proc.1D
+   output         rel_rms_proc   ${mcdir[cxt]}/${prefix}_relRMS_proc.1D
+   output         abs_rms_proc   ${mcdir[cxt]}/${prefix}_absRMS_proc.1D
+else
+   output         rps_proc       ${prefix}_realignment_proc.1D
+   output         rel_rms_proc   ${prefix}_relRMS_proc.1D
+   output         abs_rms_proc   ${prefix}_absRMS_proc.1D
+fi
+
+}
