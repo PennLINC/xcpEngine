@@ -57,7 +57,7 @@ USAGE
       # Primary image
       #############################################################
       subroutine           ${tag}.1   [Executing despike: Primary analyte]
-      proc_afni   ${img_o}          \
+      proc_afni   ${img_o}.nii.gz   \
       3dDespike                     \
          -prefix  %OUTPUT           \
          -nomask  -quiet            \

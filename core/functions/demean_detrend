@@ -106,10 +106,11 @@ USAGE
       #############################################################
       subroutine        ${tag}.5a   [Applying polynomial detrend]
       subroutine        ${tag}.5b   [Order: ${order}]
-      exec_xcp dmdt.R            \
+      proc_xcp ${img_o}.nii.gz   \
+         dmdt.R                  \
          -d    ${order}          \
          -i    ${img_i}.nii.gz   \
-         -o    ${img_o}.nii.gz   \
+         -o    %OUTPUT           \
          ${mean_dmdt}   ${mask_dmdt}   ${tmask_dmdt}
       #############################################################
       # Apply detrend: Derivatives

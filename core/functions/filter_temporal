@@ -223,9 +223,10 @@ No censoring will be performed."
       subroutine           ${tag}.12a  [${tmpf} filter]
       subroutine           ${tag}.12b  [High pass frequency: ${hipass}]
       subroutine           ${tag}.12c  [Low pass frequency: ${lopass}]
-      exec_xcp tfilter           \
+      proc_xcp ${img_o}.nii.gz   \
+         tfilter                 \
          -i    ${img_i}.nii.gz   \
-         -o    ${img_o}.nii.gz   \
+         -o    %OUTPUT           \
          -f    ${tmpf}           \
          -h    ${hipass}         \
          -l    ${lopass}         \
