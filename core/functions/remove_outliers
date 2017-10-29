@@ -3,7 +3,8 @@ remove_outliers() {
 <<USAGE
 
 This function is used to remove outlying values from a BOLD time
-series.
+series. Before using this function, ts_process_prime must be called 
+in the module header.
 
 remove_outliers   --SIGNPOST=routine_signpost_tag                 \
                   --INPUT=input_image_without_extension           \

@@ -2,7 +2,9 @@ filter_temporal() {
 
 <<USAGE
 
-This function applies temporal filters to the image.
+This function applies temporal filters to the image. Before using
+this function, ts_process_prime must be called in the module 
+header.
 
 filter_temporal   --SIGNPOST=routine_signpost_tag                 \
                   --FILTER=filtering_routine                      \
@@ -152,7 +154,7 @@ No censoring will be performed."
          assign 1dim    rps[sub] \
              or         rps[cxt] \
              as         rps_tmpf
-         if is_1D  ${rps_tmpf}
+         if is_1D     ${rps_tmpf}
             then
             subroutine     ${tag}.7.1
             ts1d="${ts1d}  realignment:${rps_tmpf}"
@@ -163,7 +165,7 @@ No censoring will be performed."
          assign 1dim    rel_rms[sub] \
              or         rel_rms[cxt] \
              as         rel_rms_tmpf
-         if is_1D    ${rel_rms_tmpf}
+         if is_1D     ${rel_rms_tmpf}
             then
             subroutine     ${tag}.7.2
             ts1d="${ts1d}  rel_rms:${rel_rms_tmpf}"
@@ -174,7 +176,7 @@ No censoring will be performed."
          assign 1dim    abs_rms[sub] \
              or         abs_rms[cxt] \
              as         abs_rms_tmpf
-         if is_1D    ${abs_rms_tmpf}
+         if is_1D     ${abs_rms_tmpf}
             then
             subroutine     ${tag}.7.3
             ts1d="${ts1d}  abs_rms:${abs_rms_tmpf}"
@@ -245,12 +247,12 @@ No censoring will be performed."
       # Reorganise outputs
       #############################################################
       is_1D    ${img_o}_realignment.1D \
-      && mv -f ${img_o}_realignment.1D ${rps[cxt]}      2>/dev/null
+      && mv -f ${img_o}_realignment.1D ${rps_proc[cxt]}     2>/dev/null
       is_1D    ${img_o}_abs_rms.1D     \
-      && mv -f ${img_o}_abs_rms.1D     ${abs_rms[cxt]}  2>/dev/null
+      && mv -f ${img_o}_abs_rms.1D     ${abs_rms_proc[cxt]} 2>/dev/null
       is_1D    ${img_o}_rel_rms.1D     \
-      && mv -f ${img_o}_rel_rms.1D     ${rel_rms[cxt]}  2>/dev/null
+      && mv -f ${img_o}_rel_rms.1D     ${rel_rms_proc[cxt]} 2>/dev/null
       is_1D    ${img_o}_tmask.1D       \
-      && mv -f ${img_o}_tmask.1D       ${tmask[cxt]}    2>/dev/null
+      && mv -f ${img_o}_tmask.1D       ${tmask_proc[cxt]}   2>/dev/null
    fi
 }

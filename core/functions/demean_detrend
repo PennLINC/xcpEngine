@@ -2,7 +2,9 @@ demean_detrend() {
 
 <<USAGE
 
-This function demeans and optionally detrends a time series image.
+This function demeans and optionally detrends a time series image. 
+Before using this function, ts_process_prime must be called in the 
+module header.
 
 demean_detrend    --SIGNPOST=routine_signpost_tag                 \
                   --ORDER=detrend_order                           \
@@ -128,10 +130,64 @@ USAGE
          then
          subroutine     ${tag}.6   [Executing detrend: Confound matrix]
          exec_xcp 1dDMDT.R          \
-            -i    ${con_i}  \
+            -i    ${con_i}          \
             -d    ${order}          \
             -o    ${con_o}          \
             ${tmask_dmdt}
+      else
+         ##########################################################
+         # Realignment parameters...
+         ##########################################################
+         assign 1dim    rps_proc[cxt] \
+             or         rps_proc[sub] \
+             or         rps[cxt] \
+             or         rps[sub] \
+             as         rps_dmdt
+         if is_1D     ${rps_dmdt}
+            then
+            subroutine  ${tag}.7   [Executing detrend: Realignment parameters]
+            exec_xcp 1dDMDT.R          \
+               -i    ${rps_dmdt}       \
+               -d    ${order}          \
+               -o    ${rps_proc[cxt]}  \
+               ${tmask_dmdt}
+         fi
+         ##########################################################
+         # Relative RMS motion...
+         ##########################################################
+         assign 1dim    rel_rms_proc[cxt] \
+             or         rel_rms_proc[sub] \
+             or         rel_rms[cxt] \
+             or         rel_rms[sub] \
+             as         rel_rms_dmdt
+         if is_1D     ${rel_rms_dmdt}
+            then
+            subroutine  ${tag}.8   [Executing detrend: Relative motion estimates]
+            exec_xcp 1dDMDT.R          \
+               -i    ${rel_rms_dmdt}       \
+               -d    ${order}          \
+               -o    ${rel_rms_proc[cxt]}  \
+               ${tmask_dmdt}
+         fi
+         ##########################################################
+         # Absolute RMS motion...
+         ##########################################################
+         assign 1dim    abs_rms_proc[cxt] \
+             or         abs_rms_proc[sub] \
+             or         abs_rms[cxt] \
+             or         abs_rms[sub] \
+             as         abs_rms_dmdt
+         if is_1D     ${abs_rms_dmdt}
+            then
+            subroutine  ${tag}.9   [Executing detrend: Absolute motion estimates]
+            exec_xcp 1dDMDT.R          \
+               -i    ${abs_rms_dmdt}       \
+               -d    ${order}          \
+               -o    ${abs_rms_proc[cxt]}  \
+               ${tmask_dmdt}
+         fi
+         ts1d=$(echo ${ts1d})
+         ts1d="-1 ${ts1d// /,}"
       fi
       configure         demeaned    1
    fi
