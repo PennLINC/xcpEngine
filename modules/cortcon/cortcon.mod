@@ -139,43 +139,33 @@ if ! is_image ${corticalContrast[${cxt}]} \
       then
       routine                 @3    Cortical contrast -- fast formulation
       date
-      (( ${cortcon_fast_iter[cxt]} == 1 )) && uniqrand="-r FALSE"
-      for (( i=0; i<${cortcon_fast_iter[cxt]}; i++ ))
+      gmMask=${intermediate}-ds-dist-from-edge-gm-bin.nii.gz
+      for i in {1..8}
          do
-         subroutine           @3.1  Uniquely labelling WM voxels
-         exec_xcp uniquifyVoxels.R     \
-            -i    ${intermediate}-ds-dist-from-edge-wm-bin.nii.gz \
-            -o    ${intermediate}-ds-dist-from-edge-wm-unique.nii.gz \
-                  ${uniqrand}
-         subroutine           @3.2  Propagating WM voxel labels into GM
-         exec_ants   ImageMath 3 ${intermediate}-wm-dil-into-gm.nii.gz \
-             GD      ${intermediate}-ds-dist-from-edge-wm-unique.nii.gz 8
-         subroutine           @3.3  Preparing GM mask
-         exec_fsl fslmaths ${intermediate}-wm-dil-into-gm.nii.gz \
-            -mul  ${intermediate}-ds-dist-from-edge-gm-bin.nii.gz \
-                  ${intermediate}-gm-nearest-wm.nii.gz
-         subroutine           @3.4  Estimating cortical contrast
-         exec_xcp cortCon2.R           \
-            -W    ${intermediate}-ds-dist-from-edge-wm-unique.nii.gz \
-            -G    ${intermediate}-gm-nearest-wm.nii.gz \
-            -T    ${struct[sub]}       \
-            -o    ${intermediate}-cortcon${i}.nii.gz
-         estimates=( "${estimates[@]}" ${intermediate}-cortcon${i}.nii.gz )
+         subroutine           @3.1  Circling the WM boundary at ${i} mm
+         exec_afni   3dLocalstat -overwrite \
+            -prefix  ${intermediate}-nearestWM${i}.nii.gz \
+            -nbhd    'SPHERE('${i}')' \
+            -stat    mean \
+            -mask    ${intermediate}-ds-dist-from-edge-wm-bin.nii.gz \
+            -use_nonmask ${struct[sub]}
+         exec_fsl    fslmaths ${intermediate}-nearestWM${i}.nii.gz \
+            -div     ${struct[sub]} \
+            -mul     ${gmMask} \
+                     ${intermediate}-cortcon${i}.nii.gz
+         exec_fsl    fslmaths ${intermediate}-cortcon${i}.nii.gz \
+            -bin     ${intermediate}-exclusion.nii.gz
+         exec_fsl    fslmaths ${gmMask} \
+            -sub     ${intermediate}-exclusion.nii.gz \
+                     ${intermediate}-gmMask.nii.gz
+         gmMask=${intermediate}-gmMask.nii.gz
+         ccvox=( "${ccvox[@]}" ${intermediate}-cortcon${i}.nii.gz )
       done
-      if (( i == 1 ))
-         then
-         subroutine           @3.5
-         exec_fsl immv  ${intermediate}-cortcon${i}.nii.gz \
-                        ${corticalContrast[${cxt}]}
-      else
-         subroutine           @3.6  Pooling estimates
-         exec_fsl fslmerge -t ${intermediate}-cortcon-estimates.nii.gz \
-                              "${estimates[@]}"
-         subroutine           @3.7  
-         exec_fsl fslmaths ${intermediate}-cortcon-estimates.nii.gz \
-                  -Tmedian ${corticalContrast[${cxt}]}
-      fi
-      subroutine              @3.8  Cortical contrast computed
+      subroutine              @3.2  Collating across all sampled distances
+      exec_fsl fslmaths $(join_by ' -add ' "${ccvox[@]}") \
+         -mul  ${intermediate}-ds-dist-from-edge-gm-bin.nii.gz \
+               ${corticalContrast[${cxt}]}
+      subroutine              @3.3  Cortical contrast computed
       date
       routine_end
    fi

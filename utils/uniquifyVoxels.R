@@ -24,12 +24,15 @@ option_list = list(
 make_option(c("-i", "--img"), action="store", default=NA, type='character',
 help="The input image to be uniquified"),
 make_option(c("-o", "--out"), action="store", default=NA, type='character',
-help="The path where the uniquified image is to be written")
+help="The path where the uniquified image is to be written"),
+make_option(c("-r", "--random"), action="store", default=TRUE, type='logical',
+help="Logical indicating whether voxels' values should be randomly shuffled")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
 impath                     <- opt$img
 out                        <- opt$out
+random                     <- opt$random
 
 if (is.na(opt$img)) {
     cat('User did not specify an input image.\n')
@@ -45,5 +48,9 @@ if (is.na(opt$out)) {
 
 img                        <- readNifti(impath)
 imguniq                    <- which(img!=0)
-img[imguniq]               <- seq(length(imguniq))
+if (random) {
+   img[imguniq]            <- sample(length(imguniq))
+} else {
+   img[imguniq]            <-    seq(length(imguniq))
+}
 writeNifti(img,out)
