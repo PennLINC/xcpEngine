@@ -62,7 +62,7 @@ qc rel_max_rms    relMaxRMSMotion   mc/${prefix}_relMaxRMS.txt
 qc rel_mean_rms   relMeanRMSMotion  mc/${prefix}_relMeanRMS.txt
 
 smooth_spatial_prime                ${prestats_smo[cxt]}
-filter_temporal_prime
+ts_process_prime
 temporal_mask_prime
 
 input       demeaned

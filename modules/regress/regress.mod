@@ -47,7 +47,7 @@ input       confmat as confproc
 input       censor
 
 smooth_spatial_prime                ${regress_smo[cxt]}
-filter_temporal_prime
+ts_process_prime
 
 process     residualised            ${prefix}_residualised
 
