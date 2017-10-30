@@ -204,6 +204,7 @@ new_stage() {
    (( NUMOUT == 1 )) && prep=${cxt}_
    define   outdir   ${out}/${prep}${1}
    contains ${run} ${cxt} && exec_sys mkdir -p ${outdir}
+   printx ${XCPEDIR}/core/CONSOLE_MODULE_RC >> ${log_proc}
 }
 
 
@@ -357,6 +358,10 @@ construct_guided() {
             -z       ${templatePadded}                         \
             -o       ${outdir}/                                \
             ${img[@]}
+         exec_ants   DenoiseImage -d 3                         \
+            -i       $(ls -d1 ${outdir}/*template0.nii.gz)     \
+            -o       ${templateTarg}                           \
+            -v       1
          exec_sys    popd 2>/dev/null 1>&2
 
          ##########################################################
@@ -370,7 +375,6 @@ construct_guided() {
          exec_fsl immv ${outdir}/*Warp*               ${warpTarg}/
          exec_fsl immv ${outdir}/*warp*               ${warpTarg}/
          exec_fsl immv ${outdir}/*Repaired*           ${repairedTarg}/
-         exec_fsl immv ${outdir}/*template0           ${templateTarg}
          exec_sys   mv ${outdir}/*Affine*             ${affineTarg}/
          exec_sys   mv ${outdir}/job*.sh              ${logTarg}/
          exec_sys   mv ${outdir}/*log.txt             ${logTarg}/
@@ -458,11 +462,11 @@ construct_mask() {
          exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}
          exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}
          exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}
-         exec_sys    mv ${outdir}/labels/*Affine*  ${jlfMaskTransforms}
-         exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfMaskTransforms}
-         
          exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfMaskWarpedLabels}
          exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfMaskWarped}
+         exec_sys    mv ${outdir}/labels/*Affine*           ${jlfMaskTransforms}
+         exec_fsl    immv ${outdir}/labels/*Warp*           ${jlfMaskTransforms}
+         
          exec_sys    popd 2>/dev/null 1>&2
          
          ##########################################################
@@ -552,6 +556,9 @@ construct_priors() {
          subroutine           @4.3  Delegating control to antsJointLabelFusion
          exec_sys    mkdir -p ${outdir}/labels
          exec_sys    mkdir -p ${logJLF}
+         exec_sys    mkdir -p ${jlfTransforms}
+         exec_sys    mkdir -p ${jlfWarped}
+         exec_sys    mkdir -p ${jlfWarpedLabels}
          exec_sys    pushd    ${logJLF} 2>/dev/null 1>&2
          exec_ants   antsJointLabelFusion.sh             \
             -d       3                                   \
@@ -704,7 +711,7 @@ resample_template() {
    ################################################################
    define      templateResampled       ${outdir}/template_brain_2mm.nii.gz
 
-   if contains ${run} ${cxt}
+   if contains ${run} ${cxt} && ! is_image ${templateResampled}
       then
 
       printx   ${mod_head}
