@@ -40,7 +40,6 @@ derivative     corticalContrast     ${prefix}_CorticalContrast
 
 derivative_set corticalContrast     Statistic        mean
 
-input   image mask
 require image segmentation       \
      or       segmentation3class \
      as       segmentation

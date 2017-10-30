@@ -55,8 +55,8 @@ community_detection() {
 ###################################################################
 declare_atlas_outputs() {
    define      net_dir              ${outdir}/${a[Name]}
-   define      net_root             ${netdir[cxt]}/${prefix}_${a[Name]}
-   exec_sys    mkdir -p             ${netdir[cxt]}
+   define      net_root             ${net_dir[cxt]}/${prefix}_${a[Name]}
+   exec_sys    mkdir -p             ${net_dir[cxt]}
 }
 declare_community_outputs() {
    define      com_dir              ${net_dir[cxt]}/${1}
