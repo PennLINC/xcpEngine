@@ -106,7 +106,7 @@ while getopts "c:o:r:n:l:s:t:" OPTION
       labelcohort=${OPTARG}
       ;;
    s)
-      intemplate=${OPTARG}
+      intemplate=$(abspath ${OPTARG})
       ;;
    t)
       trace=${OPTARG}
@@ -254,13 +254,15 @@ construct_unguided() {
       ################################################################
       subroutine              @1.2a Executing template construction
       subroutine              @1.2b Delegating control to antsMultivariateTemplateConstruction
+      exec_sys    pushd    ${logInit} 2>/dev/null 1>&2
       exec_ants   antsMultivariateTemplateConstruction.sh   \
          -d       3                                         \
          -m       1x1x0                                     \
          -r       1                                         \
          -c       1                                         \
-         -o       ${outdir}                                 \
+         -o       ${outdir}/                                \
          ${img[@]}
+      exec_sys    popd 2>/dev/null 1>&2
       ################################################################
       # Reorganise the output of the unguided template-building step.
       ################################################################
@@ -340,11 +342,13 @@ construct_guided() {
       #############################################################
       subroutine              @2.2a Executing template construction
       subroutine              @2.2b Delegating control to antsMultivariateTemplateConstruction
+      exec_sys    pushd    ${logTarg} 2>/dev/null 1>&2
       exec_ants   antsMultivariateTemplateConstruction.sh   \
          -d       3                                         \
          -z       ${templatePadded}                         \
-         -o       ${outdir}                                 \
+         -o       ${outdir}/                                \
          ${img[@]}
+      exec_sys    popd 2>/dev/null 1>&2
 
       #############################################################
       # Reorganise the output of the targeted template-building
@@ -397,6 +401,10 @@ construct_mask() {
    define      templateMaskD           ${outdir}/templateMaskMD.nii.gz
    define      templateMasked          ${outdir}/templateBrain.nii.gz
    define      templateMaskedD         ${outdir}/templateBrain_dilMasked.nii.gz
+   define      logMaskJLF              ${outdir}/log
+   define      jlfMaskTransforms       ${outdir}/transforms
+   define      jlfMaskWarped           ${outdir}/warped
+   define      jlfMaskWarpedLabels     ${outdir}/warpedLabels
 
    if contains ${run} ${cxt}
       then
@@ -422,6 +430,8 @@ construct_mask() {
       #############################################################
       subroutine              @3.3  Delegating control to antsJointLabelFusion
       exec_sys    mkdir -p ${outdir}/labels
+      exec_sys    mkdir -p ${logMaskJLF}
+      exec_sys    pushd    ${logMaskJLF} 2>/dev/null 1>&2
       exec_ants   antsJointLabelFusion.sh             \
          -d       3                                   \
          -o       ${outdir}/labels/                   \
@@ -431,6 +441,17 @@ construct_mask() {
          -q       0                                   \
          -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
          ${jlfReg}
+      
+      exec_sys    mv ${outdir}/job*             ${logMaskJLF}
+      exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}
+      exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}
+      exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}
+      exec_sys    mv ${outdir}/labels/*Affine*  ${jlfMaskTransforms}
+      exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfMaskTransforms}
+      
+      exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfMaskWarpedLabels}
+      exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfMaskWarped}
+      exec_sys    popd 2>/dev/null 1>&2
       
       #############################################################
       # Use the output of JLF to generate an extraction mask.
@@ -477,6 +498,14 @@ construct_priors() {
    define      labels                  ${outdir}/labels/Labels.nii.gz
    define      intensity               ${outdir}/labels/Intensity.nii.gz
    define      posteriors              ${outdir}/jlf_Posteriors
+   define      logJLF                  ${outdir}/log
+   define      jlfTransforms           ${outdir}/transforms
+   define      jlfWarped               ${outdir}/warped
+   define      jlfWarpedLabels         ${outdir}/warpedLabels
+   define      templateMask2           ${outdir}/templateMask.nii.gz
+   define      templateMasked2         ${outdir}/templateMasked.nii.gz
+   define      brainPrior              ${outdir}/labels/brainPrior.nii.gz
+   define      brainPrior2             ${outdir}/labels/brainPrior2.nii.gz
 
    if contains ${run} ${cxt}
       then
@@ -484,6 +513,10 @@ construct_priors() {
       printx   ${mod_head}
       routine                 @4    Template construction: atlas priors
       subroutine              @4.1  [o][${outdir}]
+      
+      #############################################################
+      
+      #############################################################
       
       #############################################################
       # Assemble all of the ground truth images for the second round
@@ -503,6 +536,8 @@ construct_priors() {
       #############################################################
       subroutine              @4.3  Delegating control to antsJointLabelFusion
       exec_sys    mkdir -p ${outdir}/labels
+      exec_sys    mkdir -p ${logJLF}
+      exec_sys    pushd    ${logJLF} 2>/dev/null 1>&2
       exec_ants   antsJointLabelFusion.sh             \
          -d       3                                   \
          -o       ${outdir}/labels/                   \
@@ -513,9 +548,32 @@ construct_priors() {
          -q       0                                   \
          -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
          ${jlfReg}
+      exec_sys    mv ${outdir}/job*             ${logJLF}
+      exec_sys    mv ${outdir}/labels/*log*     ${logJLF}
+      exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}
+      exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}
+      exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}
+      exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfTransforms}
+      
+      exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}
+      exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfWarped}
+      exec_sys    popd 2>/dev/null 1>&2
+      
+      #############################################################
+      # Generate extraction priors for the whole brain.
+      #############################################################
+      exec_fsl fslmerge -t ${brainPrior}      ${jlfWarpedLabels}/*WarpedLabels.nii.gz
+      exec_fsl fslmaths    ${brainPrior}      -bin -Tmean   ${brainPrior}
+      exec_fsl fslmaths    ${brainPrior}      -thr 0.5 -bin ${templateMask2}
+      exec_fsl fslmaths    ${templateMasked2} -mul ${templateMask2} ${templateMasked2}
+      
+      exec_ants ImageMath  ${brainPrior2}      G   ${templateMask} 1
+      
       routine_end
       
    fi
+   is_image ${templateMasked2} && define templateMasked templateMasked2
+   is_image ${templateMask2}   && define templateMask   templateMask2
 }
 
 
