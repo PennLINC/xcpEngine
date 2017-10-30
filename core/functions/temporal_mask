@@ -91,6 +91,8 @@ USAGE
    declare -A  dict_criteria=(
       [fd]='fd,framewise displacement'
       [rms]='rel_rms,relative RMS displacement'
+      [fds]='fd,framewise displacement'
+      [rmss]='rel_rms,relative RMS displacement'
       [dv]='dvars,standardised DVARS'
    )
    ################################################################
