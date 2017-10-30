@@ -710,6 +710,7 @@ while (( ${#rem} > 0 ))
                               --ORDER=${prestats_dmdt[cxt]}    \
                               --INPUT=${intermediate}          \
                               --OUTPUT=${intermediate}_${cur}  \
+                              --1DDT=${prestats_1ddt[cxt]}     \
                               --CONFIN=${confproc[cxt]}        \
                               --CONFOUT=${intermediate}_${cur}_confmat.1D
          intermediate=${intermediate}_${cur}
