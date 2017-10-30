@@ -157,16 +157,44 @@ routine_end
 routine                       @3    Preparing summary graphics
 
 subroutine                    @3.1  Acquiring arguments
+
+###################################################################
+# Assign default thresholds for DVARS, FD, and RMS.
+###################################################################
+trep=$(exec_fsl fslval ${img} pixdim4)
+dv_thresh=1.5
+fd_thresh=$( arithmetic "0.167*${trep}")
+rms_thresh=$(arithmetic "0.083*${trep}")
+
+###################################################################
+# Import thresholds from the processing stream.
+###################################################################
+assign   dv_threshold[sub] \
+    or   dv_thresh         \
+    as   dv_thresh
+assign   fd_threshold[sub] \
+    or   fd_thresh         \
+    as   fd_thresh
+assign  rms_threshold[sub] \
+    or  rms_thresh         \
+    as  rms_thresh
+
+###################################################################
+# Assemble the remaining arguments.
+###################################################################
 is_image ${intermediate}-dn-rs.nii.gz \
                               && dn_arg=",${intermediate}-dn-rs.nii.gz"
-is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:1.5,"
-is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:0.5,"
-is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:1,"
+is_1D ${dvars[sub]}           &&  ts_1d="${ts_1d}DV:${dvars[sub]}:${dv_thresh},"
+is_1D ${rel_rms[sub]}         &&  ts_1d="${ts_1d}RMS:${rel_rms[sub]}:${rms_thresh},"
+is_1D ${fd[sub]}              &&  ts_1d="${ts_1d}FD:${fd[sub]}:${fd_thresh},"
 
 [[ -n ${qcfc_custom[cxt]} ]]  &&  ts_1d="${ts_1d}${qcfc_custom[cxt]},"
 
 [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
 
+###################################################################
+# . . . and create the plot.
+###################################################################
 subroutine                    @3.2  Generating visuals
 [[ ${#seg_class[@]} == 3 ]]   &&    class_names="-n ${BRAINATLAS}/segmentation3/segmentation3NodeNames.txt"
 [[ ${#seg_class[@]} == 6 ]]   &&    class_names="-n ${BRAINATLAS}/segmentation6/segmentation6NodeNames.txt"
