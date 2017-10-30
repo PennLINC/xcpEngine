@@ -27,6 +27,9 @@ source ${XCPEDIR}/core/parseArgsMod
 # MODULE COMPLETION
 ###################################################################
 completion() {
+   !  is_image    ${segmentation[sub]}                         \
+   && derivative    segmentation       ${segmentation3class[cxt]}
+   
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
