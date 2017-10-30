@@ -108,16 +108,20 @@ for derivative in ${derivatives[@]}
    # to prevent introduction of intermediate values
    ################################################################
    unset interpol
-   if contains ${d[Name]} '[Mm]ask'
+   if contains   ${d[Type]} '[Mm]ask'
       then
       subroutine           @1.6
       interpol=NearestNeighbor
+   elif contains ${d[Type]} '[Ll]abels'
+      then
+      subroutine           @1.7
+      interpol=MultiLabel
    fi
    output                  ${d[Name]}     ${prefix}_${d[Name]}Std.nii.gz
    if ! is_image ${!d_call} \
       || rerun
       then
-      subroutine           @1.7
+      subroutine           @1.8
       warpspace                  \
          ${d[Map]}               \
          ${outdir}/${prefix}_${d[Name]}Std.nii.gz \

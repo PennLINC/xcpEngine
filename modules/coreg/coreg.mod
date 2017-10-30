@@ -80,6 +80,8 @@ derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
 
+derivative_set mask Type            Mask
+
 output      seq2struct              ${prefix}_seq2struct.txt
 output      struct2seq              ${prefix}_struct2seq.txt
 output      seq2struct_mat          ${prefix}_seq2struct.mat
