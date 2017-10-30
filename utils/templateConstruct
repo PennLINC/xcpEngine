@@ -249,41 +249,48 @@ construct_unguided() {
       exec_sys mkdir -p ${inverseWarpInit}
       exec_sys mkdir -p ${logInit}
 
-      ################################################################
+      #############################################################
       # Perform the unguided template-building procedure.
-      ################################################################
-      subroutine              @1.2a Executing template construction
-      subroutine              @1.2b Delegating control to antsMultivariateTemplateConstruction
-      exec_sys    pushd    ${logInit} 2>/dev/null 1>&2
-      exec_ants   antsMultivariateTemplateConstruction.sh   \
-         -d       3                                         \
-         -m       1x1x0                                     \
-         -r       1                                         \
-         -c       1                                         \
-         -o       ${outdir}/                                \
-         ${img[@]}
-      exec_sys    popd 2>/dev/null 1>&2
-      ################################################################
-      # Reorganise the output of the unguided template-building step.
-      ################################################################
-      subroutine              @1.3  Organising outputs
-      exec_fsl immv ${outdir}/*template*           ${templateInitDir}/
-      exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpInit}/
-      exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpInit}/
-      exec_fsl immv ${outdir}/*Warp*               ${warpInit}/
-      exec_fsl immv ${outdir}/*warp*               ${warpInit}/
-      exec_fsl immv ${outdir}/*Repaired*           ${repairedInit}/
-      exec_sys   mv ${outdir}/*Affine*             ${affineInit}/
-      exec_sys   mv ${outdir}/job*.sh              ${logInit}/
-      exec_sys   mv ${outdir}/*log.txt             ${logInit}/
+      #############################################################
+      if ! is_image ${templateInit}
+         then
+         subroutine           @1.2a Executing template construction
+         subroutine           @1.2b Delegating control to antsMultivariateTemplateConstruction
+         exec_sys    pushd    ${logInit} 2>/dev/null 1>&2
+         exec_ants   antsMultivariateTemplateConstruction.sh   \
+            -d       3                                         \
+            -m       1x1x0                                     \
+            -r       1                                         \
+            -c       1                                         \
+            -o       ${outdir}/                                \
+            ${img[@]}
+         exec_sys    popd 2>/dev/null 1>&2
+         ##########################################################
+         # Reorganise the output of the unguided template-building
+         # step.
+         ##########################################################
+         subroutine           @1.3  Organising outputs
+         exec_fsl immv ${outdir}/*template*           ${templateInitDir}/
+         exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpInit}/
+         exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpInit}/
+         exec_fsl immv ${outdir}/*Warp*               ${warpInit}/
+         exec_fsl immv ${outdir}/*warp*               ${warpInit}/
+         exec_fsl immv ${outdir}/*Repaired*           ${repairedInit}/
+         exec_sys   mv ${outdir}/*Affine*             ${affineInit}/
+         exec_sys   mv ${outdir}/job*.sh              ${logInit}/
+         exec_sys   mv ${outdir}/*log.txt             ${logInit}/
+      fi
 
-      ################################################################
+      #############################################################
       # Add padding to the initial template.
-      ################################################################
-      subroutine              @1.4  Padding template
-      exec_sys    immv        ${templateInit} ${templateInitUnpadded}
-      exec_ants   ImageMath 3 ${templatePadded} \
-         PadImage ${templateInitUnpadded} 5
+      #############################################################
+      if ! is_image ${templatePadded}
+         then
+         subroutine           @1.4  Padding template
+         exec_sys    immv        ${templateInit} ${templateInitUnpadded}
+         exec_ants   ImageMath 3 ${templatePadded} \
+            PadImage ${templateInitUnpadded} 5
+      fi
       routine_end
 
    fi
@@ -340,32 +347,35 @@ construct_guided() {
       #############################################################
       # Perform the targeted template-building procedure.
       #############################################################
-      subroutine              @2.2a Executing template construction
-      subroutine              @2.2b Delegating control to antsMultivariateTemplateConstruction
-      exec_sys    pushd    ${logTarg} 2>/dev/null 1>&2
-      exec_ants   antsMultivariateTemplateConstruction.sh   \
-         -d       3                                         \
-         -z       ${templatePadded}                         \
-         -o       ${outdir}/                                \
-         ${img[@]}
-      exec_sys    popd 2>/dev/null 1>&2
+      if ! is_image ${templateTarg}
+         then
+         subroutine           @2.2a Executing template construction
+         subroutine           @2.2b Delegating control to antsMultivariateTemplateConstruction
+         exec_sys    pushd    ${logTarg} 2>/dev/null 1>&2
+         exec_ants   antsMultivariateTemplateConstruction.sh   \
+            -d       3                                         \
+            -z       ${templatePadded}                         \
+            -o       ${outdir}/                                \
+            ${img[@]}
+         exec_sys    popd 2>/dev/null 1>&2
 
-      #############################################################
-      # Reorganise the output of the targeted template-building
-      # step.
-      #############################################################
-      subroutine              @2.3  Organising outputs
-      exec_fsl immv ${outdir}/*template*           ${templateTargDir}/
-      exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/
-      exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpTarg}/
-      exec_fsl immv ${outdir}/*Warp*               ${warpTarg}/
-      exec_fsl immv ${outdir}/*warp*               ${warpTarg}/
-      exec_fsl immv ${outdir}/*Repaired*           ${repairedTarg}/
-      exec_fsl immv ${outdir}/*template0           ${templateTarg}
-      exec_sys   mv ${outdir}/*Affine*             ${affineTarg}/
-      exec_sys   mv ${outdir}/job*.sh              ${logTarg}/
-      exec_sys   mv ${outdir}/*log.txt             ${logTarg}/
-      exec_sys   mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/
+         ##########################################################
+         # Reorganise the output of the targeted template-building
+         # step.
+         ##########################################################
+         subroutine           @2.3  Organising outputs
+         exec_fsl immv ${outdir}/*template*           ${templateTargDir}/
+         exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/
+         exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpTarg}/
+         exec_fsl immv ${outdir}/*Warp*               ${warpTarg}/
+         exec_fsl immv ${outdir}/*warp*               ${warpTarg}/
+         exec_fsl immv ${outdir}/*Repaired*           ${repairedTarg}/
+         exec_fsl immv ${outdir}/*template0           ${templateTarg}
+         exec_sys   mv ${outdir}/*Affine*             ${affineTarg}/
+         exec_sys   mv ${outdir}/job*.sh              ${logTarg}/
+         exec_sys   mv ${outdir}/*log.txt             ${logTarg}/
+         exec_sys   mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/
+      fi
       routine_end
 
    fi
@@ -428,45 +438,52 @@ construct_mask() {
       #############################################################
       # Perform the JLF routine to generate an anatomical atlas.
       #############################################################
-      subroutine              @3.3  Delegating control to antsJointLabelFusion
-      exec_sys    mkdir -p ${outdir}/labels
-      exec_sys    mkdir -p ${logMaskJLF}
-      exec_sys    pushd    ${logMaskJLF} 2>/dev/null 1>&2
-      exec_ants   antsJointLabelFusion.sh             \
-         -d       3                                   \
-         -o       ${outdir}/labels/                   \
-         -t       ${templateTarg}                     \
-         -c       1                                   \
-         -k       1                                   \
-         -q       0                                   \
-         -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
-         ${jlfReg}
-      
-      exec_sys    mv ${outdir}/job*             ${logMaskJLF}
-      exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}
-      exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}
-      exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}
-      exec_sys    mv ${outdir}/labels/*Affine*  ${jlfMaskTransforms}
-      exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfMaskTransforms}
-      
-      exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfMaskWarpedLabels}
-      exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfMaskWarped}
-      exec_sys    popd 2>/dev/null 1>&2
-      
-      #############################################################
-      # Use the output of JLF to generate an extraction mask.
-      #############################################################
-      subroutine              @3.4  Organising output
-      exec_fsl    fslmaths ${outdir}/labels/Labels.nii.gz \
-         -bin     ${templateMask}
-      exec_fsl    fslmaths ${templateTarg}            \
-         -mul     ${templateMask}                     \
-                  ${templateMasked}
-      exec_ants   ImageMath 3 ${templateMaskD}        \
-          MD      ${templateMask} 1
-      exec_fsl    fslmaths ${templateTarg}            \
-         -mul     ${templateMaskD}                    \
-                  ${templateMaskedD}
+      if ! is_image ${templateMasked}
+         then
+         subroutine           @3.3  Delegating control to antsJointLabelFusion
+         exec_sys    mkdir -p ${outdir}/labels
+         exec_sys    mkdir -p ${logMaskJLF}
+         exec_sys    pushd    ${logMaskJLF} 2>/dev/null 1>&2
+         exec_ants   antsJointLabelFusion.sh             \
+            -d       3                                   \
+            -o       ${outdir}/labels/                   \
+            -t       ${templateTarg}                     \
+            -c       1                                   \
+            -k       1                                   \
+            -q       0                                   \
+            -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
+            ${jlfReg}
+         
+         exec_sys    mv ${outdir}/job*             ${logMaskJLF}
+         exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}
+         exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}
+         exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}
+         exec_sys    mv ${outdir}/labels/*Affine*  ${jlfMaskTransforms}
+         exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfMaskTransforms}
+         
+         exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfMaskWarpedLabels}
+         exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfMaskWarped}
+         exec_sys    popd 2>/dev/null 1>&2
+         
+         ##########################################################
+         # Use the output of JLF to generate an extraction mask.
+         ##########################################################
+         subroutine           @3.4  Organising output
+         exec_fsl    fslmaths ${outdir}/labels/Labels.nii.gz \
+            -bin     ${templateMask}
+         exec_fsl    fslmaths ${templateTarg}            \
+            -mul     ${templateMask}                     \
+                     ${templateMasked}
+      fi
+      if ! is_image ${templateMaskD}
+         then
+         subroutine           @3.5  Generating dilated mask
+         exec_ants   ImageMath 3 ${templateMaskD}        \
+             MD      ${templateMask} 1
+         exec_fsl    fslmaths ${templateTarg}            \
+            -mul     ${templateMaskD}                    \
+                     ${templateMaskedD}
+         fi
       routine_end
       
    fi
@@ -515,10 +532,6 @@ construct_priors() {
       subroutine              @4.1  [o][${outdir}]
       
       #############################################################
-      
-      #############################################################
-      
-      #############################################################
       # Assemble all of the ground truth images for the second round
       # of atlas construction.
       #############################################################
@@ -534,30 +547,33 @@ construct_priors() {
       # Perform the JLF routine on brain-only images to generate an
       # improved anatomical atlas.
       #############################################################
-      subroutine              @4.3  Delegating control to antsJointLabelFusion
-      exec_sys    mkdir -p ${outdir}/labels
-      exec_sys    mkdir -p ${logJLF}
-      exec_sys    pushd    ${logJLF} 2>/dev/null 1>&2
-      exec_ants   antsJointLabelFusion.sh             \
-         -d       3                                   \
-         -o       ${outdir}/labels/                   \
-         -t       ${templateMasked}                   \
-         -x       ${templateMask}                     \
-         -c       1                                   \
-         -k       1                                   \
-         -q       0                                   \
-         -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
-         ${jlfReg}
-      exec_sys    mv ${outdir}/job*             ${logJLF}
-      exec_sys    mv ${outdir}/labels/*log*     ${logJLF}
-      exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}
-      exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}
-      exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}
-      exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfTransforms}
-      
-      exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}
-      exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfWarped}
-      exec_sys    popd 2>/dev/null 1>&2
+      if ! is_image ${labels}
+         then
+         subroutine           @4.3  Delegating control to antsJointLabelFusion
+         exec_sys    mkdir -p ${outdir}/labels
+         exec_sys    mkdir -p ${logJLF}
+         exec_sys    pushd    ${logJLF} 2>/dev/null 1>&2
+         exec_ants   antsJointLabelFusion.sh             \
+            -d       3                                   \
+            -o       ${outdir}/labels/                   \
+            -t       ${templateMasked}                   \
+            -x       ${templateMask}                     \
+            -c       1                                   \
+            -k       1                                   \
+            -q       0                                   \
+            -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
+            ${jlfReg}
+         exec_sys    mv ${outdir}/job*             ${logJLF}
+         exec_sys    mv ${outdir}/labels/*log*     ${logJLF}
+         exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}
+         exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}
+         exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}
+         exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfTransforms}
+         
+         exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}
+         exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfWarped}
+         exec_sys    popd 2>/dev/null 1>&2
+      fi
       
       #############################################################
       # Generate extraction priors for the whole brain.
