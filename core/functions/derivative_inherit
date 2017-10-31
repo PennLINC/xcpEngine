@@ -1,0 +1,21 @@
+derivative_inherit() {
+   local d path vname
+   declare -A d
+   if [[ ${2:0:1} == '/' ]]
+      then
+      path=${2}.nii.gz
+   else
+      path=${outdir}/${2}.nii.gz
+   fi
+   derivative_parse  ${4}
+   vname=${1//[![:alnum:]|_]}
+   eval ${vname}[${cxt}]=\${path}
+   json_multiset derivatives_floating ${1}         \
+                 Map:${path}                       \
+                 Space:${d[Space]}                 \
+                 ProvenanceName:${mod_name_short}  \
+                 ProvenanceIndex:${cxt}            \
+                 Statistic:${d[Statistic]}         \
+                 Type:${d[Type]}
+   declared_d[${vname}]=${vname}
+}

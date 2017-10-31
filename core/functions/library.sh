@@ -27,6 +27,7 @@ source ${LIBRARY}/define
 source ${LIBRARY}/derivative
 source ${LIBRARY}/derivative_cxt
 source ${LIBRARY}/derivative_floats
+source ${LIBRARY}/derivative_inherit
 source ${LIBRARY}/derivative_parse
 source ${LIBRARY}/derivative_set
 source ${LIBRARY}/doi2bib

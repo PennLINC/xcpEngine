@@ -22,7 +22,7 @@ derivative_cxt() {
       done
       if (( match == 1 ))
          then
-         derivative        ${d[Name]}           ${prefix}_${d[Name]}
+         derivative_inherit ${d[Name]} ${prefix}_${d[Name]} from ${d[Name]}
       fi
    done
 }
