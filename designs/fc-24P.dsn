@@ -11,7 +11,7 @@
 # execute the analysis specified in this design file by calling
 # (in any v4 or higher bash terminal):
 #
-# xcpEngine example.dsn
+# xcpEngine -d example.dsn
 #
 # Variables fall into five general categories:
 # * ANALYSIS VARIABLES are used at all stages of this analysis.
@@ -32,10 +32,10 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=accelerator_$(whoami)
-design=/home/rciric/xcpAccelerator/xcpEngine/designs/fc.dsn
-sequence=rest
-standard=PNC%2x2x2
+analysis=fc_$(whoami)
+design=${XCPEDIR}/designs/fc-36P.dsn
+sequence=fc
+standard=MNI%2x2x2_via_OASIS%2x2x2
 
 ###################################################################
 # PIPELINE
@@ -62,26 +62,27 @@ prestats_lopass[1]=nyquist
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
 prestats_dmdt[1]=2
-prestats_censor[1]=none,0.25
-prestats_censor_cr[1]=rms
+prestats_censor[1]=0
+prestats_framewise[1]=rmss:0.083,fds:0.167,dv:1.5
 prestats_censor_contig[1]=0
 prestats_rerun[1]=0
 prestats_cleanup[1]=1
-prestats_process[1]=DVO-MPR-STM-MCO-BXT-DSP-DMT
+prestats_process[1]=DVO-MPR-STM-MCO-BXT-DMT
 
 ###################################################################
 # 2 COREG
 ###################################################################
 
-coreg_reference[2]=exemplar
+coreg_reference[2]=mean
 coreg_cfunc[2]=bbr
 coreg_seg[2]=${segmentation[sub]}
 coreg_wm[2]=3
+coreg_denoise[2]=1
 coreg_refwt[2]=NULL
 coreg_inwt[2]=NULL
 coreg_qacut[2]=0.8,0.9,0.7,0.8
 coreg_decide[2]=1
-coreg_mask[2]=1
+coreg_mask[2]=0
 coreg_rerun[2]=0
 coreg_cleanup[2]=1
 
@@ -91,19 +92,23 @@ coreg_cleanup[2]=1
 
 confound_rp[3]=1
 confound_rms[3]=0
-confound_gm[3]=N
+confound_gm[3]=0
 confound_gm_path[3]=${segmentation[sub]}
 confound_gm_val[3]=2,4
 confound_gm_ero[3]=5
-confound_wm[3]=mean
+confound_gm_rad[3]=0
+confound_wm[3]=0
 confound_wm_path[3]=${segmentation[sub]}
 confound_wm_val[3]=3
 confound_wm_ero[3]=5
-confound_csf[3]=mean
+confound_wm_rad[3]=8
+confound_csf[3]=0
 confound_csf_path[3]=${segmentation[sub]}
 confound_csf_val[3]=1
 confound_csf_ero[3]=5
-confound_gsr[3]=mean
+confound_csf_rad[3]=0
+confound_gsr[3]=0
+confound_lms_rad[3]=0
 confound_cc[3]=0
 confound_past[3]=0
 confound_dx[3]=1
@@ -125,8 +130,8 @@ regress_tmpf_ripple[4]=0.5
 regress_tmpf_ripple2[4]=20
 regress_smo[4]=6
 regress_sptf[4]=susan
-regress_usan[4]=default #${segmentation[sub]}
-regress_usan_space[4]= #${structural[sub]}
+regress_usan[4]=default
+regress_usan_space[4]=
 regress_rerun[4]=0
 regress_cleanup[4]=0
 regress_process[4]=TMP-REG
@@ -135,7 +140,7 @@ regress_process[4]=TMP-REG
 # 5 FCON
 ###################################################################
 
-fcon_atlas[5]=Power264,Gordon,Glasser,AAL,MICCAI,Schaefer
+fcon_atlas[5]=all
 fcon_metric[5]=corrcoef
 fcon_thr[5]=N
 fcon_window[5]=10
@@ -168,7 +173,7 @@ alff_cleanup[7]=1
 ###################################################################
 # 8 NET
 ###################################################################
-net_atlas[8]=Power264,Gordon,Glasser,AAL,MICCAI,Schaefer
+net_atlas[8]=all
 net_com[8]=genlouvain
 net_gamma[8]=1,1.5,7
 net_consensus[8]=1
@@ -179,8 +184,8 @@ net_cleanup[8]=1
 # 9 ROIQUANT
 ###################################################################
 
-roiquant_atlas[9]=Gordon,Glasser,AAL,MICCAI,Schaefer
-roiquant_vol[9]=1
+roiquant_atlas[9]=all
+roiquant_vol[9]=0
 roiquant_rerun[9]=0
 roiquant_cleanup[9]=1
 
@@ -188,11 +193,11 @@ roiquant_cleanup[9]=1
 # 10 SEED
 ###################################################################
 
-seed_lib[10]=/home/rciric/xcpAccelerator/xcpEngine/00TEST/examplePNC.sclib
+seed_lib[10]=
 seed_smo[10]=6
 seed_sptf[10]=susan
-seed_usan[10]=${segmentation[sub]}
-seed_usan_space[10]=structural
+seed_usan[10]=
+seed_usan_space[10]=
 seed_rerun[10]=0
 seed_cleanup[10]=1
 
@@ -207,7 +212,7 @@ norm_cleanup[11]=1
 # 12 QCFC
 ###################################################################
 
-qcfc_atlas[12]=Power264,Gordon
+qcfc_atlas[12]=power264,gordon333
 qcfc_sig[12]=fdr
 qcfc_custom[12]=
 qcfc_rerun[12]=0
