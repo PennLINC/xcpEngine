@@ -78,7 +78,7 @@ for (i in 1:length(mats)){
 ###################################################################
 # 3. Compute featurewise similarity.
 ###################################################################
-similmat                <- cor(ftvecs)
+similmat                <- cor(ftvecs,use="complete")
 similmat                <- similmat - diag(diag(similmat))
 
 ###################################################################
@@ -98,14 +98,15 @@ if (!is.na(opt$outfig)) {
    suppressMessages(suppressWarnings(library(ggplot2)))
    suppressMessages(suppressWarnings(library(reshape2)))
    suppressMessages(suppressWarnings(library(svglite)))
+   similmat             <- squareform(similmat)
    ftvecs               <- data.frame(ftvecs)
+   ftvecs               <- ftvecs[complete.cases(ftvecs),]
    pkcoor               <- abs(similmat)
    pkcoor               <- which(pkcoor==max(pkcoor),arr.ind=TRUE)[1,]
    pkr                  <- similmat[pkcoor[1],pkcoor[2]]
    names(ftvecs)[pkcoor[2]] <- 'mat1'
    names(ftvecs)[pkcoor[1]] <- 'mat2'
 
-   suppressMessages(require(ggplot2))
    i <- ggplot(ftvecs, aes(x=mat1,y=mat2)) + 
       geom_hline(aes(x=mat1,y=mat2),yintercept=0,size=2) + 
       geom_vline(aes(x=mat1,y=mat2),xintercept=0,size=2) + 
