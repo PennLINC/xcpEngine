@@ -122,10 +122,10 @@ USAGE
       subroutine                 ${tag}.6
       sm_sub=img_sm${k}[$sub]
       sm_mod=img_sm${k}[$cxt]
-      ################################################################
-      # Determine whether an image with the specified smoothing kernel
-      # already exists
-      ################################################################
+      #############################################################
+      # Determine whether an image with the specified smoothing
+      # kernel already exists
+      #############################################################
       if is_image ${!sm_sub}
          then
          subroutine              ${tag}.7a
@@ -135,11 +135,11 @@ USAGE
          then
          subroutine              ${tag}.7b
          kernels="${kernels} ${!sm_mod}#${k}"
-      ################################################################
-      # If no spatial filtering has been specified by the user, then
-      # bypass this step.
-      ################################################################
-      elif [[ ${alff_sptf[cxt]} == none ]]
+      #############################################################
+      # If no spatial filtering has been specified by the user,
+      # then bypass this step.
+      #############################################################
+      elif [[ ${sptf} == none ]]
          then
          subroutine              ${tag}.8
          kernels=${img}#0
