@@ -227,7 +227,7 @@ for map in ${atlas_names[@]}
    # effects to infer distance-dependence of motion effects.
    ################################################################
    subroutine                 @2.6  Computing QC-FC distance-dependence
-   exec_xcp simil.R                                         \
+   exec_xcp featureCorrelation.R                            \
       -i    ${node_distance[cxt]},${qcfc_correlation[cxt]}  \
       -f    ${outdir}/${analysis}_distDepend_${a[Name]}.svg \
       >>    ${qcfc_dist_dependence[cxt]}
