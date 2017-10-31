@@ -246,7 +246,7 @@ while (( ${#rem} > 0 ))
          for derivative in    ${derivatives[@]}
             do
             derivative_parse  ${derivative}
-            if contains       ${d[Type]}     confound
+            if contains       ${d[Type]}     [Cc]onfound
                then
                locals="${locals}-dsort       ${d[Map]} "
             fi
@@ -344,8 +344,6 @@ fi
 #  * If the expected output is present, move it to the target path.
 #  * If the expected output is absent, notify the user.
 ###################################################################
-apply_exec        timeseries              ${prefix}_%NAME \
-   fsl            imcp %INPUT %OUTPUT
 if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
@@ -359,7 +357,7 @@ else
 [Check the log to verify that processing]
 [completed as intended."
 fi
-fi
+fi # check for residualised
 
 
 
