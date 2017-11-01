@@ -70,8 +70,15 @@ Optional arguments:
 
  -s : Input template
       If you have already started the template construction
-      procedure, use this argument to complete the procedure in
-      `basename $0`. This argument may be provided instead of -c.
+      procedure, provide the currently processed template as this 
+      argument to continue the procedure using `basename $0`. This 
+      argument may be provided instead of -c.
+
+ -m : Input mask
+      If you have already computed a template mask, or if you have
+      used manual procedures to refine the template mask, you may 
+      provide your mask to the template construction stream using 
+      this argument.
 
 endstream
 }
@@ -81,20 +88,20 @@ endstream
 ###################################################################
 run=1,2,3
 labelcohort=All
-trace=0
+! is_numeric ${trace} && trace=0
 
 
 
 
 
-while getopts "c:o:r:n:l:s:t:" OPTION
+while getopts "c:o:r:n:l:s:m:t:" OPTION
    do
    case $OPTION in
    c)
       incohort=${OPTARG}
       ;;
    o)
-      out=${OPTARG}
+      out_super=${OPTARG}
       ;;
    r)
       run=${OPTARG}
@@ -106,7 +113,10 @@ while getopts "c:o:r:n:l:s:t:" OPTION
       labelcohort=${OPTARG}
       ;;
    s)
-      intemplate=$(abspath ${OPTARG})
+      intemplate=$(  abspath ${OPTARG})
+      ;;
+   m)
+      templateMask=$(abspath ${OPTARG})
       ;;
    t)
       trace=${OPTARG}
@@ -128,7 +138,7 @@ shift $((OPTIND-1))
 ###################################################################
 # Ensure that the compulsory variables have been defined
 ###################################################################
-[[   -z ${out}       ]] && Usage && exit
+[[   -z ${out_super} ]] && Usage && exit
 [[   -z ${name}      ]] && Usage && exit
 [[ ! -s ${incohort}  ]] \
 && ! is_image ${intemplate} && Usage && exit
@@ -139,7 +149,7 @@ shift $((OPTIND-1))
 
 cxt=0
 subroutine                    @0.1  [n][${name}]
-subroutine                    @0.2  [o][${out}]
+subroutine                    @0.2  [o][${out_super}]
 ###################################################################
 # Set trace status, if applicable
 ###################################################################
@@ -176,8 +186,8 @@ fi
 ###################################################################
 # Initialise the top-level output directory
 ###################################################################
-exec_sys mkdir -p ${out}/${name}
-out=$(abspath     ${out}/${name})
+exec_sys mkdir -p ${out_super}/${name}
+out=$(abspath     ${out_super}/${name})
 mkdir -p          ${out}/log/
 export log_proc=${out}/log/${name}_$(date +%Y%m%d%H%M)_LOG
 
@@ -271,15 +281,15 @@ construct_unguided() {
          # step.
          ##########################################################
          subroutine           @1.3  Organising outputs
-         exec_fsl immv ${outdir}/*template*           ${templateInitDir}/
-         exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpInit}/
-         exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpInit}/
-         exec_fsl immv ${outdir}/*Warp*               ${warpInit}/
-         exec_fsl immv ${outdir}/*warp*               ${warpInit}/
-         exec_fsl immv ${outdir}/*Repaired*           ${repairedInit}/
-         exec_sys   mv ${outdir}/*Affine*             ${affineInit}/
-         exec_sys   mv ${outdir}/job*.sh              ${logInit}/
-         exec_sys   mv ${outdir}/*log.txt             ${logInit}/
+         exec_sys mv ${outdir}/*template*           ${templateInitDir}/  2>/dev/null
+         exec_sys mv ${outdir}/*InverseWarp*        ${inverseWarpInit}/  2>/dev/null
+         exec_sys mv ${outdir}/*WarpedToTemplate*   ${warpInit}/         2>/dev/null
+         exec_sys mv ${outdir}/*Warp*               ${warpInit}/         2>/dev/null
+         exec_sys mv ${outdir}/*warp*               ${warpInit}/         2>/dev/null
+         exec_sys mv ${outdir}/*Repaired*           ${repairedInit}/     2>/dev/null
+         exec_sys mv ${outdir}/*Affine*             ${affineInit}/       2>/dev/null
+         exec_sys mv ${outdir}/job*.sh              ${logInit}/          2>/dev/null
+         exec_sys mv ${outdir}/*log.txt             ${logInit}/          2>/dev/null
       fi
 
       #############################################################
@@ -288,7 +298,7 @@ construct_unguided() {
       if ! is_image ${templatePadded}
          then
          subroutine           @1.4  Padding template
-         exec_sys    immv        ${templateInit} ${templateInitUnpadded}
+         exec_fsl    immv        ${templateInit} ${templateInitUnpadded}
          exec_ants   ImageMath 3 ${templatePadded} \
             PadImage ${templateInitUnpadded} 5
       fi
@@ -369,16 +379,16 @@ construct_guided() {
          # step.
          ##########################################################
          subroutine           @2.3  Organising outputs
-         exec_fsl immv ${outdir}/*template*           ${templateTargDir}/
-         exec_fsl immv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/
-         exec_fsl immv ${outdir}/*WarpedToTemplate*   ${warpTarg}/
-         exec_fsl immv ${outdir}/*Warp*               ${warpTarg}/
-         exec_fsl immv ${outdir}/*warp*               ${warpTarg}/
-         exec_fsl immv ${outdir}/*Repaired*           ${repairedTarg}/
-         exec_sys   mv ${outdir}/*Affine*             ${affineTarg}/
-         exec_sys   mv ${outdir}/job*.sh              ${logTarg}/
-         exec_sys   mv ${outdir}/*log.txt             ${logTarg}/
-         exec_sys   mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/
+         exec_sys mv ${outdir}/*template*           ${templateTargDir}/  2>/dev/null
+         exec_sys mv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/  2>/dev/null
+         exec_sys mv ${outdir}/*WarpedToTemplate*   ${warpTarg}/         2>/dev/null
+         exec_sys mv ${outdir}/*Warp*               ${warpTarg}/         2>/dev/null
+         exec_sys mv ${outdir}/*warp*               ${warpTarg}/         2>/dev/null
+         exec_sys mv ${outdir}/*Repaired*           ${repairedTarg}/     2>/dev/null
+         exec_sys mv ${outdir}/*Affine*             ${affineTarg}/       2>/dev/null
+         exec_sys mv ${outdir}/job*.sh              ${logTarg}/          2>/dev/null
+         exec_sys mv ${outdir}/*log.txt             ${logTarg}/          2>/dev/null
+         exec_sys mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/  2>/dev/null
       fi
       routine_end
 
@@ -411,6 +421,7 @@ construct_mask() {
    #
    # Potential outputs include:
    ################################################################
+   ! is_image ${templateMask}          && \
    define      templateMask            ${outdir}/templateMask.nii.gz
    define      templateMaskD           ${outdir}/templateMaskMD.nii.gz
    define      templateMasked          ${outdir}/templateBrain.nii.gz
@@ -442,11 +453,14 @@ construct_mask() {
       #############################################################
       # Perform the JLF routine to generate an anatomical atlas.
       #############################################################
-      if ! is_image ${templateMasked}
+      if ! is_image ${templateMask}
          then
          subroutine           @3.3  Delegating control to antsJointLabelFusion
          exec_sys    mkdir -p ${outdir}/labels
          exec_sys    mkdir -p ${logMaskJLF}
+         exec_sys    mkdir -p ${jlfMaskTransforms}
+         exec_sys    mkdir -p ${jlfMaskWarped}
+         exec_sys    mkdir -p ${jlfMaskWarpedLabels}
          exec_sys    pushd    ${logMaskJLF} 2>/dev/null 1>&2
          exec_ants   antsJointLabelFusion.sh             \
             -d       3                                   \
@@ -458,14 +472,14 @@ construct_mask() {
             -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
             ${jlfReg}
          
-         exec_sys    mv ${outdir}/job*             ${logMaskJLF}
-         exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}
-         exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}
-         exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}
-         exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfMaskWarpedLabels}
-         exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfMaskWarped}
-         exec_sys    mv ${outdir}/labels/*Affine*           ${jlfMaskTransforms}
-         exec_fsl    immv ${outdir}/labels/*Warp*           ${jlfMaskTransforms}
+         exec_sys    mv ${outdir}/job*             ${logMaskJLF}  2>/dev/null
+         exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}  2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}  2>/dev/null
+         exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}  2>/dev/null
+         exec_sys    mv ${outdir}/labels/*WarpedLabels*  ${jlfMaskWarpedLabels}  2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Warped*        ${jlfMaskWarped}        2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Affine*        ${jlfMaskTransforms}    2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Warp*          ${jlfMaskTransforms}    2>/dev/null
          
          exec_sys    popd 2>/dev/null 1>&2
          
@@ -475,6 +489,9 @@ construct_mask() {
          subroutine           @3.4  Organising output
          exec_fsl    fslmaths ${outdir}/labels/Labels.nii.gz \
             -bin     ${templateMask}
+      fi
+      if ! is_image ${templateMasked}
+         then
          exec_fsl    fslmaths ${templateTarg}            \
             -mul     ${templateMask}                     \
                      ${templateMasked}
@@ -570,15 +587,15 @@ construct_priors() {
             -q       0                                   \
             -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
             ${jlfReg}
-         exec_sys    mv ${outdir}/job*             ${logJLF}
-         exec_sys    mv ${outdir}/labels/*log*     ${logJLF}
-         exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}
-         exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}
-         exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}
-         exec_fsl    immv ${outdir}/labels/*Warp*  ${jlfTransforms}
+         exec_sys    mv ${outdir}/job*             ${logJLF}         2>/dev/null
+         exec_sys    mv ${outdir}/labels/*log*     ${logJLF}         2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}         2>/dev/null
+         exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}         2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}  2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Warp*    ${jlfTransforms}  2>/dev/null
          
-         exec_fsl    immv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}
-         exec_fsl    immv ${outdir}/labels/*Warped*         ${jlfWarped}
+         exec_sys    mv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}   2>/dev/null
+         exec_sys    mv ${outdir}/labels/*Warped*         ${jlfWarped}         2>/dev/null
          exec_sys    popd 2>/dev/null 1>&2
       fi
       
@@ -616,6 +633,12 @@ renorm_priors() {
       assign   image intemplate     \
           or         templateMasked \
           as         templateMasked
+      if ! is_image ${templateMask}
+         then
+         templateMask=${outdir}/templateMask.nii.gz
+         exec_fsl fslmaths ${templateMasked} \
+            -bin           ${templateMask}
+      fi
    fi
 
    ################################################################
@@ -649,13 +672,13 @@ renorm_priors() {
                      1.0 ${priorPrenorm}${i}.nii.gz
          local imcall="${imcall} ${priorPrenorm}${i}.nii.gz"
       done
-      local imcall=${imcall// /,}
+      local imcall=$(join_by ',' ${imcall})
 
       #############################################################
       # Prepare CSF atlas prior.
       #############################################################
       subroutine              @5.3  Preparing the cerebrospinal fluid prior
-      exec_sys    mkdir ${kmeansDir}
+      exec_sys    mkdir -p ${kmeansDir}
       exec_ants   Atropos                                \
          -d       3                                      \
          -a       ${templateMasked}                      \
