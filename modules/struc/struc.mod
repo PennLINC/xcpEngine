@@ -62,7 +62,6 @@ derivative_set corticalThickness    Statistic        mean
 derivative_set mask                 Type             Mask
 
 output      struct_std              ${prefix}_BrainNormalizedToTemplate.nii.gz
-output      biasCorrected           ${prefix}_BrainSegmentation0N4.nii.gz
 output      corticalThickness_std   ${prefix}_CorticalThicknessNormalizedToTemplate.nii.gz
 output      ctroot                  ${prefix}_
 output      referenceVolume         ${prefix}_BrainSegmentation0N4.nii.gz
@@ -95,9 +94,6 @@ final       struct                  ${prefix}_ExtractedBrain0N4
 
 << DICTIONARY
 
-biasCorrected
-   The bias field-corrected image, used for segmentation into
-   tissue classes.
 corticalThickness
    The voxelwise map of cortical thickness values.
 corticalThickness_std
@@ -255,12 +251,12 @@ while (( ${#rem} > 0 ))
       # BFC runs ANTs bias field correction.
       #############################################################
       routine                 @2    ANTs N4 bias field correction
-      if ! is_image ${biasCorrected[cxt]} \
+      if ! is_image ${intermediate}_${cur}.nii.gz \
       || rerun
          then
          subroutine           @2.1a Correcting inhomogeneities
          subroutine           @2.1b Delegating control to N4BiasFieldCorrection
-         proc_ants   ${biasCorrected[cxt]}            \
+         proc_ants   ${intermediate}_${cur}.nii.gz    \
                      N4BiasFieldCorrection            \
             -d       3                                \
             -i       ${intermediate}.nii.gz           \
@@ -269,7 +265,6 @@ while (( ${#rem} > 0 ))
       else
          subroutine           @2.2  Bias field correction already complete
       fi
-      exec_sys ln -sf ${biasCorrected[cxt]} ${intermediate}_${cur}.nii.gz
       intermediate=${intermediate}_${cur}
       routine_end
       ;;
