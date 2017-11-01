@@ -26,18 +26,32 @@ Usage: `basename $0` -l <rawJlfLabelImage> -b <BE Map> -o <outDistanceImage> <op
 
 Compulsory arguments:
  -l : rawJlfLabelImage
-      The output label image from the JLF pipeline, without any intersections applied
+      The output label image from the JLF pipeline, without any 
+      intersections applied
 
- -b : BE Map
-      A binary image which was used to perform brain extraction on the raw T1 image 
+ -g : Grey matter mask
+      A binary mask indicating whether each voxel belongs to grey
+      matter
 
- -s : Segmentation image
-      The  6 class tissue segmentation from the output of ANTsCT
+ -w : White matter mask
+      A binary mask indicating whether each voxel belongs to white
+      matter
 
- -o : outDistanceImage
-      The file where the output distane image will be written to.
+ -o : output root
+      The root path where output images for inner and outer grey
+      boundaries will be written.
 
 Optional arguments:
+ -h : Left hemisphere mask
+      A binary mask indicating whether each voxel belongs to the
+      left hemisphere. Both this and -r may be provided instead of
+      -l.
+ 
+ -r : Right hemisphere mask
+      A binary mask indicating whether each voxel belongs to the
+      left hemisphere. Both this and -h may be provided instead of
+      -l.
+
  -i : Intermediate output path
       Path for input and output of temporary files (intermediates)
       (default: current directory)
@@ -48,17 +62,17 @@ endstream
 ###################################################################
 # Define defaults
 ###################################################################
-[[ -z ${intermediate} ]] && intermediate=$(pwd)/layerLabels~TEMP~
+[[ -z ${intermediate} ]] && intermediate=$(pwd)/sulcalDepth~TEMP~
 
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "l:o:b:i:s:" OPTION
+while getopts "l:o:i:g:w:h:r:" OPTION
    do
    case $OPTION in
    l)
       label=${OPTARG}
-      ! is_image ${label} && Usage && exit
+      ! is_image ${label}     && Usage && exit
       ;;
    o)
       out=${OPTARG}
@@ -66,13 +80,21 @@ while getopts "l:o:b:i:s:" OPTION
    i)
       intermediate=${OPTARG}-sulcalDepth
       ;;
-   s)
-      segImage=${OPTARG}
-      ! is_image ${segImage} && Usage && exit
+   g)
+      gmMask=${OPTARG}
+      ! is_image ${gmMask}    && Usage && exit
       ;;
-   b)
-      beImage=${OPTARG}
-      ! is_image ${beImage} && Usage && exit
+   w)
+      wmMask=${OPTARG}
+      ! is_image ${wmMask}    && Usage && exit
+      ;;
+   h)
+      lhMask=${OPTARG}
+      ! is_image ${lhMask}    && Usage && exit
+      ;;
+   r)
+      rhMask=${OPTARG}
+      ! is_image ${rhMask}    && Usage && exit
       ;;
    *)
       echo "Option not recognised: ${OPTARG}"
@@ -84,52 +106,111 @@ done
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${label} ]] && Usage && exit
-[[ -z ${beImage} ]] && Usage && exit
-[[ -z ${out}   ]] && Usage && exit
+flag1=0
+flag2=0
+[[ -z ${lhMask}   ]] && [[ -z ${rhMask}   ]]    && flag1=1
+[[ -z ${label}    ]]                            && flag2=1
+[[ -z ${out}      ]]                   && Usage && exit
+(( flag1 == 1 ))  && (( flag2 == 1 ))  && Usage && exit
 
 ###################################################################
 # Declare any static variables
 ###################################################################
-rmIsolVals="23,31,33,36,42,44,47,49,51,53,55,57,59,61,63,66,68,76,100,102,104,106,108,110,112,114,116,118,120,122,124,126,128,130,132,134,136,138,140,142,144,146,148,150,152,154,156,158,160,162,164,166,168,170,172,174,176,178,180,182,184,186,188,190,192,194,196,198,200,202,204,206"
-lmIsolVals="30,32,34,37,43,45,48,50,52,54,56,58,60,62,64,65,67,75,101,103,105,107,109,111,113,115,117,119,121,123,125,127,129,131,133,135,137,139,141,143,145,147,149,151,153,155,157,159,161,163,165,167,169,171,173,175,177,179,181,183,185,187,189,191,193,195,197,199,201,203,205,207"
+readonly rhIsolVals="23,31,33,36,42,44,47,49,51,53,55,57,59,61,63,66,68,76,100,102,104,106,108,110,112,114,116,118,120,122,124,126,128,130,132,134,136,138,140,142,144,146,148,150,152,154,156,158,160,162,164,166,168,170,172,174,176,178,180,182,184,186,188,190,192,194,196,198,200,202,204,206"
+readonly lhIsolVals="30,32,34,37,43,45,48,50,52,54,56,58,60,62,64,65,67,75,101,103,105,107,109,111,113,115,117,119,121,123,125,127,129,131,133,135,137,139,141,143,145,147,149,151,153,155,157,159,161,163,165,167,169,171,173,175,177,179,181,183,185,187,189,191,193,195,197,199,201,203,205,207"
 
 ###################################################################
-# Create our hemisphere specific dura mask
-# Start with the right hemisphere
+# Create our hemisphere specific dura masks
 ###################################################################
-subroutine                    @u.1
-exec_xcp val2mask.R -i ${label} -v ${rmIsolVals} -o ${intermediate}/rightHemi.nii.gz
-exec_ants ImageMath 3 ${intermediate}/rightHemiDistance.nii.gz MaurerDistance ${intermediate}/rightHemi.nii.gz 1
-exec_fsl fslmaths ${intermediate}/rightHemiDistance.nii.gz -uthr 2 -bin ${intermediate}/rightHemiDistanceBin.nii.gz
-exec_fsl fslmaths ${intermediate}/rightHemiDistanceBin.nii.gz -add ${intermediate}/rightHemi.nii.gz -bin ${intermediate}/rightHemiMask.nii.gz
-exec_fsl fslmaths ${intermediate}/rightHemiMask.nii.gz -ero ${intermediate}/rightHemiMaskEro.nii.gz
-exec_fsl fslmaths ${intermediate}/rightHemiMask.nii.gz -sub ${intermediate}/rightHemiMaskEro.nii.gz ${intermediate}/DuraEstimateRight.nii.gz
+declare -A hemi
+hemi=( 
+
+   [lh]=Left
+   [rh]=Right
+
+)
+
+for h in ${!hemi[@]}
+   do
+   if is_image ${label}
+   then
+      subroutine              @u.1.1 Generating ${hemi[$h],,} hemispheric mask
+      vals=${h}IsolVals
+      exec_xcp val2mask.R     \
+         -i    ${label}       \
+         -v    ${!vals}       \
+         -o    ${intermediate}-${hemi[$h]}Hemi.nii.gz
+   else
+      subroutine              @u.1.2 Loading ${hemi[$h],,} hemispheric mask
+      mask=${h}Mask
+      exec_sys ln -sf ${!mask} ${intermediate}-${hemi[$h]}Hemi.nii.gz
+   fi
+   subroutine                 @u.2  Estimating the dural envelope
+   exec_ants   ImageMath 3    ${intermediate}-${hemi[$h]}HemiDistance.nii.gz \
+               MaurerDistance ${intermediate}-${hemi[$h]}Hemi.nii.gz 1
+   exec_fsl fslmaths ${intermediate}-${hemi[$h]}HemiDistance.nii.gz \
+      -uthr 2                 \
+      -bin  ${intermediate}-${hemi[$h]}HemiDistanceBin.nii.gz
+   exec_fsl fslmaths ${intermediate}-${hemi[$h]}HemiDistanceBin.nii.gz \
+      -add  ${intermediate}-${hemi[$h]}Hemi.nii.gz \
+      -bin  ${intermediate}-${hemi[$h]}HemiMask.nii.gz
+   exec_fsl fslmaths ${intermediate}-${hemi[$h]}HemiMask.nii.gz \
+      -ero  ${intermediate}-${hemi[$h]}HemiMaskEro.nii.gz
+   exec_fsl fslmaths ${intermediate}-${hemi[$h]}HemiMask.nii.gz \
+      -sub  ${intermediate}-${hemi[$h]}HemiMaskEro.nii.gz \
+               ${intermediate}-DuraEstimate${hemi[$h]}.nii.gz
+done
 
 ###################################################################
-# Now onto the left hemisphere
+# Now combine the dura hemisphere maps and calculate distance from
+# the dura
 ###################################################################
-subroutine                    @u.2
-exec_xcp val2mask.R -i ${label} -v ${lmIsolVals} -o ${intermediate}/leftHemi.nii.gz
-exec_ants ImageMath 3 ${intermediate}/leftHemiDistance.nii.gz MaurerDistance ${intermediate}/leftHemi.nii.gz 1
-exec_fsl fslmaths ${intermediate}/leftHemiDistance.nii.gz -uthr 2 -bin ${intermediate}/leftHemiDistanceBin.nii.gz 
-exec_fsl fslmaths ${intermediate}/leftHemiDistanceBin.nii.gz -add ${intermediate}/leftHemi.nii.gz -bin ${intermediate}/leftHemiMask.nii.gz
-exec_fsl fslmaths ${intermediate}/leftHemiMask.nii.gz -ero ${intermediate}/leftHemiMaskEro.nii.gz
-exec_fsl fslmaths ${intermediate}/leftHemiMask.nii.gz -sub ${intermediate}/leftHemiMaskEro.nii.gz ${intermediate}/DuraEstimateLeft.nii.gz
+subroutine                    @u.3  Combining hemispheres -- mapping distance to dura
+exec_fsl    fslmaths ${intermediate}-LeftHemi.nii.gz  \
+   -add              ${intermediate}-RightHemi.nii.gz \
+   -bin              ${intermediate}-CerebralHemispheres.nii.gz
+exec_fsl    fslmaths ${intermediate}-DuraEstimateLeft.nii.gz \
+   -add     ${intermediate}-DuraEstimateRight.nii.gz \
+   -bin     ${intermediate}-Dura.nii.gz
+exec_ants   ImageMath 3    ${intermediate}-DistanceFromDura.nii.gz \
+            MaurerDistance ${intermediate}-Dura.nii.gz 1
 
 ###################################################################
-# Now combine the dura hemisphere maps and calculate distance from the dura
+# Map the GM and WM boundaries
 ###################################################################
-subroutine                    @u.3
-exec_fsl fslmaths ${intermediate}/DuraEstimateLeft.nii.gz -add ${intermediate}/DuraEstimateRight.nii.gz -bin ${intermediate}/Dura.nii.gz
-exec_ants ImageMath 3 ${intermediate}/DistanceFromDura.nii.gz MaurerDistance ${intermediate}/Dura.nii.gz 1
-
-###################################################################
-# Now produce our GM edge image
-###################################################################
-subroutine                    @u.4
-exec_afni 3dresample -dxyz .25 .25 .25 -inset ${segImage} -prefix ${intermediate}/Upsample.nii.gz
-exec_fsl fslmaths ${intermediate}/Upsample.nii.gz -thr 2 -uthr 2 -bin -edge -bin ${intermediate}/GmEdge.nii.gz
-exec_ants antsApplyTransforms -e 3 -d 3 -i ${intermediate}/GmEdge.nii.gz -o ${intermediate}/GmEdgeDS.nii.gz -r ${segImage} -n Gaussian
-exec_fsl fslmaths ${intermediate}/GmEdgeDS.nii.gz -thr .05 -bin ${intermediate}/GmEdgeDSBin.nii.gz
-exec_fsl fslmaths ${intermediate}/DistanceFromDura.nii.gz -mul ${intermediate}/GmEdgeDSBin.nii.gz ${out}
+subroutine                    @u.4  Estimating grey matter boundaries
+exec_fsl    fslmaths ${gmMask}                  \
+   -add     ${wmMask}                           \
+   -bin     ${intermediate}-gm-outer.nii.gz
+exec_sys    ln -sf ${wmMask}                    \
+            ${intermediate}-gm-inner.nii.gz
+declare -A bounds
+bounds=(
+   
+   [outer]=pial
+   [inner]=white
+   
+)
+for i in ${!bounds[@]}
+   do
+   exec_afni   3dresample  -dxyz    .25 .25 .25 \
+      -inset   ${intermediate}-gm-${i}.nii.gz   \
+      -prefix  ${intermediate}-gm-${i}.nii.gz
+   exec_fsl    fslmaths ${intermediate}-gm-${i}.nii.gz \
+      -bin     -edge                            \
+      -bin     ${intermediate}-gm-${i}-edge.nii.gz
+   exec_ants   antsApplyTransforms -e 3 -d 3    \
+      -i       ${intermediate}-gm-${i}-edge.nii.gz \
+      -o       ${intermediate}-gm-${i}-edge-ds.nii.gz \
+      -r       ${gmMask}                        \
+      -n       Gaussian
+   exec_fsl    fslmaths ${intermediate}-gm-${i}-edge-ds.nii.gz \
+      -thr     .05                                 \
+      -bin     ${intermediate}-gm-${i}-edge-ds-bin.nii.gz
+   subroutine                 @u.5  Computing sulcal depth at ${i} GM boundary
+   exec_fsl    fslmaths ${intermediate}-DistanceFromDura.nii.gz \
+      -mul     ${intermediate}-gm-${i}-edge-ds-bin.nii.gz \
+      -mul     ${intermediate}-CerebralHemispheres.nii.gz \
+      -thr     0                                          \
+               ${out}${i^}.nii.gz
+done

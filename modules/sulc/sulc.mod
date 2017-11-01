@@ -35,14 +35,16 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative     sulcalDepth          ${prefix}_sulcalDepth
+define         sulcalDepth          ${outdir}/${prefix}_sulcalDepth
 
-derivative_set sulcalDepth          Statistic        mean
+derivative     sulcalDepthOuter     ${prefix}_sulcalDepthOuter
+derivative     sulcalDepthInner     ${prefix}_sulcalDepthInner
+
+derivative_set sulcalDepthOuter     Statistic        mean
+derivative_set sulcalDepthInner     Statistic        mean
 
 require image mask
-require image segmentation       \
-     or       segmentation3class \
-     as       segmentation
+require image segmentation
 
 <<DICTIONARY
 
@@ -63,26 +65,46 @@ DICTIONARY
 if ! is_image ${sulcalDepth[cxt]}
    then
    ################################################################
+   # Determine whether a MICCAI/OASIS parcellation is available for
+   # the current subject. If it is, use this as the basis for
+   # sulcal depth estimation. Otherwise, warp hemispheric masks
+   # backwards from MNI.
+   ################################################################
+   atlas_parse miccai
+   if is_image ${a[Map]}
+      then
+      hemisphere_args="-l ${a[Map]}"
+   else
+      warpspace ${BRAINSPACE}/MNI/MNI-1x1x1LeftHemisphere.nii.gz \
+         ${intermediate}-lh.nii.gz \
+         MNI:${space[sub]} \
+         NearestNeighbor
+      warpspace ${BRAINSPACE}/MNI/MNI-1x1x1RightHemisphere.nii.gz \
+         ${intermediate}-rh.nii.gz \
+         MNI:${space[sub]} \
+         NearestNeighbor
+      hemisphere_args="-h ${intermediate}-lh.nii.gz -r ${intermediate}-rh.nii.gz"
+   fi
+   ################################################################
    # Compute mean distance from the convex hull / dural surface. In
    # this prototype, we approximate the convex hull as the brain
-   # mask.
+   # mask. Then intersect mean distance with the GM edge based on
+   # the segmentation.
    ################################################################
-   exec_fsl    fslmaths ${mask[cxt]} \
-      -mul     -1 \
-      -add      1 \
-      ${intermediate}-mask-inverse.nii.gz
-   exec_ants   ImageMath 3 ${intermediate}-dist-from-hull.nii.gz \
-               MaurerDistance ${intermediate}-mask-inverse.nii.gz
-   ################################################################
-   # Intersect mean distance with the GM from the segmentation.
-   ################################################################
-   exec_xcp    val2mask.R \
-      -i       ${segmentation[cxt]} \
-      -v       ${sulc_gm_val[cxt]} \
+   exec_xcp    val2mask.R              \
+      -i       ${segmentation[cxt]}    \
+      -v       ${sulc_gm_val[cxt]}     \
       -o       ${intermediate}-gm-mask.nii.gz
-   exec_fsl    fslmaths ${intermediate}-dist-from-hull.nii.gz \
-      -mul     ${intermediate}-gm-mask.nii.gz \
-      ${sulcalDepth[cxt]}
+   exec_xcp    val2mask.R              \
+      -i       ${segmentation[cxt]}    \
+      -v       ${sulc_wm_val[cxt]}     \
+      -o       ${intermediate}-wm-mask.nii.gz
+   exec_xcp    sulcalDepth             \
+      ${hemisphere_args}               \
+      -g       ${intermediate}-gm-mask.nii.gz \
+      -w       ${intermediate}-wm-mask.nii.gz \
+      -i       ${intermediate}         \
+      -o       ${sulcalDepth[cxt]}
 fi
 
 
