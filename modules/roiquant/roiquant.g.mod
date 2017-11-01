@@ -61,6 +61,7 @@ for map in ${atlas_names[@]}
    do
    atlas_parse       ${map}
    atlas_check       || continue
+   exec_sys mkdir -p ${outdir}/${a[Name]}
    ################################################################
    # Iterate over all subjects's atlantes.
    ################################################################
@@ -85,14 +86,14 @@ for map in ${atlas_names[@]}
    done
    for r in ${!V[@]}
       do
-      if [[ ! -s ${outdir}/${sequence}${r}.csv ]] \
+      if [[ ! -s ${outdir}/${a[Name]}/${sequence}${a[Name]^}${r^}.csv ]] \
       || rerun
          then
          subroutine           @1.3  Collating ${r}
          vallist=$(join_by ',' ${V[$r]})
          exec_xcp combineOutput.R   \
             -i    ${vallist}        \
-            -o    ${outdir}/${sequence}${r}.csv
+            -o    ${outdir}/${a[Name]}/${sequence}${a[Name]^}${r^}.csv
       fi
    done
    routine_end
