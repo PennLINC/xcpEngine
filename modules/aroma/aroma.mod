@@ -258,7 +258,8 @@ if ! is_image ${ic_maps_thr_mni[cxt]} \
    warpspace \
       ${ic_maps_thr[cxt]} \
       ${ic_maps_thr_mni[cxt]} \
-      ${space[sub]}:MNI
+      ${space[sub]}:MNI%2x2x2
+   ! is_image ${ic_maps_thr_mni[cxt]} && abort_stream
 fi
 ###################################################################
 # Import the edge, CSF, and background masks.
@@ -287,28 +288,28 @@ while (( ${i} < ${icdim} ))
    totMean=0
    totVox=($( exec_fsl fslstats ${intermediate}IC -V) )
    totMean=$( exec_fsl fslstats ${intermediate}IC -M)
-   totSum=$(arithmetic   ${totVox[0]}*${totMean})
+   totSum=$(arithmetic   "${totVox[0]}*${totMean}")
    ################################################################
    # * Obtain the total z-score within the CSF compartment.
    ################################################################
    csfMean=0
    csfVox=($( exec_fsl fslstats ${intermediate}IC -k ${csf[cxt]} -V) )
    csfMean=$( exec_fsl fslstats ${intermediate}IC -k ${csf[cxt]} -M)
-   csfSum=$(arithmetic   ${csfVox[0]}*${csfMean})
+   csfSum=$(arithmetic   "${csfVox[0]}*${csfMean}")
    ################################################################
    # * Obtain the total z-score within the edge mask.
    ################################################################
    edgeMean=0
    edgeVox=($( exec_fsl fslstats ${intermediate}IC -k ${edge[cxt]} -V) )
    edgeMean=$( exec_fsl fslstats ${intermediate}IC -k ${edge[cxt]} -M)
-   edgeSum=$(arithmetic ${edgeVox[0]}*${edgeMean})
+   edgeSum=$(arithmetic "${edgeVox[0]}*${edgeMean}")
    ################################################################
    # * Obtain the total z-score located in the background mask.
    ################################################################
    bgMean=0
    bgVox=($( exec_fsl fslstats ${intermediate}IC -k ${bg[cxt]} -V) )
    bgMean=$( exec_fsl fslstats ${intermediate}IC -k ${bg[cxt]} -M)
-   bgSum=$(arithmetic     ${bgVox[0]}*${bgMean})
+   bgSum=$(arithmetic     "${bgVox[0]}*${bgMean}")
    ################################################################
    # * Obtain the fractional z-score with CSF and edge/out masks.
    ################################################################
