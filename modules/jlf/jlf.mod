@@ -111,9 +111,21 @@ if ! is_image ${labels[cxt]} \
      jlfReg="${jlfReg} -g ${brainDir}${o}.nii.gz"
      jlfReg="${jlfReg} -l ${labelDir}${o}.nii.gz"
    done
+   
+   subroutine                 @1.5  Configuring parallelisation
+   case ${jlf_parallel[cxt]} in
+   sge)
+      define jlf_parallel  1
+      ;;
+   pbs)
+      define jlf_parallel  4
+      ;;
+   *)
+      define jlf_parallel  0
+   esac
 
-   subroutine                 @1.5a Executing joint label fusion routine
-   subroutine                 @1.5b Delegating control to antsJointLabelFusion
+   subroutine                 @1.6a Executing joint label fusion routine
+   subroutine                 @1.6b Delegating control to antsJointLabelFusion
    exec_ants   antsJointLabelFusion.sh \
       -d       3                       \
       -q       ${jlf_quick[cxt]}       \
@@ -122,7 +134,7 @@ if ! is_image ${labels[cxt]} \
       -k       ${jlf_keep_warps[cxt]}  \
       -t       ${img}                  \
       -o       ${outdir}/${prefix}_    \
-      -c       0                       \
+      -c       ${jlf_parallel[cxt]}    \
       ${jlfReg}
 
    routine_end
