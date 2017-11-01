@@ -40,9 +40,7 @@ derivative     corticalContrast     ${prefix}_CorticalContrast
 
 derivative_set corticalContrast     Statistic        mean
 
-require image segmentation       \
-     or       segmentation3class \
-     as       segmentation
+require image  segmentation
 
 <<DICTIONARY
 
