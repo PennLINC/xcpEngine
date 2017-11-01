@@ -2,9 +2,9 @@ derivative() {
    local path vname
    if [[ ${2:0:1} == '/' ]]
       then
-      path=${2}.nii.gz
+      path=${2//\.nii\.gz}.nii.gz
    else
-      path=${outdir}/${2}.nii.gz
+      path=${outdir}/${2//\.nii\.gz}.nii.gz
    fi
    vname=${1//[![:alnum:]|_]}
    eval ${vname}[${cxt}]=\${path}
