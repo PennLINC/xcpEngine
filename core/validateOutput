@@ -34,6 +34,7 @@ done
 [[ -z ${out_group} ]] && out_group=${out_super}/group
 asgt=( ${asgt[@]}     -a out_group=${out_group} )
 mkdir -p                           ${out_group}
+rm    -f                           ${out_group}/*quality.csv
 ###################################################################
 # Initialise reference atlas. This is written as a function to keep
 # variables from leaking into the pipeline engine.
