@@ -47,6 +47,7 @@ declare_atlas_outputs() {
    define   qcfc_abs_med_cor        ${outdir}/${sequence}_QC-FC_absMedCor_${a[Name]}.txt
    define   qcfc_base               ${outdir}/${sequence}_QC-FC_correlation_${a[Name]}
    define   qcfc_dist_dependence    ${outdir}/${sequence}_QC-FC_distanceDependence_${a[Name]}.txt
+   define   qcfc_dist_dependence_f  ${outdir}/${sequence}_QC-FC_distanceDependence_${a[Name]}.svg
    define   qcfc_correlation        ${outdir}/${sequence}_QC-FC_correlation_${a[Name]}.txt
    define   qcfc_correlation_thr    ${outdir}/${sequence}_QC-FC_correlation_thr_${a[Name]}.txt
    define   node_distance           ${outdir}/${sequence}_node_distance_${a[Name]}.txt
@@ -177,8 +178,10 @@ for map in ${atlas_names[@]}
    [[ -e ${qcfc_confmat[cxt]} ]] \
       && confound="  -n ${qcfc_confmat[cxt]}" \
       && conformula="-y ${qcfc_conformula[cxt]}"
-   if [[ ! -s ${qcfc_correlation[cxt]} ]]
+   if [[ ! -s ${qcfc_correlation[cxt]} ]] \
+   || rerun
       then
+      exec_sys rm -f ${qcfc_base[cxt]}*
       exec_xcp qcfc.R                                    \
          -c    ${intermediate}-${a[Name]}-subjects.csv   \
          -s    ${qcfc_sig[cxt]}                          \
@@ -227,9 +230,10 @@ for map in ${atlas_names[@]}
    # effects to infer distance-dependence of motion effects.
    ################################################################
    subroutine                 @2.6  Computing QC-FC distance-dependence
+   exec_sys rm -f ${qcfc_dist_dependence[cxt]}
    exec_xcp featureCorrelation.R                            \
       -i    ${node_distance[cxt]},${qcfc_correlation[cxt]}  \
-      -f    ${outdir}/${analysis}_distDepend_${a[Name]}.svg \
+      -f    ${qcfc_dist_dependence_f[cxt]}                  \
       >>    ${qcfc_dist_dependence[cxt]}
    atlas_complete
    routine_end
