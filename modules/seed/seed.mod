@@ -21,12 +21,21 @@ source ${XCPEDIR}/core/functions/library.sh
 source ${XCPEDIR}/core/parseArgsMod
 
 ###################################################################
-# MODULE COMPLETION
+# MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 completion() {
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
+}
+no_seeds() {
+   echo \
+"
+[WARNING: Seed-based correlation analysis has been requested,]
+[but no seed libraries have been provided.]
+  
+[Skipping module]"
+   exit 1
 }
 
 
@@ -36,6 +45,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
+[[ ! -s ${seed_lib[cxt]} ]] &&   no_seeds
 define   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
 define   kernel                  ${seed_smo[cxt]//,/ }
 
@@ -97,13 +107,7 @@ if [[ -s ${seed_lib[cxt]} ]]
    subroutine                 @0.1
    add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
 else
-   echo \
-"
-[WARNING: Seed-based correlation analysis has been requested,]
-[but no seed libraries have been provided.]
-  
-[Skipping module]"
-   exit 1
+   no_seeds
 fi
 
 
