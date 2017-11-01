@@ -24,7 +24,17 @@ ids[0]=$(join_by ',' ${id_vars[@]})
 unset cohort[idx_offset]
 
 ###################################################################
-# Import subject-evel variables from designs
+# Remove any subjects that failed analysis
+###################################################################
+sub=$(( idx_offset + 1 ))
+subject=${cohort[sub]}
+subject_parse        ${subject} ${incohort}
+source ${XCPEDIR}/core/defineDesign
+source ${design[sub]}
+source ${XCPEDIR}/core/validateSubjects
+
+###################################################################
+# Import subject-level variables from designs
 ###################################################################
 for sub in ${!cohort[@]}
    do
