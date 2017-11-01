@@ -62,6 +62,12 @@ shift $((OPTIND-1))
 [[ ! -s ${incohort}  ]] && usage_flag=1
 [[ ! -d ${out_super} ]] && usage_flag=1
 ###################################################################
+# Terminator setup. This only affects the terminator module. This
+# solution is quite hacky and should be changed in the future.
+###################################################################
+terminator_rerun[cxt]=1
+terminator_cleanup[cxt]=1
+###################################################################
 # Usage and exit
 ###################################################################
 if (( ${usage_flag} == 1 ))
@@ -90,8 +96,8 @@ esac
 ###################################################################
 # Source all design files.
 ###################################################################
-source ${XCPEDIR}/core/defineLogs
 source ${XCPEDIR}/core/xcpDelocaliser
+source ${XCPEDIR}/core/defineLogs
 ###################################################################
 # Create the primary module output directory.
 ###################################################################

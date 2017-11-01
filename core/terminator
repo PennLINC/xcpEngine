@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# SPECIFIC MODULE HEADER
+# Terminator: collate all quality and audit files
+###################################################################
+mod_name_short=terminator
+mod_name='TERMINATOR'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+
+###################################################################
+# GENERAL GROUP MODULE HEADER
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsGroup
+
+###################################################################
+# MODULE COMPLETION AND ANCILLARY FUNCTIONS
+###################################################################
+completion() {
+   source ${XCPEDIR}/core/moduleEnd
+}
+
+###################################################################
+# Define outputs
+###################################################################
+define   qtable                  ${outdir}/quality.csv
+define   atable                  ${outdir}/audit.csv
+
+###################################################################
+# Quality files
+###################################################################
+qfiles=$(join_by ',' ${quality[@]})
+exec_xcp combineOutput.R   \
+   -i    ${qfiles}         \
+   -o    ${qtable[cxt]}
+
+afiles=$(join_by ',' ${audit[@]})
+exec_xcp combineOutput.R   \
+   -i    ${afiles}         \
+   -o    ${atable[cxt]}
+   
+completion
