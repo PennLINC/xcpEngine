@@ -175,7 +175,7 @@ for class in "${!tissue_classes[@]}"
    class_name=${tissue_classes[$class]}
    class_include='confound_'${class}'['${cxt}']'
    
-   if [[ ${!class_include} != N ]]
+   if [[ ${!class_include} != 0 ]]
       then
       subroutine              @3    [Including ${class_name} signal]
       
@@ -247,6 +247,7 @@ for class in "${!tissue_classes[@]}"
             -mask       ${!class_mask}    \
             ${img}
          cc_components=$(( ${cc_components} + ${!class_include} ))
+         eval ${class}=\${ts}.1D
       elif [[ ${!class_include} == all ]]
          then
          ##########################################################
@@ -262,6 +263,7 @@ for class in "${!tissue_classes[@]}"
             ${img}
          vidx=$(tail    -n1 ${ts}.1D|wc -w)
          cc_components=$(( ${cc_components} + ${vidx} ))
+         eval ${class}=\${ts}.1D
       elif is+numeric ${!class_include}
          then
          ##########################################################
@@ -289,6 +291,7 @@ for class in "${!tissue_classes[@]}"
             -mask       ${!class_mask} \
             ${img}
          cc_components=$(( ${cc_components} + ${vidx} ))
+         eval ${class}=\${ts}.1D
       elif [[ ${!class_include} == "local" ]]
          then
          subroutine           @3.8  Modelling voxelwise ${class_name} signal
@@ -327,7 +330,7 @@ done
 ###################################################################
 # MEAN GLOBAL SIGNAL
 ###################################################################
-if [[ ${confound_gsr[cxt]} != N ]]
+if [[ ${confound_gsr[cxt]} != 0 ]]
    then
    subroutine                 @4    [Global/local signals]
    ################################################################
@@ -556,7 +559,7 @@ fi
 # The limited customisability here will need to be
 # addressed in the near future.
 ###################################################################
-if is+numeric ${confound_gm[cxt]}
+if is+numeric ${confound_gm[cxt]} && (( ${confound_gm[cxt]} != 0 ))
    then
    subroutine                 @9.1  "[Including ${confound_gm[cxt]} GM aCompCor signal(s)]"
    exec_xcp mbind.R           \
@@ -565,7 +568,7 @@ if is+numeric ${confound_gm[cxt]}
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
-if is+numeric ${confound_wm[cxt]}
+if is+numeric ${confound_wm[cxt]} && (( ${confound_wm[cxt]} != 0 ))
    then
    subroutine                 @9.2  "[Including ${confound_wm[cxt]} WM aCompCor signal(s)]"
    exec_xcp mbind.R           \
@@ -574,7 +577,7 @@ if is+numeric ${confound_wm[cxt]}
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
-if is+numeric ${confound_csf[cxt]}
+if is+numeric ${confound_csf[cxt]} && (( ${confound_csf[cxt]} != 0 ))
    then
    subroutine                 @9.3  "Including ${confound_csf[cxt]} CSF aCompCor signal(s)"
    exec_xcp mbind.R           \
