@@ -362,17 +362,28 @@ while (( ${#rem} > 0 ))
       anat[0]=${intermediate}.nii.gz
       if ! is_image ${segmentation[cxt]}
          then
-         subroutine           @5.1  Warping ${#priors[@]} template priors to anatomical space
-         for i in ${!priors[@]}
-            do
-            warprior=$(printf ${intermediate}'-priorWarped%03d.nii.gz' ${i})
-            warpspace   ${priors[i]}   \
-               ${warprior}             \
-               ${prior_space}:${space[sub]} \
-               Gaussian
-            (( i == 1 )) && continue
-            priors_include=( "${priors_include[@]}" -y ${i} )
-         done
+         if (( ${struc_seg_priors[cxt]} == 1 ))
+            then
+            subroutine        @5.1.1 Warping ${#priors[@]} template priors to anatomical space
+            for i in ${!priors[@]}
+               do
+               warprior=$(printf ${intermediate}'-priorWarped%03d.nii.gz' ${i})
+               warpspace   ${priors[i]}   \
+                  ${warprior}             \
+                  ${prior_space}:${space[sub]} \
+                  Gaussian
+               (( i == 1 )) && continue
+               priors_include=( "${priors_include[@]}" -y ${i} )
+            done
+            nclass=${#priors[@]}
+            priors_arg='-p '${intermediate}'-priorWarped%03d.nii.gz'
+            priors_wt=${struc_prior_weight[cxt]}
+         else
+            subroutine        @5.1.2 Initialising 3-class priorless segmentation
+            unset priors_include priors_arg
+            nclass=3
+            priors_wt=0
+         fi
          subroutine           @5.2a Atropos segmentation
          subroutine           @5.2b Input: ${intermediate}.nii.gz
          subroutine           @5.2c Output: ${segmentation[cxt]}
@@ -384,10 +395,10 @@ while (( ${#rem} > 0 ))
             -x       ${mask[cxt]}                        \
             -m       3                                   \
             -n       5                                   \
-            -c       ${#priors[@]}                       \
+            -c       ${nclass}                           \
             "${priors_include[@]}"                       \
-            -p       ${intermediate}'-priorWarped%03d.nii.gz' \
-            -w       ${struc_prior_weight[cxt]}          \
+            ${priors_arg}                                \
+            -w       ${priors_wt}                        \
             -u       ${struc_random_seed[cxt]}           \
             -g       ${struc_denoise_anat[cxt]}          \
             -s       'nii.gz'                            \
@@ -401,10 +412,10 @@ while (( ${#rem} > 0 ))
             -x       ${mask[cxt]}                        \
             -m       2                                   \
             -n       5                                   \
-            -c       ${#priors[@]}                       \
+            -c       ${nclass}                           \
             "${priors_include[@]}"                       \
-            -p       ${intermediate}'-priorWarped%03d.nii.gz' \
-            -w       ${struc_prior_weight[cxt]}          \
+            ${priors_arg}                                \
+            -w       ${priors_wt}                        \
             -u       ${struc_random_seed[cxt]}           \
             -g       ${struc_denoise_anat[cxt]}          \
             -s       'nii.gz'                            \
@@ -422,13 +433,16 @@ while (( ${#rem} > 0 ))
             anat[i]=${outdir}/${prefix}_BrainSegmentation${i}N4.nii.gz
             additional_images="${additional_images} ${anat[i]}"
          done
-         for i in ${!priors[@]}
-            do
-            exec_fsl immv  ${intermediate}_${cur}_SegmentationPosteriors${i}.nii.gz \
-                           ${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
-            priors[i]=${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
-            prior_space=${space[sub]}
-         done
+         if (( ${struc_seg_priors[cxt]} == 1 ))
+            then
+            for i in ${!priors[@]}
+               do
+               exec_fsl immv  ${intermediate}_${cur}_SegmentationPosteriors${i}.nii.gz \
+                              ${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
+               priors[i]=${outdir}/${prefix}_BrainSegmentationPosteriors${i}.nii.gz
+               prior_space=${space[sub]}
+            done
+         fi
          exec_sys    mv -f ${intermediate}_${cur}_SegmentationTiledMosaic.png \
                            ${outdir}/${prefix}_BrainSegmentationTiledMosaic.png
          exec_sys    mv -f ${intermediate}_${cur}_SegmentationConvergence.txt \
