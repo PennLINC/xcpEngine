@@ -242,7 +242,7 @@ for sub in ${!cohort[@]}
    # Run the localiser.
    ################################################################
    mod_cmd="
-   ${XCPEDIR}/xcpLocaliser
+   ${XCPEDIR}/core/xcpLocaliser
       -d ${design}
       -s ${sub}:${incohort}
       -o ${out_super}
@@ -375,4 +375,5 @@ done
 ###################################################################
 # Conclude the analysis.
 ###################################################################
+source         ${XCPEDIR}/core/terminatePipeline
 printx         ${XCPEDIR}/core/CONSOLE_FOOTER
