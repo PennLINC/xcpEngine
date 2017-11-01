@@ -7,6 +7,9 @@ atlas_check() {
       if contains ${a[Name]} 'Coor$'
          then
          [[ ${a[Name]} == ${i} ]] && return 0
+      elif [[ ${i} == all ]]
+         then
+         return 0
       else
          contains ${a[Name]} ${i} && return 0
       fi
