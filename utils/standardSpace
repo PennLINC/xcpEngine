@@ -13,7 +13,8 @@
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
-mni='${BRAINSPACE}'/MNI/MNI-1x1x1.nii.gz
+mni1='${BRAINSPACE}'/MNI/MNI-1x1x1.nii.gz
+mni2='${BRAINSPACE}'/MNI/MNI-2x2x2.nii.gz
 
 ###################################################################
 # Usage function
@@ -342,10 +343,14 @@ space_path=${stddir}/${name}_space.json
 space_name=${template[0]}'%'${dims}
 exec_xcp spaceMetadata                                      \
    -m    ${space_name}:${spaceMetadataArgs}                 \
-   -f    MNI%1x1x1:${mni}                                   \
+   -f    MNI%1x1x1:${mni1}                                  \
    -x    ${transforms//${stddir}/'${BRAINSPACE}'\/${name}}  \
    -i    ${itransforms//${stddir}/'${BRAINSPACE}'\/${name}} \
    -o    ${space_path}
+###################################################################
+# Add 2mm iso MNI
+###################################################################
+space_set  ${space_path} 'MNI%2x2x2' Map ${mni2}
 ###################################################################
 # Add any other resolutions.
 ###################################################################
