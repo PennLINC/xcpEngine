@@ -188,12 +188,14 @@ declare -A bounds
 bounds=(
    
    [outer]=pial
-   [inner]=white
+   [inner]=WM
    
 )
 for i in ${!bounds[@]}
    do
-   exec_afni   3dresample  -dxyz    .25 .25 .25 \
+   subroutine                 @u.5  Mapping GM-${bounds[$i]} boundary
+   exec_afni   3dresample -overwrite            \
+      -dxyz    .25 .25 .25                      \
       -inset   ${intermediate}-gm-${i}.nii.gz   \
       -prefix  ${intermediate}-gm-${i}.nii.gz
    exec_fsl    fslmaths ${intermediate}-gm-${i}.nii.gz \
@@ -205,9 +207,9 @@ for i in ${!bounds[@]}
       -r       ${gmMask}                        \
       -n       Gaussian
    exec_fsl    fslmaths ${intermediate}-gm-${i}-edge-ds.nii.gz \
-      -thr     .05                                 \
+      -thr     .05                              \
       -bin     ${intermediate}-gm-${i}-edge-ds-bin.nii.gz
-   subroutine                 @u.5  Computing sulcal depth at ${i} GM boundary
+   subroutine                 @u.6  Computing sulcal depth at GM-${bounds[$i]} boundary
    exec_fsl    fslmaths ${intermediate}-DistanceFromDura.nii.gz \
       -mul     ${intermediate}-gm-${i}-edge-ds-bin.nii.gz \
       -mul     ${intermediate}-CerebralHemispheres.nii.gz \
