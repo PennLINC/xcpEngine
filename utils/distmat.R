@@ -5,8 +5,8 @@
 ###################################################################
 
 ###################################################################
-# sclib2mat reads in a spatial coordinates library and outputs
-# a matrix of the pairwise distance between all points in the
+# distmat reads in a spatial coordinates library and outputs a
+# matrix of the pairwise distance between all points in the
 # library
 ###################################################################
 
@@ -41,7 +41,7 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$coors)) {
    cat('User did not specify an input coordinates library.\n')
-   cat('Use lib2mat.R -h for an expanded usage menu.\n')
+   cat('Use distmat.R -h for an expanded usage menu.\n')
    quit()
 }
 coorPath          <- opt$coors
