@@ -54,12 +54,16 @@ Optional arguments:
  -i : Index
       A list of relevant regions of interest
 
- -t : Intermediate output path
-      Base path for any intermediate outputs
-
  -r : Region names
       A list of names corresponding to the indices passed to
       option i
+
+ -t : Intermediate output path
+      Base path for any intermediate outputs
+
+ -w : Overwrite existing
+      If -w 0 is provided, then quantifyAtlas will not overwrite
+      any existing output that it detects.
 
 endstream
 }
@@ -72,10 +76,11 @@ endstream
 # Define defaults
 ###################################################################
 stats=mean
+overwrite=1
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "a:o:v:s:i:n:t:d:p:r:" OPTION
+while getopts "a:o:v:s:i:n:t:d:p:r:w:" OPTION
    do
    case $OPTION in
    a)
@@ -110,6 +115,9 @@ while getopts "a:o:v:s:i:n:t:d:p:r:" OPTION
    r)
       rname=${OPTARG}
       ;;
+   w)
+      overwrite=${OPTARG}
+      ;;
    *)
       echo "Option not recognised: ${OPTARG}"
       Usage
@@ -120,6 +128,7 @@ done
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
+(( overwrite == 0 )) && [[ -s ${opath} ]] && echo "[already complete]" && exit 0
 [[ -z ${atlas} ]]    && Usage && exit 1
 [[ -z ${opath} ]]    && Usage && exit 2
 [[ -z ${aname} ]]    && Usage && exit 3

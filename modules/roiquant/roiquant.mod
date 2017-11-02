@@ -91,6 +91,7 @@ else
   Skipping module"
    exit 1
 fi
+(( ${roiquant_rerun[cxt]} == 0 )) && overwrite="-w 0"
 
 
 
@@ -222,7 +223,8 @@ for map in ${atlas_names[@]}
       -n       ${a[Name]}
       -i       ${intermediate}_${a[Name]}_idx.1D
       -r       ${intermediate}_${a[Name]}_names.1D
-      -p       ${ids[sub]}"
+      -p       ${ids[sub]}
+               ${overwrite}"
    ################################################################
    # Perform the quantification: Mean
    ################################################################
