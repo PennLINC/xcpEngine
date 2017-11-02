@@ -32,19 +32,19 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$inmat)) {
    cat('User did not specify an input matrix.\n')
-   cat('Use simil.R -h for an expanded usage menu.\n')
+   cat('Use featureCorrelation.R -h for an expanded usage menu.\n')
    quit()
 }
 inmatpaths              <- opt$inmat
 outfig                  <- opt$outfig
 
-if (! "ggplot2" %in% rownames(installed.packages())){
+if (! "ggplot2"  %in% rownames(installed.packages())){
    outfig               <- NA
 }
 if (! "reshape2" %in% rownames(installed.packages())){
    outfig               <- NA
 }
-if (! "svglite" %in% rownames(installed.packages())){
+if (! "svglite"  %in% rownames(installed.packages())){
    outfig               <- NA
 }
 

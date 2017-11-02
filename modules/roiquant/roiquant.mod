@@ -91,7 +91,7 @@ else
   Skipping module"
    exit 1
 fi
-(( ${roiquant_rerun[cxt]} == 0 )) && overwrite="-w 0"
+rerun || overwrite="-w 0"
 
 
 
