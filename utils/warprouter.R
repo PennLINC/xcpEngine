@@ -83,6 +83,7 @@ while (TRUE) {
    if (visited[t] == 1){
       break
    } else if (min(dist[!visited]) == Inf) {
+      cat('NULL','\n',sep='')
       cat('[No valid route ',n[s],':',n[t],']\n', sep='', file=stderr())
       q()
    }

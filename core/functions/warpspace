@@ -3,7 +3,7 @@ warpspace() {
          edges       f_chk       f_edges     i           k \
          layer       n           node_chk    nodes       o \
          objects     output      route       source      t \
-         target      v           x           xfm
+         target      v           x           xfm         zinter
    [[ -n ${atlas[sub]}    ]] && local a_json=$(cat ${atlas[sub]})
    [[ -n ${aux_imgs[sub]} ]] && local d_json=$(cat ${aux_imgs[sub]})
    [[ -n ${spaces[sub]}   ]] && local s_json=$(cat ${spaces[sub]})
@@ -150,6 +150,7 @@ warpspace() {
          -s ${target//\%*/} \
          -t ${source//\%*/}) )
    fi
+   contains ${route[0]} NULL && return
    ################################################################
    # [4] EXECUTE TRANSFORM
    #---------------------------------------------------------------
@@ -193,9 +194,10 @@ warpspace() {
          done
       done
       rm -f ${o}
-      exec_xcp pointTransform \
-         -v ${v}        -i ${i} \
-         -s ${source}   -r ${target} \
-         ${xfm}         >> ${o}
+      [[ -n ${intermediate} ]] && zinter="-n ${intermediate}"
+      exec_xcp pointTransform          \
+         -v ${v}        -i ${i}        \
+         -s ${source}   -r ${target}   \
+         ${xfm}         ${zinter}      >> ${o}
    fi
 }
