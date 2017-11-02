@@ -25,9 +25,7 @@ option_list = list(
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path"),
    make_option(c("-c", "--csv"), action="store", default=NA, type='character',
-              help="Input coordinate CSV"),
-   make_option(c("-s", "--allMask"), action="store", default=0, type='character',
-              help="Binary mask encompassing entire inut image dimensions")
+              help="Input coordinate CSV")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 if (is.na(opt$img)) {
@@ -43,7 +41,6 @@ if (is.na(opt$out)) {
 
 impath <- opt$img
 out <- opt$out
-allMask <- opt$allMask
 inputCsv <- opt$csv
 
 ###################################################################
@@ -58,7 +55,7 @@ mm2vox <- function(inputVoxel, inputImagePath){
     output <- unlist(strsplit(output, ','))
     output <- as.numeric(output)
     # Now make sure all of our points are within the image
-    tmp <- antsImageRead(inputImagePath, 3)
+    tmp <- readNifti(inputImagePath)
     newOutput <- NULL
     for(z in seq(1,3)){
       tmpVal <- output[z]
@@ -76,10 +73,9 @@ mm2vox <- function(inputVoxel, inputImagePath){
 ###################################################################
 # 1. Load in the image and create our matrix to work with
 ###################################################################
-suppressMessages(require(ANTsR))
-suppressMessages(require(pracma))
-img <- antsImageRead(impath, 3)
-logmask <- antsImageRead(allMask, 3)
+suppressMessages(suppressWarnings(library(RNifti)))
+suppressMessages(suppressWarnings(library(pracma)))
+img <- readNifti(impath)
 
 ###################################################################
 # 2. Load in the registered points
@@ -89,7 +85,7 @@ pointVals <- read.csv(inputCsv, header=T)
 ###################################################################
 # 3. Now create our matrix to work with
 ###################################################################
-mat <- img[logmask==1]
+mat <- as.array(img)
 dim(mat) <- dim(img)
 
 ###################################################################
@@ -119,5 +115,5 @@ for(yVox in 1:dim(mat)[2]){
 ###################################################################
 # 6. Now write the new image
 ###################################################################
-img[logmask==1] <- newMat
-antsImageWrite(image=img, filename=out)
+img[img>-Inf] <- newMat
+writeNifti(image=img, file=out, template=impath)
