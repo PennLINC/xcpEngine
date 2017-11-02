@@ -52,6 +52,10 @@ Optional arguments:
       If this flag is set, then the outputs of transforms
       will be in voxel space rather than mm space.
 
+ -n : Path to intermediate outputs
+      If this path is valid, then intermediate files will
+      be written here.
+
  -l : Input voxel coordinates
       If this flag is set, then the input coordinates will
       be understood to be in voxel space.
@@ -76,7 +80,7 @@ VOXIN=0
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:s:t:r:vlx" OPTION
+while getopts "i:s:t:r:n:vlx" OPTION
    do
    case $OPTION in
    i)
@@ -94,6 +98,9 @@ while getopts "i:s:t:r:vlx" OPTION
    r)
       reference=${OPTARG}
       ! is_image ${reference} && Usage && exit
+      ;;
+   n)
+      intermediate=${OPTARG}-pointTransform
       ;;
    v)
       VOXEL=1
@@ -114,10 +121,10 @@ shift $((OPTIND-1))
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${coors} ]] && Usage && exit
-[[ -z ${template} ]] && Usage && exit
-[[ -z ${reference} ]] && Usage && exit
-[[ -z ${transforms} ]] && Usage && exit
+[[ -z ${coors}       ]] && Usage && exit
+[[ -z ${template}    ]] && Usage && exit
+[[ -z ${reference}   ]] && Usage && exit
+[[ -z ${transforms}  ]] && Usage && exit
 
 
 
@@ -136,10 +143,11 @@ if [[ -s ${coors} ]]
    atlas_raw=$(cat ${coors})
    for c in ${atlas_raw}
       do
+      ! contains ${c} '^#' && continue
       c=( ${c//\#/ } )
       names="${names} ${c[0]}"
       atlas="${atlas} ${c[1]}"
-      radii="${names} ${c[2]}"
+      radii="${radii} ${c[2]}"
    done
    names=( ${names} )
    radii=( ${radii} )
@@ -199,8 +207,8 @@ rzorient=${ORIENTATION_ITK:2:1}
 ###################################################################
 subroutine                    @u.5
 rng=$(date +%N)
-ctemp=${rng}COORD~TEMP~
-[[ -n ${TMPDIR} ]] && ctemp=${TMPDIR}/${ctemp}
+ctemp=COORD~TEMP~
+[[ -n ${intermediate} ]] && ctemp=${intermediate}-${ctemp}
 exec_sys rm -f ${ctemp}.csv
 echo x,y,z,t >> ${ctemp}.csv
 
@@ -348,4 +356,4 @@ done
 
 
 
-rm -f ${ctemp}*.csv
+! verbose && rm -f ${ctemp}*.csv
