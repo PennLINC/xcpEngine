@@ -23,10 +23,10 @@ source ${XCPEDIR}/core/parseArgsGroup
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 atlas_complete() {
-   quality_metric    QCFCnSigEdges${a[Name]}          qcfc_n_sig_edges
-   quality_metric    QCFCpctSigEdges${a[Name]}        qcfc_pct_sig_edges
-   quality_metric    QCFCabsMedCor${a[Name]}          qcfc_abs_med_cor
-   quality_metric    QCFCdistanceDependence${a[Name]} qcfc_dist_dependence
+   quality_metric    QCFCnSigEdges${a[Name]^}          qcfc_n_sig_edges
+   quality_metric    QCFCpctSigEdges${a[Name]^}        qcfc_pct_sig_edges
+   quality_metric    QCFCabsMedCor${a[Name]^}          qcfc_abs_med_cor
+   quality_metric    QCFCdistanceDependence${a[Name]^} qcfc_dist_dependence
 }
 completion() {
    quality[sub]=${quality_group}
@@ -216,7 +216,7 @@ for map in ${atlas_names[@]}
    # Build the edgewise distance matrix.
    ################################################################
    subroutine                 @2.5  Constructing distance matrix
-   exec_sys rm -f ${node_distance[cxt]}_${a[Name]}
+   exec_sys rm -f ${node_distance[cxt]}
    exec_xcp distmat.R                                 \
       -c    ${intermediate}-cmass.sclib               \
       >>    ${node_distance[cxt]}
@@ -238,14 +238,6 @@ for map in ${atlas_names[@]}
    atlas_complete
    routine_end
 done
-
-
-
-
-
-###################################################################
-# Estimate the number of degrees of freedom lost.
-###################################################################
 
 
 
