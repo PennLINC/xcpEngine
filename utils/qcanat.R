@@ -15,6 +15,7 @@
 ###################################################################
 suppressMessages(suppressWarnings(library(optparse)))
 suppressMessages(suppressWarnings(library(pracma)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -56,26 +57,25 @@ gCheck <- 0
 wCheck <- 0
 fgCheck <- 0
 cCheck <- 0
-suppressMessages(require(ANTsR))
-img <- antsImageRead(imgpath,3)
+img <- readNifti(imgpath)
 if(!is.na(gmpath)){
-  gimg <- antsImageRead(gmpath,3)
+  gimg <- readNifti(gmpath)
   gmvals <- img[gimg==1] 
   gCheck <- 1 
 }
 if(!is.na(wmpath)){
-  wimg <- antsImageRead(wmpath,3)
+  wimg <- readNifti(wmpath)
   wmvals <- img[wimg==1]  
   wCheck <- 1
 }
 if(!is.na(fgmaskpath)){
-  fgimg <- antsImageRead(fgmaskpath,3)
+  fgimg <- readNifti(fgmaskpath)
   fgvals <- img[fgimg==1]
   bgvals <- img[fgimg==0] 
   fgCheck <- 1 
 }
 if(!is.na(corticalpath)){
-  cimg <- antsImageRead(corticalpath,3)
+  cimg <- readNifti(corticalpath)
   cvals <- img[cimg==1]
   cCheck <- 1
 }
@@ -174,4 +174,29 @@ if(fgCheck > 0){
 ###################################################################
 # Now write output values
 ###################################################################
-write.csv(outputVals, file=outPath, quote=F, row.names=F)
+if (!is.na(outPath)) {
+   write.csv(outputVals, file=outPath, quote=F, row.names=F)
+} else {
+cat('· [Foreground-background energy ratio:  ',FBER,']\n', file=stderr())
+cat('FBER:',FBER, '\n', sep='')
+cat('· [Signal-to-noise ratio:               ',SNR,']\n', file=stderr())
+cat('SNR:',SNR, '\n', sep='')
+cat('· [Contrast-to-noise ratio:             ',CNR,']\n', file=stderr())
+cat('CNR:',CNR, '\n', sep='')
+cat('· [Cortical contrasts:                  ',CORTCON,']\n', file=stderr())
+cat('CORTCON:',CORTCON, '\n', sep='')
+cat('· [Entropy focus criterion:             ',EFC,']\n', file=stderr())
+cat('EFC:',EFC, '\n', sep='')
+cat('· [Grey matter kurtosis:                ',GMKURT,']\n', file=stderr())
+cat('GMKURT:',GMKURT, '\n', sep='')
+cat('· [Grey matter skewness:                ',GMSKEW,']\n', file=stderr())
+cat('GMSKEW:',GMSKEW, '\n', sep='')
+cat('· [White matter kurtosis:               ',WMKURT,']\n', file=stderr())
+cat('WMKURT:',WMKURT, '\n', sep='')
+cat('· [White matter skewness:               ',WMSKEW,']\n', file=stderr())
+cat('WMSKEW:',WMSKEW, '\n', sep='')
+cat('· [Background kurtosis:                 ',BGKURT,']\n', file=stderr())
+cat('BGKURT:',BGKURT, '\n', sep='')
+cat('· [Background skewness:                 ',BGSKEW,']\n', file=stderr())
+cat('BGSKEW:',BGSKEW, '\n', sep='')
+}
