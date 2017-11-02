@@ -49,7 +49,7 @@ input       censor
 smooth_spatial_prime                ${regress_smo[cxt]}
 ts_process_prime
 
-process     residualised            ${prefix}_residualised
+process     denoised                ${prefix}_residualised
 
 << DICTIONARY
 
@@ -64,6 +64,9 @@ confmat
    The confound matrix after filtering and censoring.
 confproc
    A pointer to the working version of the confound matrix.
+denoised
+   The residualised timeseries, indicating the successful
+   completion of the module.
 img_sm
    The residualised timeseries, after it has undergone spatial
    smoothing.
@@ -73,9 +76,6 @@ kernel
 n_volumes_censored
    The number of volumes excised from the timeseries during the
    confound regression procedure.
-residualised
-   The residualised timeseries, indicating the successful
-   completion of the module.
 tmask
    A temporal mask of binary values, indicating whether each
    volume survives motion censorship.
@@ -102,7 +102,7 @@ DICTIONARY
 # image name and is used to verify that regression has completed
 # successfully.
 ###################################################################
-if ! is_image ${residualised[cxt]} \
+if ! is_image ${denoised[cxt]} \
 || rerun
 then
 unset buffer
@@ -348,7 +348,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${residualised[cxt]}
+   exec_fsl immv ${processed} ${denoised[cxt]}
 else
    subroutine                 @0.3
    abort_stream \
@@ -357,7 +357,7 @@ else
 [Check the log to verify that processing]
 [completed as intended."
 fi
-fi # check for residualised
+fi # check for denoised (residualised)
 
 
 
@@ -371,7 +371,7 @@ fi # check for residualised
 routine                       @6    Spatially filtering image
 smooth_spatial                --SIGNPOST=${signpost}              \
                               --FILTER=regress_sptf[$cxt]         \
-                              --INPUT=${residualised[cxt]//.nii.gz}\
+                              --INPUT=${denoised[cxt]//.nii.gz}   \
                               --USAN=${regress_usan[cxt]}         \
                               --USPACE=${regress_usan_space[cxt]}
 routine_end

@@ -43,11 +43,7 @@ qc t_dof  estimatedLostTemporalDOF  ${prefix}_tdof.txt
 qc dv_mo_cor_post motionDVCorrFinal ${prefix}_motionDVCorr.txt
 
 input       depthMap
-input       residualised       \
-   or       icaDenoised        \
-   as       denoised
-input       residualised_space \
-   or       icaDenoised_space  \
+input       denoised_space \
    as       dn_space
 
 <<DICTIONARY
@@ -112,10 +108,10 @@ if [[ ! -s ${voxts[cxt]} ]] \
       -inset   ${preprocessed[sub]}    \
       -rmode   Li
 
-   if is_image ${denoised[cxt]}
+   if is_image ${denoised[sub]}
       then
       subroutine              @2.2  Resampling to 6mm isotropic: denoised
-      warpspace   ${denoised[cxt]}           \
+      warpspace   ${denoised[sub]}           \
                   ${intermediate}-dn.nii.gz  \
                   ${dn_space[cxt]}:${preprocessed_space[sub]}
       exec_afni   3dresample                 \
@@ -264,7 +260,7 @@ if ! is_1D ${dvars_post[cxt]} \
                ${space[sub]}:${dn_space[cxt]}
    (( ${demeaned[sub]} == 1 )) && dm="-d 1"
    exec_xcp dvars                \
-      -i    ${denoised[cxt]}     \
+      -i    ${denoised[sub]}     \
       -o    ${dvars_root[cxt]}   \
       -s    ${intermediate}      \
       ${dm}                      \

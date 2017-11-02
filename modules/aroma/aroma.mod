@@ -60,7 +60,7 @@ input       confmat as confproc
 
 smooth_spatial_prime                ${aroma_smo[cxt]}
 
-final       icaDenoised             ${prefix}_icaDenoised
+final       denoised                ${prefix}_icaDenoised
 
 << DICTIONARY
 
@@ -70,6 +70,8 @@ confproc
    A pointer to the working version of the confound matrix.
 demeaned
    A Boolean indicator of whether the analyte image is demeaned.
+denoised
+   The denoised map. The final output of the module.
 ic_class
    A matrix cataloguing the features used to classify MELODIC
    components as signal or noise.
@@ -101,8 +103,6 @@ ic_ts
    of the IC time series. The correlation between these and the
    realignment parameter time courses is used as an input to the
    classifier.
-icaDenoised
-   The denoised map. The final output of the module.
 melodir
    The MELODIC output directory.
 
@@ -474,11 +474,11 @@ fsl_regfilt                \
 if [[ ${aroma_dtype[cxt]} == aggr ]]
    then
    subroutine                 @7.3  Using aggressive filter
-   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_aggr.nii.gz     ${icaDenoised[cxt]}
+   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_aggr.nii.gz     ${denoised[cxt]}
 elif [[ ${aroma_dtype[cxt]} == nonaggr ]]
    then
    subroutine                 @7.4  Using non-aggressive filter
-   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_nonaggr.nii.gz  ${icaDenoised[cxt]}
+   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_nonaggr.nii.gz  ${denoised[cxt]}
 fi
 routine_end
 
@@ -497,8 +497,8 @@ if (( ${demeaned[cxt]} == 0 ))
    routine                    @8    Demeaning and detrending BOLD timeseries
    demean_detrend             --SIGNPOST=${signpost}           \
                               --ORDER=${aroma_dmdt[cxt]}       \
-                              --INPUT=${icaDenoised[cxt]}      \
-                              --OUTPUT=${icaDenoised[cxt]}     \
+                              --INPUT=${denoised[cxt]}      \
+                              --OUTPUT=${denoised[cxt]}     \
                               --CONFIN=${confproc[cxt]}        \
                               --CONFOUT=${confmat[cxt]}
    routine_end
