@@ -23,11 +23,14 @@ define      framewise               ${!fwise}
 output      rps                     mc/${prefix}_realignment.1D
 output      dvars                   ${dvars_root[cxt]}-std.1D
 output      fd                      mc/${prefix}_fd.1D
+output      ssd                     mc/${prefix}_spatial_sd.1D
 output      tmask                   mc/${prefix}_tmask.1D
 
 configures  censor                  ${!censor_var}
 configure   censored                0
 
+qc mean_dv        meanDV            ${dvars_root[cxt]}-mean.txt
+qc dv_mo_cor_pre  motionDVCorrInit  mc/${prefix}_motionDVCorr.txt
 qc n_spikes_dv    nSpikesDV         mc/${prefix}_spikesDVct.txt
 qc n_spikes_fd    nSpikesFD         mc/${prefix}_spikesFDct.txt
 qc n_spikes_rms   nSpikesRMS        mc/${prefix}_spikesRMSct.txt
@@ -73,6 +76,5 @@ for i in ${!q_criteria[@]}
 done
 
 define      framewise               $(join_by ',' ${q_criteria_recon[@]})
-echo ${framewise[cxt]}
 
 }

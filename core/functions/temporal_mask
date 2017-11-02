@@ -76,6 +76,15 @@ USAGE
          -s    ${intermediate}      \
          ${marg}
    fi
+   ################################################################
+   # Spatial standard deviation.
+   ################################################################
+   exec_fsl fslstats -t ${img_i}.nii.gz -S >> ${ssd[cxt]}
+   ################################################################
+   # Compute FD-DVARS correlation
+   ################################################################
+   exec_xcp featureCorrelation.R -i "${dvars[cxt]},${rms}" \
+                                 >>  ${dv_mo_cor_pre[cxt]}
    
    ################################################################
    # Determine what criteria should be used to generate framewise
