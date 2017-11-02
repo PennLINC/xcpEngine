@@ -62,26 +62,32 @@ DICTIONARY
 
 
 
-if ! is_image ${sulcalDepth[cxt]}
+if ! is_image ${sulcalDepthOuter[cxt]} \
+|| ! is_image ${sulcalDepthInner[cxt]} \
+|| rerun
    then
+   routine                    @1   Computing sulcal depth at grey matter boundaries
    ################################################################
    # Determine whether a MICCAI/OASIS parcellation is available for
    # the current subject. If it is, use this as the basis for
    # sulcal depth estimation. Otherwise, warp hemispheric masks
    # backwards from MNI.
    ################################################################
+   subroutine                 @1.1  Identifying requisite images
    atlas_parse miccai
    if is_image ${a[Map]}
       then
+      subroutine              @1.2  Isolating hemispheres from OASIS labels
       hemisphere_args="-l ${a[Map]}"
    else
+      subroutine              @1.3  Isolating hemispheres from warped MNI estimates
       warpspace ${BRAINSPACE}/MNI/MNI-1x1x1LeftHemisphere.nii.gz \
-         ${intermediate}-lh.nii.gz \
-         MNI:${space[sub]} \
+         ${intermediate}-lh.nii.gz     \
+         MNI:${space[sub]}             \
          NearestNeighbor
       warpspace ${BRAINSPACE}/MNI/MNI-1x1x1RightHemisphere.nii.gz \
-         ${intermediate}-rh.nii.gz \
-         MNI:${space[sub]} \
+         ${intermediate}-rh.nii.gz     \
+         MNI:${space[sub]}             \
          NearestNeighbor
       hemisphere_args="-h ${intermediate}-lh.nii.gz -r ${intermediate}-rh.nii.gz"
    fi
@@ -91,6 +97,7 @@ if ! is_image ${sulcalDepth[cxt]}
    # mask. Then intersect mean distance with the GM edge based on
    # the segmentation.
    ################################################################
+   subroutine                 @1.4  Isolating grey and white matter
    exec_xcp    val2mask.R              \
       -i       ${segmentation[cxt]}    \
       -v       ${sulc_gm_val[cxt]}     \
@@ -99,12 +106,14 @@ if ! is_image ${sulcalDepth[cxt]}
       -i       ${segmentation[cxt]}    \
       -v       ${sulc_wm_val[cxt]}     \
       -o       ${intermediate}-wm-mask.nii.gz
+   subroutine                 @1.5  Delegating control to sulcalDepth utility
    exec_xcp    sulcalDepth             \
       ${hemisphere_args}               \
       -g       ${intermediate}-gm-mask.nii.gz \
       -w       ${intermediate}-wm-mask.nii.gz \
       -i       ${intermediate}         \
       -o       ${sulcalDepth[cxt]}
+   routine_end
 fi
 
 
