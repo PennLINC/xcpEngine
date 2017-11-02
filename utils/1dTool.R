@@ -36,7 +36,8 @@ option_list = list(
                      max         : return maximum value
                      which_min   : return index of minimum value
                      which_max   : return index of maximum value
-                     length      : return length of 1D file")
+                     length      : return length of 1D file
+                     mean        : return mean of 1D file")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -89,12 +90,15 @@ if (operation == 'min') {
    out <- which(input==max(input, na.rm=TRUE))
 } else if (operation == 'length') {
    out <- nrow(input)
+} else if (operation == 'mean') {
+   out <- apply(input,2,mean,na.rm=TRUE)
 }
 
 if (!is.na(title)) {
    cat(title,'\n',sep='')
 }
-cat(out,'\n',sep='')
+cat(out,sep=' ')
+cat('\n')
 
 if (!is.na(file)) {
    sink(NULL)

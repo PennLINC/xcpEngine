@@ -249,5 +249,9 @@ for i in ${!dvars_raw[@]}
    printf '%f\n' ${dvars_std[i]} >> ${output}-std.1D
    printf '%f\n' ${dvars_vox[i]} >> ${output}-vox.1D
 done
+###################################################################
+# Compute the mean DVARS
+###################################################################
+exec_xcp 1dTool.R -i ${output}-std.1D -o mean -f ${output}-mean.txt
 
 (( trace == 0 )) && rm -f ${intermediate}*
