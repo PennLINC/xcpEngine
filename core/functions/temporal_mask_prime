@@ -24,6 +24,8 @@ output      rps                     mc/${prefix}_realignment.1D
 output      dvars                   ${dvars_root[cxt]}-std.1D
 output      fd                      mc/${prefix}_fd.1D
 output      ssd                     mc/${prefix}_spatial_sd.1D
+output      ts_quality_idx          mc/${prefix}_ts_quality_index.1D
+output      ts_outliers             mc/${prefix}_ts_outliers.1D
 output      tmask                   mc/${prefix}_tmask.1D
 
 configures  censor                  ${!censor_var}

@@ -76,10 +76,19 @@ USAGE
          -s    ${intermediate}      \
          ${marg}
    fi
+   exec_sys rm -f ${ssd[cxt]} ${ts_quality_idx[cxt]} ${ts_outliers[cxt]}
    ################################################################
    # Spatial standard deviation.
    ################################################################
    exec_fsl fslstats -t ${img_i}.nii.gz -S >> ${ssd[cxt]}
+   ################################################################
+   # Temporal quality index (AFNI)
+   ################################################################
+   exec_afni 3dTqual     -automask ${img_i}.nii.gz >> ${ts_quality_idx[cxt]}
+   ################################################################
+   # Outlier count
+   ################################################################
+   exec_afni 3dToutcount -automask ${img_i}.nii.gz >> ${ts_outliers[cxt]}
    ################################################################
    # Compute FD-DVARS correlation
    ################################################################
