@@ -559,7 +559,7 @@ fi
 # The limited customisability here will need to be
 # addressed in the near future.
 ###################################################################
-if is+numeric ${confound_gm[cxt]} && (( ${confound_gm[cxt]} != 0 ))
+if is+numeric ${confound_gm[cxt]} && [[ ${confound_gm[cxt]} != 0   ]]
    then
    subroutine                 @9.1  "[Including ${confound_gm[cxt]} GM aCompCor signal(s)]"
    exec_xcp mbind.R           \
@@ -568,7 +568,7 @@ if is+numeric ${confound_gm[cxt]} && (( ${confound_gm[cxt]} != 0 ))
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
-if is+numeric ${confound_wm[cxt]} && (( ${confound_wm[cxt]} != 0 ))
+if is+numeric ${confound_wm[cxt]} && [[ ${confound_wm[cxt]} != 0   ]]
    then
    subroutine                 @9.2  "[Including ${confound_wm[cxt]} WM aCompCor signal(s)]"
    exec_xcp mbind.R           \
@@ -577,7 +577,7 @@ if is+numeric ${confound_wm[cxt]} && (( ${confound_wm[cxt]} != 0 ))
       -o    ${confmat_path}
    output   confmat           ${prefix}_confmat.1D
 fi
-if is+numeric ${confound_csf[cxt]} && (( ${confound_csf[cxt]} != 0 ))
+if is+numeric ${confound_csf[cxt]} && [[ ${confound_csf[cxt]} != 0 ]]
    then
    subroutine                 @9.3  "Including ${confound_csf[cxt]} CSF aCompCor signal(s)"
    exec_xcp mbind.R           \
