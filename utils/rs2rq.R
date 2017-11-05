@@ -59,7 +59,7 @@ prpnd <- unlist(strsplit(prpnd,','))
 ###################################################################
 # Replace the brick information with the prefix
 ###################################################################
-input <- input[,-1]
+input <- as.data.frame(input[,-1])
 data <- matrix(nrow=1,ncol=(length(prpnd)+length(input)))
 name <- matrix(nrow=1,ncol=(length(prpnd)+length(input)))
 for (i in 1:length(prpnd)) {
