@@ -280,16 +280,19 @@ construct_unguided() {
          # Reorganise the output of the unguided template-building
          # step.
          ##########################################################
-         subroutine           @1.3  Organising outputs
-         exec_sys mv ${outdir}/*template*           ${templateInitDir}/  2>/dev/null
-         exec_sys mv ${outdir}/*InverseWarp*        ${inverseWarpInit}/  2>/dev/null
-         exec_sys mv ${outdir}/*WarpedToTemplate*   ${warpInit}/         2>/dev/null
-         exec_sys mv ${outdir}/*Warp*               ${warpInit}/         2>/dev/null
-         exec_sys mv ${outdir}/*warp*               ${warpInit}/         2>/dev/null
-         exec_sys mv ${outdir}/*Repaired*           ${repairedInit}/     2>/dev/null
-         exec_sys mv ${outdir}/*Affine*             ${affineInit}/       2>/dev/null
-         exec_sys mv ${outdir}/job*.sh              ${logInit}/          2>/dev/null
-         exec_sys mv ${outdir}/*log.txt             ${logInit}/          2>/dev/null
+         if is_image ${templateInit}
+            then
+            subroutine        @1.3  Organising outputs
+            exec_sys mv ${outdir}/*template*           ${templateInitDir}/  2>/dev/null
+            exec_sys mv ${outdir}/*InverseWarp*        ${inverseWarpInit}/  2>/dev/null
+            exec_sys mv ${outdir}/*WarpedToTemplate*   ${warpInit}/         2>/dev/null
+            exec_sys mv ${outdir}/*Warp*               ${warpInit}/         2>/dev/null
+            exec_sys mv ${outdir}/*warp*               ${warpInit}/         2>/dev/null
+            exec_sys mv ${outdir}/*Repaired*           ${repairedInit}/     2>/dev/null
+            exec_sys mv ${outdir}/*Affine*             ${affineInit}/       2>/dev/null
+            exec_sys mv ${outdir}/job*.sh              ${logInit}/          2>/dev/null
+            exec_sys mv ${outdir}/*log.txt             ${logInit}/          2>/dev/null
+         fi
       fi
 
       #############################################################
@@ -378,17 +381,20 @@ construct_guided() {
          # Reorganise the output of the targeted template-building
          # step.
          ##########################################################
-         subroutine           @2.3  Organising outputs
-         exec_sys mv ${outdir}/*template*           ${templateTargDir}/  2>/dev/null
-         exec_sys mv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/  2>/dev/null
-         exec_sys mv ${outdir}/*WarpedToTemplate*   ${warpTarg}/         2>/dev/null
-         exec_sys mv ${outdir}/*Warp*               ${warpTarg}/         2>/dev/null
-         exec_sys mv ${outdir}/*warp*               ${warpTarg}/         2>/dev/null
-         exec_sys mv ${outdir}/*Repaired*           ${repairedTarg}/     2>/dev/null
-         exec_sys mv ${outdir}/*Affine*             ${affineTarg}/       2>/dev/null
-         exec_sys mv ${outdir}/job*.sh              ${logTarg}/          2>/dev/null
-         exec_sys mv ${outdir}/*log.txt             ${logTarg}/          2>/dev/null
-         exec_sys mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/  2>/dev/null
+         if is_image ${templateTarg}
+            then
+            subroutine        @2.3  Organising outputs
+            exec_sys mv ${outdir}/*template*           ${templateTargDir}/  2>/dev/null
+            exec_sys mv ${outdir}/*InverseWarp*        ${inverseWarpTarg}/  2>/dev/null
+            exec_sys mv ${outdir}/*WarpedToTemplate*   ${warpTarg}/         2>/dev/null
+            exec_sys mv ${outdir}/*Warp*               ${warpTarg}/         2>/dev/null
+            exec_sys mv ${outdir}/*warp*               ${warpTarg}/         2>/dev/null
+            exec_sys mv ${outdir}/*Repaired*           ${repairedTarg}/     2>/dev/null
+            exec_sys mv ${outdir}/*Affine*             ${affineTarg}/       2>/dev/null
+            exec_sys mv ${outdir}/job*.sh              ${logTarg}/          2>/dev/null
+            exec_sys mv ${outdir}/*log.txt             ${logTarg}/          2>/dev/null
+            exec_sys mv ${templateInitDir}/antsBuildTemplate.* ${logTarg}/  2>/dev/null
+         fi
       fi
       routine_end
 
@@ -471,22 +477,23 @@ construct_mask() {
             -q       0                                   \
             -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
             ${jlfReg}
-         
-         exec_sys    mv ${outdir}/job*             ${logMaskJLF}  2>/dev/null
-         exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}  2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}  2>/dev/null
-         exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}  2>/dev/null
-         exec_sys    mv ${outdir}/labels/*WarpedLabels*  ${jlfMaskWarpedLabels}  2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Warped*        ${jlfMaskWarped}        2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Affine*        ${jlfMaskTransforms}    2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Warp*          ${jlfMaskTransforms}    2>/dev/null
-         
          exec_sys    popd 2>/dev/null 1>&2
          
          ##########################################################
          # Use the output of JLF to generate an extraction mask.
          ##########################################################
          subroutine           @3.4  Organising output
+         if is_image ${outdir}/labels/Labels.nii.gz
+            then
+            exec_sys    mv ${outdir}/job*             ${logMaskJLF}  2>/dev/null
+            exec_sys    mv ${outdir}/labels/*log*     ${logMaskJLF}  2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Log*     ${logMaskJLF}  2>/dev/null
+            exec_sys    mv ${outdir}/labels/JLF.sh    ${logMaskJLF}  2>/dev/null
+            exec_sys    mv ${outdir}/labels/*WarpedLabels*  ${jlfMaskWarpedLabels}  2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Warped*        ${jlfMaskWarped}        2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Affine*        ${jlfMaskTransforms}    2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Warp*          ${jlfMaskTransforms}    2>/dev/null
+         fi
          exec_fsl    fslmaths ${outdir}/labels/Labels.nii.gz \
             -bin     ${templateMask}
       fi
@@ -587,15 +594,18 @@ construct_priors() {
             -q       0                                   \
             -p       ${outdir}/jlf_Posteriors%02d.nii.gz \
             ${jlfReg}
-         exec_sys    mv ${outdir}/job*             ${logJLF}         2>/dev/null
-         exec_sys    mv ${outdir}/labels/*log*     ${logJLF}         2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}         2>/dev/null
-         exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}         2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}  2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Warp*    ${jlfTransforms}  2>/dev/null
-         
-         exec_sys    mv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}   2>/dev/null
-         exec_sys    mv ${outdir}/labels/*Warped*         ${jlfWarped}         2>/dev/null
+         if is_image ${outdir}/labels/Labels.nii.gz
+            then
+            exec_sys    mv ${outdir}/job*             ${logJLF}         2>/dev/null
+            exec_sys    mv ${outdir}/labels/*log*     ${logJLF}         2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Log*     ${logJLF}         2>/dev/null
+            exec_sys    mv ${outdir}/labels/JLF.sh    ${logJLF}         2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Affine*  ${jlfTransforms}  2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Warp*    ${jlfTransforms}  2>/dev/null
+            
+            exec_sys    mv ${outdir}/labels/*WarpedLabels*   ${jlfWarpedLabels}   2>/dev/null
+            exec_sys    mv ${outdir}/labels/*Warped*         ${jlfWarped}         2>/dev/null
+         fi
          exec_sys    popd 2>/dev/null 1>&2
       fi
       
