@@ -25,6 +25,7 @@ warpspace() {
       then
       source=${target[0]}
       target=${target[1]}
+      [[ ${source} == ${target} ]] && ln -sf ${i} ${o} && return 0
    else
       target=${target[0]}
       #############################################################
