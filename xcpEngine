@@ -45,7 +45,7 @@
  Dependencies:
   * FSL (available from FMRIB)
   * R and the following packages (available from CRAN)
-      * ANTsR
+      * RNifti
       * pracma
       * optparse
       * signal
@@ -358,7 +358,7 @@ for module in ${modules[@]}
       c)
          cluster_submit ${mod_cmd}
          sleep 5
-         ${XCPEDIR}/utils/qstatus -e ${id}
+         ${XCPEDIR}/utils/qstatus -e ${ids}
          ;;
       esac
    fi
