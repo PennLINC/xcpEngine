@@ -497,8 +497,9 @@ if (( ${demeaned[cxt]} == 0 ))
    routine                    @8    Demeaning and detrending BOLD timeseries
    demean_detrend             --SIGNPOST=${signpost}           \
                               --ORDER=${aroma_dmdt[cxt]}       \
-                              --INPUT=${denoised[cxt]}      \
-                              --OUTPUT=${denoised[cxt]}     \
+                              --INPUT=${denoised[cxt]}         \
+                              --OUTPUT=${denoised[cxt]}        \
+                              --1DDT=${aroma_1ddt[cxt]}        \
                               --CONFIN=${confproc[cxt]}        \
                               --CONFOUT=${confmat[cxt]}
    routine_end

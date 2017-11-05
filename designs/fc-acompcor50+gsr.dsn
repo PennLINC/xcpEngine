@@ -11,7 +11,7 @@
 # execute the analysis specified in this design file by calling
 # (in any v4 or higher bash terminal):
 #
-# xcpEngine -d example.dsn
+# xcpEngine -d <design> -c <cohort> -o <output> <options>
 #
 # Variables fall into five general categories:
 # * ANALYSIS VARIABLES are used at all stages of this analysis.
@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=${XCPEDIR}/designs/fc-36P.dsn
+design=${XCPEDIR}/designs/fc-acompcor50+gsr.dsn
 sequence=fc
 standard=MNI%2x2x2_via_OASIS%2x2x2
 
@@ -62,8 +62,9 @@ prestats_lopass[1]=nyquist
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
 prestats_dmdt[1]=2
+prestats_1ddt[1]=1
 prestats_censor[1]=0
-prestats_framewise[1]=rmss:0.083,fds:0.167,dv:1.5
+prestats_framewise[1]=rmss:0.083,fds:0.167,dv:2
 prestats_censor_contig[1]=0
 prestats_rerun[1]=0
 prestats_cleanup[1]=1
@@ -153,7 +154,7 @@ fcon_cleanup[5]=1
 ###################################################################
 
 reho_nhood[6]=vertices
-reho_roikw[6]=1 # does nothing at the moment
+reho_roikw[6]=0 # does nothing at the moment
 reho_sptf[6]=susan
 reho_smo[6]=6
 reho_rerun[6]=0
@@ -185,6 +186,7 @@ net_cleanup[8]=1
 ###################################################################
 
 roiquant_atlas[9]=all
+roiquant_globals[9]=1
 roiquant_vol[9]=0
 roiquant_rerun[9]=0
 roiquant_cleanup[9]=1
