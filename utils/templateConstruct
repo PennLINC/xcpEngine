@@ -94,7 +94,7 @@ labelcohort=All
 
 
 
-while getopts "c:o:r:n:l:s:m:t:" OPTION
+while getopts "c:o:r:n:l:s:m:a:t:" OPTION
    do
    case $OPTION in
    c)
@@ -117,6 +117,9 @@ while getopts "c:o:r:n:l:s:m:t:" OPTION
       ;;
    m)
       templateMask=$(abspath ${OPTARG})
+      ;;
+   a)
+      asgt=( ${asgt[@]} -a ${OPTARG} )
       ;;
    t)
       trace=${OPTARG}
@@ -142,6 +145,7 @@ shift $((OPTIND-1))
 [[   -z ${name}      ]] && Usage && exit
 [[ ! -s ${incohort}  ]] \
 && ! is_image ${intemplate} && Usage && exit
+source ${XCPEDIR}/core/assignDirect
 
 
 
