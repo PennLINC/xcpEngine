@@ -1,5 +1,5 @@
 atlas_check() {
-   local i alist aorig a_new
+   local i alist aorig a_new gchk
    alist=${mod_name_short}'_atlas['${cxt}']'
    alist=( ${!alist//,/ } )
    for i in "${alist[@]}"
@@ -7,6 +7,11 @@ atlas_check() {
       if contains ${a[Name]} 'Coor$'
          then
          [[ ${a[Name]} == ${i} ]] && return 0
+      elif [[ ${a[Name]} == segmentation ]] \
+      ||   [[ ${a[Name]} == global       ]]
+         then
+         gchk=${mod_name_short}'_globals['${cxt}']'
+         (( ${!gchk} == 1 )) && return 0
       elif [[ ${i} == all ]]
          then
          return 0
