@@ -82,16 +82,39 @@ if [[ -n ${roiquant_atlas[cxt]} ]]
    load_atlas        ${atlas[sub]}
    load_derivatives
    [[ -n ${sequence} ]] && sequence=${sequence}_
-else
-   echo \
-"
-::XCP-WARNING: Atlas-based quantification has been requested, but
-  no network maps have been provided.
-  
-  Skipping module"
-   exit 1
 fi
 rerun || overwrite="-w 0"
+
+
+
+
+
+###################################################################
+# Add globals if requested.
+###################################################################
+if (( ${roiquant_globals[cxt]} == 1 ))
+   then
+   atlas             global
+   atlas             segmentation
+   
+   t_classes=(  $(exec_fsl fslstats \
+      ${segmentation[sub]} -R) )
+   t_classes=${t_classes[1]//.*/}
+   (( t_classes == 6 )) && seg=segmentation6
+   (( t_classes == 3 )) && seg=segmentation3
+   
+   atlas_set         segmentation Map        ${segmentation[sub]}
+   atlas_set         segmentation Space      ${structural[sub]}
+   atlas_set         segmentation Type       Map
+   atlas_set         segmentation NodeIndex  ${BRAINATLAS}/${seg}/${seg}NodeIndex.1D
+   atlas_set         segmentation NodeNames  ${BRAINATLAS}/${seg}/${seg}NodeNames.txt
+   
+   atlas_set         global       Map        ${mask[sub]}
+   atlas_set         global       Space      ${space[sub]}
+   atlas_set         global       Type       Map
+   atlas_set         global       NodeIndex  ${BRAINATLAS}/global/globalNodeIndex.1D
+   atlas_set         global       NodeNames  ${BRAINATLAS}/global/globalNodeNames.txt
+fi
 
 
 
