@@ -1,0 +1,11 @@
+matchexact() {
+   local i
+   local match=${1}
+   shift
+   [[ -z ${match} ]] && return
+   for i in ${@}
+      do
+      [[ ${i} == ${match} ]] && printf "${i} "
+   done
+   echo
+}

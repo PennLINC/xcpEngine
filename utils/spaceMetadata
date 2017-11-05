@@ -167,7 +167,7 @@ elif [[ -n ${moving} ]]
 else
    combine_only=1
 fi
-if ! contains ${space[@]// /,} ${out}
+if [[ -z $(matchexact ${space[@]} ${out}) ]]
    then
    subroutine                 @u.1
    rm             -f          ${out}

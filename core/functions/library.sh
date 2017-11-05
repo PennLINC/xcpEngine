@@ -61,6 +61,7 @@ source ${LIBRARY}/json_set
 source ${LIBRARY}/json_set_array
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
+source ${LIBRARY}/matchexact
 source ${LIBRARY}/matching
 source ${LIBRARY}/ninstances
 source ${LIBRARY}/output
