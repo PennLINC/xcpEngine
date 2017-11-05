@@ -11,7 +11,7 @@
 # You may execute the analysis specified in this design file by
 # calling (in any bash terminal):
 #
-# xcpEngine /home/asharma/xcpEngine/designs/struct_pipeline_201705311006.dsn
+# xcpEngine -d <design> -c <cohort> -o <output> <options>
 #
 # Variables fall into five general categories:
 # * ANALYSIS VARIABLES are used at all stages of this analysis.
@@ -34,7 +34,7 @@
 ###################################################################
 
 analysis=struc-ACCELERATOR
-design=/home/rciric/xcpAccelerator/xcpEngine/designs/struc.dsn
+design=${XCPEDIR}/designs/anat-complete.dsn
 sequence=anatomical
 standard=REWARD%9375x9375x1
 
