@@ -1,3 +1,4 @@
 atlas() {
    json_object atlas[cxt] ${@}
+   [[ -n ${atlas_names[@]} ]] && atlas_names=( "${atlas_names[@]}" "${@}" )
 }
