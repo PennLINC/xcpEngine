@@ -11,15 +11,15 @@ cluster_submit() {
    esac
    [[ ! -e ${logfile} ]] \
       && eval "echo -e \"${log_head}\"" >> ${logfile}
-   id=$(qsub \
-      -V \
-      -S /bin/bash \
-      -cwd \
-      -j y \
-      -o ${logfile} \
-      ${cspec[cxt]} \
+   id=$(qsub         \
+      -V             \
+      -S /bin/bash   \
+      -terse         \
+      -cwd           \
+      -j y           \
+      -o ${logfile}  \
+      ${cspec[cxt]}  \
       $@)
-   id=$(echo ${id}|tr -dc '0-9')
    ids="${ids} ${id}"
 }
 
