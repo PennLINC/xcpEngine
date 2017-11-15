@@ -121,9 +121,11 @@ echo \
 ###################################################################
 if [[ -n ${scratch} ]]
    then
-   mkdir -p ${scratch}
+   [[ ${scratch:0:1} == '$' ]] && scratch=${scratch:1} && scratch=${!scratch}
+   mkdir  -p    ${scratch}
    intermediate=${scratch}/${prefix}-${mod_name_short}-$(date +%N)~TEMP~
    intermediate=${intermediate//\/\//\/}
+   echo scratch space is $scratch
 else
    intermediate=${outdir}/${prefix}~TEMP~
 fi

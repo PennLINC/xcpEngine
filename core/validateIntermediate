@@ -8,7 +8,8 @@
 # Ensure that the optional argument "scratch space" is reasonably
 # defined.
 ###################################################################
-if [[ -n ${scratch} ]]
+if [[ -n ${scratch} ]] \
+&& [[ ${scratch:0:1} != '$' ]]
    then
    mkdir -p ${scratch} 2>/dev/null
    if [[  ! -d ${scratch} ]]
@@ -21,6 +22,10 @@ if [[ -n ${scratch} ]]
       exit 2
    fi
    scratch=$(abspath ${scratch})
+   echo "· [I][${scratch}]"
+   scratch="-i ${scratch}"
+elif [[ ${scratch:0:1} == '$' ]]
+   then
    echo "· [I][${scratch}]"
    scratch="-i ${scratch}"
 fi
