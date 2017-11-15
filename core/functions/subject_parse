@@ -1,5 +1,5 @@
 subject_parse() {
-   local i id_vals idx subject_vals subject_vars v
+   local abs_test i id_vals idx subject_vals subject_vars v val_full
    unset subject prefix[sub] out[sub]
    cohort_vars=()
    subject_vals=( ${1//,/ } )
@@ -17,6 +17,14 @@ subject_parse() {
       else
          cohort_vars+=(${v}[${sub}])
          eval ${v}[${sub}]=\${subject_vals[i]}
+         # If paths are defined relative, make sure the current
+         # cohort field is actually a file and not some other type
+         # of input first
+         if [[ -n ${inroot} ]]; then val_full=$(abspath ${inroot}/${subject_vals[i]})
+         if [[ -s ${val_full} ]]
+            then
+            eval ${v}[${sub}]=\${val_full}
+         fi; fi
       fi
       (( i++ ))
    done

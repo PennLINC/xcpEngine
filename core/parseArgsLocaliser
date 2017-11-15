@@ -26,7 +26,7 @@ if (( $# < 6 ))
    then
    usage_flag=1
 fi
-while getopts "d:s:t:a:o:i:" OPTION
+while getopts "d:s:t:a:o:i:r:" OPTION
    do
    case $OPTION in
    d)
@@ -59,6 +59,9 @@ while getopts "d:s:t:a:o:i:" OPTION
       ;;
    i)
       scratch=${OPTARG}
+      ;;
+   r)
+      inroot=${OPTARG}
       ;;
    *)
       echo "Option not recognised: ${OPTION} ${OPTARG}"
