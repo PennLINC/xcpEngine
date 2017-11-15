@@ -97,6 +97,11 @@ ___________________________________________________________________
          Some systems operate more quickly when temporary
          files are written in a dedicated scratch space. This
          argument enables a scratch space for intermediates.
+    -r : Root directory for inputs:
+         If all paths defined in the cohort file are defined
+         relative to a root directory, then this argument will
+         define the root directory. Otherwise, all paths will
+         be treated as absolute.
     -t : Trace:
          Integer value ( 0 - 3 ) that indicates the level
          of verbosity during module execution. Higher
@@ -123,7 +128,7 @@ trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "d:i:c:o:m:t:a:uhv" OPTION
+while getopts "d:i:c:o:m:r:t:a:uhv" OPTION
    do
    case $OPTION in
    d)
@@ -140,6 +145,9 @@ while getopts "d:i:c:o:m:t:a:uhv" OPTION
       ;;
    m)
       mode=${OPTARG}
+      ;;
+   r)
+      inroot=${OPTARG}
       ;;
    t)
       trace=${OPTARG}
@@ -246,8 +254,7 @@ for sub in ${!cohort[@]}
       -d ${design}
       -s ${sub}:${incohort}
       -o ${out_super}
-      ${asgt[@]}
-      ${scratch}
+         ${scratch} ${root_arg} ${asgt[@]}
       -t ${trace}
       "
    subject_parse        ${subject} ${incohort}
