@@ -46,5 +46,6 @@ cohortpath <- opt$cohort
 ###################################################################
 cohort <- read.csv(cohortpath,header=T)
 oidx <- grep('id',names(cohort))
+if (length(oidx) == 0) { q() }
 cohort <- cohort[!duplicated(cohort[,oidx]),]
 write.table(cohort,cohortpath,row.names=F,quote=F,sep=',')

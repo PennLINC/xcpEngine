@@ -28,8 +28,8 @@ subject_parse() {
       fi
       (( i++ ))
    done
-   i=$(echo ${subject[@]})
-   ids[sub]=$(join_by ',' ${id_vals[@]})
-   prefix[sub]=${i// /_}
-   out[sub]=${out_super}/${i// /\/}
+   (( ${#subject[@]} == 0 )) && id_vals=( ${sub} ) && subject=( ${sub} )
+   ids[sub]=$(   join_by ',' ${id_vals[@]})
+   prefix[sub]=$(join_by '_' ${subject[@]})
+   out[sub]=${out_super}/$(join_by '/' ${subject[@]})
 }
