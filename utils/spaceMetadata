@@ -167,7 +167,7 @@ elif [[ -n ${moving} ]]
 else
    combine_only=1
 fi
-if matchexact ${out} ${space[@]}
+if ! matchexact ${out} ${space[@]}
    then
    subroutine                 @u.1
    rm             -f          ${out}
