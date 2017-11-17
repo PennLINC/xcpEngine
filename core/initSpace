@@ -72,9 +72,26 @@ configure         structural        ${prefix[sub]}_anatomical
 #             case, the anatomical map should be added to the
 #             design to support coregistration.
 ###################################################################
-if [[ -d ${antsct[sub]} ]]
+if [[ -s ${antsct[sub]} ]]
    then
    subroutine                 ${tag}.3a   [Anatomical space: ${structural[cxt]//\%*/}]
+   ################################################################
+   # The following code block handles the case of the ANTsCT
+   # directory being provided as a compressed tar archive. It's
+   # currently reliant on some non-builtins.
+   ################################################################
+   if contains ${antsct[sub]} '.tar.gz$' \
+   && [[ ! -d  ${antsct[sub]} ]]
+      then
+      subroutine              ${tag}.3a1  [Decompressing anatomical data set]
+      mkdir -p    ${antsct[sub]%\.tar\.gz}
+      tar   -zxvf ${antsct[sub]} -C ${antsct[sub]%\.tar\.gz} >/dev/null
+      brains=( $(find ${antsct[sub]%\.tar\.gz} -name *Brain*) )
+      act=$(dirname $(abspath    ${brains[0]}))
+      rm    -rf   ${antsct[sub]}
+      mv    -f    ${act}         ${antsct[sub]}
+      rm    -rf   ${antsct[sub]%\.tar\.gz}
+   fi
    ${XCPEDIR}/utils/spaceMetadata            \
       -o ${spaces[cxt]}                      \
       -f ${str_targ}:${str_temp}             \
