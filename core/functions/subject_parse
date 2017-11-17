@@ -20,10 +20,13 @@ subject_parse() {
          # If paths are defined relative, make sure the current
          # cohort field is actually a file and not some other type
          # of input first
-         if [[ -n ${inroot} ]]; then val_full=$(abspath ${inroot}/${subject_vals[i]})
+         if [[ -n ${inroot} ]]; then val_full=${inroot}/${subject_vals[i]}
          if [[ -s ${val_full} ]]
             then
-            eval ${v}[${sub}]=\${val_full}
+            eval ${v}[${sub}]=$(abspath ${val_full})
+         elif [[ ${v} == antsct ]]
+            then
+            eval ${v}[${sub}]=${val_full}
          fi; fi
       fi
       (( i++ ))

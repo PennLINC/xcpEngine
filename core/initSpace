@@ -72,7 +72,7 @@ configure         structural        ${prefix[sub]}_anatomical
 #             case, the anatomical map should be added to the
 #             design to support coregistration.
 ###################################################################
-if [[ -s ${antsct[sub]} ]]
+if [[ -n ${antsct[sub]} ]]
    then
    subroutine                 ${tag}.3a   [Anatomical space: ${structural[cxt]//\%*/}]
    ################################################################
@@ -80,17 +80,25 @@ if [[ -s ${antsct[sub]} ]]
    # directory being provided as a compressed tar archive. It's
    # currently reliant on some non-builtins.
    ################################################################
-   if contains ${antsct[sub]} '.tar.gz$' \
-   && [[ ! -d  ${antsct[sub]} ]]
+   if [[ ! -s ${antsct[sub]} ]]
       then
-      subroutine              ${tag}.3a1  [Decompressing anatomical data set]
-      mkdir -p    ${antsct[sub]%\.tar\.gz}
-      tar   -zxvf ${antsct[sub]} -C ${antsct[sub]%\.tar\.gz} >/dev/null
-      brains=( $(find ${antsct[sub]%\.tar\.gz} -name *Brain*) )
-      act=$(dirname $(abspath    ${brains[0]}))
-      rm    -rf   ${antsct[sub]}
-      mv    -f    ${act}         ${antsct[sub]}
-      rm    -rf   ${antsct[sub]%\.tar\.gz}
+      antsct_tar=${antsct[sub]}.tar.gz
+      antsct_tgt=${antsct[sub]}-extract
+      if [[ -s  ${antsct_tar} ]]
+         then
+         subroutine           ${tag}.3.1  [Decompressing anatomical data set]
+         mkdir -p    ${antsct_tgt}
+         tar   -zxvf ${antsct_tar} -C ${antsct_tgt} >/dev/null
+         brains=( $(find ${antsct_tgt} -name *Brain*) )
+         act=$( dirname $(abspath   ${brains[0]}))
+         rm    -f    ${antsct_tar}
+         mv    -f    ${act}         ${antsct[sub]}
+         rm    -rf   ${antsct_tgt}
+         antsct[sub]=$(abspath ${antsct[sub]})
+      else
+         subroutine           ${tag}.3.2
+         abort_stream         Invalid ANTsCT path provided
+      fi
    fi
    ${XCPEDIR}/utils/spaceMetadata            \
       -o ${spaces[cxt]}                      \
