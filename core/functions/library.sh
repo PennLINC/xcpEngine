@@ -59,6 +59,7 @@ source ${LIBRARY}/json_print
 source ${LIBRARY}/json_rm
 source ${LIBRARY}/json_set
 source ${LIBRARY}/json_set_array
+source ${LIBRARY}/lc_prefix
 source ${LIBRARY}/load_atlas
 source ${LIBRARY}/load_derivatives
 source ${LIBRARY}/matchexact
@@ -79,6 +80,7 @@ source ${LIBRARY}/quality_metric
 source ${LIBRARY}/repeat
 source ${LIBRARY}/require
 source ${LIBRARY}/rerun
+source ${LIBRARY}/rln
 source ${LIBRARY}/routine
 source ${LIBRARY}/routine_end
 source ${LIBRARY}/set_space
