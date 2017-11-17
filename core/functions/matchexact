@@ -5,7 +5,7 @@ matchexact() {
    [[ -z ${match} ]] && return
    for i in ${@}
       do
-      [[ ${i} == ${match} ]] && printf "${i} "
+      [[ ${i} == ${match} ]] && return 0
    done
-   echo
+   return 1
 }

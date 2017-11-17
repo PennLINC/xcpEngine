@@ -145,6 +145,10 @@ shift $((OPTIND-1))
 [[   -z ${name}      ]] && Usage && exit
 [[ ! -s ${incohort}  ]] \
 && ! is_image ${intemplate} && Usage && exit
+[[   -s ${incohort}  ]] \
+&&   is_image ${intemplate} && echo "
+Supply either an input cohort or an initial template, but not both
+" && exit
 source ${XCPEDIR}/core/assignDirect
 
 
@@ -194,6 +198,10 @@ exec_sys mkdir -p ${out_super}/${name}
 out=$(abspath     ${out_super}/${name})
 mkdir -p          ${out}/log/
 export log_proc=${out}/log/${name}_$(date +%Y%m%d%H%M)_LOG
+###################################################################
+# Reformat steps to run as array
+###################################################################
+run=( ${run//,/ } )
 
 
 
@@ -217,7 +225,7 @@ new_stage() {
    (( cxt++ ))
    (( NUMOUT == 1 )) && prep=${cxt}_
    define   outdir   ${out}/${prep}${1}
-   contains ${run} ${cxt} && exec_sys mkdir -p ${outdir}
+   matchexact ${cxt} ${run} && exec_sys mkdir -p ${outdir}
    printx ${XCPEDIR}/core/CONSOLE_MODULE_RC >> ${log_proc}
 }
 
@@ -250,7 +258,7 @@ construct_unguided() {
    define      templateInit            ${outdir}/template0.nii.gz
    define      templatePadded          ${outdir}/template.nii.gz
 
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
@@ -327,7 +335,7 @@ construct_guided() {
    # Initialise the targeted stage of template construction.
    ################################################################
    new_stage   templateTarg
-   if (( ingress == 0 )) && contains ${run} ${cxt}
+   if (( ingress == 0 )) && matchexact ${cxt} ${run}
       then
       ingress=1
       assign   image intemplate     \
@@ -348,7 +356,7 @@ construct_guided() {
    define      templateTargDir         ${outdir}
    define      templateTarg            ${outdir}/template.nii.gz
 
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
@@ -418,7 +426,7 @@ construct_mask() {
    # manually).
    ################################################################
    new_stage   templateMask
-   if (( ingress == 0 )) && contains ${run} ${cxt}
+   if (( ingress == 0 )) && matchexact ${cxt} ${run}
       then
       ingress=1
       assign   image intemplate     \
@@ -441,7 +449,7 @@ construct_mask() {
    define      jlfMaskWarped           ${outdir}/warped
    define      jlfMaskWarpedLabels     ${outdir}/warpedLabels
 
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
@@ -530,7 +538,7 @@ construct_priors() {
    # Initialise the atlas priors stage of template construction.
    ################################################################
    new_stage   templatePriors
-   if (( ingress == 0 )) && contains ${run} ${cxt}
+   if (( ingress == 0 )) && matchexact ${cxt} ${run}
       then
       ingress=1
       assign   image intemplate     \
@@ -556,7 +564,7 @@ construct_priors() {
    define      brainPrior              ${outdir}/labels/brainPrior.nii.gz
    define      brainPrior2             ${outdir}/labels/brainPrior2.nii.gz
 
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
@@ -641,7 +649,7 @@ renorm_priors() {
    # template construction.
    ################################################################
    new_stage   templatePriorsRenorm
-   if (( ingress == 0 )) && contains ${run} ${cxt}
+   if (( ingress == 0 )) && matchexact ${cxt} ${run}
       then
       ingress=1
       assign   image intemplate     \
@@ -666,7 +674,7 @@ renorm_priors() {
    define      priorPrenorm            ${outdir}/priorPrenorm
    define      kmeansDir               ${outdir}/kmeans
 
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
@@ -732,7 +740,7 @@ resample_template() {
    # Initialise the resampling stage of template construction.
    ################################################################
    new_stage   templateResample
-   if (( ingress == 0 )) && contains ${run} ${cxt}
+   if (( ingress == 0 )) && matchexact ${cxt} ${run}
       then
       ingress=1
       assign   image intemplate     \
@@ -748,7 +756,7 @@ resample_template() {
    ################################################################
    define      templateResampled       ${outdir}/template_brain_2mm.nii.gz
 
-   if contains ${run} ${cxt} && ! is_image ${templateResampled}
+   if matchexact ${cxt} ${run} && ! is_image ${templateResampled}
       then
 
       printx   ${mod_head}
@@ -774,7 +782,7 @@ register_template() {
    # Initialise the MNI registration stage of template construction.
    ###################################################################
    new_stage   templateTransforms
-   if (( ingress == 0 )) && contains ${run} ${cxt}
+   if (( ingress == 0 )) && matchexact ${cxt} ${run}
       then
       ingress=1
       assign   image intemplate     \
@@ -794,7 +802,7 @@ register_template() {
    define      xfmScript               ${outdir}/antsRegisterMNI.sh
    define      xfmLog                  ${outdir}/antsRegisterMNI_log
 
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
@@ -871,7 +879,7 @@ build_metadata() {
    ################################################################
    new_stage   templateMetadata
    
-   if contains ${run} ${cxt}
+   if matchexact ${cxt} ${run}
       then
 
       printx   ${mod_head}
