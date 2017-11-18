@@ -1,0 +1,3 @@
+proc_fsl() {
+   proc_cmd fsl "${@}"
+}

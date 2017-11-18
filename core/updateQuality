@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Update the quality file to add new variables defined in the
+# course of processing.
+###################################################################
+for i in ${!declared_q[@]}
+   do
+   quality_metric ${i}  ${declared_q[${i}]}
+done
+rm -f    ${quality[sub]}
+qvars=$(join_by ','  ${qvars[@]})
+qvals=$(join_by ','  ${qvals[@]})
+echo  ${qvars} >>    ${quality[sub]}
+echo  ${qvals} >>    ${quality[sub]}

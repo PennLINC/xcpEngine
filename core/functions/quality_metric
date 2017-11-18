@@ -1,0 +1,8 @@
+quality_metric() {
+   local quality_value_file=${2}[${cxt}]
+   if [[ -s ${!quality_value_file} ]]
+      then
+      qvars=( ${qvars[@]} ${1} )
+      qvals=( ${qvals[@]} $(<${!quality_value_file}) )
+   fi
+}

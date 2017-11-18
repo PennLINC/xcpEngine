@@ -1,0 +1,15 @@
+subroutine() {
+   signpost=${1}
+   routine_map="${routine_map}
+· ${signpost}"
+   shift
+   local subroutine_description="${@}"
+   verbose && local vid="${signpost} "
+   if [[ -n ${subroutine_description} ]]
+      then
+      (>&2 echo "· ${vid}${subroutine_description}")
+   elif verbose
+      then
+      (>&2 echo "· ${vid}")
+   fi
+}

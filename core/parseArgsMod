@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# GENERAL MODULE HEADER
+###################################################################
+export FSLOUTPUTTYPE=NIFTI_GZ
+usage_flag=0
+
+###################################################################
+# Read in:
+#  * path to localised design file
+#  * overall context in pipeline
+#  * whether to explicitly trace all commands
+# Trace status is, by default, set to 0 (no trace)
+###################################################################
+printx      ${mod_head}
+trace=0
+if (( $# < 4 ))
+   then
+   usage_flag=1
+fi
+while getopts "d:c:t:" OPTION
+   do
+   case $OPTION in
+   d)
+      design[$sub]=${OPTARG}
+      ;;
+   c)
+      cxt=${OPTARG}
+      ! is+integer ${cxt} && usage_flag=1
+      ;;
+   t)
+      trace=${OPTARG}
+      if (( ${trace} != 0 )) \
+      && (( ${trace} != 1 )) \
+      && (( ${trace} != 2 )) \
+      && (( ${trace} != 3 ))
+         then
+         usage_flag=1
+      fi
+      ;;
+   *)
+      echo "Option not recognised: ${OPTION} ${OPTARG}"
+      usage_flag=1
+      ;;
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that the compulsory design[sub] variable has been defined
+# reasonably.
+###################################################################
+[[ ! -s ${design[sub]} ]] && usage_flag=1
+###################################################################
+# Usage and exit
+###################################################################
+if (( ${usage_flag} == 1 ))
+   then
+   cat ${XCPEDIR}/core/USAGE_MOD
+   exit 1
+fi
+###################################################################
+# Set trace status, if applicable
+###################################################################
+case ${trace} in
+0)
+   trace=0
+   ;;
+1)
+   trace=1
+   ;;
+2)
+   export trace=1
+   ;;
+3)
+   set -x
+   export SHELLOPTS
+   ;;
+esac
+###################################################################
+# Source the design file.
+###################################################################
+source ${design[sub]}
+design=${design[sub]}
+prefix=${prefix[sub]}
+out=${out[sub]}
+source ${XCPEDIR}/core/defineLogs
+###################################################################
+# Verify that the analyte image is present.
+###################################################################
+if ! is_image ${out}/${prefix}.nii.gz
+   then
+   abort_stream "The primary analyte is not a valid image: ${out}/${prefix}.nii.gz"
+fi
+###################################################################
+# Create the primary module output directory.
+###################################################################
+(( ${NUMOUT} == 1 )) && prep=${cxt}_
+outdir=${out}/${prep}${mod_name_short}
+if [[ ! -e ${outdir} ]]
+   then
+   mkdir -p ${outdir}
+fi
+echo \
+"
+
+
+[I][${out}/${prefix}.nii.gz]
+[O][${outdir}]"
+###################################################################
+# * Define the root path to processing intermediates.
+# * If a scratch space has been specified, then write any
+#   intermediates to the scratch space.
+# * Initialise a pointer to the image.
+# * Ensure that the pointer references an image.
+###################################################################
+if [[ -n ${scratch} ]]
+   then
+   [[ ${scratch:0:1} == '$' ]] && scratch=${scratch:1} && scratch=${!scratch}
+   mkdir  -p    ${scratch}
+   intermediate=${scratch}/${prefix}-${mod_name_short}-$(date +%N)~TEMP~
+   intermediate=${intermediate//\/\//\/}
+else
+   intermediate=${outdir}/${prefix}~TEMP~
+fi
+intermediate_root=${intermediate}
+img_raw=${img[sub]}
+img=${out}/${prefix}.nii.gz
+###################################################################
+# Parse quality variables.
+###################################################################
+mapfile  quality_lines < ${quality[sub]}
+qvars=( ${quality_lines[0]//,/ } )
+qvals=( ${quality_lines[1]//,/ } )
+###################################################################
+# Prime the localised design file so that any outputs from this
+# module appear beneath the correct header.
+###################################################################
+printx ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT     >>   ${design[sub]}
+###################################################################
+# Prime local derivatives.
+###################################################################
+export derivatives_floating='{}'
+###################################################################
+# Prime indices of variables declared in the module context.
+###################################################################
+declare -A declared_d declared_o declared_c declared_s declared_q
+###################################################################
+# Begin mapping the module workflow.
+###################################################################
+routine_map='· START'
+###################################################################
+# Determine whether the user requested the module to be re-run.
+###################################################################
+if rerun
+   then
+   exec_sys rm -rf ${intermediate}*
+fi

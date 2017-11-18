@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Convert all input images to a form suitable for processing by
+# the pipeline. First, obtain all images and pair each with an
+# import target path:
+###################################################################
+img=${out[sub]}/${prefix[sub]}.nii.gz
+imgs="img[$sub]:${img}"
+###################################################################
+# Iterate over subject variables to determine whether any are
+# images. For each that is an image, pair it with an import path.
+###################################################################
+for v in "${cohort_vars[@]}"
+   do
+   vx=${v//\[${sub}\]}
+   if is_image ${!v} \
+   && [[ ${vx} != img ]]
+      then
+      tgt=${out[sub]}/import/${prefix[sub]}_${vx}.nii.gz
+      imgs="${imgs} ${v}:${tgt}"
+      unset tgt
+   fi
+done
+
+for i in ${imgs}
+   do
+   ori=0
+   #ori=1
+   ipl=NN
+   var=$(strslice ${i} 1 ':')
+   tgt=$(strslice ${i} 2 ':')
+   #[[ ${sequence} == anatomical       ]]  && ori=0
+   #[[ ${var}      == 'img['$sub']'    ]]  && ori=0
+   #[[ ${var}      == 'struct['$sub']' ]]  && ipl=linear
+   #[[ ${var}      == 'img['$sub']'    ]]  && ipl=linear
+   import_image ${var} ${tgt} --ORIENT=${ori} --INTERPOL=${ipl}
+done

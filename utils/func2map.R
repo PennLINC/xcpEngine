@@ -8,13 +8,16 @@
 # * Function for performing simple mathematical operations in R
 # * Utility function for xcpEngine
 ###################################################################
+cat('THIS UTILITY IS NO LONGER SUPPORTED\n')
+cat('EXITING\n')
+quit()
 
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -48,22 +51,19 @@ if (is.na(opt$func)) {
    quit()
 }
 
-imlist <- opt$imlist
-out <- opt$out
-func <- opt$func
+imlist            <- opt$imlist
+out               <- opt$out
+func              <- opt$func
 
 ###################################################################
 # Parse the image list.
 ###################################################################
-imlist <- unlist(strsplit(imlist,split=','))
+imlist            <- unlist(strsplit(imlist,split=','))
 
 ###################################################################
-# Load in the first image as an antsImage to use its header
-# information.
+# Load in the first image to use its header information.
 ###################################################################
-suppressMessages(require(ANTsR))
-impath <- imlist[1]
-refImg <- antsImageRead(impath,3)
+imorig            <- imlist[1]
 
 ###################################################################
 # Load in all reference images.
@@ -73,17 +73,17 @@ refImg <- antsImageRead(impath,3)
 ###################################################################
 idx <- 1
 for (impath in imlist) {
-   imcur <- paste('i', idx, sep='')
-   assign(imcur, antsImageRead(impath,3))
-   func <- gsub(imcur,paste(imcur,'[x,y,z]',sep=''),func)
-   idx <- idx + 1
+   imcur          <- paste('i', idx, sep='')
+   assign(imcur,     readNifti(impath))
+   func           <- gsub(imcur,paste(imcur,'[x,y,z]',sep=''),func)
+   idx            <- idx + 1
 }
 
 ###################################################################
 # Iterate through all voxels and evaluate the function at each.
 ###################################################################
-dims <- dim(refImg)
-outArray <- array(dim=dims)
+dims              <- dim(refImg)
+outArray          <- array(dim=dims)
 for ( x in 1:dims[1] ) {
    for ( y in 1:dims[2] ) {
       for ( z in 1:dims[3] ) {
@@ -95,7 +95,4 @@ for ( x in 1:dims[1] ) {
 ###################################################################
 # Write output.
 ###################################################################
-outImg <- as.antsImage(outArray)
-antsCopyImageInfo(refImg,outImg)
-antsImageWrite(outImg,out)
-
+writeNifti(outArray,out,template=imorig,datatype='float')

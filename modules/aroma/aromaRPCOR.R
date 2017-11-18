@@ -15,8 +15,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(require(optparse)))
+suppressMessages(suppressWarnings(require(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments

@@ -1,0 +1,4 @@
+write_config() {
+   local config=${1}[${cxt}]
+   echo "${1}[${sub}]=${!config}" >> ${design[sub]}
+}

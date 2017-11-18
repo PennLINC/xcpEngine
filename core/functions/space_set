@@ -1,0 +1,23 @@
+space_set() {
+   local space_chk space_new space_old spaces spaces_path
+   spaces_path=${1}
+   shift
+   spaces=$(cat ${spaces_path})
+   if (( ${#} == 1 ))
+      then
+      space_new=$(cat ${1})
+      spaces="$(json_merge       spaces space_new)"
+   else
+      space_chk=$(json_get       ${spaces} ${1})
+      if [[ ${space_chk} == null ]]
+         then
+         json_object spaces      ${1}
+         json_set    spaces      ${1} ${2} ${3}
+      else
+         json_set    spaces      ${1} ${2} ${3}
+      fi
+   fi
+   rm -f ${spaces_path}
+   json_print spaces             >> ${spaces_path}
+
+}

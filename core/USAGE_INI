@@ -1,0 +1,22 @@
+
+___________________________________________________________________
+
+Usage for pipeline module initialisation:
+<module_name>.ini -d <design> <options>
+
+Compulsory arguments:
+ -d : Master design file for pipeline:
+      Use xcpConfig for guided creation of a design
+      file.
+
+Optional arguments:
+ -c : Context in pipeline:
+      Input should be a positive integer that denotes
+      the overall position of the module in the
+      analytic pipeline.
+ -o : Reference design:
+      Secondary design file. If this option is
+      specified, then variables defined for the same
+      module and the same context in the secondary
+      design file will override defaults.
+

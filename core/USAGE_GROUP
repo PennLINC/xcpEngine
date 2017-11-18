@@ -1,0 +1,34 @@
+
+___________________________________________________________________
+
+Usage for pipeline module:
+<module_name>.g.mod -s <cohort> <options>
+
+Compulsory arguments:
+ -s : Cohort file:
+      A comma-separated catalogue of the analytic sample.
+      Each row corresponds to a subject, and each column
+      corresponds either to an identifier or to an input.
+      Used to pass all subject-level variables to the
+      group level.
+ -c : Context in pipeline:
+      Input should be a positive integer that denotes
+      the overall position of the module in the
+      analytic pipeline.
+
+Optional arguments:
+ -t : Trace status:
+      Integer value ( 0 - 3 ) that indicates the level
+      of verbosity during module execution. Higher
+      levels reduce readability but provide useful
+      information for troubleshooting.
+      0  [default]: Human-readable explanations of
+         processing steps and error traces only.
+      1: Explicitly trace module-level computations.
+         Print a workflow map when execution completes.
+      2: Explicitly trace module- and utility-level
+         computations.
+      3: All commands called by the module and all
+         children are traced and explicitly replicated
+         in a log file. This log file can then be used
+         to debug output.

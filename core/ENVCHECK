@@ -1,0 +1,32 @@
+{
+   "Name" : "${analysis}",
+   "Design" : "${indesign}",
+   "Cohort" : "${incohort}",
+   "Output" : "${out_super}",
+   "Scratch" : "${scratch//\-i /}",
+   "ExecutionMode" : "${mode}",
+   "Versions" : {
+      "Processing" : "${ver_XCP}",
+      "AFNI" : "${ver_AFNI}",
+      "ANTs" : "${ver_ANTS}",
+      "FSL" : "${ver_FSL}",
+      "C3D" : "${ver_C3D}",
+      "JQ" : "${ver_JQ}",
+      "R" : "${ver_R}",
+      "RScript" : "${ver_RSCRIPT}",
+      "optparse" : "${RpackageChk[1]}",
+      "pracma" : "${RpackageChk[2]}",
+      "RNifti" : "${RpackageChk[0]}",
+      "signal" : "${RpackageChk[3]}"
+   },
+   "Environment" : {
+      "Processing" : "${XCPEDIR}",
+      "AFNI" : "${AFNI_PATH}",
+      "ANTs" : "${ANTSPATH}",
+      "C3D" : "${C3D_PATH}",
+      "FSL" : "${FSLDIR}"
+   },
+   "CodeURL" : "https://github.com/PennBBL/xcpEngine",
+   "Citation" : "Ciric2017",
+   "License" : "GPL"
+}

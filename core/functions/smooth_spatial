@@ -1,0 +1,180 @@
+smooth_spatial() {
+
+<<USAGE
+
+This function applies smoothing kernels to the image.
+
+smooth_spatial    --SIGNPOST=routine_signpost_tag                 \
+                  --FILTER=variable_containing_smoothing_routine  \
+                  --INPUT=input_image_without_extension           \
+                  --USAN=custom_usan<optional>                    \
+                  --USPACE=custom_usan_space<optional>
+
+Before using this function, ensure that all output variables are
+primed by using smooth_spatial_prime.
+
+Use SUSAN-based smoothing on intermediate.nii.gz using the default
+USAN:
+cxt=2
+module_sptf[2]=susan
+routine           @3
+smooth_spatial    --SIGNPOST=@3           \
+                  --SPTF=module_sptf[2]   \
+                  --INPUT=intermediate
+
+Use SUSAN-based smoothing on intermediate.nii.gz using the image
+segmentation in anatomical space as the USAN:
+smooth_spatial    --SIGNPOST=@3                 \
+                  --FILTER=module_sptf[2]       \
+                  --INPUT=intermediate          \
+                  --USAN=segmentation.nii.gz    \
+                  --USPACE=subject_anatomical
+
+USAGE
+
+   ################################################################
+   # INPUTS
+   ################################################################
+   local img_i mask_sptf sptf tag usan uspace
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--SIGNPOST='  && tag=${1/--SIGNPOST=}
+      contains ${1} '^--FILTER='    && sptf=${1/--FILTER=}
+      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=} && img_i=${img_i%.nii.gz}
+      contains ${1} '^--USAN='      && usan=${1/--USAN=}
+      contains ${1} '^--USPACE='    && uspace=${1/--USPACE=}
+      shift
+   done
+   
+   ################################################################
+   # INITIALISE OUTPUT VARIABLE
+   ################################################################
+   kernels=${img}'#0'
+   
+   ################################################################
+   # (1)
+   # Obtain the mask over which smoothing is to be applied. Begin
+   # by searching for the subject mask; if this does not exist,
+   # then search for a mask created by this module.
+   ################################################################
+   assign image   mask[sub] \
+       or         mask[cxt] \
+       as         mask_sptf
+   if is_image ${mask_sptf}
+      then
+      subroutine                 ${tag}.1
+      mask_sptf="-m ${mask_sptf}"
+   fi
+   
+   ################################################################
+   # (2)
+   # SUSAN setup
+   ################################################################
+   if [[ ${!sptf} == susan ]] \
+   && [[ -n ${kernel[cxt]} ]] \
+   && [[ -z ${FUNC_SPATIAL_usan} ]]
+      then
+      subroutine                 ${tag}.2  [Configuring SUSAN]
+      #############################################################
+      # Determine whether a custom USAN is being used, and register
+      # it to analyte space if so.
+      #############################################################
+      if is_image ${usan}
+         then
+         subroutine              ${tag}.3  Warping USAN
+         warpspace                     \
+            ${usan}                    \
+            ${intermediate}usan.nii.gz \
+            ${uspace}:${space}         \
+            NearestNeighbor
+         FUNC_SPATIAL_usan="-u ${intermediate}usan.nii.gz"
+         FUNC_SPATIAL_hardseg=-h
+      #############################################################
+      # Otherwise, ensure that an example functional image exists.
+      #  * If it does not, force a switch to uniform smoothing to
+      #    prevent a catastrophe.
+      #############################################################
+      else
+         assign image   referenceVolumeBrain[sub]  \
+             or         referenceVolumeBrain[cxt]  \
+             or         referenceVolume[sub]       \
+             or         referenceVolume[cxt]       \
+             as         usan
+         if is_image ${usan}
+            then
+            subroutine           ${tag}.4
+            FUNC_SPATIAL_usan="-u ${usan}"
+         else
+            subroutine           ${tag}.5a   No appropriate USAN: reconfiguring pipeline
+            subroutine           ${tag}.5b   to smooth to uniformity instead
+            configure            ${sptf}     uniform
+            write_config         ${sptf}
+         fi
+      fi
+   fi
+   
+   ################################################################
+   # (3)
+   # Smooth over all appropriate kernels.
+   ################################################################
+   for k in ${kernel[cxt]}
+      do
+      subroutine                 ${tag}.6
+      sm_sub=img_sm${k}[$sub]
+      sm_mod=img_sm${k}[$cxt]
+      #############################################################
+      # Determine whether an image with the specified smoothing
+      # kernel already exists
+      #############################################################
+      if is_image ${!sm_sub}
+         then
+         subroutine              ${tag}.7a
+         kernels="${kernels} ${!sm_sub}#${k}"
+      elif is_image ${!sm_mod} \
+      && ! rerun
+         then
+         subroutine              ${tag}.7b
+         kernels="${kernels} ${!sm_mod}#${k}"
+      #############################################################
+      # If no spatial filtering has been specified by the user,
+      # then bypass this step.
+      #############################################################
+      elif [[ ${sptf} == none ]]
+         then
+         subroutine              ${tag}.8
+         kernels=${img}#0
+         break
+      elif (( ${k} == 0 ))
+         then
+         subroutine              ${tag}.9
+      else
+         subroutine              ${tag}.10a [Filter: ${!sptf}]
+         subroutine              ${tag}.10b [Smoothing kernel: ${k} mm]
+         ##########################################################
+         # Ensure that this step has not already run to completion
+         # by checking for the existence of a smoothed image.
+         # First, obtain the mask for filtering. Then, engage the
+         # sfilter routine.
+         ##########################################################
+         if ! is_image ${!sm_mod} \
+         || rerun
+            then
+            subroutine           ${tag}.11
+            exec_xcp sfilter        \
+               -i    ${img_i}.nii.gz\
+               -o    ${!sm_mod}   \
+               -s    ${!sptf}       \
+               -k    ${k}           \
+               ${mask_sptf}         \
+               ${FUNC_SPATIAL_usan} \
+               ${FUNC_SPATIAL_hardseg}
+         fi
+         ##########################################################
+         # Append the current kernel and smoothed image to the
+         # list.
+         ##########################################################
+         kernels="${kernels} ${!sm_mod}#${k}"
+      fi
+   done
+
+}

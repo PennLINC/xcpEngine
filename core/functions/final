@@ -1,0 +1,22 @@
+final() {
+   local path=${outdir}/${2}.nii.gz
+   eval ${1}[${cxt}]=\${path}
+   local output=${1}[${cxt}]
+   declared_p=${1}
+   if is_image ${!output} \
+   && ! rerun
+      then
+      echo \
+"
+
+
+${mod_name_short} has already run to completion.
+Writing outputs..."
+
+      completion
+   fi
+   if is_image ${out}/${prefix}.nii.gz
+      then
+      exec_sys ln -sf ${out}/${prefix}.nii.gz ${intermediate}.nii.gz
+   fi
+}

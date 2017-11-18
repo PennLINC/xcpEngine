@@ -12,9 +12,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-sink("/dev/null")
-suppressMessages(require(optparse))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -28,9 +27,9 @@ option_list = list(
               help="Spatial map of the region of interest.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
-impath <- opt$img
-out <- opt$out
-roipath <- opt$roi
+impath               <- opt$img
+out                  <- opt$out
+roipath              <- opt$roi
 
 if (is.na(opt$roi)) {
    cat('User did not specify a region of interest.\n')
@@ -46,35 +45,28 @@ if (is.na(opt$img)) {
 ###################################################################
 # 1. Load in the image and RoI
 ###################################################################
-suppressMessages(require(ANTsR))
-roiImg <- antsImageRead(roipath,3)
-roi <- as.array(roiImg)
-refImg <- antsImageRead(impath,4)
+hdr                  <- dumpNifti(impath)
+roiImg               <- readNifti(roipath)
+refImg               <- readNifti(impath)
 
 ###################################################################
 # 2. Create a mask from the Roi; use this to extract voxelwise
 #    timeseries and weights
 ###################################################################
-
-roiMask <- as.logical(roi)
-dim(roiMask) <- dim(roi)
-roiImg2 <- as.antsImage(roiMask)
-antsCopyImageInfo(roiImg,roiImg2)
-roiImg <- roiImg2
-rm(roiImg2)
-imgVals <- timeseries2matrix(refImg,roiImg)
-roiVals <- roi[roiMask]
+roiMask              <- (roiImg!=0)
+imgVals              <- refImg[roiMask]
+dim(imgVals)         <- c(sum(roiMask),hdr$dim[5])
+imgVals              <- t(imgVals)
+roiVals              <- roiImg[roiMask]
 
 ###################################################################
 # 3. Compute the weighted mean
 ###################################################################
-
-wmeants <- apply(imgVals,1,weighted.mean,w=roiVals)
+wmeants              <- apply(imgVals,1,weighted.mean,w=roiVals)
 
 ################################################################### 
 # 4. Write output
 ###################################################################
-sink(NULL)
 for (row in 1:length(wmeants)) {
    cat(wmeants[row],'\n')
 }

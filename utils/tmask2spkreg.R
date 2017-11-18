@@ -12,8 +12,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -31,7 +31,7 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$tmask)) {
    cat('User did not specify an input timeseries.\n')
-   cat('Use stick2lm.R -h for an expanded usage menu.\n')
+   cat('Use tmask2spkreg.R -h for an expanded usage menu.\n')
    quit()
 }
 

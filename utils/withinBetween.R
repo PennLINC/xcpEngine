@@ -12,8 +12,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -52,6 +52,9 @@ outbase <- opt$out
 # 1. Load in the adjacency matrix and community partition.
 ###################################################################
 adjmat <- as.matrix(read.table(matpath,header=F))
+if (dim(adjmat)[1] == 1 || dim(adjmat)[2] == 1) {
+   adjmat <- squareform(as.vector(adjmat))
+}
 adjmat <- adjmat - diag(as.vector(repmat(NaN,1,dim(adjmat)[1])))
 community <- as.vector(unlist(read.table(compath,header=F)))
 comidx <- sort(unique(community))

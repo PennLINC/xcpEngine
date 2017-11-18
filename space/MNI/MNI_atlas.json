@@ -1,0 +1,24 @@
+{
+  "power264": {
+    "Citation": "${BRAINATLAS}/power264/power264Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/power264/power264CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/power264/power264CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/power264/power264MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/power264/power264NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/power264/power264NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "power264Coor": {
+    "Citation": "${BRAINATLAS}/power264/power264Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/power264/power264CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/power264/power264CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/power264/power264CoorMNI.sclib",
+    "NodeIndex": "${BRAINATLAS}/power264/power264NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/power264/power264NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Coor"
+  }
+}

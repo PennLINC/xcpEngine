@@ -5,157 +5,70 @@
 ###################################################################
 
 ###################################################################
-# This pipeline module computes ALFF.
+# SPECIFIC MODULE HEADER
+# This pipeline module computes the amplitude of low-frequency
+# fluctuations.
 # Based on work by Xi-Nian Zuo, Maarten Mennes & Michael Milham
 # for NITRC
 ###################################################################
+mod_name_short=alff
+mod_name='AMPLITUDE OF LOW-FREQUENCY FLUCTUATIONS MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
-# Constants
+# GENERAL MODULE HEADER
 ###################################################################
-readonly SIGMA=2.35482004503
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsMod
+
+###################################################################
+# MODULE COMPLETION
+###################################################################
+completion() {
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   source ${XCPEDIR}/core/moduleEnd
+}
 
 
 
 
 
 ###################################################################
+# OUTPUTS
 ###################################################################
-# BEGIN GENERAL MODULE HEADER
-###################################################################
-###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
-###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design_local=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
-###################################################################
-# Ensure that the compulsory design_local variable has been defined
-###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "###################################################################"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭                   EXECUTING ALFF MODULE                   ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_local}
-###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}alff
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
+derivative     alff                    ${prefix}_alff
+derivative     alffZ                   ${prefix}_alffZ
 
-# For the alff module, potential outputs include:
-#  * alff : the voxelwise ALFF map
-# For the alff module, there may exist an unlimited number of
-# potential outputs, depending on the number of parcellations
-# provided by the user for analysis:
-#  * alffbase : Base name for all outputs of the ALFF analysis;
-#    the name of each parcellation will be appended to this base
-#    name
-###################################################################
-alff[${cxt}]=${outdir}/${prefix}_alff
-alffbase=${outdir}/${prefix}_
-###################################################################
-# * Initialise a pointer to the image.
-# * Ensure that the pointer references an image, and not something
-#   else such as a design file.
-# * On the basis of this, define the image extension to be used for
-#   this module (for operations, such as AFNI, that require an
-#   extension).
-# * Localise the image using a symlink, if applicable.
-# * Define the base output path for intermediate files.
-###################################################################
-img=${out}/${prefix}
-imgpath=$(ls ${img}.*)
-for i in ${imgpath}
-   do
-   [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-done
-ext=$(echo ${imgpath}|sed s@${img}@@g)
-[[ ${ext} == ".nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext} == ".nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext} == ".hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext} == ".img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-outbase=${outdir}/${prefix}~TEMP~
-[[ -e ${outdir}/${prefix}_referenceVolume${ext} ]] \
-   && rm -f ${outdir}/${prefix}_referenceVolume${ext}
-ln -s ${referenceVolume[${subjidx}]}${ext} ${outdir}/${prefix}_referenceVolume${ext}
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from alff[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
-###################################################################
-# It is always assumed that this module should re-run.
-#
-# Each ALFF map is checked separately to determine whether each
-# ALFF should be run.
-###################################################################
-###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
-###################################################################
+derivative_set alff     Statistic      mean
+derivative_set alffZ    Statistic      mean
+
+smooth_spatial_prime ${alff_smo[cxt]//,/ }            alff alffZ
+
+add_reference        referenceVolume[$sub]   ${prefix}_referenceVolume
+
+<< DICTIONARY
+
+alff
+   An unsmoothed voxelwise map of the amplitude of low-frequency
+   fluctuations.
+alff_sm
+   Voxelwise maps of the amplitude of low-frequency fluctuations,
+   computed over the smoothed time series.
+kernel
+   An array of all smoothing kernels to be applied to the
+   time series, measured in mm.
+img_sm
+   The smoothed input time series.
+
+DICTIONARY
+
+
+
+
+
 
 
 
@@ -163,112 +76,15 @@ echo "" >> $design_local
 
 ###################################################################
 # Apply the desired smoothing kernel to the BOLD timeseries.
+# Start a list of kernels and smoothed images.
 ###################################################################
-img_sm_name=sm${alff_smo[${cxt}]}
-img_sm=img_sm${alff_smo[${cxt}]}[${subjidx}]
-if [[ $(imtest ${!img_sm}) == 1 ]]
-   then
-   img=${!img_sm}
-###################################################################
-# Determine whether an image with the specified smoothing kernel
-# already exists
-###################################################################
-elif [[ $(imtest ${alffbase}sm${alff_smo[${cxt}]}) == 1 ]]
-   then
-   img=${alffbase}sm${alff_smo[${cxt}]}
-   echo "img_sm${alff_smo[${cxt}]}[${subjidx}]=${img}" >> ${design_local}
-   echo "#${img_sm_name}#${img}" >> ${auxImgs[${subjidx}]}
-###################################################################
-# If no spatial filtering has been specified by the user, then
-# bypass this step.
-###################################################################
-elif [[ ${alff_sptf[${cxt}]} == none ]] \
-   || [[ ${alff_smo[${cxt}]} == 0 ]]
-   then
-   img=${img}
-else
-   echo ""; echo ""; echo ""
-   echo "Current processing step:"
-   echo "Spatially filtering image"
-   echo "Filter: ${alff_sptf[${cxt}]}"
-   echo "Smoothing kernel: ${alff_smo[${cxt}]} mm"
-   ################################################################
-	# Ensure that this step has not already run to completion
-	# by checking for the existence of a smoothed image.
-   ################################################################
-   if [[ $(imtest ${img}_${cur}) != "1" ]] \
-      || [[ "${alff_rerun[${cxt}]}" == "Y" ]]
-      then
-      #############################################################
-	   # Obtain the mask over which smoothing is to be applied
-	   # Begin by searching for the subject mask; if this does
-	   # not exist, then search for a mask created by this
-	   # module.
-      #############################################################
-      if [[ $(imtest ${mask[${subjidx}]}) == "1" ]]
-         then
-         mask=${mask[${subjidx}]}
-      else
-         echo "Unable to locate mask."
-         echo "Generating a mask using 3dAutomask"
-         3dAutomask -prefix ${outbase}_fmask${ext} \
-            -dilate 3 \
-            -q \
-            ${img}${ext}
-         susanmask=${outbase}_fmask${ext}
-      fi
-      #############################################################
-	   # Prime the inputs to sfilter for SUSAN filtering
-      #############################################################
-      if [[ "${alff_sptf[${cxt}]}" == susan ]]
-         then
-         ##########################################################
-	      # Ensure that an example functional image exists.
-	      #  * If it does not, then you are probably doing
-	      #    something stupid.
-	      #  * In this case, force a switch to uniform
-	      #    smoothing to mitigate the catastrophe.
-         ##########################################################
-	      if [[ $(imtest ${referenceVolumeBrain[${subjidx}]}) == 1 ]]
-            then
-            usan="-u ${referenceVolume[${subjidx}]}"
-         else
-            ${alff_sptf[${cxt}]}=uniform
-            echo "alff_sptf[${cxt}]=${alff_sptf[${cxt}]}" \
-               >> ${design_local}
-         fi
-      fi
-      #############################################################
-	   # If the user has requested command tracing, propagate
-	   # that request into the sfilter routine.
-      #############################################################
-	   [[ ${trace} == 1 ]] && trace_prop="-t"
-      #############################################################
-	   # Engage the sfilter routine to filter the image.
-	   #  * This is essentially a wrapper around the three
-	   #    implemented smoothing routines: gaussian, susan,
-	   #    and uniform.
-      #############################################################
-	   ${XCPEDIR}/utils/sfilter \
-	      -i ${img} \
-	      -o ${outbase}sm${alff_smo[${cxt}]} \
-	      -s ${alff_sptf[${cxt}]} \
-	      -k ${alff_smo[${cxt}]} \
-	      -m ${mask} \
-	      ${usan} \
-	      ${trace_prop}
-	   immv ${outbase}sm${alff_smo[${cxt}]} ${alffbase}sm${alff_smo[${cxt}]}
-	fi
-   ################################################################
-   # Update image pointer, and write the smoothed image path to
-   # the design file and derivatives index so that it may be used
-   # by additional modules.
-   ################################################################
-   img=${alffbase}sm${alff_smo[${cxt}]}
-   echo "img_sm${alff_smo[${cxt}]}[${subjidx}]=${img}" >> ${design_local}
-   echo "#${img_sm_name}#${img}" >> ${auxImgs[${subjidx}]}
-   echo "Processing step complete: spatial filtering"
-fi
+routine                       @1    Spatially filtering image
+smooth_spatial                --SIGNPOST=${signpost}              \
+                              --FILTER=alff_sptf[cxt]             \
+                              --INPUT=${img}                      \
+                              --USAN=${alff_usan[cxt]}            \
+                              --USPACE=${alff_usan_space[cxt]}
+routine_end
 
 
 
@@ -277,155 +93,103 @@ fi
 ###################################################################
 # Determine whether the voxelwise ALFF map needs to be computed
 ###################################################################
-if [[ $(imtest ${alff[${cxt}]}) != 1 ]] \
-   || [[ ${alff_rerun[${cxt}]} == Y ]]
-   then
-   ################################################################
-   # * Compute number of volumes: An even number is required by
-   #   FSLpSpec
-   # * Also obtain the repetition time
-   ################################################################
-   echo ""; echo ""; echo ""
-   echo "Current processing step:"
-   echo "Ensuring integer periods"
-   nvol=$(fslnvols ${img})
-   isOdd=$(expr ${nvol} % 2)
-   trep=$(fslval ${img} pixdim4)
-   ################################################################
-   # If odd, remove the first volume
-   ################################################################
-   if [[ ${isOdd} -eq 1 ]]
+routine                       @2    Amplitude of low-frequency fluctuations
+for k in ${kernels}
+   do
+   i=$(strslice ${k} 1 '#')
+   k=$(strslice ${k} 2 '#')
+   subroutine                 @2.0  At smoothness ${k} mm
+   if (( ${k} == 0 ))
       then
-      echo " * Odd volume count: Excising first volume"
-       fslroi ${img} \
-         ${outbase}dvo \
-         1 \
-         $(expr ${nvol} - 1)
+      output_var='alff['${cxt}']'
+      output_zvar='alffZ['${cxt}']'
    else
-      rm -f ${outbase}dvo${ext}
-      ln -s ${img}${ext} ${outbase}dvo${ext}
+      output_var='alff_sm'${k}'['${cxt}']'
+      output_zvar='alffZ_sm'${k}'['${cxt}']'
    fi
-   img=${outbase}dvo
-   nvol=$(expr ${nvol} / 2 \* 2) # According to expr, 31 / 2 * 2 = 30
-   echo "Processing step complete:"
-   echo "Ensuring integer periods"
+   if ! is_image ${!output_zvar} \
+   || rerun
+      then
+      ################################################################
+      # * Compute number of volumes: An even number is required by
+      #   FSLpSpec
+      # * Also obtain the repetition time
+      ################################################################
+      subroutine              @2.1  Ensuring integer periods
+      exec_sys  rm -f         ${intermediate}EVEN.nii.gz
+      nvol=$(exec_fsl         fslnvols   ${i})
+      trep=$(exec_fsl         fslval     ${i} pixdim4)
+      isOdd=$((               ${nvol} % 2 ))
+      nvol=$((                ${nvol} / 2 * 2 ))
+      ################################################################
+      # If odd, remove the first volume
+      ################################################################
+      if (( ${isOdd} == 1 ))
+         then
+         subroutine           @2.2  Odd volume count: Excising first volume
+         exec_fsl             \
+            fslroi ${i}       \
+            ${intermediate}EVEN.nii.gz \
+            1                 \
+            ${nvol}
+      else
+         subroutine           @2.3
+         exec_sys             ln -s ${i} ${intermediate}EVEN.nii.gz
+      fi
+      i=${intermediate}EVEN.nii.gz
+      
+      
+      ################################################################
+      # Compute the power spectrum
+      ################################################################
+      subroutine              @2.4  Computing power spectrum
+      exec_fsl fslpspec       ${i}  ${intermediate}PS.nii.gz
+      subroutine              @2.5  Computing square root of amplitudes
+      exec_fsl fslmaths       ${intermediate}PS.nii.gz \
+                              -sqrt ${intermediate}PS-SQRT.nii.gz
+
+
+      ################################################################
+      # Compute the fractional frequency corresponding to the highpass
+      # and lowpass cutoff frequencies
+      ################################################################
+      subroutine              @2.6  Extracting power spectrum at the low frequency band
+      if [[ ${alff_lopass[cxt]} == nyquist ]]
+         then
+         subroutine           @2.6a
+         configure            alff_lopass       99999
+      fi
+      n_hp=$(arithmetic ${alff_hipass[cxt]}*${nvol}*${trep})
+      n_lp=$(arithmetic ${alff_lopass[cxt]}*${nvol}*${trep})
+      n1=$(  arithmetic ${n_hp}-1         |xargs printf "%1.0f")
+      n2=$(  arithmetic ${n_lp}-${n_hp}+1 |xargs printf "%1.0f")
+      subroutine              @2.7a ${alff_hipass[cxt]} Hz is approximately position ${n1}
+      subroutine              @2.7b of the power spectrum. There are about ${n2} frequency
+      subroutine              @2.7d "positions corresponding to the passband (${alff_lopass[cxt]} - ${alff_hipass[cxt]} Hz)"
+      subroutine              @2.7e "in the power spectrum."
+      ################################################################
+      # Extract the data corresponding to the passband from the power
+      # spectrum square root of amplitudes
+      ################################################################
+      exec_fsl fslroi ${intermediate}PS-SQRT.nii.gz ${intermediate}PS-SLOW.nii.gz ${n1} ${n2}
+      ################################################################
+      # Compute ALFF; this is the sum of the amplitudes across all
+      # frequencies in the passband
+      ################################################################
+      subroutine              @2.8  "Computing the amplitude of low-frequency fluctuations (ALFF)"
+      exec_fsl fslmaths ${intermediate}PS-SLOW.nii.gz -Tmean -mul ${n2} ${!output_var}
+      ################################################################
+      # Convert the raw ALFF output values to standard scores.
+      ################################################################
+      subroutine              @2.9  Standardising ALFF values
+      zscore_image            ${!output_var} ${!output_zvar}   ${mask[sub]}
+   fi
+done
+routine_end
 
 
 
 
 
-   ################################################################
-   # Compute the power spectrum
-   ################################################################
-   echo ""; echo ""; echo ""
-   echo "Current processing step:"
-   echo "Computing power spectrum"
-   fslpspec ${img} ${img}_ps
-   echo " * Computing square root of amplitudes"
-   fslmaths ${img}_ps -sqrt ${img}_ps_sqrt
-
-
-
-
-
-   ################################################################
-   # Calculate ALFF
-   ################################################################
-   echo ""; echo ""; echo ""
-   echo "Current processing step:"
-   echo "Computing voxelwise ALFF"
-   echo " * Extracting power spectrum at the low frequency band"
-   ################################################################
-   # Compute the fractional frequency corresponding to the highpass
-   # cutoff frequency
-   ################################################################
-   n_hp=$(echo "scale=10; ${alff_hipass[${cxt}]}*${nvol}*${trep}"|bc)
-   n1=$(echo "${n_hp}-1"|bc|xargs printf "%1.0f")
-   echo " * ${alff_hipass[${cxt}]} Hz is approximately position ${n1}"
-   echo "   of the power spectrum."
-   ################################################################
-   # Compute the fractional frequency corresponding to the lowpass
-   # cutoff frequency
-   ################################################################
-   [[ ${alff_lopass[${cxt}]} == nyquist ]] && alff_lopass[${cxt}]=99999
-   n_lp=$(echo "scale=10; ${alff_lopass[${cxt}]}*${nvol}*${trep}"|bc)
-   n2=$(echo "${n_lp}-${n_hp}+1"|bc|xargs printf "%1.0f") ; 
-   echo " * There are about ${n2} frequency positions corresponding to "
-   echo "   the passband (${alff_lopass[${cxt}]} - ${alff_hipass[${cxt}]} Hz) in the power "
-   echo "   spectrum."
-   ################################################################
-   # Extract the data corresponding to the passband from the power
-   # spectrum square root of amplitudes
-   ################################################################
-   fslroi ${img}_ps_sqrt ${img}_ps_slow ${n1} ${n2}
-   ################################################################
-   # Compute ALFF; this is the sum of the amplitudes across all
-   # frequencies in the passband
-   ################################################################
-   echo " * Computing the amplitude of low-frequency fluctuations (ALFF)"
-   fslmaths ${img}_ps_slow -Tmean -mul ${n2} ${alff[${cxt}]}
-   echo "Processing step complete:"
-   echo "Computing voxelwise ALFF"
-
-
-
-
-
-   ################################################################
-   # Convert the raw ALFF output values to standard scores.
-   ################################################################
-   echo ""; echo ""; echo ""
-   echo "Current processing step:"
-   echo "Standardising ALFF values"
-   mean=$(fslstats ${alff[${cxt}]} \
-         -k ${mask[${subjidx}]} \
-         -M)
-   std=$(fslstats ${alff[${cxt}]} \
-         -k ${mask[${subjidx}]} \
-         -S)
-   fslmaths ${alff[${cxt}]} \
-      -sub ${mean} \
-      -div ${std} \
-      -mas ${mask[${subjidx}]} \
-      ${alff[${cxt}]}_Z
-   echo "Processing step complete:"
-   echo "Standardising ALFF values"
-fi
-
-
-
-
-
-###################################################################
-# Write outputs to design file and index of derivatives
-###################################################################
-echo "alff[${subjidx}]=${alff[${cxt}]}" >> ${design_local}
-echo "#alff#${alff[${cxt}]}#alff,${cxt}" >> ${auxImgs[${subjidx}]}
-echo "#alffZ#${alff[${cxt}]}_Z#alff,${cxt}" >> ${auxImgs[${subjidx}]}
-
-
-
-
-
-###################################################################
-# CLEANUP
-#  * Remove any temporary files if cleanup is enabled.
-#  * Update the audit file to reflect completion of the module.
-###################################################################
-img=$(readlink -f ${img}${ext})
-if [[ "${alff_cleanup[${cxt}]}" == "Y" ]]
-   then
-   echo ""; echo ""; echo ""
-   echo "Cleaning up..."
-   rm -rf ${outdir}/*~TEMP~*
-fi
-prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-modaudit=$(expr ${prefields} + ${cxt} + 1)
-subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-replacement=$(echo ${subjaudit}\
-   |sed s@[^,]*@@${modaudit}\
-   |sed s@',,'@',1,'@ \
-   |sed s@',$'@',1'@g)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
-
-echo "Module complete"
+subroutine                    @0.1
+completion

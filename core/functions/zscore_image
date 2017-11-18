@@ -1,0 +1,18 @@
+zscore_image() {
+   local mask mean std
+   if [[ -n ${3} ]]
+      then
+      mask=( "-k ${3}" "-mul ${3}" )
+   fi
+   mean=$(exec_fsl fslstats ${1} \
+         ${mask[0]} \
+         -M)
+   std=$(exec_fsl fslstats ${1} \
+         ${mask[0]} \
+         -S)
+   exec_fsl fslmaths ${1} \
+      -sub ${mean} \
+      -div ${std} \
+      ${mask[1]} \
+      ${2}
+}

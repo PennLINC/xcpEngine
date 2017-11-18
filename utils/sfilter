@@ -12,70 +12,74 @@
 ###################################################################
 # Constants
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly POSNUM='^[0-9]+([.][0-9]+)?$'
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
 
 ###################################################################
 # Usage function
 ###################################################################
 Usage(){
-   echo ""; echo ""; echo ""
-   echo "Usage: `basename $0` -i <input> -o <output> <options>"
-   echo ""
-   echo "Compulsory arguments:"
-   echo " -i : Input timeseries"
-   echo "      The 4D timeseries to which the spatial filter is to"
-   echo "      be applied."
-   echo ""
-   echo " -o : Output timeseries"
-   echo "      The path to the file where the filtered timeseries"
-   echo "      will be written."
-   echo ""
-   echo "Optional arguments:"
-   echo " -s : Spatial filter mode [default gaussian]"
-   echo "      Input can either be 'gaussian', 'uniform', or 'susan'."
-   echo "       * Gaussian smoothing [default] applies the same"
-   echo "         Gaussian smoothing kernel across the entire volume."
-   echo "       * SUSAN-based smoothing restricts mixing of signals"
-   echo "         from disparate tissue classes (Smith and Brady, "
-   echo "         1997)."
-   echo "       * Uniform smoothing applies smoothing to all voxels"
-   echo "         until the smoothness computed at every voxel"
-   echo "         attains the target value."
-   echo "       * Uniform smoothing may be used as a compensatory"
-   echo "         mechanism to reduce the effects of subject motion"
-   echo "         on the final processed image (Scheinost et al.,"
-   echo "         2014)."
-   echo ""
-   echo " -k : Spatial smoothing kernel [default 4]"
-   echo "      The FWHM of the smoothing kernel, in mm"
-   echo ""
-   echo " -m : Mask"
-   echo "      Smoothing is computed only within the specified"
-   echo "      binary mask."
-   echo ""
-   echo " -u : USAN or MASTER"
-   echo "       * This option is required only for SUSAN-based"
-   echo "         smoothing. SUSAN uses the USAN to identify"
-   echo "         boundaries across which smoothing should be limited."
-   echo "         For functional image processing, this is often an"
-   echo "         example volume extracted from the BOLD timeseries."
-   echo "       * If this option is specified for UNIFORM smoothing,"
-   echo "         then smoothing is applied to the MASTER until it is"
-   echo "         uniformly smooth. The smoothing regime computed for"
-   echo "         the MASTER is then applied to the input dataset."
-   echo ""
-   echo " -h : Hard segmentation USAN"
-   echo "      Set this flag if the USAN that you are providing is "
-   echo "      a hard segmentation of the image and you wish to "
-   echo "      disallow smoothing between parcels."
-   echo ""
-   echo " -t : Trace"
-   echo "      If this flag is set, then any commands called by the"
-   echo "      `basename $0` routine will be explicitly printed to the"
-   echo "      console or log."
-   echo ""; echo ""; echo ""
+cat << endstream
+___________________________________________________________________
+
+
+Usage: sfilter -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -i : Input timeseries
+      The 4D timeseries to which the spatial filter is to
+      be applied.
+
+ -o : Output timeseries
+      The path to the file where the filtered timeseries
+      will be written.
+
+Optional arguments:
+ -s : Spatial filter mode [default gaussian]
+      Input can either be 'gaussian', 'uniform', or 'susan'.
+       * Gaussian smoothing [default] applies the same
+         Gaussian smoothing kernel across the entire volume.
+       * SUSAN-based smoothing restricts mixing of signals
+         from disparate tissue classes (Smith and Brady, 
+         1997).
+       * Uniform smoothing applies smoothing to all voxels
+         until the smoothness computed at every voxel
+         attains the target value.
+       * Uniform smoothing may be used as a compensatory
+         mechanism to reduce the effects of subject motion
+         on the final processed image (Scheinost et al.,
+         2014).
+
+ -k : Spatial smoothing kernel [default 4]
+      The FWHM of the smoothing kernel, in mm
+
+ -m : Mask
+      Smoothing is computed only within the specified
+      binary mask.
+
+ -u : USAN or MASTER
+       * This option is required only for SUSAN-based
+         smoothing. SUSAN uses the USAN to identify
+         boundaries across which smoothing should be limited.
+         For functional image processing, this is often an
+         example volume extracted from the BOLD timeseries.
+       * If this option is specified for UNIFORM smoothing,
+         then smoothing is applied to the MASTER until it is
+         uniformly smooth. The smoothing regime computed for
+         the MASTER is then applied to the input dataset.
+
+ -h : Hard segmentation USAN
+      Set this flag if the USAN that you are providing is 
+      a hard segmentation of the image and you wish to 
+      disallow smoothing between parcels.
+
+ -t : Trace
+      If this flag is set, then any commands called by the
+      sfilter routine will be explicitly printed to the
+      console or log.
+
+
+endstream
 }
 
 ###################################################################
@@ -92,16 +96,16 @@ while getopts "i:o:s:k:m:u:th" OPTION
    case $OPTION in
    i)
       image=${OPTARG}
-      [[ $(imtest ${image}) != 1 ]] && Usage && exit
+      ! is_image ${image} && Usage && exit
       ;;
    o)
       out=${OPTARG}
       ;;
    s)
       filter=${OPTARG}
-      if [[ ${filter} != "gaussian" ]] \
-         && [[ ${filter} != "susan" ]] \
-         && [[ ${filter} != "uniform" ]]
+      if [[ ${filter} != gaussian ]] \
+      && [[ ${filter} != susan ]] \
+      && [[ ${filter} != uniform ]]
          then
          echo "Unrecognised filter mode: ${filter}."
          Usage
@@ -110,15 +114,15 @@ while getopts "i:o:s:k:m:u:th" OPTION
       ;;
    k)
       kernel=${OPTARG}
-      ! [[ ${kernel} =~ ${POSNUM} ]] && Usage && exit
+      ! is+numeric ${kernel} && Usage && exit
       ;;
    m)
       mask=${OPTARG}
-      [[ $(imtest ${mask}) != 1 ]] && Usage && exit
+      ! is_image ${mask} && Usage && exit
       ;;
    u)
       usan=${OPTARG}
-      [[ $(imtest ${usan}) != 1 ]] && Usage && exit
+      ! is_image ${usan} && Usage && exit
       ;;
    h)
       hardseg=1
@@ -132,110 +136,75 @@ while getopts "i:o:s:k:m:u:th" OPTION
       exit
    esac
 done
-shift $((OPTIND-1))
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${image} ]] && Usage && exit
-[[ -z ${out} ]] && Usage && exit
+[[ -z ${image} ]]  && Usage && exit
+[[ -z ${out} ]]    && Usage && exit
 [[ -z ${filter} ]] && Usage && exit
 [[ -z ${kernel} ]] && Usage && exit
 
-###################################################################
-# Determine what filter subroutine to call based on user input
-###################################################################
-case "${filter}" in
+case ${filter} in
 gaussian)
+   subroutine     @u.1
    ################################################################
    # Convert filter kernel from mm to sigma
    ################################################################
-   kernel=$(echo ${kernel} $SIGMA|awk '{print $1/$2}')
+   kernel=$(arithmetic ${kernel}/${SIGMA})
    ################################################################
    # Add a mask argument, if a mask has been specified
    ################################################################
    [[ ! -z ${mask} ]] && mask="-mas ${mask}"
-   ################################################################
-   # Apply the filter
-   ################################################################
-   fslmaths ${image} \
+   exec_fsl \
+      fslmaths ${image} \
       -s ${kernel} \
       ${mask} \
       ${out}
    ;;
 uniform)
-   ################################################################
-   # Determine the extension of the input and the extension to use
-   # for the output.
-   #  * If the user-provided input omits the extension, store the
-   #    path with its extension in imgpath. Then, obtain the
-   #    extension by removing the user-specified input from the
-   #    complete input path.
-   #  * Determine the extension for the output by taking all
-   #    characters following the first '.' in the input path.
-   #  * Ensure that the output has an extension so that it is not
-   #    automatically brickheaded.
-   ################################################################
-   imgpath=$(ls -d1 ${image}.* 2>/dev/null)
-   maskpath=$(ls -d1 ${mask}*)
-   [[ ! -z ${imgpath} ]] \
-      && ext_in=$(echo $imgpath|sed "s@${image}@@") \
-      || imgpath=${image}
-   ext_out=$(echo ${out}|cut -d"." -f1 --complement)
-   [[ ${out} == ${ext_out} ]] \
-      && ext_out=$(echo ${imgpath}|cut -d"." -f1 --complement)
-   out_noext=$(echo ${out}|cut -d"." -f1)
-   [[ ${out} == ${out_noext} ]] && out=${out}.${ext_out}
-   [[ ${ext_out} == "nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-   [[ ${ext_out} == "nii" ]] && export FSLOUTPUTTYPE=NIFTI
-   [[ ${ext_out} == "hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-   [[ ${ext_out} == "img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-   [[ ${ext_out} == "hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-   [[ ${ext_out} == "img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
+   subroutine     @u.2
    rm -rf ${out}
    ################################################################
    # * If a mask has been specified, then use it for smoothing.
    # * Otherwise, automatically generate a mask using AFNI's
    #   3dAutomask tool. This may not perform as well on demeaned
    #   or detrended data.
+   # * If a master dataset has been specified, then use it for
+   #   smoothing.
    ################################################################
-   [[ ! -z ${mask} ]] && mask="-mask ${maskpath}"
+   [[ -n ${mask} ]] && mask="-mask ${mask}"
    [[ -z ${mask} ]] && mask="-automask"
-   ################################################################
-   # If a master dataset has been specified, then use it for
-   # smoothing.
-   ################################################################
-   [[ ! -z ${usan} ]] \
-      && usan=$(ls -d1 ${usan}.*) \
-      && master="-blurmaster ${usan}"
+   [[ -n ${usan} ]] && master="-blurmaster ${usan}"
    ################################################################
    # Use AFNI's 3dBlurToFWHM to obtain the smoothed image.
    ################################################################
-   3dBlurToFWHM -quiet \
-      -input ${image}${ext_in} \
+   exec_afni \
+      3dBlurToFWHM -quiet \
+      -input ${image} \
       -prefix ${out} \
       -FWHM ${kernel} \
       -detrend \
       -temper \
       ${mask} \
-      ${master} > /dev/null
+      ${master} 2>/dev/null
    ;;
 susan)
+   subroutine     @u.3
    ################################################################
    # Convert filter kernel from mm to sigma
    ################################################################
-   kernel=$(echo ${kernel} $SIGMA|awk '{print $1/$2}')
+   kernel=$(arithmetic ${kernel}/${SIGMA})
    ################################################################
    # Use 75 percent of the median as the SUSAN brightness threshold
    ################################################################
-   perc50=$(fslstats ${usan} \
+   perc50=$(exec_fsl \
+      fslstats ${usan} \
       -k ${mask} \
       -p 50)
-   bt=$(echo ${perc50}|awk '{print $1*3/4}')
+   bt=$(arithmetic ${perc50}\*3/4)
    [[ ${hardseg} == 1 ]] && bt=0.01
-   ################################################################
-   # Apply the filter
-   ################################################################
-   susan \
+   exec_fsl \
+      susan \
       ${image} \
       ${bt} \
       ${kernel} \
@@ -243,5 +212,12 @@ susan)
       ${usan} \
       ${bt} \
       ${out}
+   [[ -n ${mask} ]] && exec_fsl \
+      fslmaths \
+      ${out} \
+      -mul ${mask} \
+      ${out}
+   is_image          ${out}_usan_size.nii.gz \
+   && exec_sys rm -f ${out}_usan_size.nii.gz
    ;;
 esac

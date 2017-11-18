@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Creates a space metadata file given an ANTsCT or structural
+# module output directory, or a set of transforms.
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: spaceMetadata -f <standardSpace:standardMap> -o <output> <options>
+
+Compulsory arguments:
+ -o : Output path
+      The path to the file where the space metadata will be
+      written.
+
+ -f : Fixed image + space.
+      This might, for instance, be a template or standard-space
+      image. The argument should be provided in the format:
+      
+                     spaceName:pathToImage
+                              e.g.,
+      MNI%2x2x2:${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+
+               -  -  -  -  -  -  -  -  -  -  -  -
+Either argument set 1 or argument set 2 must also be provided.
+               -  -  -  -  -  -  -  -  -  -  -  -
+
+Argument set 1:
+ -d : ANTsCT or structural module output directory. The argument
+      should be provided in the format
+      
+            structuralImageSpaceName:pathToDirectory
+          e.g., SUBJ001_anatomical:/data/SUBJ001/antsCT/
+                     
+Argument set 2:
+ -m : Moving image in its native space + its native space.
+      This might, for instance, be the subject's structural
+      or anatomical image if it is being registered to a
+      template. The argument should be provided in the
+      format:
+      
+                     spaceName:pathToImage
+       e.g., SUBJ001_anatomical:/data/SUBJ001/SUBJ001.nii.gz
+      
+      Additional attributes may be passed as follows:
+      
+      spaceName:pathToImage,Mask=pathToMask,DilatedMask=pathToDilated
+      
+      If no attribute is specified, the attribute 'Map' will be
+      assigned, denoting the map of the named space.
+
+ -x : A comma-separated index of paths to transforms from
+      the source space (the native space of the moving image)
+      into the target space (the space of the fixed image).
+      The transforms should be indexed in the order that they
+      are applied.
+
+ -i : (optional)  A comma-separated index of paths to transforms
+      from the target space (the space of the fixed image)
+      into the source space (the native space of the moving
+      image). The transforms should be indexed in the order that
+      they are applied.
+
+Optional arguments:
+ -s : Existing space metadata file(s).
+      If this argument is provided, then the utility will
+      import all information from the existing space file(s)
+      and append new spaces and transforms. If multiple files
+      are provided, then they should be delimited in comma-
+      separated format.
+      
+ -t : Trace
+      If this flag is set, then any commands called by the
+      erodespare routine will be explicitly printed to the
+      console or log.
+
+
+endstream
+}
+
+
+###################################################################
+# Parse arguments
+###################################################################
+combine_only=0
+unset        sourceSpace
+declare -A   sourceSpace
+while getopts "o:d:m:f:x:i:s:t" OPTION
+   do
+   case $OPTION in
+   o)
+      out=${OPTARG}
+      ;;
+   d)
+      struct=( ${OPTARG//:/ } )
+      [[ ! -d ${struct[1]} ]] && Usage && exit
+      ;;
+   m)
+      moving=( ${OPTARG//:/ } )
+      for i in ${moving[1]//,/ }
+         do
+         i=( ${i//\=/ } )
+         if [[ -z ${i[1]} ]]
+            then
+            i[1]=${i[0]}
+            i[0]=Map
+         fi
+         sourceSpace[${i[0]}]=${i[1]}
+      done
+      ! is_image $(eval echo ${sourceSpace[Map]}) && Usage && exit
+      ;;
+   f)
+      fixed=(  ${OPTARG//:/ } )
+      ! is_image $(eval echo ${fixed[1]})  && Usage && exit
+      ;;
+   x)
+      transforms=${OPTARG}
+      ;;
+   i)
+      itransforms=${OPTARG}
+      ;;
+   s)
+      space=( ${OPTARG//,/ } )
+      [[ ! -s ${space[0]} ]]  && Usage && exit
+      ;;
+   t)
+      set -x
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z        ${out}   ]]      && Usage && exit
+[[ ${out} != ${out#-} ]]      && Usage && exit
+if [[ -n ${struct} ]]
+   then
+   ! is_image ${fixed[1]}     && Usage && exit
+   meta=from_pipeline
+elif [[ -n ${moving} ]]
+   then
+   ! is_image $(eval echo ${sourceSpace[Map]})    && Usage && exit
+   ! is_image $(eval echo ${fixed[1]} )    && Usage && exit
+   [[ -z ${transforms} ]]     && Usage && exit
+   meta=from_custom
+else
+   combine_only=1
+fi
+if ! matchexact ${out} ${space[@]}
+   then
+   subroutine                 @u.1
+   rm             -f          ${out}
+   echo '{}'      >>          ${out}
+fi
+if [[ -n ${space} ]]
+   then
+   subroutine                 @u.2
+   for s in "${space[@]}"
+      do
+      subroutine              @u.2.1
+      space_set      ${out}   ${s}
+   done
+fi
+(( ${combine_only} == 1 )) && exit
+
+
+
+
+
+###################################################################
+# Build the metadata file: load image information from pipeline
+# output
+###################################################################
+case ${meta} in
+from_pipeline)
+   subroutine                 @u.3
+   moving[0]=${struct[0]}
+   sourceSpace[Map]=$(abspath ${struct[1]}/*ExtractedBrain0N4.nii.gz 2>/dev/null)
+   i=0
+   while (( 1 == 1 ))
+      do
+      x=$(abspath ${struct[1]}/*SubjectToTemplate${i}*)
+      if [[ -n ${x} ]]
+         then
+         subroutine           @u.3.1
+         transforms="${transforms}        ${x}"
+      else
+         subroutine           @u.3.2
+         break
+      fi
+      (( i++ ))
+   done
+   i=0
+   while (( 1 == 1 ))
+      do
+      x=$(abspath ${struct[1]}/*TemplateToSubject${i}*)
+      if [[ -n ${x} ]]
+         then
+         subroutine           @u.3.3
+         itransforms="${itransforms}      ${x}"
+      else
+         subroutine           @u.3.4
+         break
+      fi
+      (( i++ ))
+   done
+   transforms=$(echo ${transforms})
+   transforms=${transforms// /,}
+   itransforms=$(echo ${itransforms})
+   itransforms=${itransforms// /,}
+   ;;
+from_custom)
+   subroutine                 @u.4
+   ;;
+esac
+
+
+
+
+
+###################################################################
+# Build the metadata file: write space and transform information
+# to the output path.
+###################################################################
+subroutine                    @u.5
+[[       ! -s     ${out}   ]] && echo     '{}'        >> ${out}
+space_set         ${out}   ${fixed[0]}    Map            ${fixed[1]}
+for i in ${!sourceSpace[@]}
+   do
+   space_set      ${out}   ${moving[0]}   ${i}           ${sourceSpace[$i]}
+done
+moving[0]=${moving[0]//\%*}
+fixed[0]=${fixed[0]//\%*}
+transform_set     ${out}   "itk:${transforms}"  ${moving[0]}   ${fixed[0]}
+if [[ -n ${itransforms} ]]
+   then
+   subroutine                 @u.6
+   transform_set  ${out}   "itk:${itransforms}" ${fixed[0]}    ${moving[0]}
+fi

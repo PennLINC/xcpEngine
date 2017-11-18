@@ -1,0 +1,7 @@
+load_atlas() {
+   local atlas_new
+   [[ -z ${atlas[cxt]} ]] && atlas[cxt]='{}'
+   atlas_new=$(cat ${1})
+   atlas[cxt]="$(json_merge atlas[cxt] atlas_new)"
+   atlas_names=( $(json_keys atlas[cxt]) )
+}

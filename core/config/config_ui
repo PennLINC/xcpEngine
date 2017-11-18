@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+###################################################################
+# Р Ћ 2017
+###################################################################
+<< CONFIG_UI
+
+ config_ui provides a minimal user interface for multimodal
+ pipeline configuration. This is the top-level configuration
+ script, which links into lower-level single-modal scripts.
+
+CONFIG_UI
+###################################################################
+[[ -z    ${XCPEDIR}    ]] \
+&& echo  "[XCPEDIR is undefined. Aborting.]"                && exit
+source   ${XCPEDIR}/core/constants
+source   ${XCPEDIR}/core/functions/library.sh
+source   ${XCPEDIR}/core/functions/cluster_submit
+
+
+
+
+
+
+
+
+
+
+open() {
+printx         ${XCPEDIR}/core/CONSOLE_HEADER
+cat << endstream
+___________________________________________________________________
+
+
+
+   Welcome to pipeline configuration. To begin, select a modality.
+   
+   
+
+endstream
+}
+
+
+
+
+
+
+
+
+
+
+modality_select() {
+
+   local REPLY
+   local options=(
+   
+      [1]="Anatomical"
+      [2]="Functional connectivity"
+      [3]="Functional task activation"
+      [4]="Perfusion (cerebral blood flow)"
+   
+   )
+   
+   local response=(
+      
+      [1]="
+      
+      "
+      [2]="
+      
+      "
+      [3]="
+      
+      "
+      [4]="
+      
+      "
+      [0]="
+
+
+Enter the numeral denoting the imaging modality or sequence 
+that you wish to process.
+
+
+"
+     [99]="Exiting"
+      
+   )
+   
+   local cmd=(
+   
+      [1]="${XCPEDIR}/core/config/anat.cfg"
+      [2]="${XCPEDIR}/core/config/fc.cfg"
+      [3]="${XCPEDIR}/core/config/task.cfg"
+      [4]="${XCPEDIR}/core/config/cbf.cfg"
+     [99]="exit"
+   
+   )
+   
+   select option in "${options[@]}" "Exit"
+   
+   do case $REPLY in
+   
+   1 ) echo "${response[REPLY]}"; eval ${cmd[REPLY]}; break;;
+   2 ) echo "${response[REPLY]}"; eval ${cmd[REPLY]}; break;;
+   3 ) echo "${response[REPLY]}"; eval ${cmd[REPLY]}; break;;
+   4 ) echo "${response[REPLY]}"; eval ${cmd[REPLY]}; break;;
+   5 ) echo "${response[99]}";    eval ${cmd[99]};;
+   * ) echo "${response[0]}";     eval ${cmd[0]};;
+   
+   esac; done
+   
+}
+
+
+
+
+
+
+
+
+
+
+main() {
+   open
+   modality_select
+}
+
+
+
+
+
+
+
+
+
+
+main

@@ -5,285 +5,102 @@
 ###################################################################
 
 ###################################################################
-# Constants
+# SPECIFIC MODULE HEADER
+# This module assembles a model of nuisance timeseries.
 ###################################################################
-readonly POSINT='^[0-9]+$'
-readonly POSNUM='^[0-9]+([.][0-9]+)?$'
+mod_name_short=confound
+mod_name='CONFOUND MODEL MODULE'
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+
+###################################################################
+# GENERAL MODULE HEADER
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/parseArgsMod
+
+###################################################################
+# MODULE COMPLETION
+###################################################################
+completion() {
+   source ${XCPEDIR}/core/auditComplete
+   source ${XCPEDIR}/core/updateQuality
+   source ${XCPEDIR}/core/moduleEnd
+}
 
 
 
 
 
 ###################################################################
+# OUTPUTS
 ###################################################################
-# BEGIN GENERAL MODULE HEADER
-###################################################################
-###################################################################
-# Read in:
-#  * path to localised design file
-#  * overall context in pipeline
-#  * whether to explicitly trace all commands
-# Trace status is, by default, set to 0 (no trace)
-###################################################################
-trace=0
-while getopts "d:c:t:" OPTION
-   do
-   case $OPTION in
-   d)
-      design_local=${OPTARG}
-      ;;
-   c)
-      cxt=${OPTARG}
-      ! [[ ${cxt} =~ $POSINT ]] && ${XCPEDIR}/xcpModusage mod && exit
-      ;;
-   t)
-      trace=${OPTARG}
-      if [[ ${trace} != "0" ]] && [[ ${trace} != "1" ]]
-         then
-         ${XCPEDIR}/xcpModusage mod
-         exit
-      fi
-      ;;
-   *)
-      echo "Option not recognised: ${OPTARG}"
-      ${XCPEDIR}/xcpModusage mod
-      exit
-   esac
-done
-shift $((OPTIND-1))
-###################################################################
-# Ensure that the compulsory design_local variable has been defined
-###################################################################
-[[ -z ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-[[ ! -e ${design_local} ]] && ${XCPEDIR}/xcpModusage mod && exit
-###################################################################
-# Set trace status, if applicable
-# If trace is set to 1, then all commands called by the pipeline
-# will be echoed back in the log file.
-###################################################################
-[[ ${trace} == "1" ]] && set -x
-###################################################################
-# Initialise the module.
-###################################################################
-echo ""; echo ""; echo ""
-echo "################################################################### "
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "#                                                                 #"
-echo "#  ☭                 EXECUTING CONFOUND MODULE                 ☭  #"
-echo "#                                                                 #"
-echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #"
-echo "###################################################################"
-echo ""
-###################################################################
-# Source the design file.
-###################################################################
-source ${design_local}
-###################################################################
-# Verify that all compulsory inputs are present.
-###################################################################
-if [[ $(imtest ${out}/${prefix}) != 1 ]]
-   then
-   echo "::XCP-ERROR: The primary input is absent."
-   exit 666
-fi
-###################################################################
-# Create a directory for intermediate outputs.
-###################################################################
-[[ ${NUMOUT} == 1 ]] && prep=${cxt}_
-outdir=${out}/${prep}confound
-[[ ! -e ${outdir} ]] && mkdir -p ${outdir}
-echo "Output directory is $outdir"
-###################################################################
-# Define paths to all potential outputs.
-#
-# For the confound module, potential outputs include:
-#  * gmmask : The final extracted, eroded, and transformed grey
-#    matter mask in subject functional space. Use to ensure
-#    quality.
-#  * wmmask : The final extracted, eroded, and transformed white
-#    matter mask in subject functional space. Use to ensure
-#    quality.
-#  * csfmask : The final extracted, eroded, and transformed
-#    cerebrospinal fluid mask in subject functional space. Use to
-#    ensure quality.
-#  * confmat : A 1D file containing all global nuisance timeseries
-#    for the current subject, including any user-specified
-#    timeseries and previous time points, derivatives, and powers.
-#  * While a confound matrix file does not exist at the target
-#    path, confmat will store the string 'null' for the purposes
-#    of the mbind utility. As mbind is updated, this may change.
-###################################################################
-gmMask[${cxt}]=${outdir}/${prefix}_maskGM
-wmMask[${cxt}]=${outdir}/${prefix}_maskWM
-csfMask[${cxt}]=${outdir}/${prefix}_maskCSF
+output      confmat                 null
+
+derivative  gmMask                  ${prefix}_gmMask
+derivative  wmMask                  ${prefix}_wmMask
+derivative  csfMask                 ${prefix}_csfMask
+derivative  gmLocal                 ${prefix}_gmLocal
+derivative  wmLocal                 ${prefix}_wmLocal
+derivative  csfLocal                ${prefix}_csfLocal
+derivative  lmsLocal                ${prefix}_meanLocal
+
+qc nuisance_ct nNuisanceParameters  ${prefix}_modelParameterCount.txt
+
+derivative_set    gmLocal  Type     TimeSeries-Confound
+derivative_set    wmLocal  Type     TimeSeries-Confound
+derivative_set    csfLocal Type     TimeSeries-Confound
+derivative_set    lmsLocal Type     TimeSeries-Confound
+derivative_set    gmMask   Type     Mask
+derivative_set    wmMask   Type     Mask
+derivative_set    csfMask  Type     Mask
+
+<< DICTIONARY
+
+confmat
+   A 1D file containing all global nuisance timeseries for the
+   current subject, including any user-specified timeseries
+   and previous time points, derivatives, and powers. While a 
+   confound matrix file does not exist at the target path,
+   confmat will store the string 'null' for the purposes
+   of the mbind utility.
+csfLocal
+   A voxelwise confound based on the mean local cerebrospinal
+   fluid timeseries.
+csfMask
+   The final extracted, eroded, and transformed cerebrospinal 
+   fluid mask in subject functional space.
+diffProcLocal
+   [NYI] A voxelwise confound based on the difference between 
+   the realigned timeseries and the acquired timeseries.
+gmLocal
+   A voxelwise confound based on the mean local grey matter 
+   timeseries.
+gmMask
+   The final extracted, eroded, and transformed grey matter mask 
+   in subject functional space.
+lmsLocal
+   A voxelwise confound based on the mean local timeseries.
+wmLocal
+   A voxelwise confound based on the mean local white matter 
+   timeseries.
+wmMask
+   The final extracted, eroded, and transformed white matter mask 
+   in subject functional space.
+
+DICTIONARY
+
+
+
+
+
+
+
+
+
+
 confmat_path=${outdir}/${prefix}_confmat.1D
-confmat[${cxt}]=null
-###################################################################
-# * Initialise a pointer to the image.
-# * Ensure that the pointer references an image, and not something
-#   else such as a design file.
-# * On the basis of this, define the image extension to be used for
-#   this module (for operations, such as AFNI, that require an
-#   extension).
-# * Localise the image using a symlink, if applicable.
-# * Define the base output path for intermediate files.
-###################################################################
-img=${out}/${prefix}
-imgpath=$(ls ${img}.*)
-for i in ${imgpath}
-   do
-   [[ $(imtest ${i}) == 1 ]] && imgpath=${i} && break
-done
-ext=$(echo ${imgpath}|sed s@${img}@@g)
-[[ ${ext} == ".nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext} == ".nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext} == ".hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext} == ".hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext} == ".img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-outbase=${outdir}/${prefix}~TEMP~
-###################################################################
-# Prime the localised design file so that any outputs from this
-# module appear beneath the correct header.
-###################################################################
-echo "" >> $design_local
-echo "# *** outputs from confound[${cxt}] *** #" >> $design_local
-echo "" >> $design_local
-###################################################################
-# Verify that the module should be run:
-#  * Test whether the final output already exists.
-#  * Ensure that the final output has the expected number of
-#    columns/timeseries.
-#  * Determine whether the user requested the module to be re-run.
-# If it is determined that the module should not be run, then any
-#  outputs must be written to the local design file.
-###################################################################
-if [[ -e ${confmat_path} ]]
-   then
-   obs=$(head -n1 ${confmat_path}|wc -w)
-   exp=0
-   [[ ${confound_rp[${cxt}]} == Y ]] && exp=$(echo ${exp} + 6|bc)
-   [[ ${confound_rms[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-   [[ ${confound_gm[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-   [[ ${confound_wm[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-   [[ ${confound_csf[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-   [[ ${confound_gsr[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-   exp=$(echo ${exp} + ${confound_cc[${cxt}]}|bc)
-   past=$(echo ${confound_past[${cxt}]} + 1|bc)
-   dx=$(echo ${confound_dx[${cxt}]} + 1|bc)
-   exp=$(echo ${exp} \* ${past} \* ${dx} \* ${confound_sq[${cxt}]}|bc)
-   for cts in ${confound_custom[${cxt}]}
-      do
-      ctsn=$(tail -n1 ${cts}|wc -w)
-      exp=$(echo ${exp} + ${ctsn}|bc)
-   done
-   [[ ${obs} == ${exp} ]] \
-      && completion=match \
-      || echo "Dimensions of the existing confound matrix are incorrect"
-fi
-###################################################################
-# If it is determined that the module does not need to be
-# executed, update the audit file and exit the module.
-###################################################################
-if [[ ${completion} == "match" ]] \
-   && [[ ${confound_rerun[${cxt}]} == "N" ]]
-   then
-   echo "Confound assembly has already run to completion."
-   echo "Writing outputs..."
-   if [[ "${confound_cleanup[${cxt}]}" == "Y" ]]
-      then
-      rm -rf ${outdir}/*~TEMP~*
-   fi
-   echo "confmat[${subjidx}]=$confmat_path" >> $design_local
-   prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-   modaudit=$(expr ${prefields} + ${cxt} + 1)
-   subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-   replacement=$(echo ${subjaudit}\
-      |sed s@[^,]*@@${modaudit}\
-      |sed s@',,'@',1,'@ \
-      |sed s@',$'@',1'@g)
-   sed -i s@${subjaudit}@${replacement}@g ${audit}
-   echo "Module complete"
-   exit 0   
-fi
-###################################################################
-# helper functions
-# This is no longer used.
-###################################################################
-#standardise () {
-#
-#   ################################################################
-#   # If the brain is in standard space, it will be necessary
-#   # to standardise tissue masks prior to mean signal extraction
-#   # Here, we create a dummy design file and run a single-step
-#   # norm mod without coregistration (since the masks should be
-#   # in structural space to begin with)
-#   ################################################################
-#   echo "Standardising $tissue"
-#   to_std=$1
-#   tissue=$2
-#   printout=${outdir}/${tissue}_normseg
-#   subdesign=${printout}/${tissue}_design.sh
-#   mkdir -p $printout
-#   struct=$(grep -i "struct[" $design_local)
-#   normvars=$(grep -i "norm_" $design_local\
-#      |sed -E s@[0-9]+\]@1\]@g)
-#   normvars=$(echo $normvars\
-#      |sed -E s@'rerun\[1\]=.*$'@'rerun\[1\]=Y'@g)
-#   globals=$(cat global.sh)
-#   globals=$(echo "$globals"|sed s/^#.*$//g)
-#   globals=$(echo "$globals"|sed s/^sequence.*$/sequence=norm/g)
-#   globals=$(echo "$globals"|sed s/^startdir.*$//g)
-#   echo "$globals" >> $subdesign
-#   echo "design=${subdesign}" >> $subdesign
-#   echo "subject=${subject}" >> $subdesign
-#   echo "prefix=${prefix}" >> $subdesign
-#   echo "out=${printout}" >> $subdesign
-#   echo "$struct" >> $subdesign
-#   echo "$normvars" >> $subdesign
-#   fslmaths $to_std ${printout}/${prefix}
-#   ./normMOD.sh $subdesign 1 > /dev/null
-#   fslmaths ${printout}/${prefix} $to_std
-#   
-#}
-###################################################################
-###################################################################
-# END GENERAL MODULE HEADER
-###################################################################
-###################################################################
-
-
-
-
-
-###################################################################
-# Pool any transforms necessary for moving between standard and
-# native space. Determine which transforms need to be applied for
-# such a move.
-###################################################################
-coreg="-t ${seq2struct[${subjidx}]}"
-icoreg="-t ${struct2seq[${subjidx}]}"
-if [[ ! -z ${xfm_warp} ]] \
-   && [[ $(imtest "${xfm_warp}") == 1 ]]
-   then
-	warp="-t ${xfm_warp}"
-	iwarp="-t ${ixfm_warp}"
-fi
-if [[ ! -z ${xfm_affine} ]]
-	then
-	affine="-t ${xfm_affine}"
-	iaffine="-t [${xfm_affine},1]"
-fi
-if [[ ! -z ${xfm_rigid} ]]
-	then
-	rigid="-t ${xfm_rigid}"
-	irigid="-t [${xfm_rigid},1]"
-fi
-if [[ ! -z ${xfm_resample} ]]
-	then
-	resample="-t ${xfm_resample}"
-	iresample="-t [${xfm_resample},1]"
-fi
+routine                       @0    Generating confound matrix
 
 
 
@@ -295,17 +112,17 @@ fi
 # subroutine of the prestats module prior to their use in the
 # confound matrix here.
 ###################################################################
-if [[ "${confound_rp[${cxt}]}" == "Y" ]]
+if (( ${confound_rp[cxt]} == 1 ))
    then
-   echo "Including realignment parameters in confound model."
-   ################################################################
-   # Add the RPs to the confound matrix.
-   ################################################################
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${rps[${subjidx}]} \
+   subroutine                 @1    [Including realignment parameters]
+   require 1dim   rps_proc    \
+      or          rps         \
+      as          rps
+   exec_xcp mbind.R           \
+      -x ${confmat[cxt]}      \
+      -y ${rps[cxt]}          \
       -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   output confmat             ${prefix}_confmat.1D
 fi
 
 
@@ -317,17 +134,17 @@ fi
 # Relative RMS motion should have been computed during the MPR
 # subroutine of the prestats module prior to its use here.
 ###################################################################
-if [[ "${confound_rms[${cxt}]}" == "Y" ]]
+if (( ${confound_rms[cxt]} == 1 ))
    then
-   echo "Including relative RMS displacement in confound model."
-   ################################################################
-   # Add relative RMS to the confound matrix.
-   ################################################################
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${relrms[${subjidx}]} \
+   subroutine                 @2    Including relative RMS displacement
+   require 1dim   rel_rms_proc \
+      or          rel_rms      \
+      as          rel_rms
+   exec_xcp mbind.R            \
+      -x ${confmat[cxt]}       \
+      -y ${relrms[cxt]}        \
       -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   output confmat             ${prefix}_confmat.1D
 fi
 
 
@@ -340,431 +157,171 @@ fi
 # be computed as the mean BOLD timeseries over all voxels
 # comprising the tissue class of interest.
 #
-# GREY MATTER
-# First, determine whether to include the mean grey matter
-# timeseries in the confound model. If the grey matter mask is to
+# First, determine whether to include the mean tissue confound
+# timeseries in the confound model. If the tissue mask is to
 # be included, then it must be conformed to user specifications:
-#  * Extract the GM mask from the user-specified segmentation
-#  * Erode the GM mask according to user specifications
-#  * Move the GM mask into the same space as the primary BOLD
+#  * Extract the mask from the user-specified segmentation
+#  * Erode the mask according to user specifications
+#  * Move the mask into the same space as the primary BOLD
 #    timeseries.
 ###################################################################
-if [[ "${confound_gm[${cxt}]}" == "Y" ]] \
-   || [[ ${confound_gm[${cxt}]} =~ ${POSINT} ]] \
-   || [[ ${confound_gm[${cxt}]} =~ ${POSNUM} ]]
-   then
-   echo "Including mean grey matter signal in confound model."
-   gmMask=${outbase}_gm
-   ################################################################
-   # Generate a binary mask if necessary.
-   # This mask will be based on a user-specified input value
-   # and a user-specified image in the subject's structural space.
-   ################################################################
-   if [[ $(imtest "$gmMask") != "1" ]] \
-      || [[ "${confound_rerun[${cxt}]}" != "N" ]]
+declare           -A tissue_classes
+tissue_classes=(  [gm]="grey matter"
+                  [wm]="white matter"
+                 [csf]="cerebrospinal fluid" )
+cc_components=0
+for class in "${!tissue_classes[@]}"
+   do
+   class_name=${tissue_classes[$class]}
+   class_include='confound_'${class}'['${cxt}']'
+   
+   if [[ ${!class_include} != 0 ]]
       then
-      rm -f ${gmMask}${ext}
-      ${XCPEDIR}/utils/val2mask.R \
-         -i ${confound_gm_path[${cxt}]} \
-         -v ${confound_gm_val[${cxt}]} \
-         -o ${gmMask}${ext}
-   fi
-   ################################################################
-   # Erode the mask iteratively using the erodespare utility.
-   #  * erodespare ensures that the result of applying the
-   #    specified erosion is non-empty; if an empty result is
-   #    obtained, the degree of erosion is decremented until the
-   #    result is non-empty.
-   ################################################################
-   if [[ ${confound_gm_ero[${cxt}]} -gt 0 ]]
-      then
-      [[ ${trace} == 1 ]] && traceprop="-t"
-      ${XCPEDIR}/utils/erodespare \
-         -i ${gmMask}${ext} \
-         -o ${gmMask}_ero${ext} \
-         -e ${confound_gm_ero[${cxt}]} \
-         ${traceprop}
-      gmMask=${gmMask}_ero
-   fi
-   ################################################################
-   # Move the mask from subject structural space to subject
-   # EPI space. If the BOLD timeseries is already standardised,
-   # then instead move it to standard space.
-   ################################################################
-   if [[ "${space}" == "standard" ]]
-      then
-      ${ANTSPATH}/antsApplyTransforms \
-         -i ${gmMask}${ext} \
-         -o ${gmMask}${ext} \
-         -r ${template} \
-         -n NearestNeighbor \
-         ${rigid} \
-         ${affine} \
-         ${warp} \
-         ${resample}
+      subroutine              @3    [Including ${class_name} signal]
+      
+      class_val='confound_'${class}'_val['${cxt}']'
+      class_ero='confound_'${class}'_ero['${cxt}']'
+      class_path='confound_'${class}'_path['${cxt}']'
+      class_mask=${class}'Mask['${cxt}']'
+      
+      mask=${intermediate}_${class}
+      #############################################################
+      # Generate a binary mask if necessary. Erode the mask if
+      # erosion has been requested.
+      #############################################################
+      if ! is_image ${!class_mask} \
+      || rerun
+         then
+         subroutine           @3.1
+         exec_sys    rm -f    ${mask}.nii.gz
+         exec_xcp    erodespare     \
+            -i       ${!class_path} \
+            -v       ${!class_val}  \
+            -r       ${!class_ero}  \
+            -n       ${intermediate}\
+            -o       ${mask}.nii.gz
+         ##########################################################
+         # Move the mask from subject structural space to subject
+         # EPI space. If the BOLD timeseries is already
+         # standardised, then instead move it to standard space.
+         ##########################################################
+         subroutine           @3.2
+         warpspace            \
+            ${mask}.nii.gz    \
+            ${!class_mask}    \
+            ${structural[sub]}:${space[sub]} \
+            NearestNeighbor
+      fi
+      #############################################################
+      # Determine whether to extract a mean timecourse or to apply
+      # aCompCor to extract PC timecourses.
+      #############################################################
+      ts=${intermediate}_phys_${class}
+      eval  "${class}=${ts}.1D"
+      if [[ ${!class_include} == mean ]]
+         then
+         ##########################################################
+         # Extract the mean timecourse from the eroded and
+         # transformed mask.
+         ##########################################################
+         subroutine           @3.3
+         exec_fsl                   \
+            fslmeants   -i ${img}   \
+            -o          ${ts}.1D    \
+            -m          ${!class_mask}
+         exec_xcp mbind.R           \
+            -x    ${confmat[cxt]}   \
+            -y    ${ts}.1D          \
+            -o    ${confmat_path}
+         output   confmat        ${prefix}_confmat.1D
+      elif is+integer ${!class_include}
+         then
+         ##########################################################
+         # Use aCompCor to extract PC timecourses from the mask:
+         # Fixed number of PCs.
+         ##########################################################
+         subroutine           @3.4
+         exec_afni      3dpc              \
+            -prefix     ${ts}             \
+            -pcsave     ${!class_include} \
+            -mask       ${!class_mask}    \
+            ${img}
+         cc_components=$(( ${cc_components} + ${!class_include} ))
+         eval ${class}=\${ts}.1D
+      elif [[ ${!class_include} == all ]]
+         then
+         ##########################################################
+         # Use aCompCor to extract PC timecourses from the mask:
+         # All principal components.
+         # Please don't do this?
+         ##########################################################
+         subroutine           @3.5
+         exec_afni      3dpc           \
+            -prefix     ${ts}          \
+            -pcsave     99999          \
+            -mask       ${!class_mask} \
+            ${img}
+         vidx=$(tail    -n1 ${ts}.1D|wc -w)
+         cc_components=$(( ${cc_components} + ${vidx} ))
+         eval ${class}=\${ts}.1D
+      elif is+numeric ${!class_include}
+         then
+         ##########################################################
+         # Use aCompCor to extract PC timecourses from the mask:
+         # Cumulative variance explained.
+         ##########################################################
+         subroutine           @3.6
+         exec_afni      3dpc           \
+            -prefix     ${ts}          \
+            -mask       ${!class_mask} \
+            ${img}
+         readarray      variance_explained < ${ts}_eig.1D
+         vidx=1
+         while (( ${vidx} < ${#variance_explained[@]} ))
+            do
+            v=(      ${variance_explained[${vidx}]}   )
+            chk=$(   arithmetic        ${v[3]}'>'${!class_include})
+            ((       ${chk} == 1 ))    && break
+            ((       vidx++      ))
+         done
+         subroutine           @3.7  [Retaining ${vidx} components from ${class_name}]
+         exec_afni      3dpc           \
+            -prefix     ${ts}          \
+            -pcsave     ${vidx}        \
+            -mask       ${!class_mask} \
+            ${img}
+         cc_components=$(( ${cc_components} + ${vidx} ))
+         eval ${class}=\${ts}.1D
+      elif [[ ${!class_include} == "local" ]]
+         then
+         subroutine           @3.8  Modelling voxelwise ${class_name} signal
+         class_radius='confound_'${class}'_rad['${cxt}']'
+         class_local=${class}'Local['${cxt}']'
+         if ! is_image        ${!class_local}   \
+         || rerun
+            then
+            subroutine        @3.9  Radius of influence: ${!class_radius} mm
+            exec_sys          rm -f ${!class_local}
+            exec_afni         3dLocalstat       \
+               -prefix        ${!class_local}   \
+               -nbhd          'SPHERE('"${!class_radius}"')' \
+               -stat          mean              \
+               -mask          ${!class_mask}    \
+               -use_nonmask                     \
+               ${img}
+            #######################################################
+            # . . . and confine the nuisance signal to the existing
+            # brain mask.
+            #######################################################
+            exec_fsl fslmaths ${!class_local}   \
+               -mul ${mask[sub]}                \
+               ${!class_local}
+         fi
+      fi
    else
-      ${ANTSPATH}/antsApplyTransforms \
-         -i ${gmMask}${ext} \
-         -o ${gmMask}${ext} \
-         -r ${referenceVolumeBrain[${subjidx}]}${ext} \
-         -n NearestNeighbor \
-         -t ${struct2seq[${subjidx}]}
+         subroutine           @3.10
    fi
-   ################################################################
-   # Determine whether to extract a mean timecourse or to apply
-   # aCompCor to extract PC timecourses.
-   ################################################################
-   if [[ "${confound_gm[${cxt}]}" == "Y" ]]
-      then
-      #############################################################
-      # Extract the mean timecourse from the eroded and transformed
-      # mask.
-      #############################################################
-      fslmeants -i ${img} -o ${outbase}_phys_gm -m ${gmMask}
-      immv ${gmMask} ${gmMask[${cxt}]}
-      gm=$(ls -d1 ${outbase}_phys_gm)
-      ${XCPEDIR}/utils/mbind.R \
-         -x ${confmat[${cxt}]} \
-         -y ${gm} \
-         -o ${confmat_path}
-      confmat[${cxt}]=$confmat_path
-   elif  [[ $(echo "${confound_gm[${cxt}]} > 1"|bc) == 1 ]]
-      then
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # Fixed number of PCs.
-      #############################################################
-      3dpc \
-         -prefix ${outbase}_phys_gm \
-         -pcsave ${confound_gm[${cxt}]} \
-         -mask ${gmMask}${ext} \
-         ${img}${ext}
-      gm=$(ls -d1 ${outbase}_phys_gm.1D)
-   elif  [[ $(echo "${confound_gm[${cxt}]} == 1"|bc) == 1 ]]
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # All principal components.
-      # Please don't do this?
-      #############################################################
-      then
-      3dpc \
-         -prefix ${outbase}_phys_gm \
-         -pcsave ${vidx} \
-         -mask ${gmMask}${ext} \
-         ${img}${ext}
-      gm=$(ls -d1 ${outbase}_phys_gm.1D)
-   elif  [[ $(echo "${confound_gm[${cxt}]} > 0"|bc) == 1 ]]
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # Cumulative variance explained.
-      #############################################################
-      then
-      3dpc \
-         -prefix ${outbase}_phys_gm \
-         -mask ${gmMask}${ext} \
-         ${img}${ext}
-      varExp=$(tail -n+2 ${outbase}_phys_gm_eig.1D|awk '{print $4}')
-      vidx=1
-      for v in $varExp
-         do
-         chk=$(echo "$v > ${confound_gm[${cxt}]}"|bc)
-         [[ $chk == 1 ]] && break
-         vidx=$(echo $vidx + 1|bc)
-      done
-      echo "Retaining ${vidx} component timeseries."
-      3dpc \
-         -prefix ${outbase}_phys_gm \
-         -pcsave ${vidx} \
-         -mask ${gmMask}${ext} \
-         ${img}${ext}
-      gm=$(ls -d1 ${outbase}_phys_gm.1D)
-   fi
-fi
-
-###################################################################
-# WHITE MATTER
-# First, determine whether to include the mean white matter
-# timeseries in the confound model. If the white matter mask is to
-# be included, then it must be conformed to user specifications:
-#  * Extract the WM mask from the user-specified segmentation
-#  * Erode the WM mask according to user specifications
-#  * Move the WM mask into the same space as the primary BOLD
-#    timeseries.
-###################################################################
-if [[ "${confound_wm[${cxt}]}" == "Y" ]] \
-   || [[ ${confound_wm[${cxt}]} =~ ${POSINT} ]] \
-   || [[ ${confound_wm[${cxt}]} =~ ${POSNUM} ]]
-   then
-   echo "Including mean white matter signal in confound model."
-   wmMask=${outbase}_wm
-   ################################################################
-   # Generate a binary mask if necessary.
-   # This mask will be based on a user-specified input value
-   # and a user-specified image in the subject's structural space.
-   ################################################################
-   if [[ $(imtest "$wmMask") != "1" ]] \
-      || [[ "${confound_rerun[${cxt}]}" != "N" ]]
-      then
-      rm -f ${wmMask}${ext}
-      ${XCPEDIR}/utils/val2mask.R \
-         -i ${confound_wm_path[${cxt}]} \
-         -v ${confound_wm_val[${cxt}]} \
-         -o ${wmMask}${ext}
-   fi
-   ################################################################
-   # Erode the mask iteratively using the erodespare utility.
-   #  * erodespare ensures that the result of applying the
-   #    specified erosion is non-empty; if an empty result is
-   #    obtained, the degree of erosion is decremented until the
-   #    result is non-empty.
-   ################################################################
-   if [[ ${confound_wm_ero[${cxt}]} -gt 0 ]]
-      then
-      [[ ${trace} == 1 ]] && traceprop="-t"
-      ${XCPEDIR}/utils/erodespare \
-         -i ${wmMask}${ext} \
-         -o ${wmMask}_ero${ext} \
-         -e ${confound_wm_ero[${cxt}]} \
-         ${traceprop}
-      wmMask=${wmMask}_ero
-   fi
-   ################################################################
-   # Move the mask from subject structural space to subject
-   # EPI space. If the BOLD timeseries is already standardised,
-   # then instead move it to standard space.
-   ################################################################
-   if [[ "${space}" == "standard" ]]
-      then
-      ${ANTSPATH}/antsApplyTransforms \
-         -i ${wmMask}${ext} \
-         -o ${wmMask}${ext} \
-         -r ${template} \
-         -n NearestNeighbor \
-         ${rigid} \
-         ${affine} \
-         ${warp} \
-         ${resample}
-   else
-      ${ANTSPATH}/antsApplyTransforms \
-         -i ${wmMask}${ext} \
-         -o ${wmMask}${ext} \
-         -r ${referenceVolumeBrain[${subjidx}]}${ext} \
-         -n NearestNeighbor \
-         -t ${struct2seq[${subjidx}]}
-   fi
-   ################################################################
-   # Determine whether to extract a mean timecourse or to apply
-   # aCompCor to extract PC timecourses.
-   ################################################################
-   if [[ "${confound_wm[${cxt}]}" == "Y" ]]
-      then
-      #############################################################
-      # Extract the mean timecourse from the eroded and transformed
-      # mask.
-      #############################################################
-      fslmeants -i ${img} -o ${outbase}_phys_wm -m ${wmMask}
-      immv ${wmMask} ${wmMask[${cxt}]}
-      wm=$(ls -d1 ${outbase}_phys_wm)
-      ${XCPEDIR}/utils/mbind.R \
-         -x ${confmat[${cxt}]} \
-         -y ${wm} \
-         -o ${confmat_path}
-      confmat[${cxt}]=$confmat_path
-   elif  [[ $(echo "${confound_wm[${cxt}]} > 1"|bc) == 1 ]]
-      then
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # Fixed number of PCs.
-      #############################################################
-      3dpc \
-         -prefix ${outbase}_phys_wm \
-         -pcsave ${confound_wm[${cxt}]} \
-         -mask ${wmMask}${ext} \
-         ${img}${ext}
-      wm=$(ls -d1 ${outbase}_phys_wm.1D)
-   elif  [[ $(echo "${confound_wm[${cxt}]} == 1"|bc) == 1 ]]
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # All principal components.
-      # Please don't do this?
-      #############################################################
-      then
-      3dpc \
-         -prefix ${outbase}_phys_wm \
-         -pcsave ${vidx} \
-         -mask ${wmMask}${ext} \
-         ${img}${ext}
-      wm=$(ls -d1 ${outbase}_phys_wm.1D)
-   elif  [[ $(echo "${confound_wm[${cxt}]} > 0"|bc) == 1 ]]
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # Cumulative variance explained.
-      #############################################################
-      then
-      3dpc \
-         -prefix ${outbase}_phys_wm \
-         -mask ${wmMask}${ext} \
-         ${img}${ext}
-      varExp=$(tail -n+2 ${outbase}_phys_wm_eig.1D|awk '{print $4}')
-      vidx=1
-      for v in $varExp
-         do
-         chk=$(echo "$v > ${confound_wm[${cxt}]}"|bc)
-         [[ $chk == 1 ]] && break
-         vidx=$(echo $vidx + 1|bc)
-      done
-      echo "Retaining ${vidx} component timeseries."
-      3dpc \
-         -prefix ${outbase}_phys_wm \
-         -pcsave ${vidx} \
-         -mask ${wmMask}${ext} \
-         ${img}${ext}
-      wm=$(ls -d1 ${outbase}_phys_wm.1D)
-   fi
-fi
-
-
-###################################################################
-# CEREBROSPINAL FLUID
-# First, determine whether to include the mean white matter
-# timeseries in the confound model. If the white matter mask is to
-# be included, then it must be conformed to user specifications:
-#  * Extract the CSF mask from the user-specified segmentation
-#  * Erode the CSF mask according to user specifications
-#  * Move the CSF mask into the same space as the primary BOLD
-#    timeseries.
-###################################################################
-if [[ "${confound_csf[${cxt}]}" == "Y" ]] \
-   || [[ ${confound_csf[${cxt}]} =~ ${POSINT} ]] \
-   || [[ ${confound_csf[${cxt}]} =~ ${POSNUM} ]]
-   then
-   echo "Including cerebrospinal fluid signal in confound model."
-   csfMask=${outbase}_csf
-   ################################################################
-   # Generate a binary mask if necessary.
-   # This mask will be based on a user-specified input value
-   # and a user-specified image in the subject's structural space.
-   ################################################################
-   if [[ $(imtest "$csfMask") != "1" ]] \
-      || [[ "${confound_rerun[${cxt}]}" != "N" ]]
-      then
-      rm -f ${csfMask}${ext}
-      ${XCPEDIR}/utils/val2mask.R \
-         -i ${confound_csf_path[${cxt}]} \
-         -v ${confound_csf_val[${cxt}]} \
-         -o ${csfMask}${ext}
-   fi
-   ################################################################
-   # Erode the mask iteratively using the erodespare utility.
-   #  * erodespare ensures that the result of applying the
-   #    specified erosion is non-empty; if an empty result is
-   #    obtained, the degree of erosion is decremented until the
-   #    result is non-empty.
-   ################################################################
-   if [[ ${confound_csf_ero[${cxt}]} -gt 0 ]]
-      then
-      [[ ${trace} == 1 ]] && traceprop="-t"
-      ${XCPEDIR}/utils/erodespare \
-         -i ${csfMask}${ext} \
-         -o ${csfMask}_ero${ext} \
-         -e ${confound_csf_ero[${cxt}]} \
-         ${traceprop}
-      csfMask=${csfMask}_ero
-   fi
-   ################################################################
-   # Move the mask from subject structural space to subject
-   # EPI space. If the BOLD timeseries is already standardised,
-   # then instead move it to standard space.
-   ################################################################
-   if [[ "${space}" == "standard" ]]
-      then
-      ${ANTSPATH}/antsApplyTransforms \
-         -i ${csfMask}${ext} \
-         -o ${csfMask}${ext} \
-         -r ${template} \
-         -n NearestNeighbor \
-         ${rigid} \
-         ${affine} \
-         ${warp} \
-         ${resample}
-   else
-      ${ANTSPATH}/antsApplyTransforms \
-         -i ${csfMask}${ext} \
-         -o ${csfMask}${ext} \
-         -r ${referenceVolumeBrain[${subjidx}]}${ext} \
-         -n NearestNeighbor \
-         -t ${struct2seq[${subjidx}]}
-   fi
-   ################################################################
-   # Determine whether to extract a mean timecourse or to apply
-   # aCompCor to extract PC timecourses.
-   ################################################################
-   if [[ "${confound_csf[${cxt}]}" == "Y" ]]
-      then
-      #############################################################
-      # Extract the mean timecourse from the eroded and transformed
-      # mask.
-      #############################################################
-      fslmeants -i ${img} -o ${outbase}_phys_csf -m ${csfMask}
-      immv ${csfMask} ${csfMask[${cxt}]}
-      csf=$(ls -d1 ${outbase}_phys_csf)
-      ${XCPEDIR}/utils/mbind.R \
-         -x ${confmat[${cxt}]} \
-         -y ${csf} \
-         -o ${confmat_path}
-      confmat[${cxt}]=$confmat_path
-   elif  [[ $(echo "${confound_csf[${cxt}]} > 1"|bc) == 1 ]]
-      then
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # Fixed number of PCs.
-      #############################################################
-      3dpc \
-         -prefix ${outbase}_phys_csf \
-         -pcsave ${confound_csf[${cxt}]} \
-         -mask ${csfMask}${ext} \
-         ${img}${ext}
-      csf=$(ls -d1 ${outbase}_phys_csf.1D)
-   elif  [[ $(echo "${confound_csf[${cxt}]} == 1"|bc) == 1 ]]
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # All principal components.
-      # Please don't do this?
-      #############################################################
-      then
-      3dpc \
-         -prefix ${outbase}_phys_csf \
-         -pcsave ${vidx} \
-         -mask ${csfMask}${ext} \
-         ${img}${ext}
-      csf=$(ls -d1 ${outbase}_phys_csf.1D)
-   elif  [[ $(echo "${confound_csf[${cxt}]} > 0"|bc) == 1 ]]
-      #############################################################
-      # Use aCompCor to extract PC timecourses from the mask:
-      # Cumulative variance explained.
-      #############################################################
-      then
-      3dpc \
-         -prefix ${outbase}_phys_csf \
-         -mask ${csfMask}${ext} \
-         ${img}${ext}
-      varExp=$(tail -n+2 ${outbase}_phys_csf_eig.1D|awk '{print $4}')
-      vidx=1
-      for v in $varExp
-         do
-         chk=$(echo "$v > ${confound_csf[${cxt}]}"|bc)
-         [[ $chk == 1 ]] && break
-         vidx=$(echo $vidx + 1|bc)
-      done
-      echo "Retaining ${vidx} component timeseries."
-      3dpc \
-         -prefix ${outbase}_phys_csf \
-         -pcsave ${vidx} \
-         -mask ${csfMask}${ext} \
-         ${img}${ext}
-      csf=$(ls -d1 ${outbase}_phys_csf.1D)
-   fi
-fi
+done
 
 
 
@@ -773,9 +330,9 @@ fi
 ###################################################################
 # MEAN GLOBAL SIGNAL
 ###################################################################
-if [[ "${confound_gsr[${cxt}]}" == "Y" ]]
+if [[ ${confound_gsr[cxt]} != 0 ]]
    then
-   echo "Including mean global signal in confound model."
+   subroutine                 @4    [Global/local signals]
    ################################################################
    # Determine whether a brain mask exists for the current subject.
    #  * If one does, use it as the basis for computing the mean
@@ -784,31 +341,59 @@ if [[ "${confound_gsr[${cxt}]}" == "Y" ]]
    #    utility. This may yield unexpected results if data has
    #    been demeaned or standard-scored.
    ################################################################
-   if [[ $(imtest "${mask[${subjidx}]}") == "1" ]]
+   if is_image ${mask[sub]}
       then
-      maskpath=${mask[${subjidx}]}${ext}
+      subroutine              @4.1
+      maskpath=${mask[sub]}
    else
-      echo "Unable to locate mask."
-      echo "Generating a mask using 3dAutomask"
-      3dAutomask \
-         -prefix ${outbase}_mask${ext} \
-         -dilate 3 \
-         -q \
-         ${referenceVolume[${subjidx}]}
-      maskpath=${outbase}_mask${ext}
+      subroutine              @4.2a Unable to identify mask
+      subroutine              @4.2b Generating a mask using 3dAutomask
+      maskpath=${intermediate}_mask.nii.gz
+      exec_afni   3dAutomask  \
+         -prefix  ${maskpath} \
+         -dilate  3           \
+         -q                   \
+         ${referenceVolume[sub]}
    fi
    ################################################################
    # Extract the mean timecourse from the global (whole-brain)
    # mask, and catenate it into the confound matrix.
    ################################################################
-   fslmaths ${maskpath} -thr 0.5 -bin $maskpath
-   fslmeants -i ${img} -o ${outbase}_phys_gsr -m ${maskpath}
-   gsr=$(ls -d1 ${outbase}_phys_gsr)
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${gsr} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   if [[ ${confound_gsr[cxt]}   ==  mean ]]
+      then
+      subroutine              @4.3  Including mean global signal
+      ts=${intermediate}_phys_gsr
+      exec_fsl fslmeants   -i ${img} -o ${ts} -m ${maskpath}
+      exec_xcp mbind.R           \
+         -x    ${confmat[cxt]}   \
+         -y    ${ts}             \
+         -o    ${confmat_path}
+      output   confmat                 ${prefix}_confmat.1D
+   elif [[ ${confound_gsr[cxt]} ==  local ]]
+      then
+      subroutine              @4.4  "Including mean local signal in confound model."
+      if ! is_image ${lmsLocal[cxt]} \
+      || rerun
+         then
+         subroutine           @4.5  "Modelling local signal: All voxels"
+         subroutine           @4.6  Radius of influence: ${confound_gsr_rad[cxt]}
+         exec_sys             rm -f ${lmsLocal[cxt]}
+         exec_afni            3dLocalstat       \
+            -prefix           ${lmsLocal[cxt]}  \
+            -nbhd             'SPHERE('"${confound_lms_rad[cxt]}"')' \
+            -stat             mean              \
+            -mask             ${mask[sub]}      \
+            -use_nonmask                        \
+            ${img}
+         ##########################################################
+         # . . . and confine the nuisance signal to the existing
+         # brain mask.
+         ##########################################################
+         exec_fsl fslmaths ${lmsLocal[cxt]}     \
+            -mul  ${mask[sub]}                  \
+            ${lmsLocal[cxt]}
+      fi
+   fi
 fi
 
 
@@ -830,15 +415,14 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if [[ "${confound_past[${cxt}]}" -gt "0" ]]
+if (( ${confound_past[cxt]} > 0 ))
    then
-   echo "Including ${confound_past[${cxt}]} prior time point(s)"
-   echo "  in confound model."
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y OPprev${confound_past[${cxt}]} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   subroutine                 @5    "Including ${confound_past[cxt]} prior time point(s)"
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
+      -y    OPprev${confound_past[cxt]} \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
 
 
@@ -860,15 +444,14 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if [[ "${confound_dx[${cxt}]}" -gt "0" ]]
+if (( ${confound_dx[cxt]} > 0 ))
    then
-   echo "Including ${confound_dx[${cxt}]} derivative(s)"
-   echo "  in confound model."
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y OPdx${confound_dx[${cxt}]} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   subroutine                 @6    "[Including ${confound_dx[cxt]} derivative(s)]"
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
+      -y    OPdx${confound_dx[cxt]} \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
 
 
@@ -890,15 +473,14 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if [[ "${confound_sq[${cxt}]}" -gt "1" ]]
+if (( ${confound_sq[cxt]} > 1 ))
    then
-   echo "Including ${confound_sq[${cxt}]} power(s)"
-   echo "  in confound model."
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y OPpower${confound_sq[${cxt}]} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   subroutine                 @7    "[Including ${confound_sq[cxt]} power(s)]"
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
+      -y    OPpower${confound_sq[cxt]} \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
 
 
@@ -908,10 +490,9 @@ fi
 ###################################################################
 # COMPONENT CORRECTION (COMPCOR)
 ###################################################################
-if [[ "${confound_cc[${cxt}]}" -gt "0" ]]
+if (( ${confound_cc[cxt]} > 0 ))
    then
-   echo "Including ${confound_cc[${cxt}]} CompCor signal(s)"
-   echo "  in confound model."
+   subroutine                 @8    "[Including ${confound_cc[cxt]} CompCor signal(s)]"
    ################################################################
    # Determine whether a brain mask exists for the current subject.
    #  * If one does, use it as the basis for computing nuisance
@@ -920,53 +501,50 @@ if [[ "${confound_cc[${cxt}]}" -gt "0" ]]
    #    utility. This may yield unexpected results if data has
    #    been demeaned or standard-scored.
    ################################################################
-   if [ $(imtest "${mask[${subjidx}]}") == "1" ]
+   if is_image ${mask[sub]}
       then
-      maskpath=${mask[${subjidx}]}${ext}
-   elif [[ $(imtest "${maskpath}") != "1" ]]
+      subroutine              @8.1
+      maskpath=${mask[sub]}
+   elif ! is_image ${maskpath}
       then
-      echo "Unable to locate mask."
-      echo "Generating a mask using 3dAutomask"
-      3dAutomask \
-         -prefix ${outbase}_mask${ext} \
-         -dilate 3 \
-         -q \
-         ${referenceVolume[${subjidx}]}
-      maskpath=${outbase}_mask${ext}
+      subroutine              @8.2  Unable to identify mask.
+      subroutine              @8.3  Generating a mask using 3dAutomask
+      maskpath=${intermediate}_mask.nii.gz
+      exec_afni   3dAutomask  \
+         -prefix  ${maskpath} \
+         -dilate  3           \
+         -q                   \
+         ${referenceVolume[sub]}
    fi
    ################################################################
    # Perform CompCor using the ANTs ImageMath utility.
-   ################################################################
-   ImageMath 4 ${outbase}_confound${ext} \
-      CompCorrAuto ${img}${ext} \
-      ${maskpath} \
-      ${confound_cc[${cxt}]}
-   ################################################################
+   #
    # ImageMath automatically includes global signal along with
    # CompCor; XCP Engine, by contrast, does not assume that a user
    # who includes CompCor necessarily also wishes to include the
    # global signal.
-   #
-   # Here, the confound module trims away the header from the ANTs
-   # output and removes the first column, which corresponds to
-   # global signal.
-   #
-   # ANTs outputs a .csv of component timeseries, while mbind
-   # reads tab- or space-delimited files, so an appropriate
-   # substitution is made here to ensure compatibility.
    ################################################################
-   tail -n +2 ${outbase}_confound_compcorr.csv| \
-      cut -d"," -f1 --complement| \
-      sed 's@,@\t@g' > ${outbase}_compcor
-   cc=$(ls -d1 ${outbase}_compcor)
+   cc=${intermediate}_compcor.1D
+   exec_sys          rm       -f ${cc}
+   exec_ants         ImageMath 4 ${intermediate}_confound.nii.gz \
+      CompCorrAuto   ${img}   \
+      ${maskpath}             \
+      ${confound_cc[cxt]}
+   readarray      ccdata   <  ${intermediate}_confound_compcorr.csv
+   for (( cidx=1; ${cidx}  <= $(( ${#ccdata[@]} - 1));   cidx++ ))
+      do
+      ccc=(             ${ccdata[cidx]//,/\ } )
+      ccc=${ccc[@]:1}
+      echo              "${ccc}"       >>       ${cc}
+   done
    ################################################################
    # Add the component timeseries to the confound matrix.
    ################################################################
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${cc} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${cc}             \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
 
 
@@ -981,35 +559,32 @@ fi
 # The limited customisability here will need to be
 # addressed in the near future.
 ###################################################################
-if [[ ${confound_gm[${cxt}]} =~ ${POSNUM} ]]
+if is+numeric ${confound_gm[cxt]} && [[ ${confound_gm[cxt]} != 0   ]]
    then
-   echo "Including ${confound_gm[${cxt}]} GM aCompCor signal(s)"
-   echo "  in confound model."
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${gm} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   subroutine                 @9.1  "[Including ${confound_gm[cxt]} GM aCompCor signal(s)]"
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${gm}             \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
-if [[ ${confound_wm[${cxt}]} =~ ${POSNUM} ]]
+if is+numeric ${confound_wm[cxt]} && [[ ${confound_wm[cxt]} != 0   ]]
    then
-   echo "Including ${confound_wm[${cxt}]} WM aCompCor signal(s)"
-   echo "  in confound model."
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${wm} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   subroutine                 @9.2  "[Including ${confound_wm[cxt]} WM aCompCor signal(s)]"
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${wm}             \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
-if [[ ${confound_csf[${cxt}]} =~ ${POSNUM} ]]
+if is+numeric ${confound_csf[cxt]} && [[ ${confound_csf[cxt]} != 0 ]]
    then
-   echo "Including ${confound_csf[${cxt}]} CSF aCompCor signal(s)"
-   echo "  in confound model."
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${csf} \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
+   subroutine                 @9.3  "Including ${confound_csf[cxt]} CSF aCompCor signal(s)"
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${csf}            \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
 fi
 
 
@@ -1029,118 +604,91 @@ fi
 #   time points of custom timeseries should be included as custom
 #   timeseries.
 ###################################################################
-confound_custom[${cxt}]=$(echo ${confound_custom[${cxt}]}|sed s@'#'@' '@g)
-nvol=$(fslnvols ${img})
-for cts in ${confound_custom[${cxt}]}
+confound_custom_ts=${confound_custom[cxt]//,/ }
+nvol=$(  exec_fsl             fslnvols ${img})
+for cts  in ${confound_custom_ts}
    do
-   echo "Including custom timeseries in confound model:"
-   echo "  ${cts}"
+   subroutine                 @10   "Custom timeseries: ${cts}"
    ################################################################
    # Determine whether the input is a three-column stick function
    # or an explicit timeseries. If it is a stick function, then
    # apply a convolution and convert it to a design matrix.
    ################################################################
-   stick=0
-   [[ $(cat ${cts}|wc -l) -lt ${nvol} ]] && stick=1
-   if [[ ${stick} == 1 ]]
+   readarray nlines < ${cts}
+   stick=$(arithmetic ${#nlines[@]}'<'${nvol})
+   if (( ${stick} == 1 ))
       then
-      ${XCPEDIR}/utils/stick2lm.R \
-         -i ${img} \
-         -s ${cts} \
-         -d FALSE \
-         >> ${outbase}convts
-      cts=${outbase}convts
+      subroutine              @10.1
+      exec_xcp stick2lm.R     \
+         -i    ${img}         \
+         -s    ${cts}         \
+         -d    FALSE          \
+         >>    ${intermediate}convts.1D
+   else
+      subroutine              @10.2
+      exec_sys cp ${cts}      ${intermediate}convts.1D
    fi
+   cts=${intermediate}convts.1D
    ################################################################
    # Identify the row in which the timeseries matrix proper
    # begins if the input is an FSL-style design matrix.
    ################################################################
-   startln=$(grep -i '/Matrix' ${cts})
-   [[ -z ${startln} ]] && startln=0
-   startln=$(expr ${startln} + 1)
-   cts=$(tail -n +${startln} ${cts})
-   rm -f ${outbase}convts
-   echo "${cts}" >> ${outbase}convts
-   cts=${outbase}convts
-   ${XCPEDIR}/utils/mbind.R \
-      -x ${confmat[${cxt}]} \
-      -y ${outbase}convts \
-      -o ${confmat_path}
-   confmat[${cxt}]=$confmat_path
-   rm -f ${outbase}convts
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${cts}            \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
+   exec_sys rm -f             ${intermediate}convts.1D
 done
-echo "Processing step complete: generating confound matrix"
+routine_end
 
 
 
 
-
+routine                       @11   Validating confound model
 ###################################################################
 # Verify that the confound matrix produced by the confound module
 # contains the expected number of time series.
 ###################################################################
-obs=$(head -n1 ${confmat_path}|wc -w)
+read -ra    obs      < ${confmat[cxt]}
+obs=${#obs[@]}
 exp=0
-[[ ${confound_rp[${cxt}]} == Y ]] && exp=$(echo ${exp} + 6|bc)
-[[ ${confound_rms[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-[[ ${confound_gm[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-[[ ${confound_wm[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-[[ ${confound_csf[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-[[ ${confound_gsr[${cxt}]} == Y ]] && exp=$(echo ${exp} + 1|bc)
-exp=$(echo ${exp} + ${confound_cc[${cxt}]}|bc)
-past=$(echo ${confound_past[${cxt}]} + 1|bc)
-dx=$(echo ${confound_dx[${cxt}]} + 1|bc)
-exp=$(echo ${exp} \* ${past} \* ${dx} \* ${confound_sq[${cxt}]}|bc)
-for cts in ${confound_custom[${cxt}]}
+(( ${confound_rp[cxt]}  == 1     )) && exp=$(( ${exp} + 6 ))
+(( ${confound_rms[cxt]} == 1     )) && exp=$(( ${exp} + 1 ))
+[[ ${confound_gm[cxt]}  == mean  ]] && exp=$(( ${exp} + 1 ))
+[[ ${confound_wm[cxt]}  == mean  ]] && exp=$(( ${exp} + 1 ))
+[[ ${confound_csf[cxt]} == mean  ]] && exp=$(( ${exp} + 1 ))
+[[ ${confound_gsr[cxt]} == mean  ]] && exp=$(( ${exp} + 1 ))
+
+past=$((    ${confound_past[cxt]}      + 1 ))
+dx=$((      ${confound_dx[cxt]}        + 1 ))
+exp=$((     ${exp} * ${past} * ${dx}   * ${confound_sq[cxt]} ))
+exp=$((     ${exp} + ${confound_cc[cxt]} ))
+exp=$((     ${exp} + ${cc_components} ))
+for cts in ${confound_custom_ts}
    do
-   ctsn=$(tail -n1 ${cts}|wc -w)
-   exp=$(echo ${exp} + ${ctsn}|bc)
+   read     -ra ctsn       < ${cts}
+   exp=$((  ${exp} +       ${#ctsn[@]} ))
 done
-[[ ${obs} == ${exp} ]] \
-   && completion=match1 \
-   || echo "Dimensions of the existing confound matrix are incorrect"
-
-
-
-
-
-###################################################################
-# write remaining output paths to local design file so that
-# they may be used further along the pipeline
-###################################################################
-echo ""; echo ""; echo ""
-echo "Writing outputs..."
-echo "confmat[${subjidx}]=$confmat_path" >> $design_local
-
-
-
-
-
-###################################################################
-# CLEANUP
-#  * Remove any temporary files if cleanup is enabled.
-#  * Update the audit file.
-###################################################################
-if [[ "${confound_cleanup[${cxt}]}" == "Y" ]] \
-   && [[ ${completion} == match1 ]]
+subroutine                    @11.1a   [Expected confounds: ${exp}]
+subroutine                    @11.1b   [Observed confounds: ${obs}]
+if (( ${obs} == ${exp} ))
    then
-   echo ""; echo ""; echo ""
-   echo "Cleaning up..."
-   rm -rf ${outdir}/*~TEMP~*
-elif [[ ${completion} != match1 ]]
-   then
-   echo "Expected output not present."
-   echo "Check the log to verify that processing"
-   echo "completed as intended."
-   exit 1
+   subroutine                 @11.1 [Confound matrix dimensions validated]
+   [[ ${confound_gm[cxt]}  == local  ]] && exp=$(( ${exp} + 1 ))
+   [[ ${confound_wm[cxt]}  == local  ]] && exp=$(( ${exp} + 1 ))
+   [[ ${confound_csf[cxt]} == local  ]] && exp=$(( ${exp} + 1 ))
+   [[ ${confound_gsr[cxt]} == local  ]] && exp=$(( ${exp} + 1 ))
+   exec_sys                   rm -f ${nuisance_ct[cxt]}
+   echo ${exp}                >>    ${nuisance_ct[cxt]}
+else
+   subroutine                 @11.2 [Dimensions of the existing confound matrix are incorrect]
+   abort_stream                      Dimensions of the existing confound matrix are incorrect
 fi
-prefields=$(echo $(grep -o "_" <<< $prefix|wc -l) + 1|bc)
-modaudit=$(expr ${prefields} + ${cxt} + 1)
-subjaudit=$(grep -i $(echo ${prefix}|sed s@'_'@','@g) ${audit})
-replacement=$(echo ${subjaudit}\
-   |sed s@[^,]*@@${modaudit}\
-   |sed s@',,'@',1,'@ \
-   |sed s@',$'@',1'@g)
-sed -i s@${subjaudit}@${replacement}@g ${audit}
+routine_end
 
-echo "Module complete"
+
+
+
+
+completion

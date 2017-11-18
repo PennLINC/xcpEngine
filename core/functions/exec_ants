@@ -1,0 +1,5 @@
+exec_ants() {
+   verbose &&  echo_cmd    "${@}"
+               echo_cmd    "${@}" 2>> ${log_proc}
+               ${ANTSPATH}/"${@}"
+}

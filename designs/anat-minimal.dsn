@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+###################################################################
+# This design file stores the values of all variables required to
+# execute a complete task-free functional connectivity pipeline.
+# You may execute the analysis specified in this design file by
+# calling (in any bash terminal):
+#
+# xcpEngine -d <design> -c <cohort> -o <output> <options>
+#
+# Variables fall into five general categories:
+# * ANALYSIS VARIABLES are used at all stages of this analysis.
+# * PIPELINE specifies the modules that comprise the analysis.
+# * GLOBAL VARIABLES are used at all stages of all analyses.
+# * MODULE VARIABLES are used during one stage of the analysis.
+#                  These are typically array variables with array
+#                  indices equal to the index of the analysis
+#                  stage during which they are used.
+# * OUTPUT VARIABLES may be used at all stages of the analysis.
+#                  These are sometimes array variables with array
+#                  indices equal to the value of the primary
+#                  subject identifier. They will appear only in
+#                  localised design files.
+###################################################################
+
+
+###################################################################
+# ANALYSIS VARIABLES
+###################################################################
+
+analysis=struc-ACCELERATOR
+design=${XCPEDIR}/designs/anat-minimal.dsn
+sequence=anatomical
+standard=REWARD%9375x9375x1
+
+###################################################################
+# PIPELINE
+###################################################################
+
+pipeline=struc #,qcanat
+
+###################################################################
+# 1 STRUC
+###################################################################
+
+struc_denoise_anat[1]=1
+struc_prior_weight[1]=0.25
+struc_posterior_formulation[1]='Socrates[1]'
+struc_keepBEImages[1]=0
+struc_floating_point[1]=0
+struc_random_seed[1]=0
+struc_bspline[1]=0
+struc_fit[1]=0.3
+struc_quick[1]=0
+struc_seg_priors[1]=0
+struc_rerun[1]=0
+struc_cleanup[1]=1
+struc_process[1]=BFC-ABE-REG-SEG
+
+###################################################################
+# 2 QCANAT
+###################################################################
+
+qcanat_gm[2]=Y
+qcanat_gm_val[2]=2,4
+qcanat_wm[2]=Y
+qcanat_wm_val[2]=3
+qcanat_csf[2]=Y
+qcanat_csf_val[2]=1
+qcanat_cort[2]=Y
+qcanat_cort_val[2]=4
+qcanat_rerun[2]=0
+qcanat_cleanup[2]=1

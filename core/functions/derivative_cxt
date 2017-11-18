@@ -1,0 +1,28 @@
+derivative_cxt() {
+   local deriv derivative derivatives match property value values
+   declare -A d
+   if [[ -n ${1} ]]
+      then
+      property=$(strslice  "${1}" 1 :)
+      values=$(  strslice  "${1}" 2 :)
+      values=( ${values//|/ } )
+   else
+      property=Type
+      values=all
+   fi
+   load_derivatives
+   for derivative in ${derivatives[@]}
+      do
+      match=0
+      derivative_parse ${derivative}
+      for value in "${values[@]}"
+         do
+         [[ ${value} == all ]]               && match=1 && break
+         contains ${d[${property}]} ${value} && match=1 && break
+      done
+      if (( match == 1 ))
+         then
+         derivative_inherit ${d[Name]} ${prefix}_${d[Name]} from ${d[Name]}
+      fi
+   done
+}

@@ -1,0 +1,31 @@
+# Adapted from a solution by Gilles on StackOverflow -- won't be
+# as efficient with long strings, but supports a delimit character
+# instead
+
+lc_prefix () {
+   local prefix= prefixb n
+   ## Truncate the two strings to the minimum of their lengths
+   if [[ ${#1} -gt ${#2} ]]
+      then
+      set -- "${1:0:${#2}}" "$2" "$3"
+   else
+      set -- "$1" "${2:0:${#1}}" "$3"
+   fi
+   ## Binary search for the first differing character, accumulating the common prefix
+   while [[ ${#1} -gt 1 ]]
+      do
+      n=$(((${#1}+1)/2))
+      if [[ ${1:0:$n} == ${2:0:$n} ]]
+         then
+         prefixb=${prefixb}${1:0:$n}
+         set -- "${1:$n}" "${2:$n}" "$3"
+      else
+         set -- "${1:0:$n}" "${2:0:$n}" "$3"
+      fi
+   done
+   ## Add the one remaining character, if common
+   if [[ $1 = $2 ]]; then prefixb=$prefixb$1; fi
+   ## Truncate the common prefix at the last specified delimiter
+   prefix=${prefixb%${3}*}${3}
+   printf %s "$prefix"
+}

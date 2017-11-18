@@ -1,0 +1,7 @@
+routine_end() {
+   if [[ -n ${routine_description} ]]
+      then
+      eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_END)\""
+   fi
+   unset routine_description
+}

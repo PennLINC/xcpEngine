@@ -1,0 +1,9 @@
+rln() {
+   [[ ${1} == ${2} ]] && return
+   local rootdir=$(lc_prefix ${1} ${2} '/')
+   set -- ${1#$rootdir} ${2#$rootdir}
+   (
+      pushd ${rootdir} >/dev/null
+      ln -sf ${1} ${2}
+   )
+}

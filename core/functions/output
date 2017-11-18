@@ -1,0 +1,14 @@
+output() {
+   local path
+   if [[ ${2:0:1} == '/' ]]
+      then
+      path=${2}
+   elif [[ ${2} == null ]]
+      then
+      path=null
+   else
+      path=${outdir}/${2}
+   fi
+   eval ${1}[${cxt}]=\${path}
+   declared_o[${1}]=${1}
+}

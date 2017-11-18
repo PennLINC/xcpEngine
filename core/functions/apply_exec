@@ -1,0 +1,55 @@
+apply_exec() {
+   local deriv derivative derivatives echo_var final_cmd match output output_long property value values process_generic process_specific
+   declare -A d
+   if contains ${1} ":"
+      then
+      property=$(strslice  "${1}" 1 :)
+      values=$(  strslice  "${1}" 2 :)
+      values=( ${values//|/ } )
+   else
+      property=Type
+      values=( ${1//|/ }     )
+   fi
+   output=${2}
+   if [[ ${output:0:1} == '/' ]]
+      then
+      output_long=${output}.nii.gz
+   else
+      output_long=${outdir}/${output}.nii.gz
+   fi
+   shift 2
+   if contains ${1} 'ECHO:'
+      then
+      echo_var=${1//ECHO:/}
+      shift
+   fi
+   process_generic=${@}
+   load_derivatives
+   for derivative in ${derivatives[@]}
+      do
+      match=0
+      derivative_parse ${derivative}
+      for value in "${values[@]}"
+         do
+         [[ ${value} == all ]]               && match=1 && break
+         contains ${d[${property}]} ${value} && match=1 && break
+      done
+      if (( ${match} == 1 ))
+         then
+         [[ -n ${echo_var} ]] && echo "· [${d[${echo_var}]}]"
+         process_specific=${process_generic//%INPUT/${d[Map]}}
+         process_specific=${process_specific//%OUTPUT/${output_long}}
+         process_specific=${process_specific//%NAME/${d[Name]}}
+         process_specific=${process_specific//%CAPNAME/${d[Name]^}}
+         exec_${process_specific}
+         if is_image ${output_long}
+            then
+            output_long=${output_long//.nii.gz/}
+            derivative        ${d[Name]}              ${output_long//%NAME/${d[Name]}}
+            derivative_set    ${d[Name]}  Type        ${d[Type]}
+            derivative_set    ${d[Name]}  Space       ${d[Space]}
+            derivative_set    ${d[Name]}  Statistic   ${d[Statistic]}
+         fi
+      fi
+   done
+}

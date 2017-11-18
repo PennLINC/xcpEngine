@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Define the path to a verbose image processing log.
+###################################################################
+if [[ -z ${incohort} ]]
+   then
+   export      log=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
+   export log_proc=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG-process
+else
+   export      log=${out_group}/log/${analysis}_${xcp_date}_LOG
+   export log_proc=${out_group}/log/${analysis}_${xcp_date}_LOG-process
+fi
+
+###################################################################
+# If this is called inside of a module, then add the module header
+# information to the verbose log.
+###################################################################
+if [[ -n ${mod_name_short} ]] && [[ -n ${mod_head} ]]
+   then
+   echo \
+"
+
+"                          >> ${log_proc}
+   printx      ${mod_head} >> ${log_proc}
+   echo \
+"
+
+"                          >> ${log_proc}
+fi

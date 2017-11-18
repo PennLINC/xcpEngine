@@ -1,0 +1,203 @@
+temporal_mask() {
+
+<<USAGE
+
+This function computes all framewise quality measures and uses
+these to generate a temporal mask.
+
+temporal_mask     --SIGNPOST=routine_signpost_tag                 \
+                  --INPUT=input_image_without_extension           \
+                  --RPS=file_containing_realignment_parameters    \
+                  --RMS=relative_RMS_displacements_from_MCFLIRT   \
+                  --THRESH=thresholds_for_temporal_masking
+
+Before using this function, ensure that all output variables are
+primed by using temporal_mask_prime.
+
+Threshold Power FD at 0.2, Jenkinson RMS at 0.1, and standardised
+DVARS at 1.5:
+routine           @2
+smooth_spatial    --SIGNPOST=@2           \
+                  --INPUT=intermediate    \
+                  --RPS=rps.1D            \
+                  --RMS=rel_rms.1D        \
+                  --THRESH=fd:0.2,rms:0.1,dv=1.5
+
+USAGE
+
+   ################################################################
+   # INPUTS
+   ################################################################
+   local censor_ts         criterion_val        dict_criteria     \
+         flag_ct           img_i                n_volume          \
+         n_spikes          pct_spikes           q_cr_var          \
+         q_criteria        q_criterion          q_mask            \
+         q_mask_sum        q_masks              q_spkpct          \
+         q_spkvar          q_threshold          q_ts              \
+         rps               rms                  thresh            \
+         tag               marg
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--SIGNPOST='  && tag=${1/--SIGNPOST=}
+      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=} && img_i=${img_i%.nii.gz}
+      contains ${1} '^--RPS='       && rps=${1/--RPS=}
+      contains ${1} '^--RMS='       && rms=${1/--RMS=}
+      contains ${1} '^--THRESH='    && thresh=${1/--USPACE=}
+      shift
+   done
+   
+   ################################################################
+   # This protocol should only be run once per analysis. The
+   # indicator variable below is imported from the pipeline context
+   # into the module context by the priming function.
+   ################################################################
+   (( ${censored[cxt]} == 1 )) && return
+   
+   ################################################################
+   # Compute framewise displacement using the realignment
+   # parameters.
+   ################################################################
+   subroutine              ${tag}.1  [Computing framewise displacement]
+   exec_xcp fd.R     \
+      -r    ${rps}   \
+      -o    ${fd[cxt]}
+   ################################################################
+   # Compute DVARS.
+   ################################################################
+   if ! is_1D  ${dvars[cxt]} \
+   || rerun
+      then
+      subroutine           ${tag}.2  [Computing DVARS]
+      is_image ${meanIntensityBrain[sub]} && marg="-b ${meanIntensityBrain[sub]}"
+      is_image ${meanIntensityBrain[cxt]} && marg="-b ${meanIntensityBrain[cxt]}"
+      exec_xcp dvars                \
+         -i    ${img_i}.nii.gz      \
+         -o    ${dvars_root[cxt]}   \
+         -s    ${intermediate}      \
+         ${marg}
+   fi
+   exec_sys rm -f ${ssd[cxt]} ${ts_quality_idx[cxt]} ${ts_outliers[cxt]}
+   ################################################################
+   # Spatial standard deviation.
+   ################################################################
+   exec_fsl fslstats -t ${img_i}.nii.gz -S >> ${ssd[cxt]}
+   ################################################################
+   # Temporal quality index (AFNI)
+   ################################################################
+   exec_afni 3dTqual     -automask ${img_i}.nii.gz >> ${ts_quality_idx[cxt]}
+   ################################################################
+   # Outlier count
+   ################################################################
+   exec_afni 3dToutcount -automask ${img_i}.nii.gz >> ${ts_outliers[cxt]}
+   ################################################################
+   # Compute FD-DVARS correlation
+   ################################################################
+   exec_xcp featureCorrelation.R -i "${dvars[cxt]},${rms}" \
+                                 >>  ${dv_mo_cor_pre[cxt]}
+   
+   ################################################################
+   # Determine what criteria should be used to generate framewise
+   # quality variables and, if censoring is enabled, the temporal
+   # mask.
+   #
+   # Define framewise quality criteria.
+   ################################################################
+   subroutine              ${tag}.3  [Selecting quality criteria]
+   q_criteria=( ${framewise[cxt]//,/ } )
+   q_mask_sum=${img_i}-nFlags.1D
+   exec_sys    rm -f ${q_mask_sum}
+   declare -A  dict_criteria=(
+      [fd]='fd,framewise displacement'
+      [rms]='rel_rms,relative RMS displacement'
+      [fds]='fd,framewise displacement'
+      [rmss]='rel_rms,relative RMS displacement'
+      [dv]='dvars,standardised DVARS'
+   )
+   ################################################################
+   # Loop through the framewise quality metrics.
+   ################################################################
+   for i in ${!q_criteria[@]}
+      do
+      #############################################################
+      # Parse quality criterion
+      #############################################################
+      q_criterion=$(strslice ${q_criteria[i]} 1 ':')
+      q_threshold=$(strslice ${q_criteria[i]} 2 ':')
+      criterion_val=( ${dict_criteria[$q_criterion]//,/ } )
+      #############################################################
+      # Compute a framewise inclusion mask
+      #############################################################
+      subroutine           ${tag}.4  [Quality criterion: "${criterion_val[@]:1:} < ${q_threshold}"]
+      q_spkvar='n_spikes_'${q_criterion}'['${cxt}']'
+      q_spkpct='pct_spikes_'${q_criterion}'['${cxt}']'
+      q_cr_var=${criterion_val[0]}'['${cxt}']'
+      q_mask=${intermediate}_${cur}-${q_criterion}Mask.1D
+      q_masks=( ${q_masks[@]} ${q_mask} )
+      exec_xcp tmask.R                                \
+         -s    ${!q_cr_var}                           \
+         -t    ${q_threshold}                         \
+         -o    ${q_mask}
+      #############################################################
+      # Count the number and rate of occurrences of superthreshold
+      # values.
+      #############################################################
+      mapfile q_ts                     <  ${q_mask}
+      n_spikes=$(ninstances 0             ${q_ts[@]})
+      n_volume=${#q_ts[@]}
+      if [[ -z ${flag_ct[@]} ]]
+         then
+         flag_ct=( $(repeat ${n_volume} ' 0') )
+      fi
+      pct_spikes=$(arithmetic "${n_spikes}/${n_volume}")
+      echo ${n_spikes}                 >> ${!q_spkvar}
+      echo ${pct_spikes}               >> ${!q_spkpct}
+      #############################################################
+      # Update the total number of times that each frame has been
+      # flagged.
+      #############################################################
+      for i in ${!q_ts[@]}
+          do
+          (( ${q_ts[i]} == 0 )) && (( flag_ct[i]++ ))
+      done
+   done
+   printf '%d\n' ${flag_ct[@]}         >> ${q_mask_sum}
+   ################################################################
+   # Determine whether motion censoring is enabled. If it is, then
+   # prepare to create a temporal mask indicating whether each
+   # volume survives censoring. This temporal mask will be
+   # generated as the union of all framewise flagging masks.
+   #
+   # Before creating a temporal mask, ensure that censoring has
+   # not already been primed in the course of this analysis.
+   #  * It is critical that this step only be performed once in
+   #    the course of each analysis.
+   #  * If censoring has already been primed, then the type of
+   #    censoring requested will be stored in one of the variables:
+   #    censor[cxt] or censor[subjidx]
+   ################################################################
+   subroutine              ${tag}.5 [Applying framewise threshold to time series]
+   ################################################################
+   # Create and write the temporal mask.
+   # Use the criterion dimension and threshold specified by the
+   # user to determine whether each volume should be masked out.
+   ################################################################
+   exec_xcp tmask.R                    \
+      -s    ${q_mask_sum}              \
+      -t    0.5                        \
+      -o    ${tmask[cxt]}              \
+      -m    ${censor_contig[cxt]}
+   configure               censored    1
+   ################################################################
+   # Determine the number of volumes that fail the motion criterion
+   # and print this.
+   ################################################################
+   subroutine              ${tag}.6 [Evaluating data quality]
+   mapfile                 censor_ts < ${tmask[cxt]}
+   n_spikes=$(ninstances 0             ${censor_ts[@]})
+   if (( n_spikes ==  0 )) && (( censor[$cxt] != 0 ))
+      then
+      subroutine           ${tag}.7 [Data are spike-free: deactivating censor]
+      configure            censor      0
+   fi
+
+}

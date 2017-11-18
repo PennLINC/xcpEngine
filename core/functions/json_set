@@ -1,0 +1,4 @@
+json_set() {
+   local json_new=( $(echo ${!1}|$JQ_PATH --raw-output '."'"${2}"'" += {"'"${3}"'": "'"${4}"'"}') )
+   (( ${#} == 4 )) && eval ${1}=\${json_new[@]}
+}

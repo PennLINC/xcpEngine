@@ -12,10 +12,9 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-suppressMessages(require(signal))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(signal)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -81,42 +80,41 @@ if (is.na(opt$out)) {
    quit()
 }
 
-impath <- opt$img
-out <- opt$out
-type <- opt$filter
-maskpath <- opt$mask
-order <- opt$order
-direction <- opt$direction
-hpf <- opt$hipass
-lpf <- opt$lopass
-ripple <- opt$rpass
-ripple2 <- opt$rstop
-sink("/dev/null")
+impath                  <- opt$img
+outpath                 <- opt$out
+type                    <- opt$filter
+maskpath                <- opt$mask
+order                   <- opt$order
+direction               <- opt$direction
+hpf                     <- opt$hipass
+lpf                     <- opt$lopass
+ripple                  <- opt$rpass
+ripple2                 <- opt$rstop
 
 ###################################################################
 # Compute the sequence's repetition time
 ###################################################################
-syscom <- paste("fslinfo",impath,"|grep -i pixdim4|awk '{print $2}'")
-tr <- as.numeric(system(syscom,intern=TRUE))
+hdr                     <- dumpNifti(impath)
+tr                      <- hdr$pixdim[5]
 
 
 ###################################################################
 # 1. Construct the filter
 # a. Compute Nyquist
 ###################################################################
-nyquist <- 1/(2*tr)
+nyquist                 <- 1/(2*tr)
 ###################################################################
 # b. Convert input frequencies to percent Nyquist
 # low pass
 ###################################################################
 if (lpf=="nyquist"){
-  lpnorm <- 1
+  lpnorm                <- 1
 } else {
-  lpf <- as.numeric(lpf)
-  lpnorm <- lpf/nyquist
+  lpf                   <- as.numeric(lpf)
+  lpnorm                <- lpf/nyquist
 }
 if (lpnorm > 1){
-  lpnorm <- 1
+  lpnorm                <- 1
 }
 ###################################################################
 # high pass
@@ -128,59 +126,65 @@ if (hpnorm < 0){
 ###################################################################
 # c. Generate the filter
 ###################################################################
-if (type=='butterworth'){
-  filt <- signal::butter(order, c(hpnorm,lpnorm), "pass", "z")
-} else if (type=='chebyshev1'){
-  filt <- signal::cheby1(order, ripple, 
-                         c(hpnorm,lpnorm), "pass", "z")
-} else if (type=='chebyshev2'){
-  filt <- signal::cheby2(order, ripple2,
-                         c(hpnorm,lpnorm), "pass", "z")
-} else if (type=='elliptic') {
-  filt <- signal::ellip(order, ripple, ripple2,
-                        c(hpnorm,lpnorm), "pass", "z")
+if          (type=='butterworth'){
+  filt                  <- signal::butter(order, c(hpnorm,lpnorm),
+                           "pass", "z")
+} else if   (type=='chebyshev1'){
+  filt                  <- signal::cheby1(order, ripple, 
+                           c(hpnorm,lpnorm), "pass", "z")
+} else if   (type=='chebyshev2'){
+  filt                  <- signal::cheby2(order, ripple2,
+                           c(hpnorm,lpnorm), "pass", "z")
+} else if   (type=='elliptic') {
+  filt                  <- signal::ellip(order, ripple, ripple2,
+                           c(hpnorm,lpnorm), "pass", "z")
 }
+sink("/dev/null")
 
 ###################################################################
 # 2. Load in the image
 ###################################################################
-suppressMessages(require(ANTsR))
-img <- antsImageRead(impath,4)
+img                     <- readNifti(impath)
+out                     <- img
 if (!is.na(maskpath)){
-   mask <- antsImageRead(maskpath,4)
-   imgmat <- timeseries2matrix(img,mask)
+   mask                 <- readNifti(maskpath)
+   logmask              <- (mask == 1)
+   img                  <- img[logmask]
+   dim(img)             <- c(sum(logmask),hdr$dim[5])
+   img                  <- t(img)
 } else {
-   imgmat <- as.array(img)
-   dim(imgmat) <- c(prod(dim(img)[c(1,2,3)]),dim(img)[4])
-   imgmat <- t(imgmat)
+   img                  <- as.array(img)
+   dim(img)             <- c(prod(hdr$dim[2:4]),hdr$dim[5])
+   img                  <- t(img)
 }
-nvol <- dim(imgmat)[1]
-nvox <- dim(imgmat)[2]
+nvol                    <- dim(img)[1]
+nvox                    <- dim(img)[2]
+sink(NULL)
 
 ###################################################################
 # 3. Apply the filter
 ###################################################################
-imgmat_filt <- matrix(nrow=nvol,ncol=nvox)
+img_filt                <- matrix(nrow=nvol,ncol=nvox)
 for (vox in 1:nvox){
-  ts <- imgmat[,vox]
   if (direction==1){
-    ts_filt <- signal::filter(filt,ts)
+    img_filt[,vox]      <- signal::filter(filt,img[,vox])
   } else if (direction==2){
-    ts_filt <- signal::filtfilt(filt,ts)
+    img_filt[,vox]      <- signal::filtfilt(filt,img[,vox])
   }
-  imgmat_filt[,vox] <- ts_filt
 }
 
 ###################################################################
 # 4. Write out the image
 ###################################################################
 if (!is.na(maskpath)){
-   img_filt <- matrix2timeseries(img,mask,imgmat_filt)
+   for (i in 1:nvol) {
+      out[,,,i][logmask]<- img_filt[i,]
+   }
 } else {
-   img_filt <- img
-   imgmat_filt <- t(imgmat_filt)
-   dim(imgmat_filt) <- NULL
-   img_filt[img > -Inf] <- imgmat_filt
+   for (i in 1:nvol) {
+      out[out > -Inf]   <- t(img_filt)
+   }
 }
-antsImageWrite(img_filt,out)
+sink("/dev/null")
+writeNifti(out,outpath,template=impath,datatype='float')
 sink(NULL)

@@ -19,8 +19,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -97,25 +97,27 @@ if ( in1 == in2 ) {
   outmat <- cbind(inmat,outmat)
   
 } else if (grepl('OPprev',in2)) {
-  order <- as.numeric(gsub('^OPprev','',in2))
+  orders <- as.numeric(unlist(strsplit(gsub('^OPprev','',in2),',')))
   inmat <- unname(as.matrix(read.table(in1)))
   nobs <- dim(inmat)[1]
   nvar <- dim(inmat)[2]
   outmat <- matrix(nrow=nobs,ncol=0)
-  if (sign(order) == 1){
-     for (ord in 1:order) {
-       out.prev <- circshift(inmat,c(1*ord,0))
-       out.prev[1:ord,] <- 0
-       outmat <- cbind(outmat,out.prev)
-     }
-  } else if (sign(order) == -1){
-     order=-1*order
-     for (ord in 1:order) {
-       out.prev <- circshift(inmat,c(-1*ord,0))
-       bgn <- dim(inmat)[1]-ord+1
-       fin <- dim(inmat)[1]
-       out.prev[bgn:fin,] <- 0
-       outmat <- cbind(outmat,out.prev)
+  for (order in orders) {
+     if (sign(order) == 1){
+        for (ord in 1:order) {
+          out.prev <- circshift(inmat,c(1*ord,0))
+          out.prev[1:ord,] <- 0
+          outmat <- cbind(outmat,out.prev)
+        }
+     } else if (sign(order) == -1){
+        order=-1*order
+        for (ord in 1:order) {
+          out.prev <- circshift(inmat,c(-1*ord,0))
+          bgn <- dim(inmat)[1]-ord+1
+          fin <- dim(inmat)[1]
+          out.prev[bgn:fin,] <- 0
+          outmat <- cbind(outmat,out.prev)
+        }
      }
   }
   outmat <- cbind(inmat,outmat)
@@ -136,5 +138,7 @@ if ( in1 == in2 ) {
   inmat2 <- unname(as.matrix(read.table(in2)))
   outmat <- cbind(inmat1,inmat2)
 }
+
+outmat <- outmat[,!duplicated(t(outmat))]
 
 write.table(outmat,file=out, col.names = F, row.names = F)

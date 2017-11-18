@@ -13,9 +13,9 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -56,47 +56,42 @@ if (is.na(opt$out)) {
    quit()
 }
 
-refImgPath <- opt$img
-valStr <- opt$values
-outPath <- opt$out
-sink("/dev/null")
+refImgPath              <- opt$img
+valStr                  <- opt$values
+outPath                 <- opt$out
+f <- file()
+sink(tempfile())
 
 
 ###################################################################
 # Parse value string
 ###################################################################
-maskVals <- unlist(strsplit(valStr,','))
+maskVals                <- unlist(strsplit(valStr,','))
 
 
 ###################################################################
 # Read input image
 ###################################################################
-suppressMessages(require(ANTsR))
-refImg <- antsImageRead(refImgPath,3)
-# because getMask does not support -Inf
-# I'll assume your image doesn't have values smaller than -99^9
-mask <- getMask(refImg,-99^9,Inf)
-refImg <- imagesToMatrix(refImgPath,mask)
+refImg                  <- readNifti(refImgPath)
+out                     <- refImg
 
 
 ###################################################################
 # Subset image vector
 ###################################################################
-outImgVec <- refImg
-outImgVec <- outImgVec - outImgVec
-valIdx <- c()
+outImgVec               <- refImg[refImg<Inf] * 0
+valIdx                  <- c()
 for (maskVal in maskVals) {
-   bounds <- as.numeric(unlist(strsplit(maskVal,':')))
-   valIdx <- refImg >= bounds[1] & refImg <= bounds[length(bounds)]
-   outImgVec[valIdx] <- 1
+   bounds               <- as.numeric(unlist(strsplit(maskVal,':')))
+   valIdx               <- refImg >= bounds[1] & refImg <= bounds[length(bounds)]
+   outImgVec[valIdx]    <- 1
 }
 
 
 ###################################################################
 # Write output
 ###################################################################
-outImg <- antsImageClone(mask)
-outImg[mask <= 0] <- 0
-outImg[mask > 0] <- outImgVec
-antsImageWrite(outImg, outPath)
+out[out > -Inf]         <- outImgVec
+sink("/dev/null")
+writeNifti(out,outPath,template=refImgPath,datatype='float')
 sink(NULL)

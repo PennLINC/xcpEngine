@@ -1,0 +1,10 @@
+process() {
+   local path=${outdir}/${2}.nii.gz
+   eval ${1}[${cxt}]=\${path}
+   local output=${1}[${cxt}]
+   if is_image ${out}/${prefix}.nii.gz
+      then
+      exec_sys ln -sf ${out}/${prefix}.nii.gz ${intermediate}.nii.gz
+   fi
+   declared_p=${1}
+}

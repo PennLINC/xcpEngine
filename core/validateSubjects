@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Scan an index of subjects to determine whether any should be
+# removed from the current analysis due to pipeline failure.
+###################################################################
+
+failure_chk() {
+   local ERR_ROOT failures f fids errdir
+   errdir=${out_group}/error
+   [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
+   ERR_ROOT=${errdir}/${analysis}-${xcp_date}
+   failures=$(ls ${ERR_ROOT}-* 2>/dev/null)
+   for f in ${failures}
+      do
+      f=${f//${ERR_ROOT}-/}
+      fids="${fids} ${f}"
+      unset cohort[$f]
+   done
+   if [[ -n ${fids} ]]
+      then
+      echo "
+····································································
+· [Module failure occurred in a number of subjects. They have been]
+· [removed from further analysis.]"
+      for f in ${fids}
+         do
+         echo "· · [${prefix[f]} removed from analysis]"
+      done
+      echo \
+"····································································"
+   fi
+}
+
+failure_chk

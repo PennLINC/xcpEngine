@@ -1,0 +1,9 @@
+write_atlas() {
+   local path=${atlas[sub]}
+   if [[ -n ${1} ]]
+      then
+      local path=${1}
+   fi
+   rm -f ${path}
+   json_print atlas[cxt] >> ${path}
+}

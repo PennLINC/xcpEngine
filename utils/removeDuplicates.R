@@ -18,8 +18,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -28,9 +28,7 @@ suppressMessages(require(pracma))
 option_list = list(
    make_option(c("-c", "--cohort"), action="store", default=NA, type='character',
               help="Path to the initial cohort file, which may contain 
-                  duplicated entries."),
-   make_option(c("-o", "--oidx"), action="store", default=NA, type='character',
-              help="General form of the output path for a subject.")
+                  duplicated entries.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -40,13 +38,14 @@ if (is.na(opt$cohort)) {
    quit()
 }
 
-oidx <- opt$oidx
-oidx <- as.numeric(unlist(strsplit(oidx,split=',')))
 cohortpath <- opt$cohort
-cohort <- read.csv(cohortpath,header=F)
+
 
 ###################################################################
 # Remove any duplicate entries.
 ###################################################################
+cohort <- read.csv(cohortpath,header=T)
+oidx <- grep('id',names(cohort))
+if (length(oidx) == 0) { q() }
 cohort <- cohort[!duplicated(cohort[,oidx]),]
-write.csv(cohort,cohortpath,header=F,row.names=F,quote=F)
+write.table(cohort,cohortpath,row.names=F,quote=F,sep=',')

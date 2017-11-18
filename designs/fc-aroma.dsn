@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+###################################################################
+# This design file stores the values of all variables required to
+# execute a complete neuroimage processing pipeline. You may
+# execute the analysis specified in this design file by calling
+# (in any v4 or higher bash terminal):
+#
+# xcpEngine -d <design> -c <cohort> -o <output> <options>
+#
+# Variables fall into five general categories:
+# * ANALYSIS VARIABLES are used at all stages of this analysis.
+# * PIPELINE specifies the modules that comprise the analysis.
+# * MODULE VARIABLES are used during one stage of the analysis.
+#                  These are typically array variables with array
+#                  indices equal to the index of the module that
+#                  calls them.
+# * OUTPUT VARIABLES may be used at all stages of the analysis.
+#                  These are typically array variables with array
+#                  indices equal to the value of the primary
+#                  subject identifier. They will appear only in
+#                  localised design files.
+###################################################################
+
+
+###################################################################
+# ANALYSIS VARIABLES
+###################################################################
+
+analysis=fc_$(whoami)
+design=${XCPEDIR}/designs/fc-aroma.dsn
+sequence=fc
+standard=MNI%2x2x2_via_OASIS%2x2x2
+
+###################################################################
+# PIPELINE
+###################################################################
+
+pipeline=prestats,coreg,aroma,confound,regress,fcon,reho,alff,net,roiquant,seed,norm,qcfc
+
+###################################################################
+# 1 PRESTATS
+###################################################################
+
+prestats_dvols[1]=4
+prestats_stime[1]=none
+prestats_sdir[1]=Z
+prestats_sptf[1]=none
+prestats_smo[1]=0
+prestats_tmpf[1]=none
+prestats_tmpf_order[1]=0
+prestats_tmpf_pass[1]=0
+prestats_tmpf_ripple[1]=0
+prestats_tmpf_ripple2[1]=0
+prestats_hipass[1]=0
+prestats_lopass[1]=nyquist
+prestats_fit[1]=0.3
+prestats_bbgthr[1]=0.1
+prestats_dmdt[1]=2
+prestats_1ddt[1]=1
+prestats_censor[1]=0
+prestats_framewise[1]=rmss:0.083,fds:0.167,dv:2
+prestats_censor_contig[1]=0
+prestats_rerun[1]=0
+prestats_cleanup[1]=1
+prestats_process[1]=DVO-MPR-STM-MCO-BXT
+
+###################################################################
+# 2 COREG
+###################################################################
+
+coreg_reference[2]=mean
+coreg_cfunc[2]=bbr
+coreg_seg[2]=${segmentation[sub]}
+coreg_wm[2]=3
+coreg_denoise[2]=1
+coreg_refwt[2]=NULL
+coreg_inwt[2]=NULL
+coreg_qacut[2]=0.8,0.9,0.7,0.8
+coreg_decide[2]=1
+coreg_mask[2]=0
+coreg_rerun[2]=0
+coreg_cleanup[2]=1
+
+###################################################################
+# 3 AROMA
+###################################################################
+
+aroma_dim[3]=auto
+aroma_dtype[3]=nonaggr
+aroma_dmdt[3]=2
+aroma_1ddt[3]=1
+aroma_sptf[3]=susan
+aroma_smo[3]=6
+aroma_rerun[3]=0
+aroma_cleanup[3]=1
+
+###################################################################
+# 4 CONFOUND
+###################################################################
+
+confound_rp[4]=0
+confound_rms[4]=0
+confound_gm[4]=0
+confound_gm_path[4]=${segmentation[sub]}
+confound_gm_val[4]=2,4
+confound_gm_ero[4]=5
+confound_gm_rad[4]=0
+confound_wm[4]=mean
+confound_wm_path[4]=${segmentation[sub]}
+confound_wm_val[4]=3
+confound_wm_ero[4]=5
+confound_wm_rad[4]=8
+confound_csf[4]=mean
+confound_csf_path[4]=${segmentation[sub]}
+confound_csf_val[4]=1
+confound_csf_ero[4]=5
+confound_csf_rad[4]=0
+confound_gsr[4]=0
+confound_lms_rad[4]=0
+confound_cc[4]=0
+confound_past[4]=0
+confound_dx[4]=0
+confound_sq[4]=1
+confound_custom[4]=
+confound_rerun[4]=0
+confound_cleanup[4]=1
+
+###################################################################
+# 5 REGRESS
+###################################################################
+
+regress_tmpf[5]=butterworth
+regress_hipass[5]=0.01
+regress_lopass[5]=0.08
+regress_tmpf_order[5]=1
+regress_tmpf_pass[5]=2
+regress_tmpf_ripple[5]=0.5
+regress_tmpf_ripple2[5]=20
+regress_smo[5]=6
+regress_sptf[5]=susan
+regress_usan[5]=default
+regress_usan_space[5]=
+regress_rerun[5]=0
+regress_cleanup[5]=0
+regress_process[5]=TMP-REG
+
+###################################################################
+# 6 FCON
+###################################################################
+
+fcon_atlas[6]=all
+fcon_metric[6]=corrcoef
+fcon_thr[6]=N
+fcon_window[6]=10
+fcon_pad[6]=FALSE
+fcon_rerun[6]=0
+fcon_cleanup[6]=1
+
+###################################################################
+# 7 REHO
+###################################################################
+
+reho_nhood[7]=vertices
+reho_roikw[7]=0 # does nothing at the moment
+reho_sptf[7]=susan
+reho_smo[7]=6
+reho_rerun[7]=0
+reho_cleanup[7]=1
+
+###################################################################
+# 8 ALFF
+###################################################################
+
+alff_hipass[8]=0.01
+alff_lopass[8]=0.08
+alff_sptf[8]=susan
+alff_smo[8]=6
+alff_rerun[8]=0
+alff_cleanup[8]=1
+
+###################################################################
+# 9 NET
+###################################################################
+net_atlas[9]=all
+net_com[9]=genlouvain
+net_gamma[9]=1,1.5,7
+net_consensus[9]=1
+net_rerun[9]=0
+net_cleanup[9]=1
+
+###################################################################
+# 10 ROIQUANT
+###################################################################
+
+roiquant_atlas[10]=all
+roiquant_globals[10]=1
+roiquant_vol[10]=0
+roiquant_rerun[10]=0
+roiquant_cleanup[10]=1
+
+###################################################################
+# 11 SEED
+###################################################################
+
+seed_lib[11]=
+seed_smo[11]=6
+seed_sptf[11]=susan
+seed_usan[11]=
+seed_usan_space[11]=
+seed_rerun[11]=0
+seed_cleanup[11]=1
+
+###################################################################
+# 12 NORM
+###################################################################
+
+norm_rerun[12]=0
+norm_cleanup[12]=1
+
+###################################################################
+# 13 QCFC
+###################################################################
+
+qcfc_atlas[13]=power264,gordon333
+qcfc_sig[13]=fdr
+qcfc_custom[13]=
+qcfc_rerun[13]=0
+qcfc_cleanup[13]=0

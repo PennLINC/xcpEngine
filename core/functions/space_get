@@ -1,0 +1,4 @@
+space_get() {
+   [[ -n ${spaces[sub]} ]] && local spc=$(cat ${spaces[sub]}) || local spc=$(cat ${spaces[cxt]})
+   json_get spc ${@}
+}

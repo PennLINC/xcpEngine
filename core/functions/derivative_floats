@@ -1,0 +1,9 @@
+derivative_floats() {
+   local dfloat=0
+   local dfloat_names=( $(json_keys derivatives_floating) )
+   for i in "${dfloat_names[@]}"
+      do
+      [[ ${1} == ${i} ]] && printf 1 && return
+   done
+   printf 0
+}

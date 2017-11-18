@@ -1,0 +1,10 @@
+atlas_parse() {
+   local key keys
+   a=()
+   a[Name]=${1}
+   keys=$(       json_keys atlas[cxt]  ${a[Name]})
+   for key in $keys
+      do
+      a[${key}]=$(json_get atlas[cxt]  ${a[Name]}  ${key})
+   done
+}

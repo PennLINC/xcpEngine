@@ -7,8 +7,8 @@
 ###################################################################
 # adjmat2pajek inputs an adjacency matrix and outputs Pajek format
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -39,7 +39,10 @@ thr <- opt$threshold
 ###################################################################
 # 1. Read in the adjacency matrix
 ###################################################################
-adjmat <- as.array(unname(read.table(amatPath)))
+adjmat <- as.matrix(read.table(amatPath,header=F))
+if (dim(adjmat)[1] == 1 || dim(adjmat)[2] == 1) {
+   adjmat <- squareform(as.vector(adjmat))
+}
 
 ###################################################################
 # 2. Determine whether the threshold is a numeric value or a

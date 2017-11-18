@@ -14,10 +14,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-suppressMessages(require(ANTsR))
-suppressMessages(require(signal))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(signal)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -109,7 +107,7 @@ nyquist <- 1/(2*tr)
 # b. Convert input frequencies to percent Nyquist
 # low pass
 ################################################################### 
-if (lpf=='n'){
+if (lpf=='nyquist'){
   lpnorm <- 1
 } else {
   lpf <- as.numeric(lpf)

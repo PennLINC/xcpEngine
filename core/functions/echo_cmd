@@ -1,0 +1,4 @@
+echo_cmd() {
+   local process_command=${@}
+   (>&2 printx ${XCPEDIR}/core/CONSOLE_COMMAND)
+}

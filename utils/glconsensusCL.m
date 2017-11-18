@@ -28,6 +28,10 @@ missing = '';
 % now, only the Newman-Girvan is implemented.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 A = dlmread(adjmatpath);
+if size(A,1) == 1 || size(A,2) == 1
+    A = squareform(A);
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parse optional inputs
@@ -89,9 +93,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Write outputs.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dlmwrite([outpath '_community.1D'],S,'delimiter',' ');
-dlmwrite([outpath '_quality.txt'],full(Q),'delimiter',' ');
-dlmwrite([outpath '_agreement.txt'],ni,'delimiter',' ');
-dlmwrite([outpath '_agreement.txt'],ag,'delimiter',' ','-append');
+dlmwrite([outpath '_partition.1D'],S,'delimiter',' ');
+dlmwrite([outpath '_modularity.txt'],full(Q),'delimiter',' ');
+%dlmwrite([outpath '_agreement.txt'],ni,'delimiter',' ');
+%dlmwrite([outpath '_agreement.txt'],ag,'delimiter',' ','-append');
 
 end

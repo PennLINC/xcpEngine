@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Submit the terminator.
+###################################################################
+mod_cmd="
+${XCPEDIR}/core/terminator
+   -s ${incohort}
+   -c ${cxt}
+   -o ${out_super}
+   -t ${trace}
+"
+source ${XCPEDIR}/core/validateGroup
+case ${mode} in
+s)
+   ${mod_cmd}
+   ;;
+c)
+   cluster_submit ${mod_cmd}
+   sleep 5
+   ${XCPEDIR}/utils/qstatus -e ${id}
+   ;;
+esac

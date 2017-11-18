@@ -1,0 +1,10 @@
+add_reference() {
+   local image_target image_var
+   image_var=${1}
+   image_target=${outdir}/${2}.nii.gz
+   rm -f ${image_target}
+   if is_image ${!image_var}
+      then
+      exec_sys ln -sf ${!image_var} ${image_target}
+   fi
+}

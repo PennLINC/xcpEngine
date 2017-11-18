@@ -1,0 +1,12 @@
+routine() {
+   signpost=${1}
+   routine_map="${routine_map}
+· ${signpost}"
+   shift
+   routine_description=${@}
+   verbose && local vid="${signpost} "
+   if [[ -n ${routine_description} ]]
+      then
+      (>&2 eval "echo -e \"$(<${XCPEDIR}/core/CONSOLE_ROUTINE_BEGIN)\"")
+   fi
+}

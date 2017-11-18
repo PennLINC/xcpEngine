@@ -11,9 +11,9 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(pracma)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -32,6 +32,11 @@ option_list = list(
                   etc."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path"),
+   make_option(c("-x", "--mean"), action="store", default=NA, type='character',
+              help="Output mean image: If this option is set to a valid
+                  path, then the demeaning procedure will output the
+                  voxelwise fit of the constant term as the mean
+                  image."),
    make_option(c("-m", "--mask"), action="store", default=NA, type='character',
               help="Spatial mask indicating the voxels of the input image
                   for which the linear model should be computed."),
@@ -53,103 +58,110 @@ if (is.na(opt$out)) {
    quit()
 }
 
-impath <- opt$img
-order <- opt$detrend
-maskpath <- opt$mask
-out <- opt$out
-tmaskpath <- opt$tmask
+impath                  <- opt$img
+order                   <- opt$detrend
+maskpath                <- opt$mask
+outpath                 <- opt$out
+outmean                 <- opt$mean
+tmaskpath               <- opt$tmask
 sink("/dev/null")
 
 ###################################################################
 # 1. Load in the image to determine timeseries dimensions
 ###################################################################
-suppressMessages(require(ANTsR))
-img <- antsImageRead(impath,4)
+img                     <- readNifti(impath)
+hdr                     <- dumpNifti(impath)
+out                     <- img
 if (!is.na(maskpath)){
-   mask <- antsImageRead(maskpath,4)
-   imgmat <- timeseries2matrix(img,mask)
+   mask                 <- readNifti(maskpath)
+   logmask              <- (mask == 1)
+   img                  <- img[logmask]
+   dim(img)             <- c(sum(logmask),hdr$dim[5])
+   img                  <- t(img)
 } else {
-   imgmat <- as.array(img)
-   dim(imgmat) <- c(prod(dim(img)[c(1,2,3)]),dim(img)[4])
-   imgmat <- t(imgmat)
+   img                  <- as.array(img)
+   dim(img)             <- c(prod(hdr$dim[2:4]),hdr$dim[5])
+   img                  <- t(img)
 }
-nvol <- dim(imgmat)[1]
-nvox <- dim(imgmat)[2]
+sink(NULL)
+nvol <- dim(img)[1]
+nvox <- dim(img)[2]
 
 ###################################################################
 # 2. Build a matrix of regressors
 ###################################################################
 # demean
 ###################################################################
-curreg <- rep(1,nvol)
-regmat <- matrix(curreg,nrow=nvol,ncol=1)
+curreg                  <- rep(1,nvol)
+regmat                  <- matrix(curreg,nrow=nvol,ncol=1)
 ###################################################################
-# linear detrend
+# polynomial detrend
 ###################################################################
-if ( order > 0 ){
-  linreg <- seq(0,1,length=nvol)
-  curreg <- linreg
-  regmat <- cbind(regmat,curreg)
-}
-ordin <- 1
-###################################################################
-# higher-order polynomial detrend
-###################################################################
-while ( ordin < order ) {
-  curreg <- curreg * linreg
-  regmat <- cbind(regmat,curreg)
-  ordin <- ordin + 1
+if (order > 0) {
+   linreg               <- seq(0,1,length=nvol)
+   curreg               <- stats::poly(1:(nvol*2),degree=order)
+   curreg               <- curreg[(nvol+1):(nvol*2),]
+   regmat               <- cbind(regmat,curreg)
 }
 
 ###################################################################
 # 3. Determine temporal mask
 ###################################################################
 if (tmaskpath=='ones'){
-  tmask <- rep(1,nvol)
+  tmask                 <- rep(1,nvol)
 } else {
-  tmask <- unname(as.numeric(unlist(read.table(tmaskpath))))
+  tmask                 <- unname(as.numeric(unlist(read.table(tmaskpath))))
 }
-tmask <- as.logical(tmask)
-###################################################################
-# number of retained volumes after censoring
-###################################################################
-nret <- sum(tmask, na.rm=TRUE)
+tmask                   <- as.logical(tmask)
 ###################################################################
 # Censored regressor matrix
 ###################################################################
-regmat_censored <- regmat[tmask,]
+regmat_censored         <- regmat[tmask,]
 
 ###################################################################
 # Iterate through all voxels
 ###################################################################
-imgmat_dmdt <- matrix(nrow=nvol,ncol=nvox)
+img_dmdt                <- matrix(nrow=nvol,ncol=nvox)
+img_mean                <- matrix(nrow=1,   ncol=nvox)
 for (vox in 1:nvox) {
-  ts <- imgmat[,vox]
+  ts                    <- img[,vox]
   
   #################################################################
   # 4. Solve for parameter estimates
   #    using left division
   #################################################################
-  betas <- mldivide(regmat_censored,ts[tmask])
-  dmdt <- t(betas) %*% t(regmat)
+  betas                 <- mldivide(regmat_censored,ts[tmask])
+  dmdt                  <- t(betas) %*% t(regmat)
+  img_mean[,vox]        <- betas[1]
   
   #################################################################
   # 5. Detrend timeseries with respect to regressors
   #################################################################
-  ts_dmdt <- ts - dmdt
-  imgmat_dmdt[,vox] <- ts_dmdt
+  ts_dmdt               <- ts - dmdt
+  img_dmdt[,vox]        <- ts_dmdt
 }
 
 ###################################################################
 # 6. Write out the image
 ###################################################################
 if (!is.na(maskpath)){
-   img_dmdt <- matrix2timeseries(img,mask,imgmat_dmdt)
+   for (i in 1:nvol) {
+      out[,,,i][logmask]<- img_dmdt[i,]
+   }
+   if (!is.na(outmean)){
+      omean             <- array(0,dim=dim(out)[1:3])
+      omean[logmask]    <- img_mean
+   }
 } else {
-   img_dmdt <- img
-   imgmat_dmdt <- t(imgmat_dmdt)
-   dim(imgmat_dmdt) <- NULL
-   img_dmdt[img > -Inf] <- imgmat_dmdt
+   for (i in 1:nvol) {
+      out[out > -Inf]   <- t(img_dmdt)
+   }
+   if (!is.na(outmean)){
+      omean             <- array(0,dim=dim(out)[1:3])
+      omean[omean>-Inf] <- img_mean
+   }
 }
-antsImageWrite(img_dmdt,out)
+sink("/dev/null")
+writeNifti(out,outpath,template=impath,datatype='float')
+if(!is.na(outmean)) { writeNifti(omean,outmean,template=impath,datatype='float') }
 sink(NULL)

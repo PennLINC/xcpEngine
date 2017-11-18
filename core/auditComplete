@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Update the audit file to reflect successful completion of the
+# module.
+###################################################################
+
+id_var=( ${ids[sub]//,/ } )
+modaudit=$(( ${#id_var[@]} + cxt + 1 ))
+previous=$(( modaudit - 1 ))
+mapfile subjaudit < ${audit[sub]}
+auditvals=( ${subjaudit[1]//,/ } )
+auditvals=( ${auditvals[@]:0:$previous} 1 ${auditvals[@]:$modaudit:${#auditvals[@]}} )
+subjaudit[1]=$(join_by ',' "${auditvals[@]}")
+
+rm -f ${audit[sub]}
+echo ${subjaudit[0]} >> ${audit[sub]}
+echo ${subjaudit[1]} >> ${audit[sub]}

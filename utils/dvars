@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Utility for computing standardised DVARS following the approach
+# of Dr. Nichols at FMRIB
+#
+# Supersedes dvars.R, but has since been supplanted by another,
+# more robust and sophisticated approach that will be implemented
+# in the future:
+# https://github.com/asoroosh/DVARS
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source   ${XCPEDIR}/core/constants
+source   ${XCPEDIR}/core/functions/library.sh
+readonly SD2IQR=1.34897950039
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: `basename $0` -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -i : Input image
+      The time series for which DVARS is to be computed
+
+ -o : Output root
+      The root path where all DVARS time series will be written.
+      The following 1D files will be created:
+      
+      output_root-raw.1D : Raw DVARS time series
+      output_root-std.1D : Globally standardised DVARS time series
+      output-root-vox.1D : Voxelwise standardised DVARS time series
+
+Optional arguments:
+ -s : Scratch space/intermediate output path
+      Path for input and output of temporary files (intermediates)
+      (default: current directory)
+
+ -m : Mean intensity image
+      The mean voxelwise intensity of the input time series. This
+      should have been derived before any demeaning steps.
+
+ -b : Brain-extracted mean intensity image
+      A brain extracted version of -m. There is no need to
+      specify -m if -b is specified.
+
+ -d : Demeaned input
+      Indicates that the input data have been demeaned. If this
+      flag is set, then either the -m or -b argument must also
+      be passed with an appropriate pre-demeaning image.
+
+
+endstream
+}
+
+###################################################################
+# Define defaults
+###################################################################
+[[ -z ${intermediate} ]] && intermediate=$(pwd)/dvars~TEMP~
+demeaned=0
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "i:o:s:m:b:d:" OPTION
+   do
+   case $OPTION in
+   i)
+      input=${OPTARG}
+      ! is_image ${input} && Usage && exit
+      ;;
+   o)
+      output=${OPTARG}
+      ;;
+   s)
+      intermediate=${OPTARG}-dvars
+      ;;
+   m)
+      meanIntensity=${OPTARG}
+      ! is_image ${meanIntensity} && Usage && exit
+      ;;
+   b)
+      meanIntensityBrain=${OPTARG}
+      ! is_image ${meanIntensityBrain} && Usage && exit
+      ;;
+   d)
+      demeaned=${OPTARG}
+      (( demeaned != 1 )) && (( demeaned != 0 )) && Usage && exit
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+      ;;
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[  -z ${input}   ]] && Usage && exit
+[[  -z ${output}  ]] && Usage && exit
+
+is_image ${meanIntensityBrain} && meanIntensity=${meanIntensityBrain}
+(( demeaned == 1  )) && [[ -z ${meanIntensity} ]] && Usage && exit
+
+
+
+
+
+
+###################################################################
+# Compute the temporal mean
+###################################################################
+if ! is_image ${meanIntensity}
+   then
+   exec_fsl fslmaths ${input} \
+            -Tmean   ${intermediate}-meanIntensity.nii.gz
+   meanIntensity=${intermediate}-meanIntensity.nii.gz
+fi
+
+
+
+
+
+###################################################################
+# Identify brain tissue
+###################################################################
+if ! is_image ${meanIntensityBrain}
+   then
+   exec_fsl bet ${meanIntensity} ${intermediate}-meanIntensityBrain.nii.gz
+   meanIntensityBrain=${intermediate}-meanIntensityBrain.nii.gz
+fi
+
+
+
+
+
+###################################################################
+# Compute a robust estimate of the voxelwise temporal standard
+# deviation as a scaled interquartile range
+###################################################################
+if ! is_image ${temporalSD}
+   then
+   exec_fsl fslmaths ${input} -Tperc 25 ${intermediate}-lowerQuartile.nii.gz
+   exec_fsl fslmaths ${input} -Tperc 75 ${intermediate}-upperQuartile.nii.gz
+   exec_fsl fslmaths ${intermediate}-upperQuartile.nii.gz   \
+            -sub     ${intermediate}-lowerQuartile.nii.gz   \
+            -div     ${SD2IQR}                              \
+            ${intermediate}-temporalSD.nii.gz
+   temporalSD=${intermediate}-temporalSD.nii.gz
+fi
+
+
+
+
+
+###################################################################
+# Compute a non-robust estimate of the lag-1 autocorrelation
+###################################################################
+if (( demeaned == 1 ))
+   then
+   exec_fsl fslmaths ${input}          \
+            -Tar1    ${intermediate}-temporalAR.nii.gz
+else
+   exec_fsl fslmaths ${input}          \
+            -sub     ${meanIntensity}  \
+            -Tar1    ${intermediate}-temporalAR.nii.gz
+fi
+temporalAR=${intermediate}-temporalAR.nii.gz
+###################################################################
+# Predict the standard deviation of the temporal difference time
+# series
+###################################################################
+exec_fsl fslmaths ${temporalAR}  \
+   -mul  -1                      \
+   -add  1                       \
+   -mul  2                       \
+   -sqrt                         \
+   -mul  ${temporalSD}           \
+   ${intermediate}-predictedSD.nii.gz
+predictedSD=${intermediate}-predictedSD.nii.gz
+###################################################################
+# Save the mean value of the predicted SD
+###################################################################
+predictedSDMean=$(exec_fsl fslstats ${predictedSD} \
+                                 -k ${meanIntensityBrain} -M)
+###################################################################
+# Compute the temporal difference squared time series
+###################################################################
+nvol=$(exec_fsl   fslnvols ${input})
+exec_fsl fslroi   ${input} ${intermediate}-t-1.nii.gz 0 $((nvol - 1))
+exec_fsl fslroi   ${input} ${intermediate}-t.nii.gz   1 ${nvol}
+exec_fsl fslmaths ${intermediate}-t.nii.gz   \
+         -sub     ${intermediate}-t-1.nii.gz \
+         -sqr     ${intermediate}-tdiff-sq.nii.gz
+
+
+
+
+
+###################################################################
+# Compute the voxelwise standardised image
+###################################################################
+exec_fsl fslmaths ${intermediate}-t.nii.gz   \
+         -sub     ${intermediate}-t-1.nii.gz \
+         -div     ${predictedSD}             \
+         -sqr     ${intermediate}-tdiff-vox-std.nii.gz
+
+
+
+
+
+###################################################################
+# Compute the raw DVARS
+###################################################################
+dvars_raw=( $(
+exec_fsl fslstats                               \
+   -t    ${intermediate}-tdiff-sq.nii.gz        \
+   -k    ${meanIntensityBrain} -M) )
+###################################################################
+# Compute the standardised DVARS
+###################################################################
+exec_sys rm -f ${output}-raw.1D
+exec_sys rm -f ${output}-std.1D
+exec_sys rm -f ${output}-vox.1D
+dvars_vox=( $(
+exec_fsl fslstats                               \
+   -t    ${intermediate}-tdiff-vox-std.nii.gz   \
+   -k    ${meanIntensityBrain} -M) )
+printf '%f\n' 0 >> ${output}-raw.1D
+printf '%f\n' 0 >> ${output}-std.1D
+printf '%f\n' 0 >> ${output}-vox.1D
+for i in ${!dvars_raw[@]}
+   do
+   dvars_std[i]=$(arithmetic "sqrt(${dvars_raw[i]}) / ${predictedSDMean}" 2>/dev/null)
+   dvars_vox[i]=$(arithmetic "sqrt(${dvars_vox[i]})" 2>/dev/null)
+   printf '%f\n' ${dvars_raw[i]} >> ${output}-raw.1D
+   printf '%f\n' ${dvars_std[i]} >> ${output}-std.1D
+   printf '%f\n' ${dvars_vox[i]} >> ${output}-vox.1D
+done
+###################################################################
+# Compute the mean DVARS
+###################################################################
+exec_xcp 1dTool.R -i ${output}-std.1D -o mean -f ${output}-mean.txt
+
+(( trace == 0 )) && rm -f ${intermediate}*

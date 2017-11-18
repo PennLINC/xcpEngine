@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Ensure that the compulsory argument "path to design file" is
+# reasonably defined.
+###################################################################
+if [[ -z ${indesign} ]] || [[ ! -s ${indesign} ]]
+   then
+   echo \
+"· [D]Missing or empty design file
+· [D]Aborting"
+   usage
+   exit 2
+fi
+indesign=$(abspath ${indesign})
+
+
+
+
+
+###################################################################
+# Load the design file.
+###################################################################
+echo "· [D][${indesign}]"
+source ${XCPEDIR}/core/global 2>/dev/null
+source ${indesign}            2>/dev/null
+###################################################################
+# Verify that the design variable specified in the design file
+# points to the design file. If it does not, then overwrite it.
+###################################################################
+if [[ ${indesign} != ${design} ]]
+   then
+   sed -i -e s@'^design=.*$'@'design='${indesign}@ ${indesign}
+   source ${indesign}         2>/dev/null
+fi
+###################################################################
+# Perform any direct assignments. Override design variables.
+###################################################################
+source ${XCPEDIR}/core/assignDirect

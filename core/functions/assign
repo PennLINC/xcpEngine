@@ -1,0 +1,39 @@
+assign() {
+   local input input_try type
+   [[ ${1} == image ]] && type=${1} && shift
+   [[ ${1} == 1dim  ]] && type=${1} && shift
+   [[ ${1} == files ]] && type=${1} && shift
+   [[ ${1} == value ]] && type=${1} && shift
+   [[ -z ${type}    ]] && type=value
+   while (( $# > 0 ))
+      do
+      if [[ -z ${input} ]]
+         then
+         input_try=${1}
+         case $type in
+         image)
+            is_image ${!input_try} && input=${!input_try}
+            ;;
+         1dim)
+            is_1D ${!input_try} && input=${!input_try}
+            ;;
+         files)
+            [[ -s ${!input_try} ]] && input=${!input_try}
+            ;;
+         value)
+            [[ -n ${!input_try} ]] && input=${!input_try}
+            ;;
+         esac
+      fi
+      (( $#   >  1  )) && shift || break
+      [[ ${1} == as ]] && shift && break
+      [[ ${1} == or ]] && shift
+      [[ ${1} == otherwise ]]   && shift && input=${1} && shift
+   done
+   if [[ -n ${input} ]]
+      then
+      eval ${1}=\${input}
+   else
+      unset ${1}
+   fi
+}

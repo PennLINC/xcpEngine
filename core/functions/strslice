@@ -1,0 +1,73 @@
+strslice() {
+   local bounds c d domains e i l m o q r s sliced
+   i=${1}
+   shift
+   while [[ -n ${1} ]]
+      do
+      d=','
+      domains=( ${1//,/ } )
+      shift
+      for m in "${domains[@]}"
+         do
+         bounds=( ${m//:/ } )
+         if is_integer ${bounds[0]}
+            then
+            q=( ${1//:/ } )
+            q=( ${q//,/ } )
+            if [[ -n ${1} ]] \
+            && ! is_integer ${q[0]}
+               then
+               d=${1}
+               shift
+            fi
+            ! is_integer ${bounds[1]} && bounds[1]=${bounds[0]}
+            sliced=( ${i//${d}/ } )
+            (( ${bounds[0]} >  ${#sliced[@]} )) && echo ${i} && return
+            (( ${bounds[1]} >  ${#sliced[@]} )) && echo ${i} && return
+            (( ${bounds[0]} < -${#sliced[@]} )) && echo ${i} && return
+            (( ${bounds[1]} < -${#sliced[@]} )) && echo ${i} && return
+            is+integer ${bounds[0]} && s=+ || local s=-
+            is+integer ${bounds[1]} && e=+ || local e=-
+            case ${s}${e} in
+            ++)
+               s=$(( ${bounds[0]} - 1 ))
+               e=$(( ${bounds[1]} - 1 ))
+               ;;
+            +-)
+               s=$(( ${bounds[0]} - 1 ))
+               e=$(( ${#sliced[@]} + ${bounds[1]} ))
+               ;;
+            -+)
+               s=$(( ${#sliced[@]} + ${bounds[0]} ))
+               e=$(( ${bounds[1]} - 1 ))
+               ;;
+            --)
+               s=$(( ${#sliced[@]} + ${bounds[0]} ))
+               e=$(( ${#sliced[@]} + ${bounds[1]} ))
+               ;;
+            esac
+            r=$(( ${e} - ${s} ))
+            unset o bounds
+            if is+integer ${r}
+               then
+               l=$(( ${e} - ${s} + 1 ))
+               o=${sliced[@]:${s}:${l}}
+            elif is_integer ${r}
+               then
+               l=$(( ${s} - ${e} + 1 ))
+               unset o
+               for (( index=${s} ; index>=${e} ; index-- ))
+                  do
+                  o="${o} ${sliced[index]}"
+               done
+            fi
+            c="${c} ${o}"
+         fi
+      done
+      c=$(echo ${c})
+      i=${c// /${d}}
+      i=${i[@]//}
+      unset c
+   done
+   echo ${i}
+}

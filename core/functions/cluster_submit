@@ -1,0 +1,27 @@
+cluster_submit() {
+   (( $# == 0 )) && return
+   local id logfile
+   case ${level} in
+   subject)
+      logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
+      ;;
+   group)
+      logfile=${out_group}/log/${analysis}_${xcp_date}_LOG
+      ;;
+   esac
+   [[ ! -e ${logfile} ]] \
+      && eval "echo -e \"${log_head}\"" >> ${logfile}
+   id=$(qsub         \
+      -V             \
+      -S /bin/bash   \
+      -terse         \
+      -cwd           \
+      -j y           \
+      -o ${logfile}  \
+      ${cspec[cxt]}  \
+      $@)
+   ids="${ids} ${id}"
+}
+
+# THIS IS NOT A LIBRARY FUNCTION.
+# IT IS USED EXCLUSIVELY BY THE PIPELINE ENGINE TO MANAGE GRID SUBMISSIONS.

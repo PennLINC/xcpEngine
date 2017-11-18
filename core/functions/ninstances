@@ -1,0 +1,7 @@
+ninstances() {
+   local char=$1
+   shift
+   local string=$(echo ${@})
+   reduced="${string//[^${char}]}"
+   printf ${#reduced}
+}

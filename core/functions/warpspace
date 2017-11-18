@@ -1,0 +1,204 @@
+warpspace() {
+   local a_chk       a_edges     d_chk       d_edges     e \
+         edges       f_chk       f_edges     i           k \
+         layer       n           node_chk    nodes       o \
+         objects     output      route       source      t \
+         target      v           x           xfm         zinter
+   [[ -n ${atlas[sub]}    ]] && local a_json=$(cat ${atlas[sub]})
+   [[ -n ${aux_imgs[sub]} ]] && local d_json=$(cat ${aux_imgs[sub]})
+   [[ -n ${spaces[sub]}   ]] && local s_json=$(cat ${spaces[sub]})
+   declare -A        s           d           a
+   ################################################################
+   # [1] PARSE INPUTS
+   #---------------------------------------------------------------
+   # i         Image to be warped
+   # o         Output path for warped image
+   # n         Interpolation scheme
+   # v         voxel (0) OR mm (1) coordinates
+   # target    Target space to warp to
+   ################################################################
+   i=${1}
+   o=${2}
+   v='-l'
+   target=( ${3//:/ } )
+   if [[ -n ${target[1]} ]]
+      then
+      source=${target[0]}
+      target=${target[1]}
+      [[ ${source} == ${target} ]] && ln -sf ${i} ${o} && return 0
+   else
+      target=${target[0]}
+      #############################################################
+      #     Determine the coordinate space of origin, if it has not
+      #     been passed explicitly.
+      #
+      #     Case 1: The input is an atlas.
+      #############################################################
+      if contains ${i} "atlas:"
+         then
+         i=${i//atlas:/}
+         atlas_parse ${i}
+         source=${a[Space]}
+         i=${a[Map]}
+      #############################################################
+      #     Case 2: The input is a derivative.
+      #############################################################
+      elif ! is_image ${i}
+         then
+         source=$( json_get d_json ${i} Space)
+         i=$(      json_get d_json Map   ${i})
+      #############################################################
+      #     Case 3: The source is otherwise unspecified. Default to
+      #     analyte space.
+      #############################################################
+      else
+         source=${space[sub]}
+      fi
+      i=$(eval echo ${i})
+   fi
+   if [[ -n ${4} ]]
+      then
+      (( ${4} == 0 )) && unset v
+      n="-n ${4}"
+   fi
+   ################################################################
+   # [2] PARSE SPATIAL METADATA
+   #---------------------------------------------------------------
+   #        Parse available spaces (nodes) and transforms (edges)
+   ################################################################
+   objects=$(json_keys s_json)
+   for k    in    $objects
+      do
+      #############################################################
+      #     Determine whether each object in the spatial metadata
+      #     is a space or a transform. Spaces include the 'Map'
+      #     property, while transforms do not.
+      #############################################################
+      node_chk=$(json_get s_json ${k} Map)
+      k=${k//\"/}
+      #############################################################
+      #     Add spaces to the list of available nodes.
+      #     First ensure that the space is not already listed.
+      #############################################################
+      if [[ ${node_chk} != null ]]
+         then
+         k=${k//\%*/}
+         [[ ${nodes[@]//${k}/} == ${nodes[@]} ]] && nodes=("${nodes[@]}" ${k})
+      #############################################################
+      #     Add transforms to the list of available edges.
+      #     First ensure that the transform is not already listed.
+      #############################################################
+      else
+         [[ ${edges[@]//${k}/} == ${edges[@]} ]] && edges=("${edges[@]}" ${k}) || continue
+         ##########################################################
+         #  TODO
+         #  Multilayer matrix support. Transforms contributed by
+         #  different programs should be routed differently.
+         ##########################################################
+         a_chk=$( json_get s_json ${k} TransformANTs  )
+         f_chk=$( json_get s_json ${k} TransformFSL   )
+         d_chk=$( json_get s_json ${k} TransformDRAMMS)
+         if [[    -n  ${a_chk}    ]]
+            then
+            a_edges=("${a_edges[@]}" ${k})
+         fi
+         if [[    -n  ${f_chk}    ]]
+            then
+            f_edges=("${f_edges[@]}" ${k})
+         fi
+         if [[    -n  ${d_chk}    ]]
+            then
+            d_edges=("${d_edges[@]}" ${k})
+         fi
+      fi
+   done
+   ################################################################
+   # [3] ROUTE TRANSFORM
+   #---------------------------------------------------------------
+   #        Determine the shortest route from the source space to
+   #        the target space.
+   #
+   #        This routing uses Dijkstra's algorithm on the graph
+   #        defined from the metadata above.
+   ################################################################
+   nodes=$(join_by ',' "${nodes[@]}")
+   edges=$(join_by ',' "${edges[@]}")
+   ################################################################
+   #        If the source and target spaces are identical, then
+   #        apply only the identity transform.
+   ################################################################
+   if [[ ${source//\%*/} == ${target//\%*/} ]]
+      then
+      route=()
+   ################################################################
+   #        Determine whether the input is an image or a coordinate
+   #        If it's an image, use the forward transforms.
+   ################################################################
+   elif is_image ${i}
+      then
+      route=( $(${XCPEDIR}/utils/warprouter.R \
+         -n ${nodes} \
+         -e ${edges} \
+         -s ${source//\%*/} \
+         -t ${target//\%*/}) )
+   ################################################################
+   #        If it's a coordinate, use the inverse transforms.
+   ################################################################
+   else
+      route=( $(${XCPEDIR}/utils/warprouter.R \
+         -n ${nodes} \
+         -e ${edges} \
+         -s ${target//\%*/} \
+         -t ${source//\%*/}) )
+   fi
+   contains ${route[0]} NULL && return
+   ################################################################
+   # [4] EXECUTE TRANSFORM
+   #---------------------------------------------------------------
+   #        Obtain the target reference and perform the warp.
+   ################################################################
+   target=$(json_get s_json ${target} Map)
+   layer=${route[0]}
+   route=( "${route[@]:1}" )
+   ################################################################
+   #        Determine whether input is an image or a coordinate.
+   #        If it's an image, use antsApplyTransforms.
+   ################################################################
+   if is_image ${i}
+      then
+      for e in "${route[@]}"
+         do
+         t=$(json_get_array s_json ${e} TransformANTs)
+         for x in ${t}
+            do
+            xfm="-t ${x} ${xfm}"
+         done
+      done
+      exec_ants antsApplyTransforms -e 3 -d 3 \
+         -i ${i}  -r    ${target} \
+         -o ${o}  ${n}  ${xfm}
+   ################################################################
+   #        If it's a coordinate, use pointTransform.
+   #        Note that this is routed backwards.
+   #        Also note that a reference image is required for the
+   #        source.
+   ################################################################
+   else
+      source=$(json_get s_json ${source} Map)
+      for e in "${route[@]}"
+         do
+         t=$(json_get_array s_json ${e} TransformANTs)
+         for x in ${t}
+            do
+            x=$(eval echo ${x})
+            xfm="${xfm} -t ${x}"
+         done
+      done
+      rm -f ${o}
+      [[ -n ${intermediate} ]] && zinter="-n ${intermediate}"
+      exec_xcp pointTransform          \
+         -v ${v}        -i ${i}        \
+         -s ${source}   -r ${target}   \
+         ${xfm}         ${zinter}      >> ${o}
+   fi
+}

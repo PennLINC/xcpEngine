@@ -6,107 +6,200 @@
 
 
 ###################################################################
-# Р Ћ 2015-2016
+# Р Ћ 2015-2017
 ###################################################################
-#
-# xcpEngine is an engine that reads in functional connectivity
-# pipelines (design files) and deploys an assortment of multimodal
-# analytic tools in order to run the pipelines.
-#
-# Created by Rastko Ciric based on prior work by Ted Satterthwaite
-# Contact: rastko@mail.med.upenn.edu
-#
-# What is XCP short for? Nobody knows what the X represents, but
-# CP almost certainly stands for Communist Party.
-#
-# This program is free software: you can redistribute it and/or 
-# modify it under the terms of the GNU General Public License as 
-# published by the Free Software Foundation.
-#
-# Any third-party programs distributed with xcpEngine are
-# distributed under their own licenses.
-#
-# As a courtesy, we ask that you include the following citations
-# in publications that make use of this program:
-# (motion paper 4)
-# Ciric R, Wolf DH, Power JD, Roalf DR, Baum GL, Ruparel K,
-#    Shinohara RT, Elliott MA, Eickhoff SB, Davatzikos C, Gur RC,
-#    Gur RE, Bassett DS, Satterthwaite TD (in submission)
-#    Benchmarking confound regression strategies for the control
-#    of motion artifact in studies of functional connectivity.
-#
-# Dependencies:
-#  * FSL (available from FMRIB)
-#  * R and the following packages (available from CRAN)
-#      * ANTsR
-#      * pracma
-#      * igraph
-#      * optparse
-#      * signal
-#  * AFNI (available from AFNI/NIfTI server)
-#  * Other packages may be required for implementation of specific
-#    strategies, e.g. for denoising.
-###################################################################
+<< XCPENGINE
 
-Usage(){
-   echo ""; echo ""; echo ""
-   echo "Usage: `basename $0` -d <design> <options>"
-   echo ""
-   echo "Compulsory arguments:"
-   echo " -d : Primary design file for pipeline:"
-   echo "      Use xcpConfig for guided creation of a design"
-   echo "      file."
-   echo ""
-   echo "Optional arguments:"
-   echo " -m : Execution mode"
-   echo "      Input can either be 'c' (for execution on a computing"
-   echo "      cluster) or 's' (for serial execution on a single"
-   echo "      machine)[default]"
-   echo " -t : Trace:"
-   echo "      If the XCP Engine is called with the -t argument,"
-   echo "      then all commands called by the XCP Engine will"
-   echo "      be traced and explicitly replicated in a log"
-   echo "      file. This log file can then be used to debug"
-   echo "      output or can be converted to a standalone"
-   echo "      pipeline."
-   echo ""; echo ""; echo ""
+ xcpEngine is software that reads in image processing pipelines
+ (design files) and deploys an assortment of multimodal analytic
+ tools in order to run those pipelines.
+
+ Development team:
+ Lead:         Rastko Ciric 
+               rastko@mail.med.upenn.edu
+ Multimodal:   Adon FG Rosen
+               adrose@mail.med.upenn.edu
+ PI:           Ted Satterthwaite
+               sattertt@mail.med.upenn.edu
+ 
+ What is XCP short for? Nobody knows what the X represents, but
+ CP almost certainly stands for Communist Party.
+
+ This program is free software: you can redistribute it and/or 
+ modify it under the terms of the GNU General Public License as 
+ published by the Free Software Foundation.
+
+ Any third-party programs distributed with xcpEngine are
+ distributed under their own licenses.
+
+ As a courtesy, we ask that you include the following citations
+ in publications that make use of this program:
+
+ Ciric R, Wolf DH, Power JD, Roalf DR, Baum GL, Ruparel K,
+    Shinohara RT, Elliott MA, Eickhoff SB, Davatzikos C, Gur RC,
+    Gur RE, Bassett DS, Satterthwaite TD (in press)
+    Benchmarking participant-level confound regression strategies
+    for the control of motion artifact in studies of functional
+    connectivity. NeuroImage.
+
+ Dependencies:
+  * FSL (available from FMRIB)
+  * R and the following packages (available from CRAN)
+      * RNifti
+      * pracma
+      * optparse
+      * signal
+  * ANTs (available from GitHub)
+  * AFNI (available from AFNI/NIfTI server)
+  * Convert3D (available from ITK-Snap server)
+  * Other packages may be required for implementation of specific
+    strategies, e.g. for denoising.
+ 
+ XCP v0.6.0 ACCELERATOR
+
+XCPENGINE
+###################################################################
+[[ -z    ${XCPEDIR}    ]] \
+&& echo  "[XCPEDIR is undefined. Aborting.]"                && exit
+source   ${XCPEDIR}/core/constants
+source   ${XCPEDIR}/core/functions/library.sh
+source   ${XCPEDIR}/core/functions/cluster_submit
+
+usage(){
+cat << endstream
+___________________________________________________________________
+
+
+   Usage: `basename $0` -d <design> <options>
+
+   Compulsory arguments:
+    -d : Primary design file for pipeline:
+         The design file specifies the pipeline modules to
+         be included in the current analysis and configures
+         any parameters necessary to run the modules.
+    -c : Cohort file for pipeline input:
+         A comma-separated catalogue of the analytic sample.
+         Each row corresponds to a subject, and each column
+         corresponds either to an identifier or to an input.
+    -o : Parent directory for pipeline output:
+         A valid path on the current filesystem specifying
+         the directory wherein all output from the current
+         analysis will be written.
+
+   Optional arguments:
+    -m : Execution mode:
+         Input can either be 's' (for serial execution on a
+         single machine)[default], 'c' (for execution on a
+         computing cluster) or a path to a file (for execution
+         on a computing cluster, subject to the specifications
+         defined in the file).
+    -i : Scratch space for pipeline intermediates:
+         Some systems operate more quickly when temporary
+         files are written in a dedicated scratch space. This
+         argument enables a scratch space for intermediates.
+    -r : Root directory for inputs:
+         If all paths defined in the cohort file are defined
+         relative to a root directory, then this argument will
+         define the root directory. Otherwise, all paths will
+         be treated as absolute.
+    -t : Trace:
+         Integer value ( 0 - 3 ) that indicates the level
+         of verbosity during module execution. Higher
+         levels reduce readability but provide useful
+         information for troubleshooting.
+         0  [default]: Human-readable explanations of
+            processing steps and error traces only.
+         1: Explicitly trace module-level computations.
+            Print a workflow map when execution completes.
+         2: Explicitly trace module- and utility-level
+            computations.
+         3: All commands called by the module and all
+            children are traced and explicitly replicated
+            in a log file.
+
+
+endstream
 }
 ###################################################################
-# Set constants and defaults (serial/local run)
+# Set defaults (serial/local run), quiet
 ###################################################################
-readonly RED='\033[0;31m'
-readonly RCL='\033[0m'
 mode=s
+trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "d:m:t" OPTION
+while getopts "d:i:c:o:m:r:t:a:uhv" OPTION
    do
    case $OPTION in
    d)
-      design=${OPTARG}
+      indesign=${OPTARG}
+      ;;
+   i)
+      scratch=${OPTARG}
+      ;;
+   c)
+      incohort=${OPTARG}
+      ;;
+   o)
+      out_super=${OPTARG}
       ;;
    m)
       mode=${OPTARG}
       ;;
+   r)
+      inroot=${OPTARG}
+      ;;
    t)
-      set -x
-      trace_prop="-t 1"
+      trace=${OPTARG}
+      (( trace > 3 )) && trace=3
+      ;;
+   v)
+      cat ${XCPEDIR}/core/VERSION
+      exit 1
+      ;;
+   a)
+      asgt=( ${asgt[@]} -a ${OPTARG} )
       ;;
    *)
-      echo "Option not recognised: ${OPTARG}"
-      Usage
-      exit
+      usage
+      exit 1
+      ;;
    esac
 done
 shift $((OPTIND-1))
+
+
+
+
+
 ###################################################################
-# Ensure that the compulsory argument "path to design file" has
-# been defined.
+# Validate and parse the design and cohort files.
+# All pipeline variables are available after validation.
 ###################################################################
-[[ ! -e ${design} ]] && Usage && exit
-indesign=${design}
-source $design 2>/dev/null
+echo \
+"
+Constructing a pipeline based on user specifications
+····································································"
+source ${XCPEDIR}/core/validateDesign
+source ${XCPEDIR}/core/validateIntermediate
+source ${XCPEDIR}/core/validateCohort
+source ${XCPEDIR}/core/validateOutput
+source ${XCPEDIR}/core/validateMode
+echo \
+"····································································"
+
+
+
+
+
+###################################################################
+# Obtain a timestamp for the current deployment of the engine.
+###################################################################
+export xcp_date=$(date +%Y%m%d%H%M)
+###################################################################
+# Prepare to analyse the entire pipeline.
+###################################################################
+modules=( ${pipeline//,/ } )
 
 
 
@@ -114,88 +207,16 @@ source $design 2>/dev/null
 
 ###################################################################
 # Verify that all dependencies are installed.
-# Obtain version information for all dependencies.
+# Obtain version information for all general and specific
+# dependencies.
 ###################################################################
-source ${XCPEDIR}/settings/checkDependenciesXCP
-
-
-
-
-
+source         ${XCPEDIR}/core/checkDependenciesXCP
+mkdir -p       ${out_group}/dependencies
 ###################################################################
-# Launch the pipeline.
+# Write version information to the version tracking file.
 ###################################################################
-echo ""; echo ""; echo ""
-echo -e "###################################################################"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭${RCL}                      XCP ${RED}★ ★ ★${RCL} ENGINE                     ${RED}☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "###################################################################"
-echo ""; echo ""; echo ""
-###################################################################
-# Load the design file.
-###################################################################
-echo "...Constructing a pipeline based on user specifications..."
-echo " * ${design}"
-source $design 2>/dev/null
-###################################################################
-# Verify that the design variable specified in the design file
-# points to the design file. If it does not, then overwrite it.
-###################################################################
-if cmp --silent ${indesign} ${design}
-   then
-   design=$design
-else
-   echo "   ::Correcting inconsistencies in design file."
-   sed -i -e s@'^design=.*$'@'design='${indesign}@ ${indesign}
-   source $indesign 2>/dev/null
-fi
-###################################################################
-# Verify that the analytic cohort is reasonably defined.
-###################################################################
-[[ -z ${path_cohort} ]] && echo "   ::Missing cohort file" && echo "   ::Aborting" && echo "" && exit 1
-###################################################################
-# Remove any duplications from the cohort file.
-###################################################################
-oidx=$(cat ${design}|grep '^out='|sed s@'\$'@'\n'@g|grep subject|cut -d'[' -f2|cut -d']' -f1)
-for i in $oidx; do o=${o},$(expr ${i} + 1); done
-oidx=$(echo $o|sed s@'^,'@@g)
-${XCPEDIR}/utils/removeDuplicates.R \
-   -c ${path_cohort} \
-   -o ${oidx}
-###################################################################
-# Obtain the subject list.
-###################################################################
-cohort=$(cat ${path_cohort} 2>/dev/null)
-[[ -z ${cohort} ]] && echo "   ::Empty cohort file" && echo "   ::Aborting" && echo "" && exit 1
-###################################################################
-# Obtain a timestamp for the current deployment of the engine.
-###################################################################
-#[[ ! -e ${out_super}/${analysis} ]] && mkdir -p ${out_super}/${analysis}
-xcpdate=$(date +%Y%m%d%H%M)
-out=$(grep 'out=' ${design})
-###################################################################
-# Prepare to analyse the entire pipeline.
-###################################################################
-analysis_remaining=${pipeline}
-modules=$(echo ${pipeline}|sed s@','@' '@g)
-
-
-
-
-
-###################################################################
-# Ensure that any module-specific prerequisites are installed.
-###################################################################
-modreqs="...Checking module-specific dependencies..."
-for module in ${modules}
-   do
-   reqpath=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.req 2>/dev/null)
-   [[ -e ${reqpath} ]] && source ${reqpath}
-done
-echo "${modreqs}"
+versions=${out_group}/dependencies/${analysis}_${xcp_date}_pipelineDescription.json
+printx         ${XCPEDIR}/core/ENVCHECK >> ${versions}
 
 
 
@@ -208,108 +229,54 @@ echo "${modreqs}"
 #
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
-cxt=1
-subjidx=9001
-unset ids
+printx         ${XCPEDIR}/core/CONSOLE_HEADER
+
+
+
+
+
 ###################################################################
-# Run the XCP Localiser first.
+# Run the localiser first.
 ###################################################################
-echo ""; echo ""; echo ""
-echo -e "###################################################################"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "                  CURRENTLY PROCESSING MODULE:                     "
-echo -e "                         ${RED}★${RCL} LOCALISER ${RED}★${RCL}                             "
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "###################################################################"
-echo ""
-module=${XCPEDIR}/xcpLocaliser
-for subject in ${cohort}
+cxt=0
+level=subject
+module=LOCALISER
+unset       ids
+printx      ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT
+for sub in ${!cohort[@]}
    do
-   ################################################################
-   # Parse subject identifiers, then re-parse the design to
-   # evaluate subject-specific variables.
-   ################################################################
-   subjid=$subject
-   remfield=$subject
-   iter=0
-   while [[ ! -z ${remfield} ]]
-      do
-      curfield=$(echo ${remfield}|cut -d"," -f1)
-      remfield=$(echo ${remfield}|sed s@^[^,]*@@)
-      remfield=$(echo ${remfield}|sed s@^,@@)
-      subject[${iter}]=${curfield}
-      iter=$(expr ${iter} + 1)
-   done
-   source ${design}
-   [[ ! -d ${out}/${prefix}_logs/ ]] && mkdir -p ${out}/${prefix}_logs
-   ################################################################
-   # Write version information to the version tracking file.
-   # This was previously done at the group level to minimise
-   # redundant information, but higher authorities have
-   # requested this be done at the subject level.
-   ################################################################
-   versions=${out}/${prefix}_logs/${xcpdate}_${prefix}_versions
-   [[ ! -e ${versions} ]] \
-      && ver_XCP=" * Version XCP Engine "$(cat ${XCPEDIR}/settings/version) \
-      && echo "▤▥ ▤▤▥▤▤ ▤▥ DEPENDENCY/ENVIRONMENT CHECK RESULTS ▥▤ ▤▤▥▤▤ ▥▤" >> ${versions} \
-      && echo "▥▤ ▤▤▥▤▤ ▥▤                                      ▤▥ ▤▤▥▤▤ ▤▥" >> ${versions} \
-      && echo "" >> ${versions} \
-      && echo "ANALYSIS: ${analysis}" >> ${versions} \
-      && echo "${ver_AFNI}" >> ${versions} \
-      && echo "${ver_ANTS}" >> ${versions} \
-      && echo "${ver_FSL}" >> ${versions} \
-      && echo "${ver_ITK}" >> ${versions} \
-      && echo "${ver_R}" >> ${versions} \
-      && echo "${ver_RSCRIPT}" >> ${versions} \
-      && echo "${RpackageChk}" >> ${versions} \
-      && echo "${ver_XCP}" >> ${versions} \
-      && echo " * FSLDIR=${FSLDIR}" >> ${versions} \
-      && echo " * ANTSPATH=${ANTSPATH}" >> ${versions} \
-      && echo " * XCPEDIR=${XCPEDIR}" >> ${versions} \
-      && echo "${modreqs}" >> ${versions}
-   ################################################################
-   # Initialise the subject's processing log.
-   ################################################################
-   logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}_log
-   mkdir -p ${out}
-   echo "" >> ${logfile}
-   echo "" >> ${logfile}
-   echo "###################################################################" >> ${logfile}
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> ${logfile}
-   echo "#                                                                 #" >> ${logfile}
-   echo "#  ☭                         PIPELINE                          ☭  #" >> ${logfile}
-   echo "#                                                                 #" >> ${logfile}
-   echo "#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #" >> ${logfile}
-   echo "###################################################################" >> ${logfile}
-   echo "" >> ${logfile}
-   echo "" >> ${logfile}
-   echo " * Executing in cluster mode." >> ${logfile}
+   subject=${cohort[sub]}
    ################################################################
    # Run the localiser.
    ################################################################
+   mod_cmd="
+   ${XCPEDIR}/core/xcpLocaliser
+      -d ${design}
+      -s ${sub}:${incohort}
+      -o ${out_super}
+         ${scratch} ${root_arg} ${asgt[@]}
+      -t ${trace}
+      "
+   subject_parse        ${subject} ${incohort}
+   mkdir -p             ${out[sub]}/${prefix[sub]}_logs
    case ${mode} in
    s)
-      ${module} -d ${design} -s ${subjidx} ${trace_prop}
+      ${mod_cmd}
       ;;
    c)
-      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
-         ${module} -d ${design} -s ${subjidx} ${trace_prop})
-      id=$(echo ${id}|cut -d' ' -f3)
-      ids="${ids} -e ${id}"
+      cluster_submit ${mod_cmd}
       ;;
    esac
-   subjidx=$(expr $subjidx + 1)
 done
 ###################################################################
-# Wait for the localiser to run to completion.
+# Wait for the localiser to run to completion. (cluster mode)
 ###################################################################
 if [[ ${mode} == c ]]
    then
    sleep 5
    ${XCPEDIR}/utils/qstatus ${ids}
 fi
+(( cxt++ ))
 
 
 
@@ -318,100 +285,61 @@ fi
 ###################################################################
 # Then, iterate through all modules.
 ###################################################################
-for module in ${modules}
+for module in ${modules[@]}
    do
-   echo ""; echo ""; echo ""
-   echo -e "###################################################################"
-   echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-   echo -e "#                                                                 #"
-   echo -e "                  CURRENTLY PROCESSING MODULE:                     "
-   echo -e "                         ${RED}★${RCL} ${module} ${RED}★${RCL}                             "
-   echo -e "#                                                                 #"
-   echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-   echo -e "###################################################################"
-   echo ""
    ################################################################
    # Obtain paths to the subject- and group-level scripts for
    # the current module, if each exists.
    ################################################################
-   modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod 2>/dev/null)
-   modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod 2>/dev/null)
+   printx        ${XCPEDIR}/core/CONSOLE_MODULE_SUBMIT
+   modS=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.mod    2>/dev/null)
+   modG=$(ls -d1 ${XCPEDIR}/modules/${module}/${module}.g.mod  2>/dev/null)
    ################################################################
    # SUBJECT-LEVEL PROCESSING
    #---------------------------------------------------------------
    # If the current module has a subject-level component, then
    # iterate through all subjects and run it.
    ################################################################
+   level=subject
    if [[ -n ${modS} ]]
-   then
-   unset ids
-   subjidx=9001
-   for subject in ${cohort}
-      do
-      #############################################################
-      # Parse subject identifiers, then re-parse the design to
-      # evaluate subject-specific variables.
-      #############################################################
-      subjid=$subject
-      remfield=$subject
-      iter=0
-      while [[ ! -z ${remfield} ]]
-         do
-         curfield=$(echo ${remfield}|cut -d"," -f1)
-         remfield=$(echo ${remfield}|sed s@^[^,]*@@)
-         remfield=$(echo ${remfield}|sed s@^,@@)
-         subject[${iter}]=${curfield}
-         iter=$(expr ${iter} + 1)
-      done
-      source ${design}
-      logfile=${out}/${prefix}_logs/${analysis}_${xcpdate}_${prefix}_log
-      #############################################################
-      # Before running the subject, verify that it has not yielded
-      # erroneous output or been labelled for exclusion for quality
-      # reasons.
-      #############################################################
-      errortest=""
-      [[ -e ${logfile} ]] && errortest=$(grep -i XCP-ERROR ${logfile})
-      qatest=""
-      [[ -e ${logfile} ]] && qatest=$(grep -i QA-EXCLUDE ${logfile})
-      if [[ ! -z ${errortest} ]] || [[ ! -z ${qatest} ]]
-         then
-         echo " Skipping analysis for:"
-         echo " * ${subjid}"
-         echo " for the following reasons."
-         echo "${errortest}"
-         echo "${qatest}"
-         continue
-      fi
-      #############################################################
-      # Parse the subject-specific design file.
-      #############################################################
-      design_local=${out}/${prefix}.dsn
-      source ${design_local}
-      #############################################################
-      # Execute the current module.
-      #############################################################
-      case ${mode} in
-      s)
-         ${modS} -d ${design_local} -c ${cxt} ${trace_prop}
-         ;;
-      c)
-         id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
-            ${modS} -d ${design_local} -c ${cxt} ${trace_prop})
-         id=$(echo ${id}|cut -d' ' -f3)
-         ids="${ids} -e ${id}"
-         ;;
-      esac
-      subjidx=$(expr $subjidx + 1)
-   done
-   ################################################################
-   # Wait for all subject-level routines to run to completion.
-   ################################################################
-   if [[ ${mode} == c ]]
       then
-      sleep 5
-      ${XCPEDIR}/utils/qstatus ${ids}
-   fi
+      unset ids
+      source       ${XCPEDIR}/core/validateSubjects
+      for sub  in  ${!cohort[@]}
+         do
+         ##########################################################
+         # Before running the subject, verify that it has not
+         # yielded erroneous output or been labelled for exclusion
+         # for quality reasons.
+         ##########################################################
+         logfile=${out[sub]}/${prefix[sub]}_logs/${analysis}_${xcp_date}_${prefix[sub]}LOG
+         ##########################################################
+         # Execute the current module.
+         ##########################################################
+         source ${XCPEDIR}/core/defineDesign
+         mod_cmd="
+         ${modS}
+            -d ${design[sub]}
+            -c ${cxt}
+            -t ${trace}
+            "
+         case ${mode} in
+         s)
+            ${mod_cmd}
+            ;;
+         c)
+            cluster_submit ${mod_cmd}
+            ;;
+         esac
+      done
+      #############################################################
+      # Wait for all subject-level routines to run to completion.
+      #############################################################
+      if [[ ${mode} == c ]]
+         then
+         sleep 5
+         ${XCPEDIR}/utils/qstatus ${ids}
+      fi
    fi
    ################################################################
    # GROUP-LEVEL PROCESSING
@@ -419,31 +347,32 @@ for module in ${modules}
    # If the current module has a group-level component, then
    # execute it.
    ################################################################
+   level=group
    if [[ -n ${modG} ]]
-   then
-   [[ ${glog} != 1 ]] && rm -f ${out_group}/log/${analysis}_log
-   [[ ! -e ${out_group}/log ]] && mkdir -p ${out_group}/log && glog=1
-   [[ ! -e ${out_group}/${analysis}.dsn ]] \
-      && cp ${design} ${out_group}/${analysis}.dsn
-   logfile=${out_group}/log/${analysis}_log
-   design_local=${out_group}/${analysis}.dsn
-   case ${mode} in
-   s)
-      ${modG} -d ${design_local} -c ${cxt} ${trace_prop}
-      ;;
-   c)
-      id=$(qsub -V -S /bin/bash -cwd -j y -o ${logfile} ${cspec} \
-         ${modG} -d ${design_local} -c ${cxt} ${trace_prop})
-      id=$(echo ${id}|cut -d' ' -f3)
-      sleep 5
-      ${XCPEDIR}/utils/qstatus -e ${id}
-      ;;
-   esac
+      then
+      mod_cmd="
+      ${modG} 
+         -s ${incohort}
+         -c ${cxt}
+         -o ${out_super}
+         -t ${trace}
+         "
+      source ${XCPEDIR}/core/validateGroup
+      case ${mode} in
+      s)
+         ${mod_cmd}
+         ;;
+      c)
+         cluster_submit ${mod_cmd}
+         sleep 5
+         ${XCPEDIR}/utils/qstatus -e ${ids}
+         ;;
+      esac
    fi
    ################################################################
    # Advance the pipeline to the next context.
    ################################################################
-   cxt=$(expr $cxt + 1)
+   (( cxt++ ))
 done
 
 
@@ -453,12 +382,5 @@ done
 ###################################################################
 # Conclude the analysis.
 ###################################################################
-echo ""; echo ""; echo ""
-echo -e "################################################################### "
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭${RCL}                     ANALYSIS COMPLETE                     ${RED}☭${RCL}  #"
-echo -e "#                                                                 #"
-echo -e "#  ${RED}☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭${RCL}  #"
-echo -e "###################################################################"
-echo ""
+source         ${XCPEDIR}/core/terminatePipeline
+printx         ${XCPEDIR}/core/CONSOLE_FOOTER

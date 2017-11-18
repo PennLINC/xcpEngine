@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Ensure that the optional argument "scratch space" is reasonably
+# defined.
+###################################################################
+if [[ -n ${scratch} ]] \
+&& [[ ${scratch:0:1} != '$' ]]
+   then
+   mkdir -p ${scratch} 2>/dev/null
+   if [[  ! -d ${scratch} ]]
+      then
+      echo \
+"· [I]Invalid scratch space. Ensure that the scratch space
+· [I]path exists, or else do not pass the -i flag.
+· [I]Aborting"
+      usage
+      exit 2
+   fi
+   scratch=$(abspath ${scratch})
+   echo "· [I][${scratch}]"
+   scratch="-i ${scratch}"
+elif [[ ${scratch:0:1} == '$' ]]
+   then
+   echo "· [I][${scratch}]"
+   scratch="-i ${scratch}"
+fi

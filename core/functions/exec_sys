@@ -1,0 +1,4 @@
+exec_sys() {
+   verbose &&  echo_cmd    "${@}"
+               "${@}"
+}

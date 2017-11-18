@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# GENERAL MODULE HEADER
+###################################################################
+export FSLOUTPUTTYPE=NIFTI_GZ
+mod_out=$(cat ${XCPEDIR}/core/DESIGN_MODULE_OUTPUT)
+usage_flag=0
+
+###################################################################
+# Read in:
+#  * path to main design file
+#  * current subject's identifier
+#  * whether to explicitly trace all commands
+# Trace status is, by default, set to 0 (no trace)
+###################################################################
+printx      ${mod_head}
+trace=0
+idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+if (( $# < 6 ))
+   then
+   usage_flag=1
+fi
+while getopts "d:s:t:a:o:i:r:" OPTION
+   do
+   case $OPTION in
+   d)
+      design=${OPTARG}
+      ;;
+   s)
+      #############################################################
+      # Parse the subject.
+      #############################################################
+      subjinfo=( ${OPTARG//:/ } )
+      sub=${subjinfo[0]}
+      line=$((    sub - idx_offset  ))
+      mapfile     -s    ${line}     -n 1 subject < ${subjinfo[1]}
+      ;;
+   t)
+      trace=${OPTARG}
+      if (( ${trace} != 0 )) \
+      && (( ${trace} != 1 )) \
+      && (( ${trace} != 2 )) \
+      && (( ${trace} != 3 ))
+         then
+         usage_flag=1
+      fi
+      ;;
+   o)
+      out_super=${OPTARG}
+      ;;
+   a)
+      asgt=( ${asgt[@]} ${OPTARG} )
+      ;;
+   i)
+      scratch=${OPTARG}
+      ;;
+   r)
+      inroot=${OPTARG}
+      ;;
+   *)
+      echo "Option not recognised: ${OPTION} ${OPTARG}"
+      usage_flag=1
+      ;;
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that the compulsory design and subject variables have
+# been defined
+###################################################################
+[[ -z ${design}  ]]  && usage_flag=1
+[[ -z ${sub} ]]      && usage_flag=1
+###################################################################
+# Usage and exit
+###################################################################
+if (( ${usage_flag} == 1 ))
+   then
+   cat ${XCPEDIR}/core/USAGE_LOCALISER
+   exit 1
+fi
+###################################################################
+# Set trace status, if applicable
+###################################################################
+case ${trace} in
+0)
+   trace=0
+   ;;
+1)
+   trace=1
+   ;;
+2)
+   export trace=1
+   ;;
+3)
+   set -x
+   export SHELLOPTS
+   ;;
+esac
+###################################################################
+# Prime indices of variables declared in the module context.
+###################################################################
+declare -A declared_d declared_o declared_c declared_s declared_q
+###################################################################
+# Initialise the module.
+###################################################################
+subject_parse     ${subject}  ${subjinfo[1]}
+source $design
+source ${XCPEDIR}/core/defineLogs

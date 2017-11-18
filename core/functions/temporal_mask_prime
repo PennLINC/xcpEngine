@@ -1,0 +1,82 @@
+temporal_mask_prime() {
+
+<<USAGE
+
+This function is used to prime derivatives and inputs for the
+temporal masking procedure.
+
+USAGE
+
+local trep
+local q_criteria
+local q_criterion
+local q_threshold
+
+local censor_var=${mod_name_short}'_censor['${cxt}']'
+local censor_ctg=${mod_name_short}'_censor_contig['${cxt}']'
+local fwise=${mod_name_short}'_framewise['${cxt}']'
+
+define      dvars_root              ${outdir}/mc/${prefix}_dvars
+define      censor_contig           ${!censor_ctg}
+define      framewise               ${!fwise}
+
+output      rps                     mc/${prefix}_realignment.1D
+output      dvars                   ${dvars_root[cxt]}-std.1D
+output      fd                      mc/${prefix}_fd.1D
+output      ssd                     mc/${prefix}_spatial_sd.1D
+output      ts_quality_idx          mc/${prefix}_ts_quality_index.1D
+output      ts_outliers             mc/${prefix}_ts_outliers.1D
+output      tmask                   mc/${prefix}_tmask.1D
+
+configures  censor                  ${!censor_var}
+configure   censored                0
+
+qc mean_dv        meanDV            ${dvars_root[cxt]}-mean.txt
+qc dv_mo_cor_pre  motionDVCorrInit  mc/${prefix}_motionDVCorr.txt
+qc n_spikes_dv    nSpikesDV         mc/${prefix}_spikesDVct.txt
+qc n_spikes_fd    nSpikesFD         mc/${prefix}_spikesFDct.txt
+qc n_spikes_rms   nSpikesRMS        mc/${prefix}_spikesRMSct.txt
+qc pct_spikes_dv  pctSpikesDV       mc/${prefix}_spikesDVpct.txt
+qc pct_spikes_fd  pctSpikesFD       mc/${prefix}_spikesFDpct.txt
+qc pct_spikes_rms pctSpikesRMS      mc/${prefix}_spikesRMSpct.txt
+
+input       censor
+input       censored
+
+
+###################################################################
+# Obtain the timewise-to-framewise conversion factor. That's the
+# TR.
+###################################################################
+trep=$(${FSLDIR}/bin/fslval ${img} pixdim4)
+
+q_criteria=( ${framewise[cxt]//,/ } )
+declare -A  dict_criteria=(
+   [fd]='fd,framewise displacement'
+   [rms]='rel_rms,relative RMS displacement'
+   [fds]='fd,framewise displacement'
+   [rmss]='rel_rms,relative RMS displacement'
+   [dv]='dvars,standardised DVARS'
+)
+for i in ${!q_criteria[@]}
+   do
+   ################################################################
+   # Parse quality criterion
+   ################################################################
+   q_criterion=$(strslice ${q_criteria[i]} 1 ':')
+   q_threshold=$(strslice ${q_criteria[i]} 2 ':')
+   ################################################################
+   # Convert timewise units to framewise units.
+   ################################################################
+   if [[ ${q_criterion} == fds ]] || [[ ${q_criterion} == rmss ]]
+      then
+      q_threshold=$(arithmetic ${q_threshold}*${trep})
+      q_criterion=${q_criterion%s}
+   fi
+   configure      ${q_criterion}_threshold         ${q_threshold}
+   q_criteria_recon=( "${q_criteria_recon[@]}" ${q_criterion}:${q_threshold} )
+done
+
+define      framewise               $(join_by ',' ${q_criteria_recon[@]})
+
+}

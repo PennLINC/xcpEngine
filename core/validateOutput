@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Ensure that the compulsory argument "output path" is reasonably
+# defined.
+###################################################################
+[[    -n ${out_super} ]]    &&    mkdir -p ${out_super}
+if [[ -z ${out_super} ]]    ||    [[  ! -d ${out_super} ]]
+   then
+   echo \
+"· [O]Missing or invalid output path
+· [O]Aborting"
+   usage
+   exit 2
+fi
+out_super=$(abspath ${out_super})
+
+
+
+
+
+###################################################################
+# Set the group-level output directory.
+###################################################################
+echo "· [O][${out_super}]"
+for a in ${asgt[@]}
+   do
+   contains ${a} '^out_group=' && out_group=$(strslice ${a} 2 =)
+done
+[[ -z ${out_group} ]] && out_group=${out_super}/group
+asgt=( ${asgt[@]}     -a out_group=${out_group} )
+mkdir -p                           ${out_group}
+rm    -f                           ${out_group}/*quality.csv
+###################################################################
+# Initialise reference atlas. This is written as a function to keep
+# variables from leaking into the pipeline engine.
+###################################################################
+atlas_ref() {
+   local i std atlas_standard atlas
+   local cxt=0
+   local sub=1
+   local standard=( ${standard//_via_/ } )
+   atlas[cxt]='{}'
+   atlas[sub]=${out_group}/atlas.json
+   load_atlas        $(abspath ${BRAINSPACE}/MNI/MNI_atlas.json)
+   for i in "${!standard[@]}"
+      do
+      std=${standard[i]//\%*/}
+      atlas_standard=$(abspath ${BRAINSPACE}/${std}/${std}_atlas.json)
+      [[ ! -s     ${atlas_standard} ]] && continue
+      load_atlas  ${atlas_standard}
+   done
+   [[ -s ${atlas_orig} ]] && load_atlas ${atlas_orig}
+   write_atlas
+   asgt=( ${asgt[@]}  -a atlas_orig=${atlas[sub]} )
+}
+atlas_ref

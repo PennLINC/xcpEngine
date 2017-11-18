@@ -1,12 +1,26 @@
 # new home directory for the XCP Engine
 
-##### Adding modules
-
-The primary output of any module must be an image whose name matches the primary subject identifier.
-
 ##### Change log
+v0.6.0 2017.10 (target)
+* Operational modules (18): alff, confound, cbf, coreg, fcon, gmd, jlf, net, norm, prestats, qcfc, qcstruc, regress, reho, roiquant, seed, struc, task
+* Internal-only modules (2): dico, dti2xcp
+* Modules added (1): fcon, cbf
+* Modules renamed (3): benchmark => qcfc, strucQA => qcstruc, antsCT => struc
+* Modules assimilated (1): locreg (into confound)
+* A metadata system has been implemented for derivative neuroimages, parcellation schemes, and coordinate spaces.
+* A standardised atlas and space organisation scheme with builder utilities supports rapid retrieval of metadata and easy warping between any coordinate spaces.
+* Group-level processing is now supported by a delocaliser operation.
+* Development for the XCP system is now easier. The generalised module header (and other cumbersome code) has been encapsulated in a new directory for core scripts, functions, and text blocks.
+* The code has been extensively rewritten.
+
+v0.5.1 2017.06
+* Operational modules (20): asl, alff, benchmark, antsCT, confound, coreg, dico, dti2xcp, gmd, jlf, locreg, net, norm, prestats, regress, reho, roiquant, seed, strucQA, task
+* Modules added (4): antsCT, gmd, jlf, strucQA
+* Multimodal processing now stably encompasses high-resolution anatomical sequences. Cortical thickness and grey matter density analyses, as well as multi-atlas parcellation construction, are performed through ANTs.
+* Automated template construction and atlas generation are now available through ANTs.
+
 v0.5.0 2016.07
-* Operational modules (16): asl, alff, confound, coreg, dico, locreg, net, norm, prestats, regress, reho, roiquant, seed, task
+* Operational modules (16): asl, alff, benchmark, confound, coreg, dico, dti2xcp, locreg, net, norm, prestats, regress, reho, roiquant, seed, task
 * Modules added (6): benchmark, dico, dti2xcp, locreg, roiquant, task
 * Multimodal processing potential is extended to task-constrained activation analysis (and internally DTI). Task activation analysis is currently performed through FSL's FEAT, and the XCP Engine can now process any individual-level FEAT design file.
 * ROI-wise quantification is centralised into the roiquant module.
@@ -53,35 +67,3 @@ v0.2.0 and fixes (2015.10)
 v0.1.0 and fixes (2015.09)
 * Original RSPIPE deFEATed
 * major debugging
-
-##### devnotes
-
-Modules implemented or partially implemented
-* alff : computes amplitude of low-frequency fluctuations
-* aroma : ICA-AROMA-like denoising
-* confound : creates a matrix of global confound variables/nuisance regressors
-* coreg : computes coregistration of structural and functional images
-* locreg : generates localised confound variables/nuisance regressors
-* net : extracts an a priori network from 4D timeseries and computes basic network metrics
-* norm : moves all images from subject space into template space
-* prestats : encompasses numerous preprocessing strategies
-* regress : removes effects of global and local nuisance variables from data
-* reho : computes regional homogeneity
-* sca : seed-based correlation analysis
-
-Planned/in preparation:
-* astate : identifies activity states from network or 4D timeseries
-* concat : performs all future analyses on subject-concatenated images/nets
-* context : runs contextual connectivity pipeline on dynamic FC data
-* cspace : computes trajectories through connectomic or activity space
-* cstate : identifies connectivity states from dynamic FC
-* infomax : computes a data-driven network using the Infomax ICA algorithm
-* metacon : computes a metaconnectivity matrix from dynamic FC
-* mtd : dynamic FC using the multiplication of temporal derivatives
-* mtdregrec : alternative confound regression procedure with imputation
-* qavars : obtains variables related to data and analysis quality
-* sliwico : dynamic FC using sliding window correlations
-* streg : spatiotemporal regression for simple back-reconstruction
-* tica : temporal ICA on network timeseries to obtain TFMs
-* time : obtains a time-by-time adjacency matrix and computes basic metrics
-

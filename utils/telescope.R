@@ -12,9 +12,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(require(optparse))
-suppressMessages(require(pracma))
-#suppressMessages(require(ANTsR))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(RNifti)))
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -40,37 +39,34 @@ if (is.na(opt$out)) {
    quit()
 }
 
-inpath <- opt$img
-outpath <-opt$out
-
-sink('/dev/null')
+inpath                  <- opt$img
+outpath                 <-opt$out
 
 ###################################################################
 # Read in the input volume.
 ###################################################################
-suppressMessages(require(ANTsR))
-img <- antsImageRead(inpath,3)
+img                     <- readNifti(inpath)
 
 
 ###################################################################
 # Obtain labels
 ###################################################################
-labs <- sort(unique(img[img>0]))
-out <- array(0,dim=c(dim(img)[1:3],numel(labs)))
+labs                    <- sort(unique(img[img > 0]))
+out                     <- array(0,dim=c(dim(img)[1:3],length(labs)))
+c(dim(img)[1:3],length(labs))
 
 
 ###################################################################
 # Telescope
 ###################################################################
 for (l in labs) {
-   logmask <- (img == labs[l])
-   dim(logmask) <- dim(img)[1:3]
-   out[cbind(which(logmask==1,arr.ind=T),l)] <- 1
+   cat(l,' ')
+   logmask              <- (img == labs[l])
+   out[,,,l][logmask]   <- 1
 }
+   cat('\n')
 
 ###################################################################
 # To NIfTI
 ###################################################################
-out <- as.antsImage(out)
-antsCopyImageInfo(img,out)
-antsImageWrite(out,outpath)
+writeNifti(out,outpath,template=inpath,datatype='int16')

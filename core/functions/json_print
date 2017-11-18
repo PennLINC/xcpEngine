@@ -1,0 +1,3 @@
+json_print() {
+   echo ${!1}|$JQ_PATH --sort-keys .
+}

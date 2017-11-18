@@ -1,0 +1,16 @@
+load_derivatives() {
+   local derivative deriv_json d_name dfloat_names
+   deriv_json=${aux_imgs[sub]}
+   [[ -n ${1} ]] && deriv_json=${1}
+   deriv[cxt]=$(cat ${deriv_json} 2>/dev/null)
+   dfloat_names=( $(json_keys derivatives_floating) )
+   for d_name in ${dfloat_names[@]}
+      do
+      if is_image $(  json_get   derivatives_floating ${d_name} Map)
+         then
+         derivative=$(json_get   derivatives_floating ${d_name})
+         deriv[cxt]=$(json_merge deriv[cxt]           derivative)
+      fi
+   done
+   derivatives=( $(json_keys deriv[cxt]) )
+}

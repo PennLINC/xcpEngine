@@ -1,0 +1,258 @@
+filter_temporal() {
+
+<<USAGE
+
+This function applies temporal filters to the image. Before using
+this function, ts_process_prime must be called in the module 
+header.
+
+filter_temporal   --SIGNPOST=routine_signpost_tag                 \
+                  --FILTER=filtering_routine                      \
+                  --INPUT=input_image_without_extension           \
+                  --OUTPUT=output_image_without_extension         \
+                  --CONFIN=confound_matrix_input_path<optional>   \
+                  --CONFOUT=confound_matrix_output_path<optional> \
+                  --HIPASS=high-pass_cutoff_frequency             \
+                  --LOPASS=low-pass_cutoff_frequency              \
+                  --ORDER=filter_order                            \
+                  --DIRECTIONS=1_for_forward_2_forward+reverse    \
+                  --RIPPLE_PASS=pass-band_ripple                  \
+                  --RIPPLE_STOP=stop-band_ripple
+
+Apply a second-order forward-and-reverse Butterworth filter with 
+passband 0.01Hz-Nyquist to intermediate.nii.gz:
+routine           @4
+filter_temporal   --SIGNPOST=4                     \
+                  --FILTER=butterworth             \
+                  --INPUT=intermediate             \
+                  --OUTPUT=intermediate_filtered   \
+                  --CONFIN=confmat.1D              \
+                  --CONFOUT=confmat_filtered.1D    \
+                  --HIPASS=0.01                    \
+                  --LOPASS=nyquist                 \
+                  --ORDER=2                        \
+                  --DIRECTIONS=2
+
+USAGE
+
+   ################################################################
+   # INPUTS
+   ################################################################
+   local censor_tmpf con_i       con_o       hipass      img_i    \
+         img_o       lopass      mask_tmpf   order       pass     \
+         pass_ripple stop_ripple tmask_tmpf  tmpf        tag
+   
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--SIGNPOST='     && tag=${1/--SIGNPOST=}
+      contains ${1} '^--FILTER='       && tmpf=${1/--FILTER=}
+      contains ${1} '^--INPUT='        && img_i=${1/--INPUT=} && img_i=${img_i%.nii.gz}
+      contains ${1} '^--OUTPUT='       && img_o=${1/--OUTPUT=} && img_o=${img_o%.nii.gz}
+      contains ${1} '^--CONFIN='       && con_i=${1/--CONFIN=}
+      contains ${1} '^--CONFOUT='      && con_o=${1/--CONFOUT=}
+      contains ${1} '^--HIPASS='       && hipass=${1/--HIPASS=}
+      contains ${1} '^--LOPASS='       && lopass=${1/--LOPASS=}
+      contains ${1} '^--ORDER='        && order=${1/--ORDER=}
+      contains ${1} '^--DIRECTIONS='   && pass=${1/--DIRECTIONS=}
+      contains ${1} '^--RIPPLE_STOP='  && stop_ripple=${1/--RIPPLE_STOP=}
+      contains ${1} '^--RIPPLE_PASS='  && pass_ripple=${1/--RIPPLE_PASS=}
+      shift
+   done
+   is_1D ${con_i}                      && con_chk='|| ! is_1D '${con_o}
+
+   ################################################################
+   # If no temporal filtering has been specified by the user, then
+   # bypass this step.
+   ################################################################
+   if [[ ${!tmpf} == none ]]
+      then
+      subroutine           ${tag}.1
+      exec_sys ln -sf ${img_i}.nii.gz   ${img_o}.nii.gz
+      exec_sys cp     ${con_i}          ${con_o} 2>/dev/null
+   ################################################################
+   # Ensure that this step has not already run to completion by
+   # checking for the existence of a filtered image and confound
+   # matrix.
+   ################################################################
+   elif ! is_image ${img_o}.nii.gz  \
+   || rerun                         \
+   ${con_chk}
+      then
+      subroutine           ${tag}.2
+      #############################################################
+      # OBTAIN MASKS: SPATIAL
+      # Obtain the spatial mask over which filtering is to be
+      # applied, if a subject mask has been generated. If not,
+      # perform filtering without a mask.
+      #############################################################
+      assign image   mask[sub] \
+          or         mask[cxt] \
+          as         mask_tmpf
+      if is_image ${mask_tmpf}
+         then
+         subroutine        ${tag}.3
+         mask_tmpf="-m ${mask_tmpf}"
+      fi
+      #############################################################
+      # OBTAIN MASKS: TEMPORAL
+      # Obtain the path to the temporal mask over which filtering
+      # is to be executed.
+      #
+      # If iterative censoring has been specified, then it will be
+      # necessary to interpolate over high-motion epochs to ensure
+      # that they do not exert inordinate influence upon the
+      # temporal filter, resulting in corruption of adjacent
+      # volumes by motion-related variance.
+      #############################################################
+      assign 1dim    tmask[sub]  \
+          or         tmask[cxt]  \
+          as         tmask_tmpf
+      assign value   censor[sub] \
+          or         censor[cxt] \
+          as         censor_tmpf
+      if (( ${censor_tmpf} == 1 )) \
+      && is_1D ${tmask_tmpf}
+         then
+         subroutine        ${tag}.4.1
+         tmask_tmpf="-n ${tmask_tmpf}"
+      elif (( ${censor_tmpf} != 0 ))
+         then
+         subroutine        ${tag}.4.2
+         echo \
+"WARNING: Censoring of high-motion volumes requires a
+temporal mask, but the regression module has failed
+to find one. You are advised to inspect your pipeline
+to ensure that this is intentional.
+
+Overriding user input:
+No censoring will be performed."
+         configure            censor   0
+         write_output         censor
+         unset tmask_tmpf
+      else
+         unset tmask_tmpf
+      fi
+      #############################################################
+      # DERIVATIVE IMAGES AND TIMESERIES
+      # (CONFOUND MATRIX AND LOCAL REGRESSORS)
+      # Prime the index of derivative images, as well as any 1D
+      # timeseries (e.g. realignment parameters) that should be
+      # filtered so that they can be used in linear models
+      # without reintroducing the frequencies removed from the
+      # primary BOLD timseries.
+      #############################################################
+      subroutine           ${tag}.5
+      unset derivs ts1d
+      if is_1D ${con_i}
+         then
+         subroutine        ${tag}.6
+         ts1d="-1 confmat:${con_i}"
+      else
+         ##########################################################
+         # Realignment parameters...
+         ##########################################################
+         assign 1dim    rps[sub] \
+             or         rps[cxt] \
+             as         rps_tmpf
+         if is_1D     ${rps_tmpf}
+            then
+            subroutine     ${tag}.7.1
+            ts1d="${ts1d}  realignment:${rps_tmpf}"
+         fi
+         ##########################################################
+         # Relative RMS motion...
+         ##########################################################
+         assign 1dim    rel_rms[sub] \
+             or         rel_rms[cxt] \
+             as         rel_rms_tmpf
+         if is_1D     ${rel_rms_tmpf}
+            then
+            subroutine     ${tag}.7.2
+            ts1d="${ts1d}  rel_rms:${rel_rms_tmpf}"
+         fi
+         ##########################################################
+         # Absolute RMS motion...
+         ##########################################################
+         assign 1dim    abs_rms[sub] \
+             or         abs_rms[cxt] \
+             as         abs_rms_tmpf
+         if is_1D     ${abs_rms_tmpf}
+            then
+            subroutine     ${tag}.7.3
+            ts1d="${ts1d}  abs_rms:${abs_rms_tmpf}"
+         fi
+         ts1d=$(echo ${ts1d})
+         ts1d="-1 ${ts1d// /,}"
+      fi
+      #############################################################
+      # FILTER-SPECIFIC ARGUMENTS
+      # Next, set arguments specific to each filter class.
+      #############################################################
+      unset tforder tfdirec tfprip tfsrip
+      case ${!tmpf} in
+      butterworth)
+         subroutine        ${tag}.8
+         tf_order="-r ${order}"
+         tf_direc="-d ${pass}"
+         ;;
+      chebyshev1)
+         subroutine        ${tag}.9
+         tf_order="-r ${order}"
+         tf_direc="-d ${pass}"
+         tf_p_rip="-p ${pass_ripple}"
+         ;;
+      chebyshev2)
+         subroutine        ${tag}.10
+         tf_order="-r ${order}"
+         tf_direc="-d ${pass}"
+         tf_s_rip="-s ${stop_ripple}"
+         ;;
+      elliptic)
+         subroutine        ${tag}.11
+         tf_order="-r ${order}"
+         tf_direc="-d ${pass}"
+         tf_p_rip="-p ${pass_ripple}"
+         tf_s_rip="-s ${stop_ripple}"
+         ;;
+      esac
+      #############################################################
+      # Engage the tfilter routine to filter the image and any
+      # derivative time series.
+      #  * This is essentially a wrapper around the three
+      #    implemented filtering routines: fslmaths, 3dBandpass,
+      #    and genfilter
+      #############################################################
+      subroutine           ${tag}.12a  [${tmpf} filter]
+      subroutine           ${tag}.12b  [High pass frequency: ${hipass}]
+      subroutine           ${tag}.12c  [Low pass frequency: ${lopass}]
+      proc_xcp ${img_o}.nii.gz   \
+         tfilter                 \
+         -i    ${img_i}.nii.gz   \
+         -o    %OUTPUT           \
+         -f    ${tmpf}           \
+         -h    ${hipass}         \
+         -l    ${lopass}         \
+         ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \
+         ${tf_p_rip}    ${tf_s_rip}    ${ts1d}
+      apply_exec        TimeSeries     ${prefix}_%NAME \
+         xcp   tfilter           \
+         -i    %INPUT            \
+         -o    %OUTPUT           \
+         -f    ${tmpf}           \
+         -h    ${hipass}         \
+         -l    ${lopass}         \
+         ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \
+         ${tf_p_rip}    ${tf_s_rip}
+      #############################################################
+      # Reorganise outputs
+      #############################################################
+      is_1D    ${img_o}_realignment.1D \
+      && mv -f ${img_o}_realignment.1D ${rps_proc[cxt]}     2>/dev/null
+      is_1D    ${img_o}_abs_rms.1D     \
+      && mv -f ${img_o}_abs_rms.1D     ${abs_rms_proc[cxt]} 2>/dev/null
+      is_1D    ${img_o}_rel_rms.1D     \
+      && mv -f ${img_o}_rel_rms.1D     ${rel_rms_proc[cxt]} 2>/dev/null
+      is_1D    ${img_o}_tmask.1D       \
+      && mv -f ${img_o}_tmask.1D       ${tmask_proc[cxt]}   2>/dev/null
+   fi
+}

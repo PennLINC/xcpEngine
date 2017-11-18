@@ -1,0 +1,38 @@
+abort_stream() {
+   local errdir=${out_group}/error
+   [[ ! -d  ${errdir} ]] && mkdir -p ${errdir}
+   ERR_ROOT=${errdir}/${analysis}-${xcp_date}
+   local error="
+· [A major error has occurred.]
+· [The processing stream will now abort.]
+· [Preparing diagnostics]
+····································································
+
+
+
+Module Workflow Map
+····································································
+${routine_map}
+· ERROR
+····································································
+
+
+
+····································································
+· [An error occurred while processing module ${mod_name_short}.]
+· [The error was detected at signpost ${signpost}.]
+· [The most recent command logged was]
+· [${process_command}]
+· [For additional details, view the processing log. For improved]
+· [diagnostics, increment verbosity using the -t option.]
+· []
+· [${@}]
+· []
+· [stream abort]
+····································································
+
+"
+   echo "${error}"
+   echo "${error}" >> ${ERR_ROOT}-${sub}
+   exit 1
+}

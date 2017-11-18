@@ -1,0 +1,40 @@
+
+___________________________________________________________________
+
+Usage for pipeline localiser:
+xcpLocaliser -d <design> <options>
+
+Compulsory arguments:
+ -d : Design file for pipeline:
+      Includes all specifications for processing routines
+      to be run as part of the current pipeline.
+ -o : Output superdirectory:
+      A path to the top-level output directory in which
+      all processed subject directories will be written.
+ -s : Subject index and cohort:
+      Input should be (1) a positive integer that denotes
+      the internal index of the subject data that are to
+      be localised and (2) the path to the cohort file
+      for the current analysis, delimited by a colon in
+      the format 1:2 .
+
+Optional arguments:
+ -i : Scratch space:
+      Some systems operate more efficiently when temporary
+      files are written in a dedicated scratch space. This
+      argument enables a scratch space for intermediates.
+ -t : Trace status:
+      Integer value ( 0 - 3 ) that indicates the level
+      of verbosity during module execution. Higher
+      levels reduce readability but provide useful
+      information for troubleshooting.
+      0  [default]: Human-readable explanations of
+         processing steps and error traces only.
+      1: Explicitly trace module-level computations.
+         Print a workflow map when execution completes.
+      2: Explicitly trace module- and utility-level
+         computations.
+      3: All commands called by the module and all
+         children are traced and explicitly replicated
+         in a log file. This log file can then be used
+         to debug output.

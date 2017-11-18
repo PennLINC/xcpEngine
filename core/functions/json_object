@@ -1,0 +1,4 @@
+json_object() {
+   local json_new=( $(echo ${!1}|$JQ_PATH '. + {"'"${2}"'" : {} }') )
+   eval ${1}=\${json_new[@]}
+}

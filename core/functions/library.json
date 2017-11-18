@@ -1,0 +1,289 @@
+{
+   "abspath" : {
+      "Description" : "Given a relative path to (a) file(s), return the absolute path.",
+      "Input" : {
+         "1" : "The relative path to (a) file(s)"
+      },
+      "Output" : {
+         "STDOUT" : "The absolute path to the input file(s)"
+      },
+      "Keywords" : [ "filesystem" ]
+   },
+   "add_reference" : {
+      "Description" : "Adds a reference image (not produced by the current module) to the current module's output directory",
+      "Input" : {
+         "1" : "The variable pointing to the reference image to be added",
+         "2" : "The path (within the current module's output directory, no extensions) where the reference image will be added"
+      },
+      "Keywords" : [ "" ]
+   },
+   "apply_exec" : {
+      "Description" : "Applies the same processing operation to all existing derivatives, or to all existing derivatives that are of a particular type.",
+      "Input" : {
+         "1" : "A (list of) derivative type(s). Use `all` for all derivatives without regard to type. At the time, a logical OR/set union (A|B) is supported.",
+         "2" : "The generic path where derivatives will be written, with the derivative's name replaced by the generic string `%NAME`. The path excludes extensions and is defined relative to the module output directory.",
+         "3 [optional]" : "If the third argument begins with `ECHO:` and is followed by the name of an output of `derivative_parse` (a property of the derivative, such as `d_name` or `d_map`), then the value of the specified property will be printed to the console for any derivative that is of the requested type.",
+         "4" : "The program that should be used to perform the specified command (all lowercase), for instance `ants`, `afni`, or `fsl`.",
+         "REMAINING" : "The command that should be applied to any derivatives of the specified type. This command can include the generic fields `%INPUT`, `%OUTPUT`, and `%NAME`, which the parser will replace with the current path to the derivative (`%INPUT`), the output path as specified by the second argument (`%OUTPUT`), and the name of the derivative (`%NAME`)."
+      },
+      "Output" : {
+         "STDOUT" : "(if input 3 is set) The value corresponding to the requested property of the processed derivative",
+         "STDERR" : "(if verbose) The commands executed for each derivative that satisifes the criteria",
+         "derivatives_floating" : "The catalogue of floating derivatives will be expanded by appending any derivatives to which the command is applied. Derivatives inherit any previously specified properties except for map (replaced by the specified output) and provenance (set to the current module)."
+      },
+      "Keywords" : [ "operation" ]
+   },
+   "arithmetic" : {
+      "Description" : "Evaluates elementary arithmetic expressions, including decimal addition, subtraction, multiplication, division, and radicals, with high precision",
+      "Input" : {
+         "ALL" : "The expression to be evaluated"
+      },
+      "Output" : {
+         "STDOUT" : "The simplified value of the expression",
+         "STDERR" : "(if verbose) The expression to be evaluated"
+      },
+      "Keywords" : [ "operation" ]
+   },
+   "atlas_parse" : {
+      "Description" : "Parses a given atlas or parcellation for use by module routines",
+      "Input" : {
+         "1" : "The identifier (name) of the atlas to be parsed"
+      },
+      "Output" : {
+         "a_name" : "The name of the atlas",
+         "a_map" : "The path to a map of the atlas, stored either as a neuroimage or as a text-based library of coordinates",
+         "a_space" : "Identifier for the coordinate space in which the atlas is situated",
+         "a_community" : "Path to a file containing an affiliation vector that declares the community assignment of each atlas region (used for network analysis)",
+         "a_type" : {
+            "image" : "Indicates that the atlas is stored on the file system as an image",
+            "sclib" : "Indicates that the atlas is stored on the file system as a text-based coordinates library",
+            "sphere" : "Indicates that the provided identifier denotes a single spherical region of interest in a text-based coordinates library"
+         },
+         "a_coor" : "The coordinates of the centre of the current spherical atlas region",
+         "a_radius" : "The radius of the current spherical atlas region"
+      },
+      "Keywords" : [ "interface", "atlas", "parse" ]
+   },
+   "cleanup" : {
+      "Description" : "Tests whether the design file specifies that intermediate outputs from the current module should be deleted on successful completion",
+      "Return" : {
+         "0" : "Indicates that any intermediate outputs should be deleted",
+         "1" : "Indicates that any intermediate outputs should be retained"
+      },
+      "Keywords" : [ "test" ]
+   },
+   "configure" : {
+      "Description" : "Declares a new context-level variable without an associated path on the file system; used to guide the module control structures",
+      "Input" : {
+         "0" : "The name of the context-level variable to be declared",
+         "1" : "The value to be assigned to the context-level variable"
+      },
+      "Keywords" : [ "declare", "context" ]
+   },
+   "contains" : {
+      "Description" : "Tests whether a string contains a specified substring",
+      "Input" : {
+         "1" : "The string to be tested",
+         "2" : "The substring to be tested"
+      },
+      "Return" : {
+         "0" : "Indicates that the provided string contains the provided substring",
+         "1" : "Indicates that the provided string does not contain the provided substring"
+      },
+      "Keywords" : [ "test", "string" ]
+   },
+   "derivative" : {
+      "Description" : "Declares a new neuroimage derivative by pairing (1) a context-level variable name to (2) a path in the current module's output directory that includes the standard extension for neuroimages",
+      "Input" : {
+         "1" : "The name of the context-level variable to be declared; this also becomes the name of the derivative if it is indexed by write_derivative",
+         "2" : "The value to be assigned to the context-level variable; this should be a path relative to the module output directory and should not include any extensions"
+      },
+      "Output" : {
+         "derivatives_floating" : "A catalogue of any derivative images that have been declared but are not yet indexed. (Use derivative_write to index the derivative after ensuring that its map exists on the filesystem.) Derivative metadata are stored in this variable. When a new derivative is initialised, its metadata are assigned the following values: Map = the second input above, Type = map, Space = the space of the analyte image, Statistic = null, ProvenanceName = the short name of the module of origin, ProvenanceIndex = the contextual index of the module of origin. Use derivative_config to change these default values.",
+         "<1[cxt]>" : "The new derivative that has been declared. Its value is stored in an array variable indexed at the contextual index of the declaring module."
+      },
+      "Keywords" : [ "declare", "context", "image" ]
+   },
+   "derivative_config" : {
+      "Description" : "Add a property to a declared derivative, or change the value of an existing property. Operates only on derivatives that have been loaded into memory, for instance using load_derivatives.",
+      "Input" : {
+         "1" : "The name of the declared derivative",
+         "2" : "The name or key corresponding to the property to be added or changed",
+         "3" : "The new value to be assigned to the property",
+         "4 [optional]" : "The file from which the derivative was loaded. If this argument is included, the new value will be assigned not only in memory but also in the file. (Because write_derivative does not operate on indexed derivatives, this is the correct way to update properties of indexed derivatives.)"
+      },
+      "Output" : {
+         "derivatives_floating" : "The derivatives catalogue that stores any new derivative declared by the current module. The specified property of the target derivative will be assigned the specified value in this catalogue.",
+         "deriv" : "A derivatives catalogue loaded into memory using load_derivatives. If the target derivative is not indexed in derivatives_floating, then the specified property of the target derivative will be assigned the specified value in this catalogue (and in its source file) instead."
+      }
+   },
+   "derivative_parse" : {
+      "Description" : "Parses a given image derivative for use by module routines",
+      "Input" : {
+         "1" : "The name of the derivative to be parsed"
+      },
+      "Output" : {
+         "d_name" : "The name of the derivative (identical to input)",
+         "d_map" : "The location of the derivative image on the file system",
+         "d_mod" : "The provenance of the derivative: the name of the module that created it",
+         "d_mod_idx" : "The provenance of the derivative: the contextual index of the module that created it",
+         "d_stat" : {
+            "Description" : "The summary statistic(s) that should be computed over any groupings of voxels from the current derivative",
+            "Values" : {
+               "mean" : "The arithmetic mean",
+               "null" : "No appropriate statistic"
+            }
+         },
+         "d_type" : {
+            "Description" : "The type of image that encodes the derivative",
+            "Values" : {
+               "map" : "Indicates that the derivative is a 3-dimensional voxelwise map",
+               "maps" : "Indicates that the derivative is a 4-dimensional grouping of 3-dimensional voxelwise maps",
+               "timeseries" : "Indicates that the derivative is a 4-dimensional time series with the same number of volumes as the primary analyte image"
+            }
+         }
+      },
+      "Keywords" : [ "interface", "image", "parse" ]
+   },
+   "exec_afni" : {
+      
+   },
+   "load_derivatives" : {
+      "Description" : "Load derivatives from a text file into memory.",
+      "Input" : {
+         "1 [optional]" : "The text file from which derivatives are to be loaded. If none is specified, then derivatives are loaded from the primary subject-level derivatives catalogue (~derivatives.json)."
+      },
+      "Output" : {
+         "deriv[$cxt]" : "The catalogue of derivatives, loaded into memory. Floating derivatives are also indexed in this catalogue if they correspond to neuroimages on the filesystem.",
+         "derivatives" : "An array variable indexing names of all loaded derivatives. Use this, for instance, to iterate over derivatives."
+      },
+      "Keywords" : [ "load", "image", "interface" ]
+   },
+   "rerun" : {
+      "Description" : "Tests whether the design file specifies that the current module should be rerun from the start, regardless of completion stage",
+      "Return" : {
+         "0" : "Indicates that the current module should be rerun",
+         "1" : "Indicates that the current module should not be rerun"
+      },
+      "Keywords" : [ "test" ]
+   },
+   "routine" : {
+      "Description" : "Creates a signpost for a processing routine, and prints the start-of-routine message to the console",
+      "Input" : {
+         "1" : "A signpost identifying the current routine",
+         "2" : "A description of the current routine"
+      },
+      "Output" : {
+         "routine_map" : "The sequence of all signposts visited by the current module",
+         "STDOUT" : "The routine description, (if verbose) the signpost identifying the current routine"
+      },
+      "Keywords" : [ "signpost", "workflow" ]
+   },
+   "routine_end" : {
+      "Description" : "Prints a message terminating the current processing routine",
+      "Output" : {
+         "STDOUT" : "A message announcing the end of the routine"
+      },
+      "Keywords" : [ "workflow" ]
+   },
+   "set_space" : {
+      "Description" : "Sets the coordinate space of the analyte image, and writes the space to the design file. Does not perform registration.",
+      "Input" : {
+         "1" : "The coordinate space of the analyte image"
+      },
+      "Output" : {
+         "space" : "The coordinate space of the analyte image"
+      }
+   },
+   "space_config" : {
+      "Description" : "Defines a new space, or adds a property to an existing space.",
+      "Input" : {
+         "1" : "The space metadata file to be modified.",
+         "2" : "Can either be a path to a space metadata file or the name of the space to be added or modified.",
+         "3" : "(if 1 is a space) The name of the property to be configured for the provided space",
+         "4" : "(if 1 is a space) The value to be assigned to the specified property."
+      },
+      "Output" : {
+         "spaceMetadataFile" : "An updated metadata file that includes either (a) the metadata loaded from input 1 or (b) the new or modified space."
+      },
+      "Keywords" : [ "space", "interface" ]
+   },
+   "subject_parse" : {
+      "Description" : "Parses a line from a cohort file to produce an indexed array variable representing the corresponding subject",
+      "Input" : {
+         "1" : "A comma-separated list of subject identifiers and input paths",
+         "2 [optional]" : "Any combination of the strings `output` and `design`."
+      },
+      "Output" : {
+         "subject" : "An array variable. Each comma-delimited field from input 1 is mapped to an array index, such that the first field is mapped to subject[0], the second to subject[1], and so on.",
+         "prefix" : "The `prefix` variable, evaluated for the current subject. Returned only if the string `output` is supplied to the second input argument.",
+         "out" : "The output path for the current subject's data. Returned only if the string `output` is supplied to the second input argument.",
+         "Any number of design variables" : "Returned if the string `design` is supplied to the second input argument."
+      }
+   },
+   "subroutine" : {
+      "Description" : "Creates a signpost for a processing subroutine, and prints the subroutine description to the console",
+      "Input" : {
+         "1" : "A signpost identifying the current subroutine",
+         "2" : "A description of the current subroutine"
+      },
+      "Output" : {
+         "routine_map" : "The sequence of all signposts visited by the current module",
+         "STDOUT" : "The subroutine description, (if verbose) the signpost identifying the current subroutine"
+      },
+      "Keywords" : [ "signpost", "workflow" ]
+   },
+   "strslice" : {
+      "Description" : "Slices a string and returns the requested slices.",
+      "Input" : {
+         "1" : "The string to be sliced",
+         "Additional arguments" : "Additional arguments take the form of alternating slice indices (e.g., 1:3 corresponds to the first three slices, 2:-2 corresponds to all slices between the second and second-to-last) and slice delimiters (e.g., _ indicates that any underscore characters in the input string delimit slice boundaries). If a slice delimiter is not provided, slices will be delimited with a comma (,). The slices returned by one pass of strslice will then be sliced again if further indices and/or delimiters are provided."
+      },
+      "Output" : {
+         "STDOUT" : "The requested slices of the string"
+      },
+      "Keywords" : [ "string" ]
+   },
+   "transform_config" : {
+      "Description" : "Defines a new transform, or adds a property to an existing transform.",
+      "Input" : {
+         "1" : "The space metadata file to be modified.",
+         "2" : "The path(s) to the files that represent the transform to be added. If the transform consists of multiple files (e.g., one for the affine component and one for the diffeomorphic warp), then the paths should be separated by a comma and provided in the order that they are to be applied. (For ANTsCT, this is often affine,warp for forward transformations.) The transform paths should be prefixed by the format of the transforms (either itk, fsl, or dramms) and a colon. Use itk for ANTs transforms.",
+         "3" : "The source space of the provided transform or transform series.",
+         "4" : "The target space of the provided transform or transform series."
+      },
+      "Output" : {
+         "spaceMetadataFile" : "An updated metadata file that includes the newly provided transform."
+      },
+      "Keywords" : [ "space", "interface", "transform" ]
+   },
+   "warpspace" : {
+      "Description" : "Warps an image into a target space.",
+      "Input" : {
+         "1" : "The image to be warped",
+         "2" : "The output path for the warped image",
+         "3" : "The name of the target space, as defined in the space metadata file",
+         "4" : "(optional) The interpolation scheme to use in the warp"
+      },
+      "Output" : {
+         "fileSystem" : "The warped image"
+      },
+      "Keywords" : [ "transform" ]
+   },
+   "write_derivative" : {
+      "Description" : "Writes a derivative that has been declared at the module/context level into the design file as a subject-level variable accessible by all modules. Also indexes the derivative in the derivatives catalogue.",
+      "Input" : {
+         "1" : "The name of the derivative to be written. The input must be the name of a module-level variable that corresponds to an existing neuroimage on the filesystem."
+      },
+      "Keywords" : [ "write", "image", "interface" ]
+   },
+   "zscore_image" : {
+      "Description" : "Converts voxelwise values to standardised voxelwise values by subtracting the spatial mean and dividing by the spatial standard deviation.",
+      "Input" : {
+         "1" : "The voxelwise map to be converted to standard (z) scores.",
+         "2" : "Path where the standardised voxelwise map is to be written.",
+         "3 [optional]" : "A spatial mask over which the mean and standard deviation are to be computed. Strongly recommended so that zero values are excluded from the computation."
+      },
+      "Keywords" : [ "image", "processing" ]
+   }
+}

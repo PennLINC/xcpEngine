@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+###################################################################
+# Pad a string with spaces until it is a particular length
+###################################################################
+
+length=$1
+shift 1
+string=$@
+
+pad=$((${length} - ${#string}))
+pad=$((${pad} / 2))
+pad=$(printf '%.0s ' $(seq 1 ${pad}))
+string=${pad}${string}${pad}
+if (( ${#string} < ${length} ))
+   then
+   string="${string} "
+fi
+
+printf "${string}"
+
+
+# OBSOLETE CODE BELOW. Easier to read, but slower.
+#pad=1
+#
+#while (( ${#string} < ${length} ))
+#   do
+#   case $pad in
+#   0)
+#      string=" ${string}"
+#      pad=1
+#      ;;
+#   1)
+#      string="${string} "
+#      pad=0
+#      ;;
+#   esac
+#done

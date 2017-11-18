@@ -1,0 +1,24 @@
+transform_set() {
+   local itk dramms fsl source spaces spaces_path target transform transform_chk
+   itk=TransformANTs
+   fsl=TransformFSL
+   dramms=TransformDRAMMS
+   spaces_path=${1}
+   shift
+   spaces=$(cat ${spaces_path})
+   transform=( $(echo ${1/:/ }) )
+   source=${2//\%*/}
+   target=${3//\%*/}
+   transform_chk=$(json_get spaces_fixed ${source}:${target})
+   if [[ ${transform_chk} == null ]]
+      then
+      json_object    spaces      ${source}:${target}
+      json_set_array spaces      ${source}:${target} \
+                                 ${!transform[0]}  ${transform[1]}
+   else
+      json_set_array spaces      ${source}:${target} \
+                                 ${!transform[0]}  ${transform[1]}
+   fi
+   rm -f ${spaces_path}
+   json_print  spaces            >> ${spaces_path}
+}

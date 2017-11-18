@@ -1,0 +1,24 @@
+proc_cmd() {
+
+   local exec_cmd
+   local prog=${1}
+   local output=${2}
+   shift 2
+   
+   if is_image ${output} \
+   && ! rerun
+      then
+      return
+   else
+      process_command="${@//%OUTPUT/${output}}"
+   fi
+   
+           exec_cmd='exec_'"${prog}"
+   eval "${exec_cmd} ${process_command}"
+   
+   if ! is_image ${output}
+      then
+      abort_stream "Processing failed to produce required output: ${output}"
+   fi
+
+}

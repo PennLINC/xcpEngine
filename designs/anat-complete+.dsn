@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+
+###################################################################
+# This design file stores the values of all variables required to
+# execute a complete task-free functional connectivity pipeline.
+# You may execute the analysis specified in this design file by
+# calling (in any bash terminal):
+#
+# xcpEngine -d <design> -c <cohort> -o <output> <options>
+#
+# Variables fall into five general categories:
+# * ANALYSIS VARIABLES are used at all stages of this analysis.
+# * PIPELINE specifies the modules that comprise the analysis.
+# * GLOBAL VARIABLES are used at all stages of all analyses.
+# * MODULE VARIABLES are used during one stage of the analysis.
+#                  These are typically array variables with array
+#                  indices equal to the index of the analysis
+#                  stage during which they are used.
+# * OUTPUT VARIABLES may be used at all stages of the analysis.
+#                  These are sometimes array variables with array
+#                  indices equal to the value of the primary
+#                  subject identifier. They will appear only in
+#                  localised design files.
+###################################################################
+
+
+###################################################################
+# ANALYSIS VARIABLES
+###################################################################
+
+analysis=struc-ACCELERATOR
+design=${XCPEDIR}/designs/anat-complete+.dsn
+sequence=anatomical
+standard=REWARD%9375x9375x1
+
+###################################################################
+# PIPELINE
+###################################################################
+
+pipeline=struc,gmd,jlf,roiquant #,qcanat
+
+###################################################################
+# 1 STRUC
+###################################################################
+
+struc_denoise_anat[1]=1
+struc_prior_weight[1]=0.25
+struc_posterior_formulation[1]='Socrates[1]'
+struc_keepBEImages[1]=0
+struc_floating_point[1]=0
+struc_random_seed[1]=0
+struc_bspline[1]=0
+struc_fit[1]=0.3
+struc_quick[1]=0
+struc_seg_priors[1]=1
+struc_rerun[1]=0
+struc_cleanup[1]=1
+struc_process[1]=ACT
+
+###################################################################
+# 2 GMD
+###################################################################
+
+gmd_rerun[2]=0
+gmd_cleanup[2]=1
+
+###################################################################
+# 3 JLF
+###################################################################
+
+newAntsPath[3]=/data/joy/BBL/applications/ANTsJLF_201603/bin/
+jlf_keep_warps[3]=0
+jlf_extract[3]=1
+jlf_quick[3]=1
+jlf_cohort[3]=SexBalanced20
+jlf_parallel[3]=none
+jlf_rerun[3]=0
+jlf_cleanup[3]=1
+
+###################################################################
+# 4 ROIQUANT
+###################################################################
+
+roiquant_atlas[4]=miccai
+roiquant_vol[4]=1
+roiquant_rerun[4]=0
+roiquant_cleanup[4]=1
+
+###################################################################
+# 5 QCSTRUC
+###################################################################
+
+qcanat_gm[5]=Y
+qcanat_gm_val[5]=2,4
+qcanat_wm[5]=Y
+qcanat_wm_val[5]=3
+qcanat_csf[5]=Y
+qcanat_csf_val[5]=1
+qcanat_cort[5]=Y
+qcanat_cort_val[5]=4
+qcanat_rerun[5]=0
+qcanat_cleanup[5]=1

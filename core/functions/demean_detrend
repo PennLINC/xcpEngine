@@ -1,0 +1,201 @@
+demean_detrend() {
+
+<<USAGE
+
+This function demeans and optionally detrends a time series image. 
+Before using this function, ts_process_prime must be called in the 
+module header.
+
+demean_detrend    --SIGNPOST=routine_signpost_tag                 \
+                  --ORDER=detrend_order                           \
+                  --INPUT=input_image_without_extension           \
+                  --OUTPUT=output_image_without_extension         \
+                  --CONFIN=confound_matrix_input_path<optional>   \
+                  --CONFOUT=confound_matrix_output_path<optional> \
+                  --1DDT=boolean_detrend_1Ds<optional>
+                  
+                  1Ds to be potentially detrended include motion
+                  estimates (realignment parameters, relative and
+                  absolute root-mean-square estimates of motion)
+
+USAGE
+
+   ################################################################
+   # INPUTS
+   ################################################################
+   local censor_dmdt con_i       con_o       demeaned_dmdt  \
+         img_i       img_o       mask_dmdt   mean_dmdt      \
+         nvol        order       tag         tmask_dmdt     \
+         trep        dt1d
+   
+   while (( $# > 0 ))
+      do
+      contains ${1} '^--SIGNPOST='  &&   tag=${1/--SIGNPOST=}
+      contains ${1} '^--ORDER='     && order=${1/--ORDER=}
+      contains ${1} '^--INPUT='     && img_i=${1/--INPUT=}  && img_i=${img_i%.nii.gz}
+      contains ${1} '^--OUTPUT='    && img_o=${1/--OUTPUT=} && img_o=${img_o%.nii.gz}
+      contains ${1} '^--CONFIN='    && con_i=${1/--CONFIN=}
+      contains ${1} '^--CONFOUT='   && con_o=${1/--CONFOUT=}
+      contains ${1} '^--1DDT='      &&  dt1d=${1/--1DDT=}
+      shift
+   done
+   
+   ################################################################
+   # Determine whether the image is already demeaned.
+   ################################################################
+   assign value   demeaned[sub] \
+       or         demeaned[cxt] \
+       as         demeaned_dmdt
+   if [[ ${demeaned_dmdt} == 1 ]]
+      then
+      subroutine        ${tag}.1
+      exec_sys ln -s ${img_i}.nii.gz   ${img_o}.nii.gz
+      exec_sys cp    ${con_i}          ${con_o} 2>/dev/null
+   elif ! is_image ${img_o} \
+   || rerun
+      then
+      #############################################################
+      # First, fetch a brain mask.
+      #############################################################
+      assign image   mask[sub] \
+          or         mask[cxt] \
+          as         mask_dmdt
+      if is_image ${mask_dmdt}
+         then
+         subroutine     ${tag}.2
+         mask_dmdt="-m  ${mask_dmdt}"
+      fi
+      #############################################################
+      # If the user has requested iterative censoring of motion-
+      # corrupted volumes, then the demean/detrend step should
+      # exclude the corrupted volumes from the linear model. In
+      # this case, a temporal mask is required for the
+      # demean/detrend step.
+      #
+      # If iterative censoring has not been specified or if no
+      # temporal mask exists yet, then all time points must be used
+      # in the linear model.
+      #############################################################
+      assign value   censor[sub] \
+          or         censor[cxt] \
+          as         censor_dmdt
+      if (( ${censor_dmdt} == 1 ))
+         then
+         subroutine     ${tag}.3
+         assign 1dim    tmask[cxt] \
+             otherwise  ones       \
+             as         tmask_dmdt
+         tmask_dmdt="-t ${tmask_dmdt}"
+      fi
+      #############################################################
+      # Decide whether to obtain the mean intensity as output.
+      #############################################################
+      [[ -z ${meanIntensityBrain[cxt]} ]] && mean_dmdt="-x ${meanIntensityBrain[cxt]}"
+      #############################################################
+      # AFNI's afni_proc.py pipeline uses a formula to determine
+      # an appropriate order of polynomial detrend to apply to the
+      # data.
+      #
+      #        floor(1 + TR*nVOLS / 150)
+      #
+      # In summary, the detrend order is based upon the overall
+      # duration of the scan.
+      #############################################################
+      if ! is+integer ${order}
+         then
+         subroutine     ${tag}.4 [Estimating polynomial order]
+         nvol=$(exec_fsl fslnvols ${img_i}.nii.gz)
+         trep=$(exec_fsl fslval   ${img_i}.nii.gz pixdim4)
+         order=$(arithmetic 1 + ${trep}\*${nvol}/150)
+         order=$(strslice ${order} 1 '.')
+      fi
+      #############################################################
+      # Apply detrend: primary analyte
+      #############################################################
+      subroutine        ${tag}.5a   [Applying polynomial detrend]
+      subroutine        ${tag}.5b   [Order: ${order}]
+      proc_xcp ${img_o}.nii.gz   \
+         dmdt.R                  \
+         -d    ${order}          \
+         -i    ${img_i}.nii.gz   \
+         -o    %OUTPUT           \
+         ${mean_dmdt}   ${mask_dmdt}   ${tmask_dmdt}
+      #############################################################
+      # Apply detrend: Derivatives
+      #############################################################
+      apply_exec        ${img_o}_%NAME \
+         xcp   dmdt.R            \
+         -d    ${order}          \
+         -i    ${img_i}.nii.gz   \
+         -o    %OUTPUT           \
+         ${mask_dmdt}   ${tmask_dmdt}
+      #############################################################
+      # Apply detrend: Confound matrix
+      #############################################################
+      if is_1D ${con_i}
+         then
+         subroutine     ${tag}.6   [Executing detrend: Confound matrix]
+         exec_xcp 1dDMDT.R          \
+            -i    ${con_i}          \
+            -d    ${order}          \
+            -o    ${con_o}          \
+            ${tmask_dmdt}
+      elif (( dt1d == 1 ))
+         then
+         ##########################################################
+         # Realignment parameters...
+         ##########################################################
+         assign 1dim    rps_proc[cxt] \
+             or         rps_proc[sub] \
+             or         rps[cxt] \
+             or         rps[sub] \
+             as         rps_dmdt
+         if is_1D     ${rps_dmdt}
+            then
+            subroutine  ${tag}.7   [Executing detrend: Realignment parameters]
+            exec_xcp 1dDMDT.R          \
+               -i    ${rps_dmdt}       \
+               -d    ${order}          \
+               -o    ${rps_proc[cxt]}  \
+               ${tmask_dmdt}
+         fi
+         ##########################################################
+         # Relative RMS motion...
+         ##########################################################
+         assign 1dim    rel_rms_proc[cxt] \
+             or         rel_rms_proc[sub] \
+             or         rel_rms[cxt] \
+             or         rel_rms[sub] \
+             as         rel_rms_dmdt
+         if is_1D     ${rel_rms_dmdt}
+            then
+            subroutine  ${tag}.8   [Executing detrend: Relative motion estimates]
+            exec_xcp 1dDMDT.R          \
+               -i    ${rel_rms_dmdt}       \
+               -d    ${order}          \
+               -o    ${rel_rms_proc[cxt]}  \
+               ${tmask_dmdt}
+         fi
+         ##########################################################
+         # Absolute RMS motion...
+         ##########################################################
+         assign 1dim    abs_rms_proc[cxt] \
+             or         abs_rms_proc[sub] \
+             or         abs_rms[cxt] \
+             or         abs_rms[sub] \
+             as         abs_rms_dmdt
+         if is_1D     ${abs_rms_dmdt}
+            then
+            subroutine  ${tag}.9   [Executing detrend: Absolute motion estimates]
+            exec_xcp 1dDMDT.R          \
+               -i    ${abs_rms_dmdt}       \
+               -d    ${order}          \
+               -o    ${abs_rms_proc[cxt]}  \
+               ${tmask_dmdt}
+         fi
+         ts1d=$(echo ${ts1d})
+         ts1d="-1 ${ts1d// /,}"
+      fi
+      configure         demeaned    1
+   fi
+}

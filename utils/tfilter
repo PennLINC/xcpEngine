@@ -12,142 +12,118 @@
 ###################################################################
 # Constants
 ###################################################################
-
-readonly SIGMA=2.35482004503
-readonly POSNUM='^[0-9]+([.][0-9]+)?$'
-readonly POSINT='^[0-9]+$'
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
 
 ###################################################################
 # Usage function
 ###################################################################
 Usage(){
-   echo ""; echo ""; echo ""
-   echo "Usage: `basename $0` -i <input> -o <output> <options>"
-   echo ""
-   echo "Compulsory arguments:"
-   echo " -i : Input timeseries"
-   echo "      The 4D timeseries to which the temporal filter is to"
-   echo "      be applied."
-   echo ""
-   echo " -o : Output timeseries"
-   echo "      The path to the file where the filtered timeseries"
-   echo "      will be written."
-   echo ""
-   echo "Optional arguments:"
-   echo " -f : Temporal filter mode [default fft]"
-   echo "      Input can be any of 'gaussian', 'fft', 'butterworth',"
-   echo "      'chebyshev1', 'chebyshev2', or 'elliptic'."
-   echo "       * FFT-based filters [default] use a fast Fourier"
-   echo "         transform to attenuate frequencies. An FFT-based"
-   echo "         filter may not be suitable for use in designs that"
-   echo "         incorporate iterative motion censoring, since"
-   echo "         it will include interpolated frequencies in its"
-   echo "         calculations."
-   echo "       * A Gaussian filter uses Gaussian-weighted least-"
-   echo "         squares"
-   echo "       * Chebyshev and elliptic filters more ideally"
-   echo "         discriminate accepted and attenuated frequencies"
-   echo "         than do Butterworth filters, but they introduce"
-   echo "         ripples in either the passband (chebyshev1),"
-   echo "         stopband (chebyshev2), or both (elliptic) that"
-   echo "         result in some signal distortion."
-   echo ""
-   echo " -h : Highpass frequency [default 0.01]"
-   echo "      The cutoff frequency below which all signal will be"
-   echo "      removed from the timeseries, in Hz. To create a"
-   echo "      bandpass filter, specify a lowpass frequency that is"
-   echo "      higher than the highpass frequency."
-   echo ""
-   echo " -l : Lowpass frequency [default nyquist]"
-   echo "      The cutoff frequency above which all signal will be"
-   echo "      removed from the timeseries, in Hz."
-   echo ""
-   echo " -m : Mask"
-   echo "      Filtering is computed only within the specified"
-   echo "      binary mask."
-   echo ""
-   echo " -n : Temporal mask with interpolation"
-   echo "      Filtering is computed only within the specified"
-   echo "      temporal mask. Outside of the temporal mask, the values"
-   echo "      of the timeseries are interpolated so as to eliminate"
-   echo "      the influence of masked-out time points on the processed"
-   echo "      timeseries (following Power et al., 2014)."
-   echo ""
-   echo " -k : Temporal mask without interpolation"
-   echo "      Discard volumes from the temporal mask, but do not"
-   echo "      interpolate over volumes to be censored. Use this option"
-   echo "      if, for instance, you are using an old scrubbing-based"
-   echo "      processing pipeline."
-   echo ""
-   echo " -r : Filter order [default 1]"
-   echo "      The filter order indicates the number of input samples"
-   echo "      taken under consideration when generating an output"
-   echo "      signal. In general, using a higher-order filter will"
-   echo "      result in a sharper cutoff between accepted and"
-   echo "      attenuated frequencies. For a gentler filter, use a"
-   echo "      lower order."
-   echo "      (Affects only Butterworth, Chebyshev, and elliptic"
-   echo "      filters.)"
-   echo ""
-   echo " -d : Filter direction [default 2]"
-   echo "      The filter direction indicates whether the input signal"
-   echo "      should be processed in the forward direction only [-d 1]"
-   echo "      or in both forward and reverse directions [-d 2]."
-   echo "      (Affects only Butterworth, Chebyshev, and elliptic"
-   echo "      filters.)"
-   echo ""
-   echo " -p : Pass band ripple [default 1]"
-   echo "      Chebyshev I and elliptic filters allow for sharper"
-   echo "      discrimination between accepted and attenuated"
-   echo "      frequencies at the cost of a 'ripple' in the pass band."
-   echo "      This ripple results in somewhat uneven retention of"
-   echo "      pass-band frequencies."
-   echo "      (Affects only Chebyshev I and elliptic filters)"
-   echo ""
-   echo " -s : Stop band ripple [default 1]"
-   echo "      Chebyshev II and elliptic filters allow for sharper"
-   echo "      discrimination between accepted and attenuated"
-   echo "      frequencies at the cost of a 'ripple' in the stop band."
-   echo "      This ripple results in somewhat uneven removal of"
-   echo "      stop-band frequencies."
-   echo "      (Affects only Chebyshev II and elliptic filters)"
-   echo ""
-   echo " -v : Discard volumes [default 0]"
-   echo "      Application of certain filters may result in extreme"
-   echo "      values at the beginnings and ends of timeseries; these"
-   echo "      values may be removed by discarding initial (for all"
-   echo "      filters) and final (for forward-reverse filters) time"
-   echo "      points."
-   echo "      (Should not be used for FFT or Gaussian filters)"
-   echo ""
-   echo " -x : Index of derivative images"
-   echo "      Path to a file containing any derivative images"
-   echo "      generated from the primary BOLD timeseries. The file"
-   echo "      text should match the format:"
-   echo "           #NAME_OF_IMAGE1#PATH_TO_IMAGE1"
-   echo "           #NAME_OF_IMAGE2#PATH_TO_IMAGE2"
-   echo "           ..."
-   echo "      If any images in the derivatives file have the same"
-   echo "      number of volumes as the primary BOLD timeseries,"
-   echo "      then the same filtering procedure that was applied"
-   echo "      to the primary BOLD timeseries will be applied to"
-   echo "      that derivative image."
-   echo ""
-   echo " -1 : 1D timeseries"
-   echo "      A comma separated list of paths to files containing"
-   echo "      one-dimensional timeseries. Each column in the file"
-   echo "      should represent a separate timeseries, and each row"
-   echo "      should represent a separate time point; the number of"
-   echo "      rows must equal the number of volumes present in the"
-   echo "      primary BOLD timeseries. The same filtering regime"
-   echo "      that was applied to the primary BOLD timeseries will"
-   echo "      be applied to each column of each 1D file"
-   echo ""
-   echo " -t : Trace"
-   echo "      If this flag is set, then any commands called by the"
-   echo "      tfilter routine will be explicitly printed to the"
-   echo "      console or log."
-   echo ""; echo ""; echo ""
+cat << endstream
+___________________________________________________________________
+
+
+Usage: `basename $0` -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -i : Input timeseries
+      The 4D timeseries to which the temporal filter is to
+      be applied.
+
+ -o : Output timeseries
+      The path to the file where the filtered timeseries
+      will be written.
+
+Optional arguments:
+ -f : Temporal filter mode [default fft]
+      Input can be any of 'gaussian', 'fft', 'butterworth',
+      'chebyshev1', 'chebyshev2', or 'elliptic'.
+       * FFT-based filters [default] use a fast Fourier
+         transform to attenuate frequencies. An FFT-based
+         filter may not be suitable for use in designs that
+         incorporate iterative motion censoring, since
+         it will include interpolated frequencies in its
+         calculations.
+       * A Gaussian filter uses Gaussian-weighted least-
+         squares
+       * Chebyshev and elliptic filters more ideally
+         discriminate accepted and attenuated frequencies
+         than do Butterworth filters, but they introduce
+         ripples in either the passband (chebyshev1),
+         stopband (chebyshev2), or both (elliptic) that
+         result in some signal distortion.
+
+ -h : Highpass frequency [default 0.01]
+      The cutoff frequency below which all signal will be
+      removed from the timeseries, in Hz. To create a
+      bandpass filter, specify a lowpass frequency that is
+      higher than the highpass frequency.
+
+ -l : Lowpass frequency [default nyquist]
+      The cutoff frequency above which all signal will be
+      removed from the timeseries, in Hz.
+
+ -m : Mask
+      Filtering is computed only within the specified
+      binary mask.
+
+ -n : Temporal mask with interpolation
+      Filtering is computed only within the specified
+      temporal mask. Outside of the temporal mask, the values
+      of the timeseries are interpolated so as to eliminate
+      the influence of masked-out time points on the processed
+      timeseries (following Power et al., 2014).
+
+ -r : Filter order [default 1]
+      The filter order indicates the number of input samples
+      taken under consideration when generating an output
+      signal. In general, using a higher-order filter will
+      result in a sharper cutoff between accepted and
+      attenuated frequencies. For a gentler filter, use a
+      lower order.
+      (Affects only Butterworth, Chebyshev, and elliptic
+      filters.)
+
+ -d : Filter direction [default 2]
+      The filter direction indicates whether the input signal
+      should be processed in the forward direction only [-d 1]
+      or in both forward and reverse directions [-d 2].
+      (Affects only Butterworth, Chebyshev, and elliptic
+      filters.)
+
+ -p : Pass band ripple [default 1]
+      Chebyshev I and elliptic filters allow for sharper
+      discrimination between accepted and attenuated
+      frequencies at the cost of a 'ripple' in the pass band.
+      This ripple results in somewhat uneven retention of
+      pass-band frequencies.
+      (Affects only Chebyshev I and elliptic filters)
+
+ -s : Stop band ripple [default 1]
+      Chebyshev II and elliptic filters allow for sharper
+      discrimination between accepted and attenuated
+      frequencies at the cost of a 'ripple' in the stop band.
+      This ripple results in somewhat uneven removal of
+      stop-band frequencies.
+      (Affects only Chebyshev II and elliptic filters)
+
+ -1 : 1D timeseries
+      A comma separated list of names and paths to files containing
+      one-dimensional timeseries, formatted name1:path1,name2:path2
+      Each column in the file should represent a separate
+      timeseries, and each row should represent a separate time
+      point; the number of rows must equal the number of volumes
+      present in the primary BOLD timeseries. The same filtering
+      regime that was applied to the primary BOLD timeseries will
+      be applied to each column of each 1D file
+
+ -t : Trace
+      If this flag is set, then any commands called by the
+      tfilter routine will be explicitly printed to the
+      console or log.
+
+
+endstream
 }
 
 
@@ -164,32 +140,30 @@ order=1
 pass=2
 rpass=1
 rstop=1
-dvol=0
 tmask=ones
-tmaskcut=ones
-ntrue=0
-ktrue=-1
+unset tslist
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
+while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
    do
    case $OPTION in
    i)
       image=${OPTARG}
-      [[ $(imtest ${image}) != 1 ]] && Usage && exit
+      ! is_image ${image} && Usage && exit
       ;;
    o)
       out=${OPTARG}
+      out_root=$(exec_fsl remove_ext ${out})
       ;;
    f)
       filter=${OPTARG}
-      if [[ ${filter} != "gaussian" ]] \
-         && [[ ${filter} != "fft" ]] \
-         && [[ ${filter} != "butterworth" ]] \
-         && [[ ${filter} != "chebyshev1" ]] \
-         && [[ ${filter} != "chebyshev2" ]] \
-         && [[ ${filter} != "elliptic" ]]
+      if [[ ${filter} != gaussian ]] \
+      && [[ ${filter} != fft ]] \
+      && [[ ${filter} != butterworth ]] \
+      && [[ ${filter} != chebyshev1 ]] \
+      && [[ ${filter} != chebyshev2 ]] \
+      && [[ ${filter} != elliptic ]]
          then
          echo "Unrecognised filter mode: ${filter}."
          Usage
@@ -198,57 +172,44 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
       ;;
    h)
       hipass=${OPTARG}
-      ! [[ ${hipass} =~ ${POSNUM} ]] && Usage && exit
+      ! is+numeric ${hipass} && Usage && exit
       ;;
    l)
       lopass=${OPTARG}
-      ! [[ ${lopass} =~ ${POSNUM} ]] \
-         && ! [[ ${lopass} == nyquist ]] \
+      ! is+numeric ${lopass} \
+         && [[ ${lopass} != nyquist ]] \
          && Usage \
          && exit
       ;;
    m)
       mask=${OPTARG}
-      [[ $(imtest ${mask}) != 1 ]] && Usage && exit
+      ! is_image ${mask} && Usage && exit
       ;;
    n)
       tmask=${OPTARG}
-      tmaskcut=${OPTARG}
-      ntrue=1
-      ;;
-   k)
-      tmaskcut=${OPTARG}
-      ktrue=1
+      ! is_1D ${tmask}  && Usage && exit
       ;;
    r)
       order=${OPTARG}
-      ! [[ ${order} =~ ${POSINT} ]] && Usage && exit
+      ! is+integer ${order} && Usage && exit
       ;;
    d)
       pass=${OPTARG}
-      [[ ${pass} != 1 ]] \
-         && [[ ${pass} != 2 ]] \
+      (( ${pass} != 1 )) \
+         && (( ${pass} != 2 )) \
          && Usage \
          && exit
       ;;
    p)
       rpass=${OPTARG}
-      ! [[ ${rpass} =~ ${POSNUM} ]] && Usage && exit
+      ! is+numeric ${rpass} && Usage && exit
       ;;
    s)
       rstop=${OPTARG}
-      ! [[ ${rstop} =~ ${POSNUM} ]] && Usage && exit
-      ;;
-   v)
-      dvol=${OPTARG}
-      ! [[ ${dvol} =~ ${POSINT} ]] && Usage && exit
-      ;;
-   x)
-      derivsList=${OPTARG}
-      derivs=$(cat ${derivsList})
+      ! is+numeric ${rstop} && Usage && exit
       ;;
    1)
-      tslist=${OPTARG}
+      tslist="${tslist} ${OPTARG}"
       ;;
    t)
       set -x
@@ -259,85 +220,46 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:x:1:t" OPTION
       exit
    esac
 done
-shift $((OPTIND-1))
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z ${image} ]] && Usage && exit
-[[ -z ${out} ]] && Usage && exit
+[[ -z ${image} ]]  && Usage && exit
+[[ -z ${out} ]]    && Usage && exit
 [[ -z ${filter} ]] && Usage && exit
-[[ ${ntrue} == ${ktrue} ]] \
-   && echo "You may only specify one of -n and -k" \
-   && exit
 ###################################################################
 # Ensure that all 1D timeseries (including the temporal mask) have
 # the same number of volumes as the primary BOLD timeseries
 ###################################################################
-nvol=$(fslnvols ${image})
-[[ ${tmask} != "ones" ]] \
-   && cvol=$(cat $tmask|wc|awk '{print $2}') \
-   || cvol=${nvol}
-[[ ${nvol} != ${cvol} ]] \
-   && echo "Volume mismatch: temporal mask" \
-   && exit
-[[ ! -z tslist ]] && use_tslist=TRUE
-if [[ ${use_tslist} == TRUE ]]
+nvol=$(exec_fsl fslnvols ${image})
+if [[ ${tmask} != ones ]]
    then
-   ################################################################
-   # Change the list of 1D timeseries from a comma-delimited list
-   # to a space-delimited list. This will facilitate its use in
-   # for loops at later stages.
-   ################################################################
-   tslist=$(echo ${tslist}|sed s@','@' '@g)
-   for ts in ${tslist}
-      do
-      cvol=$(cat ${ts}|wc -l)
-      [[ ${nvol} != ${cvol} ]] \
-         && echo "Volume mismatch: ${ts}" \
-         && exit
-   done
+   cvol=$(wc -l < ${tmask})
+else
+   cvol=${nvol}
 fi
+if (( ${nvol} != ${cvol} ))
+   then
+   echo "Volume mismatch: temporal mask"
+   exit
+fi
+[[ -n ${tslist} ]] && tslist=${tslist//,/ }
+declare -A ts1d
+for ts in ${tslist}
+   do
+   ts_name=$(strslice ${ts} 1 :)
+   ts_path=$(strslice ${ts} 2 :)
+   ts1d[$ts_name]=${ts_path}
+   cvol=$(wc -l < ${ts_path})
+   if (( ${nvol} != ${cvol} ))
+      then
+      echo "Volume mismatch: ${ts}"
+      exit
+   fi
+done
 ###################################################################
 # Compute the repetition time. This is required for all filters.
 ###################################################################
-t_rep=$(fslinfo ${image} \
-   |grep pixdim4 \
-   |awk '{print $2}')
-
-
-
-
-
-###################################################################
-# Determine the extension of the input and the extension to use
-# for the output.
-#  * If the user-provided input omits the extension, store the
-#    path with its extension in imgpath. Then, obtain the
-#    extension by removing the user-specified input from the
-#    complete input path.
-#  * Determine the extension for the output by taking all
-#    characters following the first '.' in the input path.
-#  * Ensure that the output has an extension so that it is not
-#    automatically brickheaded by AFNI scripts.
-###################################################################
-imgpath=$(ls -d1 ${image}.* 2>/dev/null)
-maskpath=$(ls -d1 ${mask}*)
-[[ ! -z ${imgpath} ]] \
-   && ext_in=$(echo $imgpath|sed "s@${image}@@") \
-   || imgpath=${image}
-ext_out=$(echo ${out}|cut -d"." -f1 --complement)
-[[ ${out} == ${ext_out} ]] \
-   && ext_out=$(basename ${imgpath}|cut -d"." -f1 --complement)
-img_noext=$(echo ${image}|cut -d"." -f1)
-out_noext=$(echo ${out}|cut -d"." -f1)
-[[ ${out} == ${out_noext} ]] && out=${out}.${ext_out}
-[[ ${out} == ${out_noext} ]] && out=${out}.${ext_out}
-[[ ${ext_out} == "nii.gz" ]] && export FSLOUTPUTTYPE=NIFTI_GZ
-[[ ${ext_out} == "nii" ]] && export FSLOUTPUTTYPE=NIFTI
-[[ ${ext_out} == "hdr" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext_out} == "img" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR
-[[ ${ext_out} == "hdr.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
-[[ ${ext_out} == "img.gz" ]] && export FSLOUTPUTTYPE=NIFTI_PAIR_GZ
+t_rep=$(exec_fsl fslval ${image} pixdim4)
 
 
 
@@ -347,20 +269,20 @@ out_noext=$(echo ${out}|cut -d"." -f1)
 # 1. Interpolate over masked-out epochs, if a temporal mask has
 #    been provided.
 ###################################################################
-if [ "${tmask}" != "ones" ]
+if [[ ${tmask} != ones ]]
    then
-   echo "Interpolating over masked-out epochs..."
-   echo "(This will be slow)"
-   ${XCPEDIR}/utils/interpolate.R \
-      -i "${imgpath}" \
-      -m "${maskpath}" \
+   subroutine     @u.1a Interpolating over masked-out epochs...
+   subroutine     @u.1b This will be slow
+   exec_xcp \
+      interpolate.R \
+      -i "${image}" \
+      -m "${mask}" \
       -t "${tmask}" \
-      -o "${out_noext}_interpol.${ext_out}"
+      -o "${out_root}_interpol.nii.gz"
    ################################################################
    # Update pointers to indicate the post-interpolation image
    ################################################################
-   img_noext=${out_noext}_interpol
-   imgpath=${out_noext}_interpol.${ext_out}
+   image=${out_root}_interpol.nii.gz
 fi
 
 
@@ -378,8 +300,9 @@ case ${filter} in
 
 
 gaussian)
-   genfilt=false
-   [[ ! -z ${mask} ]] && maskcall="-mas ${mask}"
+   subroutine                 @u.2
+   genfilt=0
+   is_image ${mask} && maskcall="-mas ${mask}"
    ################################################################
    # 2a. Filter the primary 4D timeseries.
    #---------------------------------------------------------------
@@ -387,136 +310,81 @@ gaussian)
    #     second) to cycles per repetition.
    #   * Convert from frequency cutoff (in Hz) to cycle cutoff
    #     (in s).
-   ################################################################
-   hpw=$(echo 1 ${hipass}|awk '{print $1/$2}')
-   ################################################################
    #   * Then, determine how many cycles of the cutoff per
    #     repetition.
    ################################################################
-   hpf=$(echo ${t_rep} ${hpw}|awk '{print $2/$1/2}')
+   hpw=$(arithmetic 1/${hipass})
+   hpf=$(arithmetic ${hpw}/${t_rep}/2)
    ################################################################
    #   * Repeat for the lowpass frequency with the following
    #     exception: Set lowpass frequency to -1 (no attenuation)
    #     if the lowpass frequency is set to Nyquist.
    ################################################################
-   if [[ "${lopass}" == "nyquist" ]]
+   if [[ ${lopass} == nyquist ]]
       then
+      subroutine              @u.2.1
       lpf=-1
    else
-      lpw=$(echo 1 ${lopass} | \
-         awk '{print $1/$2}')
-      lpf=$(echo ${t_rep} ${lpw} | \
-         awk '{print $2/$1/2}')
+      subroutine              @u.2.2
+      lpw=$(arithmetic 1/${lopass})
+      lpf=$(arithmetic ${lpw}/${t_rep}/2)
    fi
    ################################################################
    #   * With that, it is possible to apply the filter through
    #     fslmaths.
    ################################################################
-   fslmaths ${image} \
+   exec_fsl \
+      fslmaths ${image} \
       -bptf ${hpf} ${lpf} \
       ${maskcall} \
       ${out}
    ################################################################
-   # 3a. Filter any derivative 4D timeseries.
-   #   * Iterate through all derivative images.
-   ################################################################
-   rm -rf ${out_noext}_derivs
-	for deriv in ${derivs}
-      do
-      #############################################################
-      # * Parse the derivative image.
-      #############################################################
-	   dName=$(echo ${deriv}|cut -d'#' -f2)
-	   dPath=$(echo ${deriv}|cut -d'#' -f3)
-      #############################################################
-      # * Determine whether the number of volumes in the derivative
-      #   image is equal to the number of volumes in the primary
-      #   image.
-      #############################################################
-	   cvol=$(fslnvols ${dPath})
-      #############################################################
-      # * Only filter the derivative image if it has the same
-      #   number of volumes as the primary image.
-      # * This will ensure that derivative timeseries used in
-      #   linear models do not re-introduce frequencies that were
-      #   filtered out of the primary image.
-      # * Initialise an index of filtered derivatives using the
-      #   user-specified output as a prefix, and write the paths
-      #   to the filtered images to the index.
-      #############################################################
-	   if [[ "${nvol}" == "${cvol}" ]]
-	      then
-	      fslmaths ${dPath} \
-            -bptf ${hpf} ${lpf} \
-            ${maskcall} \
-            ${out_noext}_${dName}
-         echo "#${dName}#${out_noext}_${dName}" \
-            >> ${out_noext}_derivs
-      #############################################################
-      # * If the derivative image has a different number of volumes
-      #   from the primary image, then copy it to the index of
-      #   filtered derivatives without making any changes.
-      #############################################################
-	   else
-         echo "#${dName}#${dPath}" \
-            >> ${out_noext}_derivs
-	   fi
-	done
-   ################################################################
-   # 4a. Filter any 1D timeseries specified by the user.
+   # 3a. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
    #   * This is much more complicated than it sounds because
    #     FSL's filter engine will only process NIfTIs.
    #   * So, the information in each 1D timeseries must be written
    #     into a (hopefully compact) NIfTI.
    ################################################################
-   for ts in ${tslist}
+   for tsname in "${!ts1d[@]}"
       do
-      #############################################################
-      # * Obtain the base name of the current 1D timeseries file.
-      #############################################################
-      tsname=$(basename ${ts}|cut -d"." -f1)
+      subroutine              @u.2.6
+      ts=${ts1d[$tsname]}
       #############################################################
       # * Determine the number of timeseries in the 1D timeseries
       #   file by dividing the total number of words in the file
       #   by the number of time points (volumes).
       #############################################################
-      nfld=$(wc -w ${ts}|cut -d" " -f1)
-      nfld=$(echo ${nfld} ${nvol}|awk '{print $1/$2}')
+      nfld=$(exec_sys wc -w < ${ts})
+      nfld=$(( ${nfld}/${nvol} ))
       #############################################################
       # * Through trial and error, we have found that the desired
       #   result is obtained only if the timeseries is transposed
-      #   first.
+      #   before conversion to NIfTI.
       #############################################################
-      1dtranspose ${ts} ${out_noext}_${tsname}_tp.1D
-      #############################################################
-      # * Next, convert it to a NIfTI timeseries.
-      #############################################################
-      fslascii2img ${out_noext}_${tsname}_tp.1D \
+      exec_afni 1dtranspose ${ts} ${out_root}_${tsname}_tp.1D
+      exec_fsl \
+         fslascii2img ${out_root}_${tsname}_tp.1D \
          ${nfld} 1 1 \
          ${nvol} 1 1 1 \
          ${t_rep} \
-         ${out_noext}_${tsname}.${ext_out}
-      #############################################################
-      # * Apply the Gaussian filter.
-      #############################################################
-      fslmaths ${out_noext}_${tsname}.${ext_out} \
+         ${out_root}_${tsname}.nii.gz
+      exec_fsl \
+         fslmaths ${out_root}_${tsname}.nii.gz \
          -bptf ${hpf} ${lpf} \
-         ${out_noext}_${tsname}_filt.${ext_out}
+         ${out_root}_${tsname}_filt.nii.gz
       #############################################################
       # * Convert back to a .1D file using fslmeants with the
       #   showall flag to return all timeseries instead of the
       #   mean timeseries.
       #############################################################
-      fslmeants -i ${out_noext}_${tsname}_filt.${ext_out} \
+      exec_fsl \
+         fslmeants -i ${out_root}_${tsname}_filt.nii.gz \
          --showall \
-         -o ${out_noext}_${tsname}.1D
-      #############################################################
-      # * Clean up intermediate files.
-      #############################################################
-      rm -f ${out_noext}_${tsname}_tp.1D
-      rm -f ${out_noext}_${tsname}.${ext_out}
-      rm -f ${out_noext}_${tsname}_filt.${ext_out}
+         -o ${out_root}_${tsname}.1D
+      rm -f ${out_root}_${tsname}_tp.1D
+      rm -f ${out_root}_${tsname}.nii.gz
+      rm -f ${out_root}_${tsname}_filt.nii.gz
    done
    ;;
    
@@ -525,9 +393,9 @@ gaussian)
    
    
 fft)
-   genfilt=false
-   [[ ! -z ${mask} ]] \
-      && maskcall="-mask ${maskpath}"
+   subroutine                 @u.3
+   genfilt=0
+   is_image ${mask} && maskcall="-mask ${mask}"
    ################################################################
    # 2b. Filter the primary 4D timeseries.
    #---------------------------------------------------------------
@@ -539,88 +407,26 @@ fft)
    #   * So, if the user has requested all frequencies retained up
    #     to the Nyquist limit, pass 99999 as the lowpass cutoff.
    ################################################################
-   hpf=${hipass}
-   if [ "${lopass}" == "nyquist" ]
+   if [[ ${lopass} == nyquist ]]
       then
-      lpf=99999
-   else
-      lpf=${lopass}
+      subroutine              @u.3.1
+      lopass=99999
    fi
    ################################################################
    #   * Apply the FFT filter.
    #   * If the output path is already occupied by an image, then
    #     AFNI will not by default overwrite. Clear the output path.
    ################################################################
-   [[ -e ${out} ]] && rm -rf ${out}
-   3dBandpass \
+   rm -rf ${out}
+   exec_afni \
+      3dBandpass \
       -prefix ${out} \
       -nodetrend -quiet \
       ${maskcall} \
-      ${hpf} ${lpf} ${imgpath} \
+      ${hipass} ${lopass} ${image} \
       2>/dev/null
    ################################################################
-   # 3b. Filter any derivative 4D timeseries.
-   ################################################################
-   rm -rf ${out_noext}_derivs
-   for deriv in ${derivs}
-      do
-      #############################################################
-      # * Parse the derivative image.
-      #############################################################
-	   dName=$(echo ${deriv}|cut -d'#' -f2)
-	   dPath=$(echo ${deriv}|cut -d'#' -f3)
-      #############################################################
-      # * Determine whether the number of volumes in the derivative
-      #   image is equal to the number of volumes in the primary
-      #   image.
-      #############################################################
-	   cvol=$(fslnvols ${dPath})
-      #############################################################
-      # * Only filter the derivative image if it has the same
-      #   number of volumes as the primary image.
-      # * This will ensure that derivative timeseries used in
-      #   linear models do not re-introduce frequencies that were
-      #   filtered out of the primary image.
-      # * Initialise an index of filtered derivatives using the
-      #   user-specified output as a prefix, and write the paths
-      #   to the filtered images to the index.
-      #############################################################
-	   if [[ "${nvol}" == "${cvol}" ]]
-	      then
-         ##########################################################
-         # * Ensure that the ultimate input to 3dBandpass has an
-         #   appropriate extension. Unlike FSL, AFNI requires the
-         #   full file name.
-         ##########################################################
-	      input=$(ls -d1 ${dPath}.* 2>/dev/null)
-	      [[ -z ${input} ]] && input=${dPath}
-         ##########################################################
-         # * Apply the FFT filter.
-         ##########################################################
-         [[ -e ${out_noext}_${dName}.${ext_out} ]] \
-            && rm -rf ${out_noext}_${dName}.${ext_out}
-	      3dBandpass \
-            -prefix ${out_noext}_${dName}.${ext_out} \
-            -nodetrend \
-            -quiet \
-            ${maskcall} \
-            ${hpf} ${lpf} \
-            ${input} \
-            2>/dev/null
-         echo "#${dName}#${out_noext}_${dName}" \
-            >> ${out_noext}_derivs
-      #############################################################
-      # * If the derivative image has a different number of volumes
-      #   from the primary image, then copy it to the index of
-      #   filtered derivatives without making any changes.
-      #############################################################
-	   else
-         echo "#${dName}#${dPath}" \
-            >> ${out_noext}_derivs
-	   fi
-	done
-   ################################################################
-   # 4b. Filter any 1D timeseries specified by the user.
+   # 3b. Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
    #   * For this purpose, the script uses 1dBandpass.
    #   * Because 1D files do not include a header with timing
@@ -628,25 +434,16 @@ fft)
    #     the program can convert cutoff frequencies to units of
    #     sampling intervals.
    ################################################################
-   for ts in ${tslist}
+   for tsname in "${!ts1d[@]}"
       do
-      #############################################################
-      # * Obtain the base name of the current 1D timeseries file.
-      #############################################################
-      tsname=$(basename ${ts}|cut -d"." -f1)
-      #############################################################
-      # * Delete any file that already exists at the destination
-      #   path.
-      #############################################################
-      rm -rf ${out_noext}_${tsname}.1D
-      #############################################################
-      # * Apply the FFT filter.
-      #############################################################
-      1dBandpass \
+      ts=${ts1d[$tsname]}
+      exec_sys rm -rf ${out_root}_${tsname}.1D
+      exec_afni \
+         1dBandpass \
          -nodetrend \
          -dt ${t_rep} \
-         ${hpf} ${lpf} ${ts} \
-         >> ${out_noext}_${tsname}.1D
+         ${hipass} ${lopass} ${ts} \
+         >> ${out_root}_${tsname}.1D
    done
    ;;
    
@@ -655,52 +452,32 @@ fft)
    
    
 butterworth)
-   ################################################################
-   # Initialise parameters.
-   ################################################################
+   subroutine                 @u.4
+   genfilt=1
    rpcall=""
    rscall=""
    fcall="-f butterworth"
-   ################################################################
-   # Pass control to genfilter.
-   ################################################################
-   genfilt=true
    ;;
 chebyshev1)
-   ################################################################
-   # Initialise parameters.
-   ################################################################
+   subroutine                 @u.5
+   genfilt=1
    rpcall="-p ${rpass}"
    rscall=""
    fcall="-f chebyshev1"
-   ################################################################
-   # Pass control to genfilter.
-   ################################################################
-   genfilt=true
    ;;
 chebyshev2)
-   ################################################################
-   # Initialise parameters.
-   ################################################################
+   subroutine                 @u.6
+   genfilt=1
    rpcall=""
    rscall="-s ${rstop}"
    fcall="-f chebyshev2"
-   ################################################################
-   # Pass control to genfilter.
-   ################################################################
-   genfilt=true
    ;;
 elliptic)
-   ################################################################
-   # Initialise parameters.
-   ################################################################
+   subroutine                 @u.7
+   genfilt=1
    rpcall="-p ${rpass}"
    rscall="-s ${rstop}"
    fcall="-f elliptic"
-   ################################################################
-   # Pass control to genfilter.
-   ################################################################
-   genfilt=true
    ;;
 esac
 
@@ -708,20 +485,22 @@ esac
 # genfilter is a utility R script that applies Butterworth,
 # Chebyshev I and II, and elliptic filters to an image.
 ###################################################################
-if [[ ${genfilt} == true ]]
+if (( ${genfilt} == 1 ))
    then
+   subroutine     @u.8
    ################################################################
    # Initialise parameters.
    ################################################################
-   [[ ! -z ${mask} ]] && maskcall="-m ${maskpath}"
+   is_image ${mask} && maskcall="-m ${mask}"
    ocall="-r ${order}"
    dcall="-d ${pass}"
    ################################################################
-   # 2c. Filter the primary 4D timeseries.
+   # Filter the primary 4D timeseries.
    ################################################################
-   [[ -e ${out} ]] && rm -rf ${out}
-   ${XCPEDIR}/utils/genfilter.R \
-      -i ${imgpath} \
+   exec_sys rm -rf ${out}
+   exec_xcp \
+      genfilter.R \
+      -i ${image} \
       -o ${out} \
       ${fcall} \
       ${maskcall} \
@@ -732,69 +511,7 @@ if [[ ${genfilt} == true ]]
       ${rpcall} \
       ${rscall}
    ################################################################
-   # 3c. Filter any derivative 4D timeseries.
-   ################################################################
-   rm -rf ${out_noext}_derivs
-   for deriv in ${derivs}
-      do
-      #############################################################
-      # * Parse the derivative image.
-      #############################################################
-	   dName=$(echo ${deriv}|cut -d'#' -f2)
-	   dPath=$(echo ${deriv}|cut -d'#' -f3)
-      #############################################################
-      # * Determine whether the number of volumes in the derivative
-      #   image is equal to the number of volumes in the primary
-      #   image.
-      #############################################################
-	   cvol=$(fslnvols ${dPath})
-      #############################################################
-      # * Only filter the derivative image if it has the same
-      #   number of volumes as the primary image.
-      # * This will ensure that derivative timeseries used in
-      #   linear models do not re-introduce frequencies that were
-      #   filtered out of the primary image.
-      # * Initialise an index of filtered derivatives using the
-      #   user-specified output as a prefix, and write the paths
-      #   to the filtered images to the index.
-      #############################################################
-	   if [[ "${nvol}" == "${cvol}" ]]
-	      then
-         ##########################################################
-         # * Ensure that the ultimate input to genfilter has an
-         #   appropriate extension. Genfilter requires the complete
-         #   file name.
-         ##########################################################
-	      input=$(ls -d1 ${dPath}.* 2>/dev/null)
-	      [[ -z ${input} ]] && input=${dPath}
-         ##########################################################
-         # * Apply the generalised filter operation.
-         ##########################################################
-         ${XCPEDIR}/utils/genfilter.R \
-            -i ${input} \
-            -o ${out_noext}_${dName}.${ext_out} \
-            ${fcall} \
-            ${maskcall} \
-            -c ${hipass} \
-            -l ${lopass} \
-            ${ocall} \
-            ${dcall} \
-            ${rpcall} \
-            ${rscall}
-         echo "#${dName}#${out_noext}_${dName}" \
-            >> ${out_noext}_derivs
-      #############################################################
-      # * If the derivative image has a different number of volumes
-      #   from the primary image, then copy it to the index of
-      #   filtered derivatives without making any changes.
-      #############################################################
-	   else
-         echo "#${dName}#${dPath}" \
-            >> ${out_noext}_derivs
-	   fi
-	done
-   ################################################################
-   # 4a. Filter any 1D timeseries specified by the user.
+   # Filter any 1D timeseries specified by the user.
    #---------------------------------------------------------------
    #   * For this purpose, the script uses 1dGenfilter.
    #   * Because 1D files do not include a header with timing
@@ -802,23 +519,15 @@ if [[ ${genfilt} == true ]]
    #     the program can convert cutoff frequencies to units of
    #     sampling intervals.
    ################################################################
-   for ts in ${tslist}
+   for tsname in "${!ts1d[@]}"
       do
-      #############################################################
-      # * Obtain the base name of the current 1D timeseries file.
-      #############################################################
-      tsname=$(basename ${ts}|cut -d"." -f1)
-      #############################################################
-      # * Delete any file that already exists at the destination
-      #   path.
-      #############################################################
-      rm -rf ${out_noext}_${tsname}.1D
-      #############################################################
-      # * Apply the generalised filter.
-      #############################################################
-      ${XCPEDIR}/utils/1dGenfilter.R \
+      subroutine  @u.8.3
+      ts=${ts1d[$tsname]}
+      exec_sys rm -rf ${out_root}_${tsname}.1D
+      exec_xcp \
+         1dGenfilter.R \
          -i ${ts} \
-         -o ${out_noext}_${tsname}.1D \
+         -o ${out_root}_${tsname}.1D \
          ${fcall} \
          -t ${t_rep} \
          -c ${hipass} \
@@ -829,136 +538,3 @@ if [[ ${genfilt} == true ]]
          ${rscall}
    done
 fi
-
-
-
-
-
-###################################################################
-# 5. Finally, it is time to discard volumes from the limits of all
-#    timeseries, as specified by the user.
-#  * If the number of volumes to be discarded is 0 (default
-#    behaviour), then the script will never enter the conditional
-#    statement below.
-#  * For a forward-only filter, volumes are discarded only from the
-#    beginning of each timeseries.
-#  * For a forward/reverse filter, volumes are discarded from the
-#    beginning and end of each timeseries.
-###################################################################
-if [[ ${dvol} -gt 0 ]]
-   then
-   ################################################################
-   # Compute the number of volumes to be retained following
-   # timeseries truncation.
-   #  * For forward filters, this is equal to the difference
-   #    between the number of initial volumes and the number of
-   #    volumes to be discarded.
-   #  * For forward/reverse filters, this is equal to the
-   #    difference between the number of initial volumes and
-   #    twice the number of volumes to be discarded, since
-   #    that many volumes are to be discarded from both the
-   #    beginning and end of the timeseries.
-   ################################################################
-   case ${pass} in
-   1)
-      retain=$(echo ${nvol} - ${dvol}|bc)
-      echo "Discarding ${dvol} volumes from beginning of"
-      echo "  timeseries"
-      ;;
-   2)
-      retain=$(echo ${nvol} - 2*${dvol}|bc)
-      echo "Discarding ${dvol} volumes from beginning and end"
-      echo "  of timeseries"
-      ;;
-   esac
-   ################################################################
-   # Primary BOLD timeseries:
-   #---------------------------------------------------------------
-   # Use fslroi to remove the first $dvol volumes and retain
-   # the next $retain volumes.
-   ################################################################
-   fslroi ${out} ${out} \
-      0 -1 \
-      0 -1 \
-      0 -1 \
-      ${dvol} ${retain}
-   ################################################################
-   # Derivative 4D timeseries:
-   #---------------------------------------------------------------
-   #  * Update the derivatives list by loading in the new list
-   #    of filtered derivatives.
-   #  * Iterate through all derivatives, obtain their names, and
-   #    again use fslroi.
-   ################################################################
-   derivs=$(cat ${out_noext}_derivs)
-   for deriv in ${derivs}
-      do
-      #############################################################
-      # * Parse the derivative image.
-      #############################################################
-	   dName=$(echo ${deriv}|cut -d'#' -f2)
-	   dPath=$(echo ${deriv}|cut -d'#' -f3)
-      #############################################################
-      # * Determine whether the number of volumes in the derivative
-      #   image is equal to the number of volumes in the primary
-      #   image.
-      #############################################################
-	   cvol=$(fslnvols ${dPath})
-      #############################################################
-      # * Discard volumes from the derivative images only if
-      #   they have the same number of volumes as the primary
-      #   4D timeseries.
-      # * These will be the same derivative images
-      #   that were previously filtered.
-      #############################################################
-	   if [[ "${nvol}" == "${cvol}" ]]
-	      then
-	      fslroi ${dPath} ${dPath} \
-            0 -1 \
-            0 -1 \
-            0 -1 \
-            ${dvol} ${retain}
-	   fi
-	done
-   ################################################################
-   # 1D timeseries:
-   #---------------------------------------------------------------
-   #  * First, update the pointer to indicate the filtered
-   #    version of each timeseries.
-   ################################################################
-   for ts in ${tslist}
-      do
-      #############################################################
-      # * Obtain the base name of the old 1D timeseries file; use
-      #   this to find the path to the filtered version of
-      #   the same timeseries.
-      #############################################################
-      tsname=$(basename ${ts}|cut -d"." -f1)
-      ts=${out_noext}_${tsname}.1D
-      #############################################################
-      # * Discard volumes from the timeseries limits.
-      #############################################################
-      tail -n +${dvol} ${ts} >> ${out_noext}_TEMP_ts
-      rm -f ${ts}
-      head -n ${retain} ${out_noext}_TEMP_ts >> ${ts}
-      rm -f ${out_noext}_TEMP_ts
-   done
-   ################################################################
-   # Temporal mask:
-   #---------------------------------------------------------------
-   #  * The temporal mask, too, must be truncated so that its
-   #    indices correctly match up with any new volumes.
-   ################################################################
-   tmask=${tmaskcut}
-   if [[ ${tmask} != "ones" ]]
-      then
-      #############################################################
-      # * Discard volumes from the timeseries limits.
-      #############################################################
-      tail -n +${dvol} ${tmask} >> ${out_noext}_TEMP_tmask
-      head -n ${retain} ${out_noext}_TEMP_tmask >> ${out_noext}_tmask.1D
-      rm -f ${out_noext}_TEMP_tmask
-   fi
-fi
-
-

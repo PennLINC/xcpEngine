@@ -1,0 +1,5 @@
+arithmetic() {
+   local process_command=${@}
+   verbose && (>&2 eval "echo -e \"`<${XCPEDIR}/core/CONSOLE_COMMAND`\"")
+   echo "scale=20; ${@}"|bc
+}
