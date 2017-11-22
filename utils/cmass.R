@@ -24,7 +24,7 @@ suppressMessages(suppressWarnings(library(RNifti)))
 option_list = list(
    make_option(c("-r", "--roi"), action="store", default=NA, type='character',
               help="A 3D image specifying the nodes or regions of interest
-                  from which timeseries are to be extracted.")
+                  for which centres of mass are to be computed.")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 

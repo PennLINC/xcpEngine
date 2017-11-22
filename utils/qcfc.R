@@ -32,8 +32,10 @@ option_list = list(
               help="Path to the file containing subject identifiers as well
                   as paths to the connectivity matrix and a scalar-valued
                   motion metric. Subject identifiers should be marked
-                  with column headers id0,id1,... matched to any confound
-                  matrix"),
+                  with column headers id0,id1,... The column containing 
+                  the scalar-valued motion metric should have the heading
+                  'motion', and the paths to connectivity matrices should
+                  have the heading 'connectivity'."),
    make_option(c("-s", "--significance"), action="store", default='fdr', type='character',
               help="Mode of establishing significance (multiple-comparisons
                   correction: either fdr [default], bonferroni, or none)."),

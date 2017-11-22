@@ -40,7 +40,7 @@ option_list = list(
               help="A list of paths to additional 1D timeseries to include as a
                   line plot. Format as
                            
-                           ts1_name:ts1_path,ts2_name:ts2_path,...
+                   ts1_name:ts1_path:ts1_thresh,ts2_name:ts2_path:ts2_thresh,...
                   "),
    make_option(c("-n", "--names"), action="store", default=NA, type='character',
               help="The path to a vector of label names."),
