@@ -217,6 +217,7 @@ for class in "${!tissue_classes[@]}"
       # aCompCor to extract PC timecourses.
       #############################################################
       ts=${intermediate}_phys_${class}
+      pc_out=${ts}_pca
       eval  "${class}=${ts}.1D"
       if [[ ${!class_include} == mean ]]
          then
@@ -242,10 +243,13 @@ for class in "${!tissue_classes[@]}"
          ##########################################################
          subroutine           @3.4
          exec_afni      3dpc              \
-            -prefix     ${ts}             \
+            -prefix     ${pc_out}         \
             -pcsave     ${!class_include} \
             -mask       ${!class_mask}    \
             ${img}
+         pcidx=( $(seq 0    $(( ${!class_include} - 1 ))    )     )
+         exec_afni      1dcat $(printf ${pc_out}'%02d'.1D' ' ${pcidx[@]}) \
+            >>          ${ts}.1D
          cc_components=$(( ${cc_components} + ${!class_include} ))
          eval ${class}=\${ts}.1D
       elif [[ ${!class_include} == all ]]
@@ -257,11 +261,14 @@ for class in "${!tissue_classes[@]}"
          ##########################################################
          subroutine           @3.5
          exec_afni      3dpc           \
-            -prefix     ${ts}          \
+            -prefix     ${pc_out}      \
             -pcsave     99999          \
             -mask       ${!class_mask} \
             ${img}
-         vidx=$(tail    -n1 ${ts}.1D|wc -w)
+         vidx=$(( $(cat ${pc_out}_eig.1D|wc -l) - 1 ))
+         pcidx=(  $(seq 0     $(( ${vidx} - 1 ))    )    )
+         exec_afni      1dcat $(printf ${pc_out}'%02d'.1D' ' ${pcidx[@]}) \
+            >>          ${ts}.1D
          cc_components=$(( ${cc_components} + ${vidx} ))
          eval ${class}=\${ts}.1D
       elif is+numeric ${!class_include}
@@ -272,24 +279,28 @@ for class in "${!tissue_classes[@]}"
          ##########################################################
          subroutine           @3.6
          exec_afni      3dpc           \
-            -prefix     ${ts}          \
+            -prefix     ${pc_out}      \
             -mask       ${!class_mask} \
             ${img}
-         readarray      variance_explained < ${ts}_eig.1D
+         readarray      variance_explained < ${pc_out}_eig.1D
+         pcidx=( 0 )
          vidx=1
          while (( ${vidx} < ${#variance_explained[@]} ))
             do
             v=(      ${variance_explained[${vidx}]}   )
             chk=$(   arithmetic        ${v[3]}'>'${!class_include})
             ((       ${chk} == 1 ))    && break
+            pcidx=(  ${pcidx[@]}          ${vidx}     )
             ((       vidx++      ))
          done
          subroutine           @3.7  [Retaining ${vidx} components from ${class_name}]
          exec_afni      3dpc           \
-            -prefix     ${ts}          \
+            -prefix     ${pc_out}      \
             -pcsave     ${vidx}        \
             -mask       ${!class_mask} \
             ${img}
+         exec_afni      1dcat $(printf ${pc_out}'%02d'.1D' ' ${pcidx[@]}) \
+            >>          ${ts}.1D
          cc_components=$(( ${cc_components} + ${vidx} ))
          eval ${class}=\${ts}.1D
       elif [[ ${!class_include} == "local" ]]
