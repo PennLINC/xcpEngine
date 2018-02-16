@@ -671,6 +671,7 @@ exp=0
 [[ ${confound_csf[cxt]} == mean  ]] && exp=$(( ${exp} + 1 ))
 [[ ${confound_gsr[cxt]} == mean  ]] && exp=$(( ${exp} + 1 ))
 
+(( ${confound_sq[cxt]} == 0 )) && confound_sq[cxt]=1
 past=$((    ${confound_past[cxt]}      + 1 ))
 dx=$((      ${confound_dx[cxt]}        + 1 ))
 exp=$((     ${exp} * ${past} * ${dx}   * ${confound_sq[cxt]} ))
