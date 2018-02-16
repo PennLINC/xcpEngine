@@ -38,11 +38,14 @@ completion() {
 derivative            meanPerfusion    ${prefix}_meanPerfusion
 
 output                tag_mask         ${prefix}_tag_mask.txt
+output                rps_proc         ${prefix}_realignment_transform.1D
 
 qc negative_voxels    negativeVoxels   ${prefix}_negativeVoxels.txt
 qc negative_voxels_ts negativeVoxelsTS ${prefix}_negativeVoxelsTS.txt
 
 derivative_set        meanPerfusion    Statistic         mean
+
+input 1dim            rps_proc or rps  as rps
 
 process               perfusion        ${prefix}_perfusion
 
@@ -61,7 +64,7 @@ perfusion
    A voxelwise time series of perfusion estimates.
 tag_mask
    A 1-dimensional mask indicating whether each volume is tagged
-   (1) or untagged(0).
+   (1) or untagged (0).
 
 DICTIONARY
 
@@ -116,6 +119,7 @@ fi
 # Compute cerebral blood flow.
 ###################################################################
 if ! is_image ${meanPerfusion[cxt]} \
+|| ! is_image ${perfusion[cxt]}     \
 || rerun
    then
    routine                    @2    Computing cerebral blood flow
@@ -197,6 +201,11 @@ if ! is_image ${meanPerfusion[cxt]} \
    echo ${neg[0]}   >> ${negative_voxels_ts[cxt]}
    routine_end
 fi
+   
+routine                       @4    Selecting realignment parameters
+subroutine                    @4.1  Averaging over tagged/untagged pairs
+exec_xcp realignment.R -m ${rps[cxt]} -t mean -o ${outdir}/${prefix}
+routine_end
 
 
 
