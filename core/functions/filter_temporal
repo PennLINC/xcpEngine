@@ -64,7 +64,7 @@ USAGE
    # If no temporal filtering has been specified by the user, then
    # bypass this step.
    ################################################################
-   if [[ ${!tmpf} == none ]]
+   if [[ ${tmpf} == none ]]
       then
       subroutine           ${tag}.1
       exec_sys ln -sf ${img_i}.nii.gz   ${img_o}.nii.gz
@@ -189,7 +189,7 @@ No censoring will be performed."
       # Next, set arguments specific to each filter class.
       #############################################################
       unset tforder tfdirec tfprip tfsrip
-      case ${!tmpf} in
+      case ${tmpf} in
       butterworth)
          subroutine        ${tag}.8
          tf_order="-r ${order}"
