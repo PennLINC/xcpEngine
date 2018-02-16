@@ -47,8 +47,8 @@ derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
 
-output      referenceVolume         ${prefix}_referenceVolume
-output      meanIntensity           ${prefix}_meanIntensity
+output      referenceVolume         ${prefix}_referenceVolume.nii.gz
+output      meanIntensity           ${prefix}_meanIntensity.nii.gz
 output      confmat                 ${prefix}_confmat.1D
 output      fsf                     model/${prefix}_design.fsf
 output      mcdir                   mc
@@ -58,7 +58,7 @@ output      abs_mean_rms            mc/${prefix}_absMeanRMS.txt
 output      rel_rms                 mc/${prefix}_relRMS.1D
 output      rmat                    mc/${prefix}.mat
 
-define      featdir                 fsl/${prefix}
+define      featdir                 ${outdir}/fsl/${prefix}
 
 qc rel_max_rms  relMaxRMSMotion     mc/${prefix}_relMaxRMS.txt
 qc rel_mean_rms relMeanRMSMotion    mc/${prefix}_relMeanRMS.txt

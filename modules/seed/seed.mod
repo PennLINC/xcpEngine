@@ -56,7 +56,7 @@ for seed in ${seeds[cxt]}
    define            mapdir               ${outdir}/${seed[0]}/
    define            mapbase              ${mapdir[cxt]}/${prefix}_connectivity
    define            ${seed[0]}_ts        ${mapbase[cxt]}_${seed[0]}_ts.1D
-   output            ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed
+   output            ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed.nii.gz
    derivative        ${seed[0]}           ${mapbase[cxt]}_${seed[0]}
    derivative        ${seed[0]}Z          ${mapbase[cxt]}_${seed[0]}Z
    exec_sys          mkdir -p             ${mapdir[cxt]}
