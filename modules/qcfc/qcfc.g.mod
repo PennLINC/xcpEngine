@@ -200,41 +200,17 @@ for map in ${atlas_names[@]}
 
 
    ################################################################
-   # Obtain the centres of mass for each network node.
-   ################################################################
-   subroutine                 @2.4  Identifying nodal centres of mass
-   exec_sys rm -f ${intermediate}-cmass.sclib
-   exec_xcp cmass.R                                   \
-      -r    ${a[Map]}                                 \
-      >>    ${intermediate}-cmass.sclib
-
-
-
-
-
-   ################################################################
-   # Build the edgewise distance matrix.
-   ################################################################
-   subroutine                 @2.5  Constructing distance matrix
-   exec_sys rm -f ${node_distance[cxt]}
-   exec_xcp distmat.R                                 \
-      -c    ${intermediate}-cmass.sclib               \
-      >>    ${node_distance[cxt]}
-
-
-
-
-
-   ################################################################
    # Compute the overall correlation between distance and motion
    # effects to infer distance-dependence of motion effects.
    ################################################################
-   subroutine                 @2.6  Computing QC-FC distance-dependence
-   exec_sys rm -f ${qcfc_dist_dependence[cxt]}
-   exec_xcp featureCorrelation.R                            \
-      -i    ${node_distance[cxt]},${qcfc_correlation[cxt]}  \
-      -f    ${qcfc_dist_dependence_f[cxt]}                  \
-      >>    ${qcfc_dist_dependence[cxt]}
+   subroutine                 @2.4  Computing QC-FC distance-dependence
+   exec_xcp qcfcDistanceDependence        \
+      -a    ${a[Map]}                     \
+      -q    ${qcfc_correlation[cxt]}      \
+      -o    ${qcfc_dist_dependence[cxt]}  \
+      -f    ${qcfc_dist_dependence_f[cxt]}\
+      -d    ${node_distance[cxt]}         \
+      -i    ${intermediate}
    atlas_complete
    routine_end
 done
