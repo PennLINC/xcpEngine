@@ -21,6 +21,7 @@ CONFIG_UI
 source   ${XCPEDIR}/core/constants
 source   ${XCPEDIR}/core/functions/library.sh
 source   ${XCPEDIR}/core/functions/cluster_submit
+source   ${XCPEDIR}/core/global
 
 
 
