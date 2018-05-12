@@ -60,12 +60,21 @@ require image  meanIntensityBrain      \
      as        sourceReference
      ;;
 *)
-abort_stream   Invalid reference for coregistration
+abort_stream   "Invalid reference for coregistration"
      ;;
 esac
 
+case ${coreg_target[cxt]} in
+head)
+require image  struct_head             \
+     as        targetReference
+     ;;
+*)
 require image  struct                  \
      as        targetReference
+     ;;
+esac
+
 space_set      ${spaces[sub]}   ${space[sub]} \
      Map       ${sourceReference[cxt]}
 
@@ -204,9 +213,10 @@ if [[ ! -e ${seq2struct_mat[cxt]} ]] \
    fi
    ################################################################
    # Prime an additional input argument to FLIRT, containing
-   # the path to the new mask.
+   # the path to the new mask and instructions to use the BBR
+   # registration schedule.
    ################################################################
-   wm_mask_cmd="-wmseg ${wm_mask}"
+   wm_mask_cmd="-wmseg ${wm_mask} -schedule ${FSLDIR}/etc/flirtsch/bbr.sch"
 fi; fi
 
 
@@ -258,22 +268,37 @@ if [[ ! -e ${seq2struct_mat[cxt]} ]] \
    subroutine                 @4.1c [Input volume]
    subroutine                 @4.1d [${sourceReference[cxt]}]
    subroutine                 @4.1e [Reference volume]
-   subroutine                 @4.1f [${struct[sub]}]
+   subroutine                 @4.1f [${targetReference[sub]}]
    subroutine                 @4.1g [Output volume]
    subroutine                 @4.1h [${seq2struct_img[cxt]}]
+   if [[ ${coreg_cfunc[cxt]} != corratio ]]
+      then
+      subroutine              @4.2  Initialising coregistration
+      exec_fsl flirt                   \
+         -in   ${sourceReference[cxt]} \
+         -ref  ${struct[sub]}          \
+         -dof  6                       \
+         -searchrx   -180  180         \
+         -searchry   -180  180         \
+         -searchrz   -180  180         \
+         -omat ${intermediate}-init.mat
+      [[ -e ${intermediate}-init.mat ]]\
+         && coreg_init="-init ${intermediate}-init.mat"
+   fi
    proc_fsl  ${seq2struct_img[cxt]} \
    flirt -in ${sourceReference[cxt]}\
-      -ref   ${struct[sub]}         \
+      -ref   ${targetReference[cxt]}\
       -dof   6                      \
       -out   %OUTPUT                \
       -omat  ${seq2struct_mat[cxt]} \
       -cost  ${coreg_cfunc[cxt]}    \
       ${refwt}                      \
       ${inwt}                       \
+      ${coreg_init}                 \
       ${wm_mask_cmd}
    registered=1
 else
-   subroutine                 @4.2  [Coregistration already run]
+   subroutine                 @4.3  [Coregistration already run]
 fi
 routine_end
 
@@ -362,11 +387,12 @@ if (( ${flag} == 1 ))
    # Re-compute coregistration.
    ################################################################
    exec_fsl flirt -in ${sourceReference[cxt]}   \
-      -ref  ${struct[sub]}                      \
+      -ref  ${targetReference[cxt]}             \
       -dof  6                                   \
       -out  ${intermediate}_seq2struct_alt      \
       -omat ${intermediate}_seq2struct_alt.mat  \
       -cost ${coreg_cfunc[cxt]}                 \
+      ${coreg_init}                             \
       ${refwt}                                  \
       ${inwt}
    registered=1
