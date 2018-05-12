@@ -23,7 +23,7 @@ cat << endstream
 ___________________________________________________________________
 
 
-Usage: `basename $0` -i <input> -o <output> <options>
+Usage: `basename $0` -a <atlas> -o <output> <options>
 
 Compulsory arguments:
  -a : Atlas
