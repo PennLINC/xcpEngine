@@ -8,7 +8,18 @@ xcpEngine v0.6.0 (ACCELERATOR) is the most recent iteration of the BBL's neuroim
 
 ###### Dependencies
 
-Ensure that your bash terminal is minimally v4.0 (`bash --version`). Ensure that all dependencies are installed. These should include: AFNI, ANTs, FSL, C3D, R, Rscript. Install the following R packages if necessary: optparse, pracma, RNifti, signal. For enhanced group-level reporting, optionally install the following R packages: reshape2, ggplot2, svglite.
+Ensure that your bash terminal is minimally v4.0 (`bash --version`). Ensure that all dependencies are installed. These should include: AFNI, ANTs, FSL, C3D, R, Rscript. Install the following R packages if necessary: optparse, pracma, RNifti, signal. For enhanced group-level reporting, optionally install the following R packages: reshape2, ggplot2, svglite, lme4.
+
+Download links and instructions for each dependency are available here:
+
+ * [FSL](http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation).
+ * [AFNI](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/background_install/install_instructs/index.html).
+ * [ANTs](http://stnava.github.io/ANTs/).
+ * [C3D](http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.C3D)
+ * [R](https://www.r-project.org/)
+ * R packages can be installed from CRAN after installing R by entering R and running install.packages('<package_name>').
+
+A near-term objective of the development team is containerisation. In the interim, the system is available for execution with all dependencies installed at the Penn [Image Processing Portal (IPP)](https://ipp.cbica.upenn.edu/categories/pipelines) (registration required).
 
 ###### Software
 
