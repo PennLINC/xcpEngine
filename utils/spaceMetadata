@@ -61,7 +61,7 @@ Argument set 2:
       
       Additional attributes may be passed as follows:
       
-      spaceName:pathToImage,Mask=pathToMask,DilatedMask=pathToDilated
+      spaceName:pathToImage,Mask=pathToMask,DilatedMask=pathToDilated,MapHead=pathToImageHeadOn
       
       If no attribute is specified, the attribute 'Map' will be
       assigned, denoting the map of the named space.
@@ -196,7 +196,8 @@ case ${meta} in
 from_pipeline)
    subroutine                 @u.3
    moving[0]=${struct[0]}
-   sourceSpace[Map]=$(abspath ${struct[1]}/*ExtractedBrain0N4.nii.gz 2>/dev/null)
+   sourceSpace[Map]=$(    abspath ${struct[1]}/*ExtractedBrain0N4.nii.gz    2>/dev/null)
+   sourceSpace[MapHead]=$(abspath ${struct[1]}/*BrainSegmentation0N4.nii.gz 2>/dev/null)
    i=0
    while (( 1 == 1 ))
       do

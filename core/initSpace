@@ -105,8 +105,10 @@ if [[ -n ${antsct[sub]} ]]
       -f ${str_targ}:${str_temp}             \
       -d ${structural[cxt]}:${antsct[sub]}   \
       -s ${spaces[cxt]}
-   struct[$sub]=$(abspath     $(space_get ${structural[cxt]} Map))
+   struct[$sub]=$(     abspath     $(space_get ${structural[cxt]} Map))
+   struct_head[$sub]=$(abspath     $(space_get ${structural[cxt]} MapHead))
    cohort_vars+=(struct[$sub])
+   cohort_vars+=(struct_head[$sub])
    [[ -z ${segmentation[sub]} ]]             \
         && segmentation[$sub]=$(ls ${antsct[sub]}/*BrainSegmentation.nii.gz) \
         && cohort_vars+=(segmentation[$sub])
