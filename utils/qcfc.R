@@ -58,6 +58,9 @@ option_list = list(
                   This argument uses standard R formula syntax."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The base output path."),
+   make_option(c("-d", "--directory"), action="store", default=NA, type='character',
+              help="The root directory relative to which all paths in the
+                  cohort are defined."),
    make_option(c("-r", "--threshmat"), action="store", default=TRUE, type='logical',
               help="Logical indicating whether a thresholded version of the
                   QC-FC matrix should be saved to disc [default TRUE]."),
@@ -85,6 +88,7 @@ if (is.na(opt$out)) {
 cohort                  <- read.csv(opt$cohort,header=TRUE,stringsAsFactors=FALSE)
 sig                     <- opt$significance
 thr                     <- opt$threshold
+root                    <- opt$directory
 out                     <- paste(opt$out,'.txt',sep='')
 if (opt$threshmat) {
    out_thr              <- paste(opt$out,'_thr.txt',sep='')
@@ -97,8 +101,10 @@ if (opt$quality) {
 if (opt$outfig) {
    outfig               <- paste(opt$out,'.svg',sep='')
 }
+confound_lme            <- FALSE
 if (!is.na(opt$confound)) {
    confound             <- read.csv(opt$confound,header=TRUE)
+   cohort               <- merge(x=cohort,y=confound,all.x=TRUE)
    conformula           <- opt$conformula
    if (is.na(conformula)) {
       write(paste('[Warning: A confound matrix was provided, but the   ]','\n',
@@ -107,6 +113,25 @@ if (!is.na(opt$confound)) {
           '[         controlled for in the model.              ]','\n',
           sep=''),stderr())
       confound          <- NA
+   } else if (grepl('\\|',conformula)) {
+      suppressMessages(suppressWarnings(library(lme4)))
+      confound_lme      <- TRUE
+      rfx1              <- unlist(strsplit(
+                           unlist(strsplit(
+                              grep('\\|',c(unlist(strsplit(conformula,'\\+'))),value=T),
+                           '\\|'))[2],
+                           '\\)'))[1]
+      rfx2              <- unlist(strsplit(
+                           unlist(strsplit(
+                              grep('\\|',c(unlist(strsplit(conformula,'\\+'))),value=T),
+                           '\\|'))[1],
+                           '\\('))[2]
+      if (length(grep(rfx1,names(cohort))) > 0) { 
+         cohort[,rfx1]    <- factor(cohort[,rfx1])
+      }
+      if (length(grep(rfx2,names(cohort))) > 0) {
+         cohort[,rfx2]    <- factor(cohort[,rfx2])
+      }
    }
 } else { confound       <- NA }
 
@@ -116,7 +141,7 @@ if (! "ggplot2"   %in% rownames(installed.packages())){
 if (! "reshape2"  %in% rownames(installed.packages())){
    outfig               <- NA
 }
-if (! "svglite"  %in% rownames(installed.packages())){
+if (! "svglite"   %in% rownames(installed.packages())){
    outfig               <- NA
 }
 
@@ -135,9 +160,15 @@ PLOTXMAX                <- 0.45
 # Determine the number of subjects, number of identifiers, and
 # number of edges
 ###################################################################
-idVars                  <- names(cohort)[grep('motion|connectivity',names(cohort),invert=TRUE)]
+idVars                  <- names(cohort)[grep('^id',names(cohort))]
+for (idVar in idVars) {
+   cohort[,idVar]       <- factor(cohort[,idVar])
+}
 nSubj                   <- dim(cohort)[1]
-net                     <- as.matrix(read.table(cohort$connectivity[1],
+if (! is.na(root)) {
+   ccon                 <- paste(root,cohort$connectivity[1],sep='/')
+} else { ccon           <- cohort$connectivity[1] }
+net                     <- as.matrix(read.table(ccon,
                                                 header=FALSE,
                                                 stringsAsFactors=FALSE))
 if (dim(net)[1] != 1 && dim(net)[2] != 1) {
@@ -155,6 +186,9 @@ nEdges                  <- length(net)
 ###################################################################
 edges                   <- matrix(0,nrow=nSubj,ncol=nEdges)
 for (i in 1:dim(cohort)[1]) {
+   if (! is.na(root)) {
+      cohort$connectivity[i] <- paste(root,cohort$connectivity[i],sep='/')
+   }
    if (file.exists(cohort$connectivity[i])){
       net               <- as.matrix(read.table(cohort$connectivity[i],
                                                 header=FALSE,
@@ -189,9 +223,12 @@ cohort                  <- cbind(cohort,edges)
 ###################################################################
 residuals               <- FALSE
 if (any(!is.na(confound)) && !is.na(conformula)) {
-   cohort               <- merge(x=cohort,y=confound,all.x=TRUE)
    parform              <- as.formula(paste('motion ~',conformula))
-   cohort$motion        <- lm(parform, data=cohort)$residuals
+   if (confound_lme) {
+      cohort$motion     <- resid(lmer(parform, data=cohort))
+   } else {
+      cohort$motion     <- lm(parform, data=cohort)$residuals
+   }
    residuals            <- TRUE
 }
 cohort$moperm           <- randperm(cohort$motion)
@@ -210,7 +247,11 @@ for (i in 1:nEdges) {
    edge                 <- names(edges)[i]
    if (residuals) {
       parform           <- as.formula(paste(edge,'~',conformula))
-      cohort[edge]      <- lm(parform, data=cohort)$residuals
+      if (confound_lme) {
+         cohort[edge]   <- resid(lmer(parform, data=cohort))
+      } else {
+         cohort[edge]   <- lm(parform, data=cohort)$residuals
+      }
    }
    c                    <- cor.test(cohort$motion, unlist(unname(cohort[edge])))
    cperm                <- cor.test(cohort$moperm, unlist(unname(cohort[edge])))
