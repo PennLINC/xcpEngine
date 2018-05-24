@@ -269,19 +269,18 @@ for seed in ${seeds[cxt]}
          then
          subroutine           @4    SCA at smoothness ${k} mm
          exec_sys             rm -f    ${!sca_map}
-         exec_afni            3dfim+      \
-            -input            ${i}        \
-            -ideal_file       ${!sca_ts}  \
-            -out              Correlation \
-            -bucket           ${!sca_map}
+         exec_afni            3dTcorr1D   \
+            -prefix           ${!sca_map} \
+            -mask             ${mask[sub]}\
+                              ${i}        \
+                              ${!sca_ts}
          ##########################################################
-         # Fisher transform: not certain why the signs are
-         # reversed, but it has worked this way
+         # Fisher transform
          ##########################################################
          exec_sys             rm -f ${!sca_zmap}
          exec_afni            3dcalc               \
             -a                ${!sca_map}          \
-            -expr             'log((a+1)/(a-1))/2' \
+            -expr             'log((1+a)/(1-a))/2' \
             -prefix           ${!sca_zmap}
       fi
    done
