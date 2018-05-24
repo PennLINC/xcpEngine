@@ -481,19 +481,25 @@ while (( ${#rem} > 0 ))
          subroutine           @6.2.2 SyN registration: default settings
          registration_mode=s
       fi
+      if (( ${struc_floating_point[cxt]} == 1 ))
+         then
+         subroutine           @6.3  Using floating point precision
+         precision_arg='-p f'
+      fi
       if ! is_image ${struct_std[cxt]} \
       || rerun
          then
-         subroutine           @6.3a Input: ${intermediate}.nii.gz
-         subroutine           @6.3b Output warp: ${xfm_warp[cxt]}
-         subroutine           @6.3c Template: ${template}
+         subroutine           @6.43a Input: ${intermediate}.nii.gz
+         subroutine           @6.4b Output warp: ${xfm_warp[cxt]}
+         subroutine           @6.4c Template: ${template}
          exec_ants   ${registration_prog}                   \
             -d       3                                      \
             -f       ${template}                            \
             -m       ${intermediate}.nii.gz                 \
             -o       ${intermediate}_${cur}                 \
-            -t       ${registration_mode}
-         subroutine           @6.4  Reorganising output
+            -t       ${registration_mode}                   \
+                     ${precision_arg}
+         subroutine           @6.5  Reorganising output
          exec_sys mv -f ${intermediate}_${cur}0GenericAffine.mat \
                         ${xfm_affine[cxt]}
          exec_fsl immv  ${intermediate}_${cur}1Warp.nii.gz \
@@ -503,12 +509,12 @@ while (( ${#rem} > 0 ))
          exec_fsl immv  ${intermediate}_${cur}Warped.nii.gz \
                         ${struct_std[cxt]}
       else
-         subroutine           @6.5  Registration already completed
+         subroutine           @6.6  Registration already completed
       fi
       if [[ ! -s ${ixfm_affine[cxt]} ]]            \
       || rerun
          then
-         subroutine           @6.6  Inverting affine transform
+         subroutine           @6.7  Inverting affine transform
          exec_ants   antsApplyTransforms           \
             -d       3                             \
             -o       Linear[${ixfm_affine[cxt]},1] \
