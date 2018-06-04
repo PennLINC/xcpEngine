@@ -179,7 +179,7 @@ if [[ -n ${space} ]]
    for s in "${space[@]}"
       do
       subroutine              @u.2.1
-      space_set      ${out}   ${s}
+      import_metadata   ${s}  to  ${out}
    done
 fi
 (( ${combine_only} == 1 )) && exit
