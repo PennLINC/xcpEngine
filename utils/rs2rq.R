@@ -64,7 +64,7 @@ data <- matrix(nrow=1,ncol=(length(prpnd)+length(input)))
 name <- matrix(nrow=1,ncol=(length(prpnd)+length(input)))
 for (i in 1:length(prpnd)) {
    data[i]        <- prpnd[i]
-   name[i]        <- paste('subject',i,sep='_')
+   name[i]        <- paste('id',i-1,sep='')
 }
 offset <- i
 
