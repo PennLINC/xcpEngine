@@ -80,6 +80,8 @@ add_reference        template       template
 
 routine                    @1    Normalising using ANTs
 subroutine                 @1.1  [Selecting transforms to apply]
+if (( ${norm_primary[cxt]} == 1 )); then
+subroutine                 @1.2  [Normalising primary dataset]
 if ! is_image ${std[cxt]}  \
 || rerun
    then
@@ -88,6 +90,7 @@ if ! is_image ${std[cxt]}  \
       ${img}               \
       ${std[cxt]}          \
       ${space[sub]}:${standard}
+fi
 fi
 ###################################################################
 # Iterate through all derivative images, and apply the computed
