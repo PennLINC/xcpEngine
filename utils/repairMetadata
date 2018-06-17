@@ -32,9 +32,11 @@ UNIMPLEMENTED
 ###################################################################
 # Iterate over atlas
 ###################################################################
-atlas=$(abspath $(ls -d1 ${BRAINATLAS}/*/))
+atlas=$(ls -d1 ${BRAINATLAS}/*/)
 for a in ${atlas}
    do
-   exec_xcp atlasMetadata \
-      -d    ${a}
+   a=$(abspath ${a})
+   contains    ${a}  '/coor$' && echo $a # continue
+   exec_xcp    atlasMetadata \
+      -d       ${a}
 done
