@@ -70,7 +70,6 @@ subroutine                    @1.4  [Initialising atlas system]
 subroutine                    @1.5  Ingress
    for var in "${cohort_vars[@]}"
       do
-      echo $var : ${!var}
       [[ ! -s ${XCPEDIR}/core/ingress/${var//\[$sub\]}.ing ]] && continue
       source  ${XCPEDIR}/core/Ingress
    done

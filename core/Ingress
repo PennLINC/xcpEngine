@@ -16,7 +16,6 @@ unset    ing
 ###################################################################
 # 1. Read the .ing file
 ###################################################################
-echo ingress
 mapfile  ing < ${XCPEDIR}/core/ingress/${var//\[$sub\]}.ing
 
 ###################################################################
@@ -24,7 +23,6 @@ mapfile  ing < ${XCPEDIR}/core/ingress/${var//\[$sub\]}.ing
 ###################################################################
 if [[ ! -s ${!var} ]]
    then
-   echo uhoh
    ################################################################
    # If it doesn't exist, check for a compressed version and
    # prepare to extract it.
@@ -73,7 +71,6 @@ for i in ${!ing[@]}
    # Metadata import: spatial
    ################################################################
    %SPACE)
-      echo space
       import_metadata   ${i[1]}   to   ${spaces[sub]}
       ;;
 
@@ -81,7 +78,6 @@ for i in ${!ing[@]}
    # Metadata import: derivatives
    ################################################################
    %DERIV)
-      echo deriv
       import_metadata   ${i[1]}   to   ${aux_imgs[sub]}
       ;;
 
@@ -89,7 +85,6 @@ for i in ${!ing[@]}
    # Metadata import: atlas
    ################################################################
    %ATLAS)
-      echo atlas
       import_metadata   ${i[1]}   to   ${atlas[sub]}
       ;;
 
@@ -97,14 +92,12 @@ for i in ${!ing[@]}
    # Define variable
    ################################################################
    *)
-      echo ${i[1]}
       #############################################################
       # Substitutions
       # %INT replaced by all matched integers in order
       #############################################################
       if contains ${i[1]} '%INT'
          then
-         echo integer
          unset i_buffer
          j=0
          while (( 1 == 1 ))
@@ -134,14 +127,10 @@ for i in ${!ing[@]}
       #############################################################
       if ! contains ${i[0]} '^\!'
          then
-         echo addvar
          assign      i[1]  as ${i[0]}[sub]
          blog=${i[0]}[$sub]
-         echo ${blog} : ${!blog}
          cohort_vars+=(${i[0]}[$sub])
-         echo ${cohort_vars[@]}
       else
-         echo novar
          i[0]=${i[0]#'!'}
          assign      i[1]  as ${i[0]}
       fi
@@ -149,5 +138,3 @@ for i in ${!ing[@]}
    
    esac
 done
-echo "
-"
