@@ -1,0 +1,5 @@
+%SPACE                  %ING/*space.json
+%ATLAS                  %ING/*atlas.json
+struct                  %ING/struc/*ExtractedBrain0N4.nii.gz
+struct_head             %ING/struc/*BrainSegmentation0N4.nii.gz
+segmentation            %ING/struc/*BrainSegmentation.nii.gz

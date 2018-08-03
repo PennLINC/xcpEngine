@@ -23,14 +23,15 @@ source ${XCPEDIR}/core/parseArgsGroup
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
 completion() {
+   rm -rf ${outdir}
    source ${XCPEDIR}/core/moduleEnd
 }
 
 ###################################################################
 # Define outputs
 ###################################################################
-define   qtable                  ${outdir}/quality.csv
-define   atable                  ${outdir}/audit.csv
+define   qtable                  ${out_group}/n${#subjects[@]}_quality.csv
+define   atable                  ${out_group}/n${#subjects[@]}_audit.csv
 
 ###################################################################
 # Quality files

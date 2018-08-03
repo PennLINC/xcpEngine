@@ -45,7 +45,7 @@ subroutine                    @1.1a [Creating output directory]
 subroutine                    @1.2  [Initialising space mapping]
    output                     spaces      ${prefix[sub]}_spaces.json
    rm -f                                  ${spaces[cxt]}
-   source                                 ${XCPEDIR}/core/initSpace
+   echo '{}'                           >> ${spaces[cxt]}
 
 ###################################################################
 # Write path to derivative image index
@@ -63,6 +63,17 @@ subroutine                    @1.4  [Initialising atlas system]
    output                     atlas       ${prefix[sub]}_atlas/${prefix[sub]}_atlas.json
    rm -f                                  ${atlas[cxt]}
    echo '{}'                           >> ${atlas[cxt]}
+
+###################################################################
+# Launch ingress
+###################################################################
+subroutine                    @1.5  Ingress
+   for var in "${cohort_vars[@]}"
+      do
+      [[ ! -s ${XCPEDIR}/core/ingress/${var//\[$sub\]}.ing ]] && continue
+      source  ${XCPEDIR}/core/Ingress
+   done
+   source                                 ${XCPEDIR}/core/initSpace
 
 ###################################################################
 # Write path to audit file, and write information
