@@ -109,7 +109,7 @@ done
 # Ensure that all compulsory arguments have been defined
 ###################################################################
 [[  -z ${input}   ]] && Usage && exit
-[[  -z ${output}  ]] && Usage && exit
+[[ ! -d ${output} ]] && mkdir -p ${output} 
 
 is_image ${meanIntensityBrain} && meanIntensity=${meanIntensityBrain}
 (( demeaned == 1  )) && [[ -z ${meanIntensity} ]] && Usage && exit
