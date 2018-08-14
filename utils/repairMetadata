@@ -14,6 +14,15 @@
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
+if [[ ! -s ${JQ_PATH} ]]
+   then
+   if [[ $(arch) == x86_64 ]]
+      then
+      JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux64
+   else
+      JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
+   fi
+fi
 
 ###################################################################
 # TODO Iterate over space
@@ -36,7 +45,7 @@ atlas=$(ls -d1 ${BRAINATLAS}/*/)
 for a in ${atlas}
    do
    a=$(abspath ${a})
-   contains    ${a}  '/coor$' && echo $a # continue
+   contains    ${a}  '/coor$' && continue
    exec_xcp    atlasMetadata \
       -d       ${a}
 done
