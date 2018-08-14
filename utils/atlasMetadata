@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 ###################################################################
@@ -127,6 +126,7 @@ while getopts "a:d:m:c:n:i:r:l:" OPTION
    d)
       atlas_dir=$(abspath ${OPTARG})
       [[ ! -d ${atlas_dir} ]]                   && Usage && exit
+      [[ -z ${atlas_n} ]] && atlas_n=$(strslice ${atlas_dir} -1 '/')
       ;;
    m)
       q=( ${OPTARG//:/ } )
