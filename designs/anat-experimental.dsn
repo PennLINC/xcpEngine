@@ -36,7 +36,7 @@
 analysis=struc-ACCELERATOR
 design=${XCPEDIR}/designs/anat-experimental.dsn
 sequence=anatomical
-standard=REWARD%9375x9375x1
+standard=MNI%1x1x1
 
 ###################################################################
 # PIPELINE
