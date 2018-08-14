@@ -40,13 +40,12 @@ for i in "${!standard[@]}"
    if (( i == 0 )) && [[ -s ${space_standard} ]]
       then
       subroutine                 ${tag}.2a   [Standard space: ${std}]
-      printx ${space_standard}   >>          ${spaces[cxt]}
+      import_metadata  ${space_standard} to  ${spaces[cxt]}
       template=$(abspath         $(space_get ${standard[i]} Map))
       normalise=1
    elif (( i == 0 ))
       then
       subroutine                 ${tag}.2b   [No standard space]
-      echo '{}'                  >>          ${spaces[cxt]}
    elif [[ -s ${space_standard} ]]
       then
       subroutine                 ${tag}.2c   [Loading space: ${std}]
@@ -68,73 +67,38 @@ str_temp=$(abspath               $(space_get ${standard[i]} Map))
 ###################################################################
 configure         structural        ${prefix[sub]}_anatomical
 ###################################################################
-#     Case 1: ANTsCT directory and template are provided. In this
+#     Case 1: Template and transforms are provided. In this
 #             case, the anatomical map should be added to the
 #             design to support coregistration.
 ###################################################################
-if [[ -n ${antsct[sub]} ]]
+[[ -z ${xfms}  ]] &&  xfms="  ${xfm_rigid[sub]} 
+                              ${xfm_affine[sub]} 
+                              ${xfm_warp[sub]} 
+                              ${xfm_resample[sub]}"
+[[ -z ${ixfms} ]] && ixfms="  ${ixfm_resample[sub]} 
+                              ${ixfm_warp[sub]} 
+                              ${ixfm_affine[sub]} 
+                              ${ixfm_rigid[sub]}"
+if [[ -n ${xfms} ]]
    then
    subroutine                 ${tag}.3a   [Anatomical space: ${structural[cxt]//\%*/}]
-   ################################################################
-   # The following code block handles the case of the ANTsCT
-   # directory being provided as a compressed tar archive. It's
-   # currently reliant on some non-builtins.
-   ################################################################
-   if [[ ! -s ${antsct[sub]} ]]
-      then
-      antsct_tar=${antsct[sub]}.tar.gz
-      antsct_tgt=${antsct[sub]}-extract
-      if [[ -s  ${antsct_tar} ]]
-         then
-         subroutine           ${tag}.3.1  [Decompressing anatomical data set]
-         mkdir -p    ${antsct_tgt}
-         tar   -zxvf ${antsct_tar} -C ${antsct_tgt} >/dev/null
-         brains=( $(find ${antsct_tgt} -name *Brain*) )
-         act=$( dirname $(abspath   ${brains[0]}))
-         rm    -f    ${antsct_tar}
-         mv    -f    ${act}         ${antsct[sub]}
-         rm    -rf   ${antsct_tgt}
-         antsct[sub]=$(abspath ${antsct[sub]})
-      else
-         subroutine           ${tag}.3.2
-         abort_stream         Invalid ANTsCT path provided
-      fi
-   fi
-   ${XCPEDIR}/utils/spaceMetadata            \
-      -o ${spaces[cxt]}                      \
-      -f ${str_targ}:${str_temp}             \
-      -d ${structural[cxt]}:${antsct[sub]}   \
-      -s ${spaces[cxt]}
-   struct[$sub]=$(     abspath     $(space_get ${structural[cxt]} Map))
-   struct_head[$sub]=$(abspath     $(space_get ${structural[cxt]} MapHead))
-   cohort_vars+=(struct[$sub])
-   cohort_vars+=(struct_head[$sub])
-   [[ -z ${segmentation[sub]} ]]             \
-        && segmentation[$sub]=$(ls ${antsct[sub]}/*BrainSegmentation.nii.gz) \
-        && cohort_vars+=(segmentation[$sub])
-###################################################################
-#     Case 2: Template and structural:template maps are provided.
-###################################################################
-elif is_image ${xfm_warp[sub]}
-   then
-   subroutine                 ${tag}.3b   [Anatomical space: ${structural[cxt]//\%*/}]
-   xfms="${xfm_rigid[sub]} ${xfm_affine[sub]} ${xfm_warp[sub]} ${xfm_resample[sub]}"
-   ixfms="${ixfm_resample[sub]} ${ixfm_warp[sub]} ${ixfm_affine[sub]} ${ixfm_rigid[sub]}"
    xfms=$( echo ${xfms})
    ixfms=$(echo ${ixfms})
    xfms=${xfms// /,}
    ixfms=${ixfms// /,}
-   ${XCPEDIR}/utils/spaceMetadata         \
-      -o ${spaces[cxt]}                   \
-      -f ${str_targ}:${str_temp}          \
-      -m ${structural[cxt]}:${struct[sub]} \
-      -x ${xfms}                          \
-      -i ${ixfms}                         \
+   is_image ${struct_head[sub]} && hd=',MapHead='${struct_head[sub]}
+   ${XCPEDIR}/utils/spaceMetadata               \
+      -o ${spaces[cxt]}                         \
+      -f ${str_targ}:${str_temp}                \
+      -m ${structural[cxt]}:${struct[sub]}${hd} \
+      -x ${xfms}                                \
+      -i ${ixfms}                               \
       -s ${spaces[cxt]}
 ###################################################################
 #     Case 3: Nothing is provided. This might be the case for
-#     structural analyses, for instance.
+#     structural analyses, for instance. Or, the anatomical space
+#     has already been imported via ingress.
 ###################################################################
 else
-   subroutine                 ${tag}.3c
+   subroutine                 ${tag}.3b
 fi

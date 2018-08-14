@@ -3,13 +3,13 @@ import_metadata() {
    meta_floating='{}'
    while [[ ${1} != to ]]
       do
-      [[ -s ${1}        ]] && meta_new=$(cat ${1})
+      [[ -s ${1}        ]] && meta_new=$(printx ${1})
       [[ -z ${meta_new} ]] && meta_new='{}'
       meta_floating="$(json_merge meta_floating meta_new)"
       meta_new=''
       shift
    done
-   [[ -s ${2}        ]]    && meta_new=$(cat ${2})
+   [[ -s ${2}        ]]    && meta_new=$(printx ${2})
    [[ -z ${meta_new} ]]    && meta_new='{}'
    meta_floating="$(json_merge meta_floating meta_new)"
    rm -f ${2}

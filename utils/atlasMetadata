@@ -14,6 +14,15 @@
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
+if [[ ! -s ${JQ_PATH} ]]
+   then
+   if [[ $(arch) == x86_64 ]]
+      then
+      JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux64
+   else
+      JQ_PATH=${XCPEDIR}/thirdparty/jq/jq-linux32
+   fi
+fi
 
 ###################################################################
 # Usage function
@@ -117,6 +126,7 @@ while getopts "a:d:m:c:n:i:r:l:" OPTION
    d)
       atlas_dir=$(abspath ${OPTARG})
       [[ ! -d ${atlas_dir} ]]                   && Usage && exit
+      [[ -z ${atlas_n} ]] && atlas_n=$(strslice ${atlas_dir} -1 '/')
       ;;
    m)
       q=( ${OPTARG//:/ } )
@@ -374,14 +384,14 @@ from_dir)
    for l in ${!libs[@]}
       do
       subroutine              @u.2.5
-      argsl[l]=${libs[l]}:${libs[l]//${atlas_dir}\/${atlas_n}/}
-      argsl[l]=${argsl[l]%\.sclib/}
+      argsl[l]=${libs[l]}:${libs[l]//${atlas_dir}\/${atlas_n}Coor/}
+      argsl[l]=${argsl[l]%\.sclib}
    done
    args=( "${argsm[@]}" "${argsl[@]}" )
    ################################################################
    # Build the arguments list: communities.
    ################################################################
-   coms=( $(ls -d ${atlas_dir}/${atlas_n}*CommunityAffiliation.1D) )
+   coms=( $(ls -d ${atlas_dir}/${atlas_n}*CommunityAffiliation.1D 2>/dev/null) )
    for c in ${!coms[@]}
       do
       subroutine              @u.2.6
@@ -390,9 +400,9 @@ from_dir)
       c_name=${coms[c]//CommunityAffiliation.1D/}
       cxname=${c_name//${atlas_dir}\/${atlas_n}/}
       c_name=${c_name//${atlas_dir}\/${atlas_n}x/}
-      c_idx=$(ls -d ${atlas_dir}/${atlas_n}${cxname}CommunityNames.1D 2>/dev/null)
-      [[ -n ${c_name} ]] && ccname=${ccname}${c_name}
-      [[ -s ${c_idx}  ]] && ccidx='IDS='${c_idx}
+      [[ -n ${cxname} ]] && ccname=${ccname}${c_name}
+      c_idx=$(ls -d ${atlas_dir}/${atlas_n}${cxname}CommunityNames.txt 2>/dev/null)
+      [[ -s ${c_idx}  ]] && ccidx=',IDS='${c_idx}
       community[c]=${coms[c]//${atlas_dir}\/${atlas_n}/${atlasj}}${ccname}${ccidx}
    done
    ;;
@@ -408,11 +418,18 @@ esac
 meta_update() {
    local cxt=0
    local sub=1
+   [[ ! -d ${BRAINSPACE}/${space} ]] \
+      && echo \
+"· Space is ill-defined: ${space}
+·· Ensure that a reasonable definition is provided for ${space}
+·· first, by running either the standardSpace or spaceMetadata 
+·· utility." \
+      && return
    [[      ! -s         ${BRAINSPACE}/${space}/${space}_atlas.json ]] \
       && echo '{}'   >> ${BRAINSPACE}/${space}/${space}_atlas.json
    atlas[sub]=$(abspath ${BRAINSPACE}/${space}/${space}_atlas.json)
    load_atlas ${atlas[sub]}
-   atlas[cxt]=$(atlas ${atlas_m})
+   atlas     ${atlas_m}
    atlas_set ${atlas_m} Map            ${atlas_map}
    atlas_set ${atlas_m} Space          ${space}
    atlas_set ${atlas_m} SpaceNative    ${space}
@@ -422,6 +439,7 @@ meta_update() {
    for i in ${!community[@]}
       do
       parse_community ${community[i]}
+      echo ${community[i]}
       atlas_set ${atlas_m} CommunityPartition${c_name} ${c_path}
       [[ -n ${c_ids} ]] \
       && atlas_set ${atlas_m} CommunityNames${c_name}  ${c_ids}
