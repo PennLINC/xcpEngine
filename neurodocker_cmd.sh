@@ -24,7 +24,4 @@ neurodocker \
   --run-bash ' echo ==========================' \
   --run-bash 'cat $ND_ENTRYPOINT' \
   --run-bash ' echo ==========================' \
-  --entrypoint "/neurodocker/startup.sh /xcpEngine-master/xcpEngine" > Singularity
-
-
-
+  --entrypoint '/neurodocker/startup.sh /xcpEngine-master/xcpEngine "$@"' > Singularity
