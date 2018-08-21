@@ -121,7 +121,6 @@ while getopts "a:d:m:c:n:i:r:l:" OPTION
    case $OPTION in
    a)
       atlas_n=${OPTARG}
-      atlasj='${BRAINATLAS}'/${atlas_n}/${atlas_n}
       ;;
    d)
       atlas_dir=$(abspath ${OPTARG})
@@ -172,6 +171,7 @@ if [[ -n ${atlas_map} ]]
 else
    meta=from_dir
 fi
+atlasj='${BRAINATLAS}'/${atlas_n}/${atlas_n}
 
 
 
