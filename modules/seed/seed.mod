@@ -32,7 +32,7 @@ no_seeds() {
    echo \
 "
 [WARNING: Seed-based correlation analysis has been requested,]
-[but no seed libraries have been provided.]
+[but no valid seed libraries have been provided.]
   
 [Skipping module]"
    exit 1
@@ -45,7 +45,9 @@ no_seeds() {
 ###################################################################
 # OUTPUTS
 ###################################################################
+[[ ! -s ${seed_lib[cxt]} ]] &&   seed_lib[cxt]=${BRAINATLAS}/coor/${seed_lib[cxt]}.sclib
 [[ ! -s ${seed_lib[cxt]} ]] &&   no_seeds
+
 define   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
 define   kernel                  ${seed_smo[cxt]//,/ }
 

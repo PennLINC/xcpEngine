@@ -36,7 +36,7 @@
 analysis=struc-ACCELERATOR
 design=${XCPEDIR}/designs/anat-antsct.dsn
 sequence=anatomical
-standard=REWARD%9375x9375x1
+standard=MNI%1x1x1
 
 ###################################################################
 # PIPELINE
@@ -57,7 +57,7 @@ struc_random_seed[1]=0
 struc_bspline[1]=0
 struc_fit[1]=0.3
 struc_quick[1]=0
-struc_seg_priors[1]=0
+struc_seg_priors[1]=1
 struc_rerun[1]=0
 struc_cleanup[1]=1
 struc_process[1]=ACT

@@ -15,18 +15,18 @@
  tools in order to run those pipelines.
 
  Development team:
- Lead:         Rastko Ciric 
+ Lead:         Rastko Ciric
                rastko@mail.med.upenn.edu
  Multimodal:   Adon FG Rosen
                adrose@mail.med.upenn.edu
  PI:           Ted Satterthwaite
                sattertt@mail.med.upenn.edu
- 
+
  What is XCP short for? Nobody knows what the X represents, but
  CP almost certainly stands for Communist Party.
 
- This program is free software: you can redistribute it and/or 
- modify it under the terms of the GNU General Public License as 
+ This program is free software: you can redistribute it and/or
+ modify it under the terms of the GNU General Public License as
  published by the Free Software Foundation.
 
  Any third-party programs distributed with xcpEngine are
@@ -54,11 +54,13 @@
   * Convert3D (available from ITK-Snap server)
   * Other packages may be required for implementation of specific
     strategies, e.g. for denoising.
- 
+
  XCP v0.6.0 ACCELERATOR
 
 XCPENGINE
 ###################################################################
+echo $@
+
 [[ -z    ${XCPEDIR}    ]] \
 && echo  "[XCPEDIR is undefined. Aborting.]"                && exit
 source   ${XCPEDIR}/core/constants
@@ -351,7 +353,7 @@ for module in ${modules[@]}
    if [[ -n ${modG} ]]
       then
       mod_cmd="
-      ${modG} 
+      ${modG}
          -s ${incohort}
          -c ${cxt}
          -o ${out_super}

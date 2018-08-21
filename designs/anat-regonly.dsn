@@ -34,9 +34,9 @@
 ###################################################################
 
 analysis=struc-ACCELERATOR
-design=${XCPEDIR}/designs/anat-minimal.dsn
+design=${XCPEDIR}/designs/anat-regonly.dsn
 sequence=anatomical
-standard=REWARD%9375x9375x1
+standard=MNI%1x1x1
 
 ###################################################################
 # PIPELINE

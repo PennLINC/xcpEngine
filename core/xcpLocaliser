@@ -20,9 +20,9 @@ source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
 source ${XCPEDIR}/core/parseArgsLocaliser
 
-################################################################### 
+###################################################################
 # Localise design file
-################################################################### 
+###################################################################
 routine                       @1    Localising subject metadata...
 
 ###################################################################
@@ -30,7 +30,7 @@ routine                       @1    Localising subject metadata...
 ###################################################################
 subroutine                    @1.1  [Parsing subject identifiers]
    source ${XCPEDIR}/core/assignDirect
-   
+
 ###################################################################
 # Create output directory
 ###################################################################
@@ -45,7 +45,7 @@ subroutine                    @1.1a [Creating output directory]
 subroutine                    @1.2  [Initialising space mapping]
    output                     spaces      ${prefix[sub]}_spaces.json
    rm -f                                  ${spaces[cxt]}
-   source                                 ${XCPEDIR}/core/initSpace
+   echo '{}'                           >> ${spaces[cxt]}
 
 ###################################################################
 # Write path to derivative image index
@@ -65,13 +65,24 @@ subroutine                    @1.4  [Initialising atlas system]
    echo '{}'                           >> ${atlas[cxt]}
 
 ###################################################################
+# Launch ingress
+###################################################################
+subroutine                    @1.5  Ingress
+   for var in "${cohort_vars[@]}"
+      do
+      [[ ! -s ${XCPEDIR}/core/ingress/${var//\[$sub\]}.ing ]] && continue
+      source  ${XCPEDIR}/core/Ingress
+   done
+   source                                 ${XCPEDIR}/core/initSpace
+
+###################################################################
 # Write path to audit file, and write information
 # to the audit file
 ###################################################################
 subroutine                    @1.5  [Priming analytic audit]
    audit[sub]=${out[sub]}/${prefix[sub]}_logs/${prefix[sub]}_audit.csv
    rm -f ${audit[sub]}
-   
+
    ################################################################
    # Prepare the audit header, which will contain information
    # about the processing status of the current subject
@@ -79,7 +90,7 @@ subroutine                    @1.5  [Priming analytic audit]
    id_vars=$(echo    ${!subject[@]})
    id_vars=$(echo    id${id_vars// /,id})
    audit_var=${id_vars},localiser,${pipeline}
-   
+
    ################################################################
    # Write the contents of the audit file.
    ################################################################
@@ -159,7 +170,7 @@ subroutine                    @3.2  [Evaluating subject variables]
    done
    [[ ${sequence}  == native ]] \
    && echo  "sequence=native"                   >> ${design[sub]}
-   (( ${normalise} == 1      )) \
+   [[ ${normalise} == 1      ]] \
    && echo "template=${template}"               >> ${design[sub]} \
    && echo "standard=${standard[0]}"            >> ${design[sub]}
 routine_end
