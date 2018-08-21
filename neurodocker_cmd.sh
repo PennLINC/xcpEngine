@@ -4,7 +4,7 @@ neurodocker \
   generate singularity \
   --base=neurodebian:stretch \
   --pkg-manager=apt \
-  --install wget \
+  --install wget r-cran-afex r-cran-car \
   --fsl version=5.0.11 \
   --convert3d version=1.0.0 method=binaries \
   --afni version=latest install_r=true install_r_pkgs=true \
