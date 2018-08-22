@@ -71,7 +71,7 @@ subroutine                    @1.5  Ingress
    for var in "${cohort_vars[@]}"
       do
       [[ ! -s ${XCPEDIR}/core/ingress/${var//\[$sub\]}.ing ]] && continue
-      source  ${XCPEDIR}/core/Ingress
+      source  ${XCPEDIR}/core/Ingress.sh
    done
    source                                 ${XCPEDIR}/core/initSpace
 
