@@ -1,4 +1,4 @@
-FROM pennbbl/baseimage:latest
+FROM pennbbl/baseimages:common
 
 RUN sed -i '$iexport XCPEDIR=/xcpEngine-master' $ND_ENTRYPOINT
 
@@ -6,6 +6,12 @@ RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
 RUN bash -c 'cd / && wget https://github.com/PennBBL/xcpEngine/archive/master.zip && unzip master.zip'
 
-RUN bash -c 'XCPEDIR=/xcpEngine-master FSLDIR=/opt/fsl-5.0.11 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-2.2.0 /xcpEngine-master/xcpReset'
+RUN bash -c 'rm -rf /xcpEngine-master/space \
+    && cd  /xcpEngine-master \
+    && wget https://www.dropbox.com/s/92i491mrtslb56i/space.tar.xz \
+    && tar xvfJm space.tar.xz \
+    && rm space.tar.xz'
+
+RUN bash -c 'XCPEDIR=/xcpEngine-master FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-2.2.0 /xcpEngine-master/xcpReset && echo asdf'
 
 ENTRYPOINT ["/neurodocker/startup.sh", "/xcpEngine-master/xcpEngine", "\"$@\""]

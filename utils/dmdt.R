@@ -125,7 +125,7 @@ img_dmdt                <- matrix(nrow=nvol,ncol=nvox)
 img_mean                <- matrix(nrow=1,   ncol=nvox)
 for (vox in 1:nvox) {
   ts                    <- img[,vox]
-  
+
   #################################################################
   # 4. Solve for parameter estimates
   #    using left division
@@ -133,7 +133,7 @@ for (vox in 1:nvox) {
   betas                 <- mldivide(regmat_censored,ts[tmask])
   dmdt                  <- t(betas) %*% t(regmat)
   img_mean[,vox]        <- betas[1]
-  
+
   #################################################################
   # 5. Detrend timeseries with respect to regressors
   #################################################################
@@ -162,6 +162,6 @@ if (!is.na(maskpath)){
    }
 }
 sink("/dev/null")
-writeNifti(out,outpath,template=impath,datatype='float')
-if(!is.na(outmean)) { writeNifti(omean,outmean,template=impath,datatype='float') }
+writeNifti(out,outpath,template=hdr)
+if(!is.na(outmean)) { writeNifti(omean,outmean,template=hdr) }
 sink(NULL)
