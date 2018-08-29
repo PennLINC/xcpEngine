@@ -95,4 +95,4 @@ for ( x in 1:dims[1] ) {
 ###################################################################
 # Write output.
 ###################################################################
-writeNifti(outArray,out,template=imorig,datatype='float')
+writeNifti(outArray,out,template=imorig)

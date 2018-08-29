@@ -130,7 +130,7 @@ if          (type=='butterworth'){
   filt                  <- signal::butter(order, c(hpnorm,lpnorm),
                            "pass", "z")
 } else if   (type=='chebyshev1'){
-  filt                  <- signal::cheby1(order, ripple, 
+  filt                  <- signal::cheby1(order, ripple,
                            c(hpnorm,lpnorm), "pass", "z")
 } else if   (type=='chebyshev2'){
   filt                  <- signal::cheby2(order, ripple2,
@@ -186,5 +186,5 @@ if (!is.na(maskpath)){
    }
 }
 sink("/dev/null")
-writeNifti(out,outpath,template=impath,datatype='float')
+writeNifti(out,outpath,template=hdr)
 sink(NULL)

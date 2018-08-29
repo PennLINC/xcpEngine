@@ -69,4 +69,4 @@ for (l in labs) {
 ###################################################################
 # To NIfTI
 ###################################################################
-writeNifti(out,outpath,template=inpath,datatype='int16')
+writeNifti(out,outpath,template=inpath)

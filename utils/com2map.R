@@ -74,4 +74,4 @@ for (c in coms) {
 ###################################################################
 # 3. Write out the image
 ###################################################################
-writeNifti(out,outpath,template=roipath,datatype='int16')
+writeNifti(out,outpath,template=roipath)

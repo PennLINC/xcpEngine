@@ -65,7 +65,7 @@ writeImages <- function(images, outputRoot, templateImage, out, mask) {
    for (i in 1:dim(images)[1]) {
       out[mask > 0]     <- images[i,]
       outpath           <- paste(outputRoot, sprintf("%03d", i), ".nii.gz", sep="")
-      writeNifti(out, outpath, template=templateImage, datatype='float')
+      writeNifti(out, outpath, template=templateImage)
    }
 
 }

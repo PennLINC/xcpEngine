@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-################################################################### 
+###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
 
@@ -54,6 +54,7 @@ outpath                 <- opt$out
 # Convert values to percentiles
 ###################################################################
 img                     <- readNifti(impath)
+hdr                     <- dumpNifti(impath)
 mask                    <- readNifti(maskpath)
 logmask                 <- (mask!=0)
 imvec                   <- img[logmask]
@@ -64,5 +65,5 @@ img[logmask]            <- pct
 # Write out the image
 ###################################################################
 sink("/dev/null")
-writeNifti(img,outpath,template=impath,datatype='float')
+writeNifti(img,outpath,template=hdr)
 sink(NULL)

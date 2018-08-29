@@ -83,7 +83,7 @@ if (!is.na(impath)) {
    ################################################################
    # Write the censored image
    ################################################################
-   writeNifti(img_censored,out,template=impath,datatype='float')
+   writeNifti(img_censored,out,template=impath)
 }
 rm(img)
 rm(img_censored)

@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-################################################################### 
+###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
 
@@ -89,7 +89,7 @@ tau                     <- opt$duration
 # 1. Compute the scalar CBF factor to scale the images.
 ###################################################################
 cbf                     <- (6000 * lambda * exp(pld / t1b)) /
-                           (2 * alpha * m0scale * t1b * 
+                           (2 * alpha * m0scale * t1b *
                            (1 - exp(-tau / t1b)))
 
 ###################################################################
@@ -125,5 +125,5 @@ cbf_mean                <- apply(cbf_ts,c(1,2,3),mean)
 ###################################################################
 outpath_ts              <- paste(outpath,'_ts.nii.gz',sep='')
 outpath_mean            <- paste(outpath,'_mean.nii.gz',sep='')
-writeNifti(cbf_ts,  outpath_ts,  template=impath,datatype='float')
-writeNifti(cbf_mean,outpath_mean,template=impath,datatype='float')
+writeNifti(cbf_ts,  outpath_ts,  template=impath)
+writeNifti(cbf_mean,outpath_mean,template=impath)

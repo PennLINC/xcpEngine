@@ -153,7 +153,7 @@ nbins                   <- ceil(dim(img)[2] / VOXBIN)
 img_interpol            <- img
 
 for (curbin in 1:nbins){
-  
+
   cat('bin ')
   cat(curbin)
   cat(' out of ')
@@ -168,7 +168,7 @@ for (curbin in 1:nbins){
                            to=curbin*VOXBIN)
   binincl               <- intersect(binincl,seq(1,nvox))
   active                <- img[tmask,binincl]
-  
+
   #################################################################
   # 7. Compute the transform from good data as follows
   # for sin and cos terms
@@ -205,7 +205,7 @@ for (curbin in 1:nbins){
   rm(numerator,
      denominator,
      sinmult)
-  
+
   #################################################################
   # 8. Interpolate over motion-corrupted epochs
   # and reconstruct the original timeseries
@@ -241,7 +241,7 @@ for (curbin in 1:nbins){
      sw_p,
      C,
      S)
-  
+
   #################################################################
   # 9. Normalise the reconstructed spectrum
   # This is necessary when the oversampling
@@ -252,12 +252,12 @@ for (curbin in 1:nbins){
   norm_fac              <- Std_recon/Std_active
   norm_fac              <- repmat(norm_fac,nvol_total,1)
   recon                 <- recon / norm_fac
-  
+
   #################################################################
   # 10. Write the current bin into the image matrix
   #################################################################
   img_interpol[!tmask,binincl] <- recon[!tmask,]
-  
+
   rm(recon,
      norm_fac,
      Std_recon,
@@ -277,5 +277,5 @@ if (!is.na(maskpath)){
    }
 }
 sink("/dev/null")
-writeNifti(out,outpath,template=impath,datatype='float')
+writeNifti(out,outpath,template=hdr)
 sink(NULL)
