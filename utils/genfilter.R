@@ -190,6 +190,6 @@ sink("/dev/null")
 rm(img, img_filt)
 gc()
 hdr$datatype <- 32
-hdr$bitp
+hdr$bitpix <- 32
 writeNifti(out,outpath,template=impath)
 sink(NULL)
