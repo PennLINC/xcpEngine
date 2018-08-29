@@ -191,5 +191,5 @@ rm(img, img_filt)
 gc()
 hdr$datatype <- 32
 hdr$bitpix <- 32
-writeNifti(out,outpath,template=impath)
+writeNifti(out,outpath,template=hdr)
 sink(NULL)
