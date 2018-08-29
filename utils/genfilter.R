@@ -91,16 +91,7 @@ lpf                     <- opt$lopass
 ripple                  <- opt$rpass
 ripple2                 <- opt$rstop
 
-impath <- "/tmp/2585584.1.qlogin.q/TNI.SC.1.006_T002-regress-681907420~TEMP~.nii.gz"
-outpath <- "/tmp/2585584.1.qlogin.q/TNI.SC.1.006_T002-regress-681907420~TEMP~_TMP.nii.gz"
-type <- "butterworth"
-maskpath <- "/data/joy/BBL-extend/share/jaredz_test/cfn_output/TNI.SC.1.006/T002/prestats/TNI.SC.1.006_T002_mask.nii.gz"
-order <- 1
-direction <- 2
-hpf <- 0.01
-lpf <- 0.08
-ripple <- 1
-ripple2 <- 1
+
 ###################################################################
 # Compute the sequence's repetition time
 ###################################################################
@@ -199,6 +190,6 @@ sink("/dev/null")
 rm(img, img_filt)
 gc()
 hdr$datatype <- 32
-hdr$bitpix <- 32
-writeNifti(out,outpath,template=hdr)
+hdr$bitp
+writeNifti(out,outpath,template=impath)
 sink(NULL)
