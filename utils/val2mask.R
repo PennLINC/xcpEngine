@@ -29,7 +29,7 @@ option_list = list(
               help="A string of comma-delimited numeric ranges that
                   represent the intensity values of the reference image
                   that should be included in the mask.
-                  
+
                   Examples:
                   -v 1      : Create a binary mask including all voxels
                               where the reference has a value of 1
@@ -73,6 +73,7 @@ maskVals                <- unlist(strsplit(valStr,','))
 # Read input image
 ###################################################################
 refImg                  <- readNifti(refImgPath)
+hdr                     <- dumpNifti(refImgPath)
 out                     <- refImg
 
 
@@ -93,5 +94,5 @@ for (maskVal in maskVals) {
 ###################################################################
 out[out > -Inf]         <- outImgVec
 sink("/dev/null")
-writeNifti(out,outPath,template=refImgPath,datatype='float')
+writeNifti(out,outPath,template=hdr)
 sink(NULL)
