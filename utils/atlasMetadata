@@ -403,7 +403,7 @@ from_dir)
       [[ -n ${cxname} ]] && ccname=${ccname}${c_name}
       c_idx=$(ls -d ${atlas_dir}/${atlas_n}${cxname}CommunityNames.txt 2>/dev/null)
       [[ -s ${c_idx}  ]] && ccidx=',IDS='${c_idx}
-      community[c]=${coms[c]//${atlas_dir}\/${atlas_n}/${atlasj}}${ccname}${ccidx}
+      community[c]=${coms[c]//${atlas_dir}\/${atlas_n}/${atlasj}}${ccname}${ccidx//${atlas_dir}\/${atlas_n}/${atlasj}}
    done
    ;;
 esac
