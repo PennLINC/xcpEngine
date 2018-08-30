@@ -24,7 +24,7 @@ source ${XCPEDIR}/core/parseArgsMod
 ###################################################################
 completion() {
    set_space         ${standard}
-   
+
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -80,7 +80,7 @@ add_reference        template       template
 
 routine                    @1    Normalising using ANTs
 subroutine                 @1.1  [Selecting transforms to apply]
-if (( ${norm_primary[cxt]} == 1 )); then
+if [[ "${norm_primary[cxt]}" == 1 ]]; then
 subroutine                 @1.2  [Normalising primary dataset]
 if ! is_image ${std[cxt]}  \
 || rerun
