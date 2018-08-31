@@ -32,8 +32,8 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=accelerator_$(whoami)
-design=/home/rciric/xcpAccelerator/xcpEngine/designs/task.dsn
+analysis=task_$(whoami)
+design=${XCPEDIR}/designs/task.dsn
 sequence=nback
 standard=MNI%2x2x2
 
