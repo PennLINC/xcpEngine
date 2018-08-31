@@ -52,8 +52,7 @@ community_detection_octave() {
    verbose && echo_cmd "octave : glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg})"
    octave \
       --no-gui \
-      --eval "addpath(genpath('${XCPEDIR}/thirdparty/')); addpath(genpath('${XCPEDIR}/utils/')); glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg}); exit"\
-      2>/dev/null 1>&2
+      --eval "pkg load statistics; addpath(genpath('${XCPEDIR}/thirdparty/')); addpath(genpath('${XCPEDIR}/utils/')); glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg}); exit" \
    verbose && echo_cmd "octave : exit"
 }
 
