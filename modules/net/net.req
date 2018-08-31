@@ -49,20 +49,37 @@ unset ver_MATLAB
 if [[ -n ${net_gamma[${cxt}]} ]]
    then
    ver_MATLAB=$(which matlab)
-   [[ -z ${ver_MATLAB} ]] && reqerr=1
+   [[ -z ${ver_MATLAB} ]] && matlab_missing=1
 fi
+
+if [[ -z ${matlab_missing} ]]
+    then
+    ver_OCTAVE=$(which octave)
+    [[ -z ${ver_OCTAVE} ]] && octave_missing=1
+fi
+
 if [[ -n ${ver_MATLAB} ]]
    then
    modreqs="${modreqs}
  * MATLAB version $(which matlab)"
 fi
+
+if [[ -n ${ver_OCTAVE} ]]
+   then
+   modreqs="${modreqs}
+ * OCTAVE version $(which octave)"
+fi
+
+# If matlab and octave are missing, then this won't work
+[[ -z ${octave_missing} -a -z ${matlab_missing} ]] && reqerr=1
+
 if [[ ${reqerr} == 1 ]]
    then
    modreqs="${modreqs}
-   
+
    Aborting.
-   ::Dependencies check failed: MATLAB (net.mod)
-   ::Please ensure that MATLAB is in your "'$PATH'" or toggle
+   ::Dependencies check failed: MATLAB/OCTAVE (net.mod)
+   ::Please ensure that MATLAB or OCTAVE are in your "'$PATH'" or toggle
    ::community detection off by deleting net_gamma[${cxt}]."
    exit 1
 fi

@@ -28,13 +28,13 @@ update_networks() {
 
 completion() {
    write_atlas
-   
+
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
 }
 
-community_detection() {
+community_detection_matlab() {
    verbose && echo_cmd "matlab : addpath(genpath('${XCPEDIR}/thirdparty/'))"
    verbose && echo_cmd "matlab : addpath(genpath('${XCPEDIR}/utils/'))"
    verbose && echo_cmd "matlab : glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg})"
@@ -46,8 +46,26 @@ community_detection() {
    verbose && echo_cmd "matlab : exit"
 }
 
+community_detection_octave() {
+   verbose && echo_cmd "octave : addpath(genpath('${XCPEDIR}/thirdparty/'))"
+   verbose && echo_cmd "octave : addpath(genpath('${XCPEDIR}/utils/'))"
+   verbose && echo_cmd "octave : glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg})"
+   octave \
+      --no-gui \
+      --eval "addpath(genpath('${XCPEDIR}/thirdparty/')); addpath(genpath('${XCPEDIR}/utils/')); glconsensusCL('${adjacency}','${com_root[cxt]}','gamma',${gamma},'nreps',${net_consensus[cxt]}${missing_arg}); exit"\
+      2>/dev/null 1>&2
+   verbose && echo_cmd "octave : exit"
+}
 
+community_detection() {
+  if [[ -n $(which matlab) ]]
+  then
+      community_detection_matlab
+  else
+    community_detection_octave
+  fi
 
+}
 
 
 ###################################################################
@@ -71,9 +89,9 @@ declare_community_outputs() {
 << DICTIONARY
 
 com_dir/com_root
-   
+
 net_dir/net_root
-   
+
 
 DICTIONARY
 
@@ -100,7 +118,7 @@ else
 "
 ::XCP-WARNING: Network analysis has been requested, but no network
   maps have been provided.
-  
+
   Skipping module"
    exit 1
 fi
