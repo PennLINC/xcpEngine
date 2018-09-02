@@ -15,5 +15,5 @@ derivative() {
                  ProvenanceIndex:${cxt}            \
                  Statistic:null                    \
                  Type:Map
-   declared_d[${vname}]=${vname}
+   declared_d[${vname}]=${1}
 }
