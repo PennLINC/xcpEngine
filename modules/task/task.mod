@@ -36,6 +36,14 @@ completion() {
    source   ${XCPEDIR}/core/moduleEnd
 }
 
+###################################################################
+# HELPER FUNCTION -- for FEAT reorganisation
+###################################################################
+reorg(){
+   mv     ${1} ${2}
+   ln -sf ${2} ${1}
+}
+
 
 
 
@@ -322,9 +330,9 @@ if [[ -d ${featout} ]]
    ################################################################
    # * Image localisation
    ################################################################
-   exec_sys ln -sf ${featout}/mask.nii.gz         ${mask[cxt]}
-   exec_sys ln -sf ${featout}/example_func.nii.gz ${referenceVolume[cxt]}
-   exec_sys ln -sf ${featout}/mean_func.nii.gz    ${meanIntensity[cxt]}
+   exec_sys reorg ${featout}/mask.nii.gz         ${mask[cxt]}
+   exec_sys reorg ${featout}/example_func.nii.gz ${referenceVolume[cxt]}
+   exec_sys reorg ${featout}/mean_func.nii.gz    ${meanIntensity[cxt]}
    ################################################################
    # * Brain extraction
    ################################################################
@@ -349,7 +357,7 @@ if [[ -d ${featout} ]]
    if [[ -s ${featout}/confoundevs.txt ]]
       then
       subroutine              @3.3
-      exec_sys ln -sf ${featout}/confoundevs.txt   ${confmat[cxt]}
+      exec_sys reorg ${featout}/confoundevs.txt   ${confmat[cxt]}
    fi
 
    ################################################################
@@ -360,13 +368,13 @@ if [[ -d ${featout} ]]
       subroutine              @3.4  Re-localising motion metrics
       [[ -d ${rmat[cxt]} ]] && exec_sys rm -rf     ${rmat[cxt]}
       exec_sys mkdir -p ${mcdir[cxt]}
-      exec_sys ln -sf ${featout}/mc/*mcf.par       ${rps[cxt]}
-      exec_sys ln -sf ${featout}/mc/*mcf_rel.rms   ${rel_rms[cxt]}
-      exec_sys ln -sf ${featout}/mc/*rel_mean.rms  ${rel_mean_rms[cxt]}
-      exec_sys ln -sf ${featout}/mc/*abs.rms       ${abs_rms[cxt]}
-      exec_sys ln -sf ${featout}/mc/*abs_mean.rms  ${abs_mean_rms[cxt]}
-      exec_sys ln -sf ${featout}/mc/*.mat          ${rmat[cxt]}
-      exec_sys ln -sf ${featout}/mc/*.png          ${mcdir[cxt]}
+      exec_sys reorg ${featout}/mc/*mcf.par       ${rps[cxt]}
+      exec_sys reorg ${featout}/mc/*mcf_rel.rms   ${rel_rms[cxt]}
+      exec_sys reorg ${featout}/mc/*rel_mean.rms  ${rel_mean_rms[cxt]}
+      exec_sys reorg ${featout}/mc/*abs.rms       ${abs_rms[cxt]}
+      exec_sys reorg ${featout}/mc/*abs_mean.rms  ${abs_mean_rms[cxt]}
+      exec_sys reorg ${featout}/mc/*.mat          ${rmat[cxt]}
+      exec_sys reorg ${featout}/mc/*.png          ${mcdir[cxt]}
       exec_xcp 1dTool.R             \
          -i    ${rel_rms[cxt]}      \
          -o    max                  \
@@ -386,8 +394,7 @@ if [[ -d ${featout} ]]
    for i in ${dsnfiles}
       do
       fname=${i//${featout}\//}
-      exec_sys mv     ${i} ${outdir}/model/${prefix}_${fname}
-      exec_sys ln -sf ${outdir}/model/${prefix}_${fname} ${i}
+      exec_sys reorg ${i} ${outdir}/model/${prefix}_${fname}
    done
 
    ################################################################
@@ -396,8 +403,8 @@ if [[ -d ${featout} ]]
    if [[ -d ${featout}/logs ]]
       then
       subroutine              @3.6
-      exec_sys ln -sf ${featout}/logs               ${outdir}/logs
-      exec_sys ln -sf ${featout}/report_log.html    ${outdir}/logs/report_log.html
+      exec_sys reorg ${featout}/logs               ${outdir}/logs
+      exec_sys reorg ${featout}/report_log.html    ${outdir}/logs/report_log.html
    fi
    routine_end
 
@@ -462,8 +469,7 @@ if [[ -d ${featout} ]]
             par_dx=${par_out}${cname}_tderiv.nii.gz
             psc_dx=${psc_out}${cname}_tderiv.nii.gz
             
-            exec_fsl immv     ${pe} ${par_pe}
-            exec_sys ln -sf   ${par_pe} ${pe}
+            exec_fsl reorg   ${pe} ${par_pe}
             #######################################################
             # Convert raw PE to percent signal change.
             #######################################################
@@ -476,8 +482,7 @@ if [[ -d ${featout} ]]
             
          else
             subroutine        @4.5
-            exec_fsl immv     ${pe} ${par_dx}
-            exec_sys ln -sf   ${par_pe} ${pe}
+            exec_fsl reorg    ${pe} ${par_dx}
             is_dx=0
             #######################################################
             # Convert raw PE to percent signal change.
@@ -523,10 +528,8 @@ if [[ -d ${featout} ]]
          con_o='contrast'${i}'_'${cname}'['${cxt}']'
          var_o='varcope'${i}'_'${cname}'['${cxt}']'
          psc_o='sigchange_contrast'${i}'_'${cname}'['${cxt}']'
-         exec_fsl immv        ${con_i}    ${!con_o}
-         exec_fsl immv        ${var_i}    ${!var_o}
-         exec_sys ln -sf      ${!con_o}   ${con_i}
-         exec_sys ln -sf      ${!var_o}   ${var_i}
+         exec_sys reorg       ${con_i}    ${!con_o}
+         exec_sys reorg       ${var_i}    ${!var_o}
          ##########################################################
          # Convert raw contrast to percent signal change.
          ##########################################################
@@ -549,8 +552,7 @@ if [[ -d ${featout} ]]
       for i in ${statimgs}
          do
          fname=${i//${featout}\/stats\//}
-         exec_sys mv     ${i} ${outdir}/stats/${prefix}_${fname}
-         exec_sys ln -sf ${outdir}/stats/${prefix}_${fname} ${i}
+         exec_sys reorg  ${i} ${outdir}/stats/${prefix}_${fname}
       done
    fi
 
@@ -560,8 +562,7 @@ if [[ -d ${featout} ]]
    if is_image ${featout}/filtered_func_data.nii.gz
       then
       subroutine              @4.10
-      exec_fsl immv   ${featout}/filtered_func_data.nii.gz ${processed[cxt]}
-      exec_sys ln -sf ${processed[cxt]} ${featout}/filtered_func_data.nii.gz
+      exec_sys reorg  ${featout}/filtered_func_data.nii.gz ${processed[cxt]}
    fi
    routine_end
 fi
