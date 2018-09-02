@@ -1,5 +1,7 @@
 derivative_set() {
-   local dfloat=$(derivative_floats ${1})
-   (( dfloat == 0 )) && json_set deriv[cxt]           ${@}
-   (( dfloat == 1 )) && json_set derivatives_floating ${@}
+   dname=${1//[![:alnum:]|_]}
+   shift
+   local dfloat=$(derivative_floats ${dname})
+   (( dfloat == 0 )) && json_set deriv[cxt]           ${dname} ${@}
+   (( dfloat == 1 )) && json_set derivatives_floating ${dname} ${@}
 }
