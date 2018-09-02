@@ -77,7 +77,7 @@ declare_copes() {
 for i in ${!cpe[@]}
    do
    derivative     contrast${i}_${cpe[i]}                 \
-                  contrasts/${prefix}_contrast${i}_${cpe[i]}
+                  copes/${prefix}_contrast${i}_${cpe[i]}
    derivative     sigchange_contrast${i}_${cpe[i]}       \
                   sigchange/${prefix}_sigchange_contrast${i}_${cpe[i]}
    derivative     varcope${i}_${cpe[i]}                  \
@@ -426,7 +426,7 @@ if [[ -d ${featout} ]]
    if [[ -n $(ls ${featout}/stats/pe* 2>/dev/null) ]]
       then
       subroutine              @4.2  Raw parameter estimates
-      exec_sys                mkdir -p ${outdir}/pe
+      exec_sys                mkdir -p ${outdir}/pes
       exec_sys                mkdir -p ${outdir}/sigchange
       paramest=( $(exec_sys ls -d1 ${featout}/stats/pe*.nii.gz) )
       #############################################################
@@ -443,7 +443,7 @@ if [[ -d ${featout} ]]
       #############################################################
       for (( cidx=1; cidx <= ${npes}; cidx++ ))
          do
-         par_out=${outdir}/pe/${prefix}_pe${cidx}
+         par_out=${outdir}/pes/${prefix}_pe${cidx}
          psc_out=${outdir}/sigchange/${prefix}_pe${cidx}
          pe=${featout}/stats/pe${cidx}.nii.gz
          subroutine           @4.3
@@ -512,7 +512,7 @@ if [[ -d ${featout} ]]
    if [[ -n $(ls ${featout}/stats/cope* 2>/dev/null) ]]
       then
       subroutine              @4.7  Contrasts
-      exec_sys                mkdir -p ${outdir}/contrasts
+      exec_sys                mkdir -p ${outdir}/copes
       exec_sys                mkdir -p ${outdir}/varcopes
       exec_sys                mkdir -p ${outdir}/sigchange
       #############################################################
