@@ -469,7 +469,7 @@ if [[ -d ${featout} ]]
             par_dx=${par_out}${cname}_tderiv.nii.gz
             psc_dx=${psc_out}${cname}_tderiv.nii.gz
             
-            exec_fsl reorg   ${pe} ${par_pe}
+            exec_sys reorg   ${pe} ${par_pe}
             #######################################################
             # Convert raw PE to percent signal change.
             #######################################################
@@ -482,7 +482,7 @@ if [[ -d ${featout} ]]
             
          else
             subroutine        @4.5
-            exec_fsl reorg    ${pe} ${par_dx}
+            exec_sys reorg    ${pe} ${par_dx}
             is_dx=0
             #######################################################
             # Convert raw PE to percent signal change.
