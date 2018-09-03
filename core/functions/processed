@@ -1,9 +1,9 @@
 processed() {
-   local processed=${1}[${cxt}]
-   if is_image ${!processed}
+   local processed_p=${1}[${cxt}]
+   if is_image ${!processed_p}
       then
       echo "${1}_space[${sub}]=${space[sub]}" >> ${design[sub]}
-      echo "${1}[${sub}]=${!processed}"       >> ${design[sub]}
+      echo "${1}[${sub}]=${!processed_p}"       >> ${design[sub]}
       rm -f ${out}/${prefix}.nii.gz
       exec_sys ln -sf ${!processed} ${out}/${prefix}.nii.gz
    fi
