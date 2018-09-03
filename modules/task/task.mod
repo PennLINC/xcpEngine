@@ -299,14 +299,14 @@ declare_copes
 # Execute analysis in FEAT. Deactivate autosubmission before
 # calling FEAT, and reactivate after FEAT is complete.
 ###################################################################
-if ! is_image ${processed[cxt]} \
+if ! is_image ${featdir[cxt]}.feat/filtered_func_data.nii.gz \
 || rerun
    then
    routine                    @2    Executing FEAT analysis
    subroutine                 @2.1  Preparing environment
    buffer=${SGE_ROOT}
    unset    SGE_ROOT
-   exec_sys rm -rf            ${featdir[cxt]}
+   exec_sys rm -rf            ${featdir[cxt]}.feat
    subroutine                 @2.2a Processing FEAT design:
    subroutine                 @2.2b ${fsf[cxt]}
    exec_fsl feat                    ${fsf[cxt]}          >/dev/null
@@ -314,7 +314,7 @@ if ! is_image ${processed[cxt]} \
    featout=$(ls -d1 ${featdir[cxt]}.feat 2>/dev/null)
    routine_end
 else
-   featout=/dev/null
+   featout=$(ls -d1 ${featdir[cxt]}.feat 2>/dev/null)
 fi
 
 
