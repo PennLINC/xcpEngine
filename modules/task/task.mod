@@ -40,8 +40,8 @@ completion() {
 # HELPER FUNCTION -- for FEAT reorganisation
 ###################################################################
 reorg(){
-   mv     ${1} ${2}
-   ln -sf ${2} ${1}
+   mv    ${1} ${2}
+   rln   ${2} ${1}
 }
 
 
