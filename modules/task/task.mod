@@ -551,6 +551,7 @@ if [[ -d ${featout} ]]
       statimgs=$(exec_sys ls -d1 ${featout}/stats/*)
       for i in ${statimgs}
          do
+         contains $i 'pe[0-9]+.nii.gz' && continue
          fname=${i//${featout}\/stats\//}
          exec_sys reorg  ${i} ${outdir}/stats/${prefix}_${fname}
       done
