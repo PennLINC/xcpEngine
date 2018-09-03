@@ -7,6 +7,7 @@ rln() {
       [[ ${p1[f]} != ${p2[f]} ]] && break
       common=("${common[@]}" "${p1[f]}")
    done
+   (( f == 0 )) && ln -sf ${1} ${2} && return
    local nuniq=$(arithmetic ${#p2[@]}-${#common[@]}-1)
    local dividx=$(arithmetic ${#p2[@]}-1)
    local pardir='/'$(join_by '/' ${p2[@]::${dividx}})
