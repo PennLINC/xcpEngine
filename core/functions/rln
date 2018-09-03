@@ -1,9 +1,19 @@
 rln() {
-   [[ ${1} == ${2} ]] && return
-   local rootdir=$(lc_prefix ${1} ${2} '/')
-   set -- ${1#$rootdir} ${2#$rootdir}
+   unset common
+   local p1=$(abspath ${1})
+   local p2=(${2//\// })
+   p1=(${p1//\// })
+   for f in ${!p1[@]}
+      do
+      [[ ${p1[f]} != ${p2[f]} ]] && break
+      common=("${common[@]}" "${p1[f]}")
+   done
+   local nuniq=$(arithmetic ${#p2[@]}-${#common[@]}-1)
+   local dividx=$(arithmetic ${#p2[@]}-1)
+   local pardir='/'$(join_by '/' ${p2[@]::${dividx}})
+   local fname=${p2[@]:${dividx}}
    (
-      pushd ${rootdir} >/dev/null
-      ln -sf ${1} ${2}
+      cd $pardir 2>/dev/null
+      ln -sf $(repeat $nuniq '../')$(join_by '/' ${p1[@]:${#common[@]}}) $fname
    )
 }
