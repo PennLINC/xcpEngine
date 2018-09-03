@@ -40,7 +40,7 @@ completion() {
 # HELPER FUNCTION -- for FEAT reorganisation
 ###################################################################
 reorg(){
-   mv    ${1} ${2}
+   mv    ${1} ${2} 2>/dev/null
    rln   ${2} ${1}
 }
 
@@ -54,6 +54,8 @@ reorg(){
 derivative  referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 derivative  meanIntensityBrain      ${prefix}_meanIntensityBrain
 derivative  mask                    ${prefix}_mask
+
+derivative_set    mask Type         Mask
 
 output      referenceVolume         ${prefix}_referenceVolume.nii.gz
 output      meanIntensity           ${prefix}_meanIntensity.nii.gz
