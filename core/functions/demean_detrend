@@ -49,7 +49,7 @@ USAGE
    if [[ ${demeaned_dmdt} == 1 ]]
       then
       subroutine        ${tag}.1
-      exec_sys ln -s ${img_i}.nii.gz   ${img_o}.nii.gz
+      exec_sys rln   ${img_i}.nii.gz   ${img_o}.nii.gz
       exec_sys cp    ${con_i}          ${con_o} 2>/dev/null
    elif ! is_image ${img_o} \
    || rerun

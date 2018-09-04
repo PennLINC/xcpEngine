@@ -67,7 +67,7 @@ USAGE
    if [[ ${tmpf} == none ]]
       then
       subroutine           ${tag}.1
-      exec_sys ln -sf ${img_i}.nii.gz   ${img_o}.nii.gz
+      exec_sys rln    ${img_i}.nii.gz   ${img_o}.nii.gz
       exec_sys cp     ${con_i}          ${con_o} 2>/dev/null
    ################################################################
    # Ensure that this step has not already run to completion by

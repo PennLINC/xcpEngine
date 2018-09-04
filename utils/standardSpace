@@ -294,7 +294,7 @@ for i in ${!priors[@]}
    exec_fsl imcp     ${p_path} \
                      ${p_targ}
    pushd ${stddir}/${name}_priors   >/dev/null
-   exec_sys ln -sf   ${p_base} \
+   exec_sys rln      ${p_base} \
                      ${p_nonm}
    popd                             >/dev/null
    spaceMetadataArgs=${spaceMetadataArgs},Priors'='${p_form}

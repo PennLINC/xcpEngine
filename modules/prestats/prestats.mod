@@ -823,9 +823,9 @@ while (( ${#rem} > 0 ))
          proc_fsl ${mask[cxt]} \
                   fslmaths ${meanIntensity[cxt]}   -bin     %OUTPUT
          subroutine           @10.4 [Adding link references]
-         exec_sys ln -sf   ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
-         exec_sys ln -sf   ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
-         exec_sys ln -sf   ${intermediate}.nii.gz  ${intermediate}_${cur}.nii.gz
+         exec_sys rln   ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
+         exec_sys rln   ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
+         exec_sys rln   ${intermediate}.nii.gz  ${intermediate}_${cur}.nii.gz
          intermediate=${intermediate}_${cur}
          routine_end
          ;;

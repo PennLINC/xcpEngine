@@ -407,7 +407,7 @@ routine                       @5    Extracting feature: high-frequency content
 subroutine                    @5.1a Computing midpoints of IC power spectra
 subroutine                    @5.1b Ensure that you have not performed any filtering,
 subroutine                    @5.1c as filtering will cause incorrect classifications
-exec_sys ln -s ${melodir[cxt]}/melodic_FTmix ${ic_ft[cxt]}
+exec_sys rln ${melodir[cxt]}/melodic_FTmix ${ic_ft[cxt]}
 verbose && echo_cmd \
 ${XCPEDIR}/modules/aroma/aromaHIFRQ.R \
    -i ${ic_ft[cxt]} \
@@ -474,11 +474,11 @@ fsl_regfilt                \
 if [[ ${aroma_dtype[cxt]} == aggr ]]
    then
    subroutine                 @7.3  Using aggressive filter
-   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_aggr.nii.gz     ${denoised[cxt]}
+   exec_sys rln ${outdir}/${prefix}_icaDenoised_aggr.nii.gz     ${denoised[cxt]}
 elif [[ ${aroma_dtype[cxt]} == nonaggr ]]
    then
    subroutine                 @7.4  Using non-aggressive filter
-   exec_sys ln -sf ${outdir}/${prefix}_icaDenoised_nonaggr.nii.gz  ${denoised[cxt]}
+   exec_sys rln ${outdir}/${prefix}_icaDenoised_nonaggr.nii.gz  ${denoised[cxt]}
 fi
 routine_end
 
