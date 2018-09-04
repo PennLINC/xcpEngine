@@ -4,7 +4,8 @@ process() {
    local output=${1}[${cxt}]
    if is_image ${out}/${prefix}.nii.gz
       then
-      exec_sys ln -sf ${out}/${prefix}.nii.gz ${intermediate}.nii.gz
+      exec_sys rln ${out}/${prefix}.nii.gz ${intermediate}.nii.gz
    fi
    declared_p=${1}
+   test=${1}'['${cxt}']'
 }

@@ -5,6 +5,6 @@ processed() {
       echo "${1}_space[${sub}]=${space[sub]}" >> ${design[sub]}
       echo "${1}[${sub}]=${!processed_p}"       >> ${design[sub]}
       rm -f ${out}/${prefix}.nii.gz
-      exec_sys ln -sf ${!processed} ${out}/${prefix}.nii.gz
+      exec_sys rln ${!processed_p} ${out}/${prefix}.nii.gz
    fi
 }
