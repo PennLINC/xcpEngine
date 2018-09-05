@@ -5,6 +5,6 @@ add_reference() {
    rm -f ${image_target}
    if is_image ${!image_var}
       then
-      exec_sys rln ${!image_var} ${image_target}
+      exec_sys cp ${!image_var} ${image_target}
    fi
 }
