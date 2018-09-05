@@ -76,7 +76,7 @@ DICTIONARY
 #  * At this point in time, only ANTs-based normalisation has been
 #    tested, and the remaining options are no longer supported.
 ###################################################################
-add_reference        template       template
+cp    ${template}          ${outdir}/template.nii.gz
 
 routine                    @1    Normalising using ANTs
 subroutine                 @1.1  [Selecting transforms to apply]
