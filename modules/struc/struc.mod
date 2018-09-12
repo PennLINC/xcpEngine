@@ -28,7 +28,7 @@ completion() {
       space_set   ${spaces[sub]}   ${space[sub]} \
             Map   ${referenceVolumeBrain[cxt]}
    fi
-   
+
    exec_xcp spaceMetadata                       \
       -o    ${spaces[sub]}                      \
       -f    ${standard}:${template}             \
@@ -36,7 +36,7 @@ completion() {
       -x    ${xfm_affine[cxt]},${xfm_warp[cxt]} \
       -i    ${ixfm_warp[cxt]},${ixfm_affine[cxt]} \
       -s    ${spaces[sub]}
-   
+
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -138,7 +138,7 @@ struct
    The fully processed (bias-field corrected and skull-stripped)
    brain in native anatomical space.
 struct_std
-   The subject's brain following normalisation to a standard or
+   The subject\'s brain following normalisation to a standard or
    template space. This should not be processed as a derivative.
 xfm_affine
    A matrix that defines an affine transformation from anatomical
@@ -146,7 +146,7 @@ xfm_affine
 xfm_warp
    A distortion field that defines a nonlinear diffeomorphic warp
    from anatomical space to standard space.
-   
+
 DICTIONARY
 
 
@@ -176,6 +176,26 @@ prior_space=${standard}
 unset buffer
 
 subroutine                    @0.1
+
+###################################################################
+# Ensure that the input image is stored in the same orientation
+# as the template. If not, reorient it to match
+###################################################################
+routine                 @0    Ensure matching orientation
+subroutine              @0.1a Input: ${intermediate}.nii.gz
+subroutine              @0.1b Template: ${template}
+subroutine              @0.1c Output root: ${ctroot[cxt]}
+
+native_orientation=$(3dinfo -orient ${intermediate}.nii.gz)
+template_orientation=$(3dinfo -orient ${template})
+
+if [[ "${native_orientation}" != "${template_orientation}"]]; then
+
+    exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${intermediate.nii.gz} \
+              -prefix ${intermediate}_${template_orientation}.nii.gz
+    intermediate=${intermediate}_${template_orientation}
+fi
 
 ###################################################################
 # Parse the control sequence to determine what routine to run next.
@@ -535,15 +555,15 @@ while (( ${#rem} > 0 ))
          -s    ${spaces[sub]}
       routine_end
       ;;
-      
-      
-      
-      
-      
+
+
+
+
+
    *)
       subroutine           @E.1     Invalid option detected: ${cur}
       ;;
-         
+
    esac
 done
 
