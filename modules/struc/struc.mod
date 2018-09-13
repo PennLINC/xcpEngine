@@ -187,7 +187,7 @@ subroutine              @0.1b Template: ${template}
 subroutine              @0.1c Output root: ${ctroot[cxt]}
 
 native_orientation=$(${AFNI_PATH}/3dinfo -orient ${intermediate}.nii.gz)
-template_orientation=$(${AFNI_PATH}/exec_afni 3dinfo -orient ${template})
+template_orientation=$(${AFNI_PATH}/3dinfo -orient ${template})
 
 if [[ "${native_orientation}" != "${template_orientation}"]]; then
 
