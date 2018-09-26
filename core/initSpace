@@ -71,13 +71,13 @@ configure         structural        ${prefix[sub]}_anatomical
 #             case, the anatomical map should be added to the
 #             design to support coregistration.
 ###################################################################
-[[ -z ${xfms}  ]] &&  xfms="  ${xfm_rigid[sub]} 
-                              ${xfm_affine[sub]} 
-                              ${xfm_warp[sub]} 
+[[ -z ${xfms}  ]] &&  xfms="  ${xfm_rigid[sub]}
+                              ${xfm_affine[sub]}
+                              ${xfm_warp[sub]}
                               ${xfm_resample[sub]}"
-[[ -z ${ixfms} ]] && ixfms="  ${ixfm_resample[sub]} 
-                              ${ixfm_warp[sub]} 
-                              ${ixfm_affine[sub]} 
+[[ -z ${ixfms} ]] && ixfms="  ${ixfm_resample[sub]}
+                              ${ixfm_warp[sub]}
+                              ${ixfm_affine[sub]}
                               ${ixfm_rigid[sub]}"
 if [[ -n ${xfms} ]]
    then
@@ -86,8 +86,9 @@ if [[ -n ${xfms} ]]
    ixfms=$(echo ${ixfms})
    xfms=${xfms// /,}
    ixfms=${ixfms// /,}
-   is_image ${struct_head[sub]} && hd=',MapHead='${struct_head[sub]}
-   ${XCPEDIR}/utils/spaceMetadata               \
+   # Only run if we find a skull-stripped image
+   is_image ${struct_head[sub]} && hd=',MapHead='${struct_head[sub]} \
+   && ${XCPEDIR}/utils/spaceMetadata            \
       -o ${spaces[cxt]}                         \
       -f ${str_targ}:${str_temp}                \
       -m ${structural[cxt]}:${struct[sub]}${hd} \
