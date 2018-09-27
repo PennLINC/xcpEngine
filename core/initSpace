@@ -86,7 +86,7 @@ if [[ -n ${xfms} ]]
    ixfms=$(echo ${ixfms})
    xfms=${xfms// /,}
    ixfms=${ixfms// /,}
-   # Only run if we find a skull-stripped image
+
    is_image ${struct_head[sub]} && hd=',MapHead='${struct_head[sub]}
    ${XCPEDIR}/utils/spaceMetadata            \
       -o ${spaces[cxt]}                         \

@@ -42,7 +42,7 @@ Compulsory arguments:
  -f : Fixed image + space.
       This might, for instance, be a template or standard-space
       image. The argument should be provided in the format:
-      
+
                      spaceName:pathToImage
                               e.g.,
       MNI%2x2x2:${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
@@ -54,24 +54,24 @@ Either argument set 1 or argument set 2 must also be provided.
 Argument set 1:
  -d : ANTsCT or structural module output directory. The argument
       should be provided in the format
-      
+
             structuralImageSpaceName:pathToDirectory
           e.g., SUBJ001_anatomical:/data/SUBJ001/antsCT/
-                     
+
 Argument set 2:
  -m : Moving image in its native space + its native space.
       This might, for instance, be the subject's structural
       or anatomical image if it is being registered to a
       template. The argument should be provided in the
       format:
-      
+
                      spaceName:pathToImage
        e.g., SUBJ001_anatomical:/data/SUBJ001/SUBJ001.nii.gz
-      
+
       Additional attributes may be passed as follows:
-      
+
       spaceName:pathToImage,Mask=pathToMask,DilatedMask=pathToDilated,MapHead=pathToImageHeadOn
-      
+
       If no attribute is specified, the attribute 'Map' will be
       assigned, denoting the map of the named space.
 
@@ -94,7 +94,7 @@ Optional arguments:
       and append new spaces and transforms. If multiple files
       are provided, then they should be delimited in comma-
       separated format.
-      
+
  -t : Trace
       If this flag is set, then any commands called by the
       erodespare routine will be explicitly printed to the
@@ -119,7 +119,8 @@ while getopts "o:d:m:f:x:i:s:t" OPTION
       ;;
    d)
       struct=( ${OPTARG//:/ } )
-      [[ ! -d ${struct[1]} ]] && Usage && exit
+      [[ ! -d ${struct[1]} ]] && echo "No file \'${struct[1]}\'" \
+        && exit
       ;;
    m)
       moving=( ${OPTARG//:/ } )
@@ -133,11 +134,15 @@ while getopts "o:d:m:f:x:i:s:t" OPTION
          fi
          sourceSpace[${i[0]}]=${i[1]}
       done
-      ! is_image $(eval echo ${sourceSpace[Map]}) && Usage && exit
+      source_space_map=$(eval echo ${sourceSpace[Map]})
+      ! is_image ${source_space_map} \
+          && echo "source space map '${source_space_map}' is not an image" && exit
       ;;
    f)
       fixed=(  ${OPTARG//:/ } )
-      ! is_image $(eval echo ${fixed[1]})  && Usage && exit
+      ! is_image $(eval echo ${fixed[1]})  \
+          && echo "fixed '${fixed[1]}' is not an image" \
+          && exit
       ;;
    x)
       transforms=${OPTARG}
@@ -147,7 +152,8 @@ while getopts "o:d:m:f:x:i:s:t" OPTION
       ;;
    s)
       space=( ${OPTARG//,/ } )
-      [[ ! -s ${space[0]} ]]  && Usage && exit
+      [[ ! -s ${space[0]} ]]  && echo "Space not defined" \
+          && Usage && exit
       ;;
    t)
       set -x
@@ -161,27 +167,44 @@ done
 ###################################################################
 # Ensure that all compulsory arguments have been defined
 ###################################################################
-[[ -z        ${out}   ]]      && Usage && exit
-[[ ${out} != ${out#-} ]]      && Usage && exit
+[[ -z        ${out}   ]]      \
+    && echo "-o not defined" && Usage && exit
+[[ ${out} != ${out#-} ]]      \
+    && echo '[[ ${out} != ${out#-} ]]' && Usage && exit
+
+# Make this easier to read
+fixed1=$(eval echo ${fixed[1]} )
+source_space_map=$(eval echo ${sourceSpace[Map]})
+
 if [[ -n ${struct} ]]
    then
-   ! is_image ${fixed[1]}     && Usage && exit
+   ! is_image ${fixed1} \
+      && echo '${struct} defined but ${fixed[1]} is not an image' \
+      && Usage && exit
    meta=from_pipeline
 elif [[ -n ${moving} ]]
    then
-   ! is_image $(eval echo ${sourceSpace[Map]})    && Usage && exit
-   ! is_image $(eval echo ${fixed[1]} )    && Usage && exit
-   [[ -z ${transforms} ]]     && Usage && exit
+   ! is_image $source_space_map  \
+     && echo '${moving} defined but ${sourceSpace[Map]} is not an image' \
+     && Usage && exit
+   ! is_image ${fixed1}    \
+     && echo '${moving} defined but ${fixed[1]} is not an image' \
+     && Usage && exit
+   [[ -z ${transforms} ]]     \
+     && echo '${transforms} is empty' \
+     && Usage && exit
    meta=from_custom
 else
    combine_only=1
 fi
+
 if ! matchexact ${out} ${space[@]}
    then
    subroutine                 @u.1
    rm             -f          ${out}
    echo '{}'      >>          ${out}
 fi
+
 if [[ -n ${space} ]]
    then
    subroutine                 @u.2
