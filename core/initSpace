@@ -87,8 +87,8 @@ if [[ -n ${xfms} ]]
    xfms=${xfms// /,}
    ixfms=${ixfms// /,}
    # Only run if we find a skull-stripped image
-   is_image ${struct_head[sub]} && hd=',MapHead='${struct_head[sub]} \
-   && ${XCPEDIR}/utils/spaceMetadata            \
+   is_image ${struct_head[sub]} && hd=',MapHead='${struct_head[sub]}
+   ${XCPEDIR}/utils/spaceMetadata            \
       -o ${spaces[cxt]}                         \
       -f ${str_targ}:${str_temp}                \
       -m ${structural[cxt]}:${struct[sub]}${hd} \
