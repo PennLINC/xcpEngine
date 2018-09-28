@@ -189,12 +189,21 @@ subroutine              @0.1c Output root: ${ctroot[cxt]}
 native_orientation=$(${AFNI_PATH}/3dinfo -orient ${intermediate}.nii.gz)
 template_orientation=$(${AFNI_PATH}/3dinfo -orient ${template})
 
-if [[ "${native_orientation}" != "${template_orientation}"]]; then
+echo "NATIVE:${native_orientation} TEMPLATE:${template_orientation}"
+full_intermediate=$(ls ${intermediate}.nii* | head -n 1)
+if [ "${native_orientation}" != "${template_orientation}" ]
+then
 
-    exec_afni 3dresample -orient ${template_orientation} \
-              -inset ${intermediate.nii.gz} \
+    subroutine @0.1d "${native_orientation} -> ${template_orientation}"
+    ${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${full_intermediate} \
               -prefix ${intermediate}_${template_orientation}.nii.gz
     intermediate=${intermediate}_${template_orientation}
+
+else
+
+    subroutine  @0.1d "NOT re-orienting T1w"
+
 fi
 
 ###################################################################
