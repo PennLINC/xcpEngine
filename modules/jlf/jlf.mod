@@ -24,22 +24,22 @@ source ${XCPEDIR}/core/parseArgsMod
 ###################################################################
 # MODULE COMPLETION
 ###################################################################
-completion() {   
+completion() {
    atlas             miccai
-   
+
    assign image      labelsGMIntersect[cxt] \
        or            labels[cxt] \
        as            jlfLabels
-   
+
    atlas_set         miccai Map        ${jlfLabels}
    atlas_set         miccai Space      ${structural[sub]}
    atlas_set         miccai Type       Map
-   atlas_set         miccai NodeIndex  ${BRAINATLAS}/miccai/miccaiNodeIndex.1D 
-   atlas_set         miccai NodeNames  ${BRAINATLAS}/miccai/miccaiNodeNames.txt 
+   atlas_set         miccai NodeIndex  ${BRAINATLAS}/miccai/miccaiNodeIndex.1D
+   atlas_set         miccai NodeNames  ${BRAINATLAS}/miccai/miccaiNodeNames.txt
    atlas_set         miccai Citation   ${BRAINATLAS}/miccai/miccaiReference.bib
-   
+
    write_atlas
-   
+
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -111,7 +111,7 @@ if ! is_image ${labels[cxt]} \
      jlfReg="${jlfReg} -g ${brainDir}${o}.nii.gz"
      jlfReg="${jlfReg} -l ${labelDir}${o}.nii.gz"
    done
-   
+
    subroutine                 @1.5  Configuring parallelisation
    case ${jlf_parallel[cxt]} in
    sge)
@@ -126,6 +126,7 @@ if ! is_image ${labels[cxt]} \
 
    subroutine                 @1.6a Executing joint label fusion routine
    subroutine                 @1.6b Delegating control to antsJointLabelFusion
+   export ANTSPATH=${ANTSPATH}/
    exec_ants   antsJointLabelFusion.sh \
       -d       3                       \
       -q       ${jlf_quick[cxt]}       \
@@ -161,7 +162,7 @@ if ! is_image ${labelsGMIntersect[cxt]}\
       exec_xcp val2mask.R                                \
          -i    ${segmentation[sub]}                      \
          -v    ${valsToBin}                              \
-         -o    ${intermediate}-thresholdedImage.nii.gz 
+         -o    ${intermediate}-thresholdedImage.nii.gz
       subroutine              @2.2  Generating ventricular CSF mask
       exec_xcp val2mask.R                                \
          -i    ${labels[cxt]}                            \
