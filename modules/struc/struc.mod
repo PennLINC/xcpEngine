@@ -199,7 +199,7 @@ then
               -inset ${full_intermediate} \
               -prefix ${intermediate}_${template_orientation}.nii.gz
     intermediate=${intermediate}_${template_orientation}
-
+    intermediate_root=${intermediate}
 else
 
     subroutine  @0.1d "NOT re-orienting T1w"
