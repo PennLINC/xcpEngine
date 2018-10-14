@@ -1,0 +1,660 @@
+#!/bin/bash
+
+# Perfusion with basil and pve: Converts ASL images in to perfusion maps with partial volume correction
+#
+# Azeez , F
+#
+# still working on it dude!
+
+# Make script use local copies of helper scripts/programs in the same
+# directory, if present. This allows for multiple versions of the scripts
+# to be used, possibly with bundled dependencies
+
+Usage() {
+    echo "perf_asl"
+    echo "Calculate perfusion maps from ASL data"
+    echo ""
+    echo "Usage: perfusion_basil -i <asl_data> -o <output_dir_name> [options]"
+    echo " "
+    echo " Main options:"
+    echo " -m         : mask (in native space of ASL data) - {default: automatically generated}"
+    echo " --mc       : apply motion correction using mcflirt"
+    echo " --more     : see extended options and usage notes"
+    echo ""
+    echo " Acquisition/Data specific"
+    echo " --iaf       : input ASl format: diff,tc,ct {default: diff}"
+    echo " --casl      : ASL acquisition is  pseudo cASL (pcASL) rather than pASL"
+    echo " --artsupp   : Arterial suppression (vascular crushing) was used"
+    echo " --bolus     : Bolus duration - {default: 1}"
+    echo " --bat       : Bolus arrival time - {default: 0.7 (pASL); 1.3 (cASL)}"
+    echo " --t1        : Tissue T1 value - {default: 1.3}"
+    echo " --t1b       : Blood T1 value - {default: 1.65}"
+    echo ""
+    echo " Calibration"
+    echo " --M0        : (single) precomputed M0 value (e.g. from having run a separate calibration)"
+    echo " --alpha     : Inversion efficiency - {default: 0.98 (pASL); 0.85 (cASL)}"
+    echo "  --tr        : TR of calibration data - {default: 3.2 s}"
+}
+
+Usage_extended() {
+    echo "Extended options (all optional):"
+    echo " Analysis"
+    echo " --artoff     : Do not infer arterial signal - (same as --artsupp)"
+    echo " --fixbolus   : Bolus duration is fixed, e.g. by QUIPSSII or CASL (otheriwse it will be estimated)"
+    echo "                 {default: on (cASL); off (pASL)"
+    echo " --fixbat     : Fix the bolus arrival time (to value specified by --bat)"
+    echo " --infert1    : Incorporate uncertainty in T1 values in analysis"
+    echo " --fulldata   : Never average multiple measurements at each TI"
+    
+    echo " Registration "
+    echo " --asl2struct : transformation matrix from asl to struct"
+    echo " --subj2templatea : struct to template affine"
+    echo " --subj2templatew : struct to template warp" 
+    echo " --template : template for reference registration"
+   
+   echo " Calibration"
+    echo "  --cgain     : Relative gain between calibration and ASL image - {default: 1}"
+    echo "   extended options for voxel"
+    echo "    --t1t      : Assumed T1 of tissue (only used if TR<5 s) {default: 1.3 s}"
+ 
+    echo "Partial volume correction"
+    echo " --pvcorr    : Do partial volume correction" 
+    echo "   --pvgm    : Partial volume estimates for GM"
+    echo "   --pvwm    : Partial volume estimates for WM"
+
+    
+    echo ""
+    echo " Notes:"
+    echo " Input data - Any combination of label (tag) control images is accepted, see asl_file for more detailed"
+    echo "              usage of the input options"
+    echo " Analysis  -  If only one TI is specified then the following options are set:"
+    echo "              --fixbat --fixbolus --artoff --fulldata"
+ 
+    echo " Registration - Results are saved in native space by default in case you need to revisit this."
+    echo "                with applytransform"
+   
+}
+
+Version() {
+echo "v1 get in touch"
+exit 0
+}
+
+
+if [ -z $1 ]; then
+    Usage
+    exit 1
+elif [ $1 = "--more" ]; then
+    Usage
+    Usage_extended
+    exit 1
+fi
+
+until [ -z $1 ]; do
+
+# look at this option and determine if has an argument specified by an =
+option=`echo $1 | sed s/=.*//`
+arg="" #specifies if an argument is to be read from next item on command line (=1 is is when = is used)
+if [ $option = $1 ]; then
+# no argument to this command has been found with it (i.e. after an =)
+# if there is an argument it will be the next option
+    argument=$2
+else
+    arg=1
+    argument=`echo $1 | sed s/.*=//`
+fi
+takeargs=0;boolarg="";isbool="";
+    case $option in
+	-o) outflag=1 outdir=$argument
+	    takeargs=1;;
+	-i) inflag=1 infile=$argument #input/data file
+	    takeargs=1;;
+	--iaf) iaf=$argument # input asl format (asl_file syntax)
+	       takeargs=1;;
+	--rpts) rpts=$argument # the number of repeats at each TI (when --ibf=tis) - to be passed to asl_file
+		takeargs=1;;
+	-m) mask=$argument
+	    takeargs=1;;
+	--mc) mc=1; # do motion correction using mcflirt
+	      ;;
+	--tis) ntis=$argument
+	    takeargs=1;;
+	--bolus) boluset=1 boluslen=$argument
+	    takeargs=1;;
+	--bat) bat=$argument
+	    takeargs=1;;
+	--t1) t1set=$argument # the T1 of tissue to be used in kinetic model
+	    takeargs=1;;
+	--t1b) t1bset=$argument
+	       takeargs=1;;
+	--t1im) t1im=$argument # A T1 (of tissue) image
+		takeargs=1;;
+	--M0) M0=$argument; calibflag=1;
+	    takeargs=1;;
+	--t1t) t1tset=$argument; #the T1 of tissue to be used in calibration
+	    takeargs=1;;
+	--tr) tr=$argument
+	    takeargs=1;;
+	--asl2struct) asl2struct=$argument;
+	    takeargs=1;;
+	--subj2templatea) subj2templatea=$argument; 
+	    takeargs=1;;
+	--subj2templatew) subj2templatew=$argument; 
+	    takeargs=1;;    
+	--struct) struct=$argument;
+	    takeargs=1;;
+	--template) template=$argument;
+	    takeargs=1;;
+	--cgain) cgain=$argument
+	    takeargs=1;;
+	--alpha) alpha=$argument
+	    takeargs=1;;
+        --tis) tis=$argument
+	    takeargs=1;;
+	--infert1) infert1=1
+	    ;;
+	--artoff) artoff=1
+	    ;;
+	--artsupp) artoff=1 #this does same job as --artoff, but is explicitly linked to vascular crushers in the data
+	    ;;
+	--fixbat) fixbat=1
+	    ;;
+	--fixbolus) fixbolus=1
+	    ;;
+	--casl) casl=1
+		;;
+	--spatial) spatial=1
+		;;
+	--exch) exch=$argument
+	    takeargs=1;;
+	--pvcorr) pvcorr=1
+	    ;;
+	--pvgm) pvgm=$argument
+	    takeargs=1;;
+	--pvwm) pvwm=$argument
+	    takeargs=1;;
+	--fulldata) fulldata=1
+	    ;;
+	--version) Version
+	    ;;
+	*)  #Usage
+	    echo "Error! Unrecognised option on command line: $option"
+	    echo ""
+	    exit 1;;
+    esac
+
+
+    # sort out a shift required by a command line option that takes arguments
+    if [ -z $arg ]; then
+	# an argument has been supplied on the command NOT using an =
+	if [ $takeargs -eq 1 ]; then
+	    shift;
+	fi
+    fi
+    
+    if [ ! -z $isbool ]; then
+	    # this is an (explicit) boolean setting
+	if [ ! -z $arg ]; then
+	    # an argument has been supplied on the command using an =
+	    # set the variable based on the argument
+	    case $argument in
+		on) eval $boolarg=1
+		    ;;
+		off) eval $boolarg=""
+		     ;;
+		1) eval $boolarg=1
+		   ;;
+		0) eval $boolarg=""
+		   ;;
+		*)  Usage
+		    echo "Error! Unrecognised setting for boolean option: $1"
+		    echo ""
+		    exit 1;;
+	    esac
+	else
+	    # no argument has been suppled with this command (NOTE that you cannot supply an arugment to a bool option without an =)
+	    # this sets the variable to true
+	    eval $boolarg=1;
+	fi
+    fi
+
+
+    # shift to move on to next parameter
+    shift
+done
+
+if [ -z $verbose ]; then
+    verbose=1
+fi
+
+# deal with the temporary directory
+tmpbase=`tmpnam`
+tempdir=${tmpbase}_ox_asl
+#tempdir=/home/aadebimpe/fsl_asl
+mkdir $tempdir
+
+echo "temp directory is : $tempdir "
+
+echo "#FABBER options created" > $tempdir/basil_options.txt
+
+# deal with default output format
+
+
+
+# set the output directory here if not specified
+if [ -z $outflag ]; then
+    echo "Ouput being placed in input directory"
+    outdir=`pwd`;
+fi
+
+# Start by looking for the output directory (and create if need be)
+if [ ! -d $outdir ]; then
+  echo "Creating output directory"
+  mkdir $outdir;
+fi
+
+
+
+#check required inputs are present
+if [ -z $inflag ]; then
+    echo "ERROR: no input file specified"
+    exit 1
+else
+    if [ `imtest $infile` -eq 0 ]; then
+	echo "ERROR: $infile is not an image/has not been found"
+	exit 1
+    fi
+fi
+echo "Input file: $infile"
+
+echo "Saving results in natve (ASL aquisition) space to $outdir"
+
+
+### Command line parameter interactions
+
+# bolus duration inference
+# if we are doing CASL then fix the bolus duration, except where the user has explicitly told us otherwise
+
+    # fixbolus is to take its default value
+    if [ ! -z $casl ]; then
+	fixbolus=1;
+    else
+	fixbolus="";
+    fi
+
+### End of Command line parameter interactions
+
+
+
+# standard pre-processing of calibration image
+if [ ! -z $calibflag ]; then
+    fslmaths $M0 $tempdir/calib
+fi
+
+
+# read in ASL data
+cp $infile $tempdir/asldata.nii.gz # this is the MAIN data that we will reflect any corrections applied
+# take a copy that will not be subject to any subsequent corrections
+cp $tempdir/asldata.nii.gz $tempdir/asldata_orig.nii.gz
+
+### Motion Correction (main)
+# note motion correction within calibration data is done above
+if [ ! -z $mc ]; then
+    echo "Motion Correction of asldata"
+    mcflirt -in $tempdir/asldata -out $tempdir/asldata 	
+fi
+
+# Take mean of the asl data as we might need this in the next step, and subsequent steps
+fslmaths $tempdir/asldata -Tmean $tempdir/meanasl
+
+#aslfile1=$XCPEDIR/utils/aslfile1
+
+### Label-control subtraction (we repeat subtraction after doing distortion correction - when applicable)
+ echo " register the data to template and do asl data processing "
+antsApplyTransforms -e 3 -d 3 -i $tempdir/asldata.nii.gz  -r ${template} -o $tempdir/asldatat.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor 
+antsApplyTransforms -e 3 -d 3 -i $tempdir/calib.nii.gz  -r ${template} -o $tempdir/M0.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
+antsApplyTransforms -e 3 -d 3 -i $mask -r ${template} -o $tempdir/mask.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor     
+
+ 
+
+$XCPEDIR/utils/asl_file1 --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
+ 
+ 
+
+    
+
+# Generate a perfusion-weighted image by taking the mean over all TIs of the differenced data
+fslmaths $tempdir/diffdata -Tmean $tempdir/pwi
+ 
+
+### End of : Label-control subtraction
+
+### Establish the number of repeats in data - query the diffdata file (that will contain all repeats)
+
+repeats=$(fslnvols $tempdir/diffdata)
+
+echo "Number of timepoints in data:$repeats"
+
+
+### End of: Establish number of repeats
+
+
+
+# Defaults for (some) parameters
+# deal with T1
+if [ -z $t1set ]; then
+    t1set=1.3;
+fi
+echo "T1: $t1set"
+
+if [ -z $t1bset ]; then
+# follws the ASL white paper recommendation
+    t1bset=1.65;
+fi
+echo "T1b: $t1bset"
+
+
+### Bolus duration(s)
+if [ -z $boluset ]; then
+    boluslen=1.8; # use the WP default
+fi
+echo "Bolus duration(s): $boluslen"
+
+count=0
+tauslist=""
+thetaus=`echo $boluslen | sed 's:,: :g'`
+for tau in $thetaus; do
+    count=`expr ${count} + 1`
+    tauslist=`echo $tauslist --tau${count}=$tau`
+done
+
+if [ $count -eq 1 ]; then
+    tauslist="--tau=$tau" #single univerisal bolus duration
+    echo "Bolus duration: $tau"
+else
+    echo "bolus duration list: $tauslist"
+    if [ $count -ne $ntis ]; then
+	echo "Error: number bolus durations specified does not match the number of TIs - this is not possible for multiple bolus duration processing"
+	exit 1
+    fi
+fi
+### End of Bolus duration(s)
+
+#pre-processing for epochwise analysis
+
+# write options file for BASIL - these are the core options that are appropraite whether we are doing a single or epochwise analysis
+echo "Setting up BASIL"
+echo "BASIL setup"
+
+# T1 values
+echo "--t1=$t1set --t1b=$t1bset" >> $tempdir/basil_options.txt
+
+echo "--repeats=$repeats" >> $tempdir/basil_options.txt 
+ 
+if [ ! -z $t1im ]; then
+    #basil_options=$basil_options"--t1im=$t1im "
+    #echo "--t1im=$t1im" >> $tempdir/basil_options.txt
+    echo "Using supplied T1 (tissue) image in BASIL: $t1im"
+fi
+
+# data acquired using CASL?
+if [ ! -z $casl ]; then
+    echo "--casl" >> $tempdir/basil_options.txt;
+    echo "cASL model"
+else
+    echo "pASL model"
+fi
+
+echo "--tau=$boluslen" >> $tempdir/basil_options.txt
+echo "--pld=$boluslen" >> $tempdir/basil_options.txt
+
+
+# Infer arterial component?
+if [ -z $artoff ]; then
+    echo "--inferart " >> $tempdir/basil_options.txt
+    echo "Infer arterial component"
+fi
+# fix the bolus duration?
+if [ -z $fixbolus ]; then
+    basil_options=$basil_options"--infertau "
+    echo "--infertau" >> $tempdir/basil_options.txt
+    echo"Varaiable bolus duration"
+else
+    echo "Fixed bolus duration"
+fi
+
+#deal with BAT
+if [ -z $bat ]; then
+    if [ -z $casl ]; then
+	bat=0.7 #PASL default
+    else
+	bat=1.3 #CASL default
+    fi
+fi
+
+echo "--bat=$bat" >> $tempdir/basil_options.txt  
+
+
+if [ ! -z $infert1 ]; then
+    echo "Instructing BASIL to infer variable T1 values"
+    echo "--infert1" >> $tempdir/basil_options.txt  
+    echo "Including T1 uncertainty"
+fi
+
+
+echo "BASIL options ($tempdir/basil_options.txt):"
+echo "----"
+echo "`cat $tempdir/basil_options.txt`"
+echo "----"
+# -- end of main basil options setting
+
+cp $tempdir/basil_options.txt $tempdir/basil_options_core.txt # keep a copy of the core options accumulated thus far (we might need these again for the epoch analysis)
+
+
+##### Analyse data using BASIL
+### First analysis on whole data, normal perfusion image
+echo "Calling BASIL on data - conventional perusion image"
+
+# main analysis using full data
+datafile=$tempdir/diffdata
+
+#mkdir -p $tempdir/basil 
+echo  "Main run of BASIL on ASL data"
+
+#basil1=$XCPEDIR/utils/aslfile1
+
+
+if [ ! -z $spatial ]; then
+         
+     $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt --spatial   
+ else
+     $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt
+fi	 
+     
+     
+### End of: First analysis on whole data
+
+
+### Partial Volume Estimates
+# Note we do this here since we have the final registration now which we need to transform PV estimates into ASL space
+
+if [ ! -z $pvgm ]; then
+    #using supplied PV images
+	echo "Loading supplied PV images"
+	if [ -z $pvwm ]; then
+        echo "ERROR: no WM PV image has been supplied"
+        fi
+	echo "PV GM is: $pvgm and register it to template"
+        #antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
+	antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor         
+	#flirt  -in $pvgm -ref $mask-out $tempdir/pvgm.nii.gz -init $struct2asl -applyxfm
+	fslmaths $tempdir/pvgm1 -thr 0.1 -min 1 $tempdir/pvgm_inasl
+	echo "PV WM is: $pvwm and register it to asl data"
+        #antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
+	antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor                
+	#flirt  -in $pvwm -ref $mask -out $tempdir/pvwm.nii.gz -init $struct2asl  -applyxfm
+	fslmaths $tempdir/pvwm1 -thr 0.1 -min 1 $tempdir/pvwm_inasl
+	pvexist=1
+fi
+
+if [ ! -z $pvexist ]; then 
+    # make some masks 
+    # these are currently used for masking after model fitting
+    fslmaths $tempdir/pvgm_inasl -thr 0.1 -bin $tempdir/gmmask
+    fslmaths $tempdir/pvwm_inasl -thr 0.1 -bin $tempdir/wmmask
+    # these are for calculating mean perfusion within tissue types
+    fslmaths $tempdir/pvgm_inasl -thr 0.8 -bin $tempdir/gmmask_pure
+    fslmaths $tempdir/pvwm_inasl -thr 0.9 -bin $tempdir/wmmask_pure   
+fi
+
+### Partial Volume Correction BASIL
+if [ ! -z $pvcorr ]; then
+  echo  "Main run of BASIL on ASL data with perfusion correction" 
+  $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt --spatial --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl   
+fi
+
+
+### End of: Partial Volume Correction
+
+
+### Calibration parameters
+if [ -z $t1tset ]; then
+    t1tset=1.3;
+fi
+echo "T1t (for calibration): $t1tset"
+
+# TR (for calibration image)
+if [ -z $tr ]; then
+    tr=3.2
+fi
+
+echo " TR fr calibration correction: $tr"
+
+# calibration image gain
+if [ -z $cgain ]; then
+    cgain=1;
+fi
+
+echo " Gain is : $cgain"
+
+# Calibration if reqd
+if [ -z $alpha ]; then
+        # based on the ASL white paper
+    if [ -z $casl ]; then
+	alpha=0.98;
+    else
+	alpha=0.85;
+    fi
+fi
+
+echo " alpha is : $alpha"
+
+
+
+if [ ! -z $calibflag ]; then
+
+	echo "Calibration is voxelwise"
+
+	fslmaths $tempdir/M0.nii.gz -Tmean -mul $cgain $outdir/M0
+        echo " copying M0 map"
+	Mo=$outdir/M0.nii.gz 
+	if [ 1 -eq `echo "$tr < 5" | bc`  ]; then
+	 # correct the M0 image for short TR using the equation from the white paper
+	    echo "Correcting the calibration (M0) image for short TR (using T1 of tissue $t1tset)"
+	    ccorr=`echo "1 / (1 - e(- $tr / $t1tset) )" | bc -l`
+	    fslmaths $Mo -mul $ccorr $Mo
+	fi
+         fslmaths $Mo -mul $alpha -div 0.9 $Mo
+	#inlcude partiition co-effcient in M0 image to convert from M0 tissue to M0 arterial
+fi
+
+
+### End of: Calibration
+
+
+### Output main BASIL results
+# Note we do this here, as we have the registration done and masks created and calibration complete
+
+# save the mask used to the (native space) output directory
+fslmaths $tempdir/mask $outdir/mask.nii.gz
+### End of: Output main BASIL results
+
+
+
+if [ ! -z $spatial ]; then 
+   fslmaths $tempdir/basil/step1/mean_ftiss -mul $tempdir/mask   $outdir/cbf
+   fslmaths $tempdir/basil/step1/mean_fblood -mul $tempdir/mask   $outdir/acbv 
+   cp $tempdir/basil_options.txt  $outdir/basil_option.txt
+   cp $tempdir/basil/step1/logfile  $outdir/logfile
+   #fslmaths $tempdir/basil/step1/noise_means -mul $tempdir/mask   $outdir/noise 
+   
+   fslmaths $tempdir/basil/step2/mean_ftiss -mul $tempdir/mask   $outdir/cbf_spatial
+   fslmaths $tempdir/basil/step2/mean_fblood -mul $tempdir/mask   $outdir/acbv_spatial 
+   cp $tempdir/basil/step2/logfile  $outdir/logfile_spatial
+   #fslmaths $tempdir/basil/step2/noise_means -mul $tempdir/mask   $outdir/noise_spatial 
+
+
+else
+
+  fslmaths $tempdir/basil/step1/mean_ftiss -mul $tempdir/mask   $outdir/cbf
+   fslmaths $tempdir/basil/step1/mean_fblood -mul $tempdir/mask   $outdir/acbv 
+   cp $tempdir/basil_options.txt  $outdir/basil_option.txt
+   cp $tempdir/basil/step1/logfile  $outdir/logfile
+   #fslmaths $tempdir/basil/step1/noise_means -mul $tempdir/mask   $outdir/noise 
+fi
+
+
+
+if [ ! -z $calibflag ]; then
+   fslcpgeom $outdir/cbf $Mo -d
+ 
+   if [ ! -z $spatial ]; then 
+       fslmaths $outdir/cbf_spatial -mul 6000 -div $Mo $outdir/cbf_spatial_calib
+       #fslmaths $outdir/noise_spatial -mul 6000 -div $Mo $outdir/noise_spatial_calib
+       fslmaths $outdir/cbf -mul 6000 -div $Mo $outdir/cbf_calib
+       #fslmaths $outdir/noise -mul 6000 -div $Mo $outdir/noise_calib 
+   else 
+     fslmaths $outdir/cbf -mul 6000 -div $Mo $outdir/cbf_calib
+     #fslmaths $outdir/noise -mul 6000 -div $Mo $outdir/noise_calib  
+ fi
+fi
+
+
+
+
+#if [ ! -z $pvcorr ]; then
+
+# copy PVE in ASL space to output directory
+#cp $tempdir/pvgm_inasl.nii.gz  $outdir/pvgm_inasl.nii.gz
+#cp $tempdir/pvwm_inasl.nii.gz $outdir/pvwm_inasl.nii.gz
+#fi
+
+if [ ! -z $pvexist ]; then
+    # copy PV masks to output directory
+    #cp $tempdir/gmmask.nii.gz $outdir/gm_mask.nii.gz
+    #cp $tempdir/wmmask.nii.gz $outdir/wm_mask.nii.gz
+    #cp $tempdir/gmmask_pure.nii.gz $outdir/gm_roi.nii.gz
+    #cp $tempdir/wmmask_pure.nii.gz $outdir/wm_roi.nii.gz
+        
+    fslmaths $tempdir/pvcorr/step2/mean_ftiss -mul $tempdir/mask  $outdir/cbf_pv_gm
+    fslmaths $tempdir/pvcorr/step2/mean_fwm -mul $tempdir/mask  $outdir/cbf_pv_wm
+    #fslmaths $tempdir/pvcorr/step2/noise_means -mul $tempdir/mask   $outdir/noise_pv
+    fslmaths $outdir/cbf_pv_gm -add $outdir/cbf_pv_wm $outdir/cbf_pv
+fi
+
+
+if [ !  -z $calibflag ]; then 
+    if [ ! -z $pvexist ]; then 
+       fslcpgeom $outdir/cbf $Mo -d
+       fslmaths $outdir/cbf_pv_gm -mul 6000 -div $Mo $outdir/cbf_pv_gm_calib
+       fslmaths $outdir/cbf_pv_wm -mul 6000 -div $Mo $outdir/cbf_pv_wm_calib
+       #fslmaths $outdir/noise_pv -mul 6000 -div $Mo $outdir/noise_pv_gm_calib
+       fslmaths $outdir/cbf_pv -mul 6000 -div $Mo $outdir/cbf_pv_calib 
+    fi
+fi
+# clearup
+
+rm -r $tempdir
+
+echo "Output is $outdir" 
+echo "persufsion as - done."
