@@ -116,25 +116,22 @@ DICTIONARY
          -i $out/prestats/${prefix}_preprocessed.nii.gz        \
          -m  $out/coreg/${prefix}_mask.nii.gz       \
           -o $out/basil \
-         --M0=${referenceVolumeBrain[sub]} --asl2struct=$out/coreg/*_seq2struct.txt \
-         --template=${template} --subj2templatea=${antsct[sub]}/*_SubjectToTemplate0GenericAffine.mat \
-         --subj2templatew=${antsct[sub]}/*_SubjectToTemplate1Warp.nii.gz --casl  --cgain=${basil_m0_scale[cxt]} \
+         --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
+         --casl  --cgain=${basil_m0_scale[cxt]} \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
-         --tr=${basil_MOTR[cxt]} --pvgm=${antsct[sub]}/../gmd/*_priorImage002.nii.gz  --pvwm=${antsct[sub]}/../gmd/*_priorImage003.nii.gz  \
+         --tr=${basil_MOTR[cxt]} --pvgm=${antsct[sub]}/../gmd/*_priorImage002.nii.gz \  
+         --pvwm=${antsct[sub]}/../gmd/*_priorImage003.nii.gz   \
          --pvcorr 
 
         elif [ ${basil_pvc[cxt]} == 0 ]; then 
 
-        TR_M0=$(fslval  ${referenceVolumeBrain[sub]}  pixdim4)
-
           routine @2.1  compute CBF
          exec_xcp perf_asl \
-         -i    $out/prestats/${prefix}_preprocessed.nii.gz        \
-         -m    $out/coreg/${prefix}_mask.nii.gz       \
+         -i $out/prestats/${prefix}_preprocessed.nii.gz        \
+         -m  $out/coreg/${prefix}_mask.nii.gz       \
           -o $out/basil \
-         --M0=${referenceVolumeBrain[sub]} --asl2struct=$out/coreg/*_seq2struct.txt \
-         --template=${template} --subj2templatea=${antsct[sub]}/*_SubjectToTemplate0GenericAffine.mat \
-         --subj2templatew=${antsct[sub]}/*_SubjectToTemplate1Warp.nii.gz --casl  --cgain=${basil_m0_scale[cxt]} \
+         --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
+         --casl  --cgain=${basil_m0_scale[cxt]} \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
          --tr=${basil_MOTR[cxt]} 
       fi
@@ -158,33 +155,26 @@ DICTIONARY
       
 
       if [ ${basil_pvc[cxt]} == 1 ]; then
-         TR_M0=$(fslval  ${referenceVolumeBrain[sub]}  pixdim4)
-         
-        routine @2.1  compute CBF
+         routine @2.1  compute CBF
          exec_xcp perf_asl \
          -i $out/prestats/${prefix}_preprocessed.nii.gz        \
-         -m  $out/coreg/${prefix}_mask.nii.gz       \
-         --M0=${referenceVolumeBrain[sub]} --asl2struct=$out/coreg/*_seq2struct.txt \
-         --template=${template} --subj2templatea=${antsct[sub]}/*_SubjectToTemplate0GenericAffine.mat \
-         --subj2templatew=${antsct[sub]}/*_SubjectToTemplate1Warp.nii.gz  --cgain=${basil_m0_scale[cxt]} \
+         -m  $out/coreg/${prefix}_mask.nii.gz  -o $out/basil \
+         --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt --cgain=${basil_m0_scale[cxt]} \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
-         --tr=${basil_MOTR[cxt]} --pvgm=${antsct[sub]}/../gmd/*_priorImage002.nii.gz  --pvwm=${antsct[sub]}/../gmd/*_priorImage003.nii.gz  \
-         --pvcorr -o $out/basil
-         
- 
-        elif [ ${basil_pvc[cxt]} == 0 ]; then
- 
-        TR_M0=$(fslval  ${referenceVolumeBrain[sub]}  pixdim4)
-           
-        routine @2.1  compute CBF
+         --tr=${basil_MOTR[cxt]} --pvgm=${antsct[sub]}/../gmd/*_priorImage002.nii.gz \  
+         --pvwm=${antsct[sub]}/../gmd/*_priorImage003.nii.gz   \
+         --pvcorr 
+
+        elif [ ${basil_pvc[cxt]} == 0 ]; then 
+
+          routine @2.1  compute CBF
          exec_xcp perf_asl \
-         -i    $out/prestats/${prefix}_preprocessed.nii.gz        \
-         -m    $out/coreg/${prefix}_mask.nii.gz       \
-         --M0=${referenceVolumeBrain[sub]} --asl2struct=$out/coreg/*_seq2struct.txt \
-         --template=${template} --subj2templatea=${antsct[sub]}/*_SubjectToTemplate0GenericAffine.mat \
-         --subj2templatew=${antsct[sub]}/*_SubjectToTemplate1Warp.nii.gz  --cgain=${basil_m0_scale[cxt]} \
+         -i $out/prestats/${prefix}_preprocessed.nii.gz        \
+         -m  $out/coreg/${prefix}_mask.nii.gz  -o $out/basil \
+         --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
+         --cgain=${basil_m0_scale[cxt]} \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
-         --tr=${basil_MOTR[cxt]}  -o $out/basil
+         --tr=${basil_MOTR[cxt]} 
       fi
       ;;
      
