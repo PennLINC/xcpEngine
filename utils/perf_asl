@@ -2,7 +2,7 @@
 
 # Perfusion with basil and pve: Converts ASL images in to perfusion maps with partial volume correction
 #
-# Azeez , F
+# Azeez Adebimpe, PENN BBL
 #
 # still working on it dude!
 
@@ -47,7 +47,7 @@ Usage_extended() {
     echo " --fulldata   : Never average multiple measurements at each TI"
     
     echo " Registration "
-    echo " --asl2struct : transformation matrix from asl to struct"
+    echo " --struct2asl : transformation matrix from asl to struct"
     echo " --subj2templatea : struct to template affine"
     echo " --subj2templatew : struct to template warp" 
     echo " --template : template for reference registration"
@@ -135,7 +135,7 @@ takeargs=0;boolarg="";isbool="";
 	    takeargs=1;;
 	--tr) tr=$argument
 	    takeargs=1;;
-	--asl2struct) asl2struct=$argument;
+	--struct2asl) asl2struct=$argument;
 	    takeargs=1;;
 	--subj2templatea) subj2templatea=$argument; 
 	    takeargs=1;;
@@ -311,10 +311,12 @@ fslmaths $tempdir/asldata -Tmean $tempdir/meanasl
 
 ### Label-control subtraction (we repeat subtraction after doing distortion correction - when applicable)
  echo " register the data to template and do asl data processing "
-antsApplyTransforms -e 3 -d 3 -i $tempdir/asldata.nii.gz  -r ${template} -o $tempdir/asldatat.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor 
-antsApplyTransforms -e 3 -d 3 -i $tempdir/calib.nii.gz  -r ${template} -o $tempdir/M0.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
-antsApplyTransforms -e 3 -d 3 -i $mask -r ${template} -o $tempdir/mask.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor     
-
+#antsApplyTransforms -e 3 -d 3 -i $tempdir/asldata.nii.gz  -r ${template} -o $tempdir/asldatat.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
+fslmaths $tempdir/asldata.nii.gz $tempdir/asldatat.nii.gz
+#antsApplyTransforms -e 3 -d 3 -i $tempdir/calib.nii.gz  -r ${template} -o $tempdir/M0.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
+fslmaths $tempdir/calib.nii.gz $tempdir/M0.nii.gz 
+#antsApplyTransforms -e 3 -d 3 -i $mask -r ${template} -o $tempdir/mask.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
+fslmaths $mask $tempdir/mask.nii.gz
  
 
 $XCPEDIR/utils/asl_file1 --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
@@ -485,13 +487,13 @@ if [ ! -z $pvgm ]; then
         echo "ERROR: no WM PV image has been supplied"
         fi
 	echo "PV GM is: $pvgm and register it to template"
-        #antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
-	antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor         
+        antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
+	#antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor         
 	#flirt  -in $pvgm -ref $mask-out $tempdir/pvgm.nii.gz -init $struct2asl -applyxfm
 	fslmaths $tempdir/pvgm1 -thr 0.1 -min 1 $tempdir/pvgm_inasl
 	echo "PV WM is: $pvwm and register it to asl data"
-        #antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
-	antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor                
+        antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
+	#antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor                
 	#flirt  -in $pvwm -ref $mask -out $tempdir/pvwm.nii.gz -init $struct2asl  -applyxfm
 	fslmaths $tempdir/pvwm1 -thr 0.1 -min 1 $tempdir/pvwm_inasl
 	pvexist=1
