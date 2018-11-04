@@ -1,0 +1,2 @@
+img                         %ING/*preproc.nii.gz
+fmriprepconf                %ING/*bold_confounds.tsv
