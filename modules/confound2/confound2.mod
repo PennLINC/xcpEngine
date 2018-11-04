@@ -38,41 +38,11 @@ completion() {
 output      confmat                 null
 
 
-qc nuisance_ct nNuisanceParameters  ${prefix}_modelParameterCount.txt
+#qc nuisance_ct nNuisanceParameters  ${prefix}_modelParameterCount.txt
 
 
 << DICTIONARY
-
-confmat
-   A 1D file containing all global nuisance timeseries for the
-   current subject, including any user-specified timeseries
-   and previous time points, derivatives, and powers. While a 
-   confound matrix file does not exist at the target path,
-   confmat will store the string 'null' for the purposes
-   of the mbind utility.
-csfLocal
-   A voxelwise confound based on the mean local cerebrospinal
-   fluid timeseries.
-csfMask
-   The final extracted, eroded, and transformed cerebrospinal 
-   fluid mask in subject functional space.
-diffProcLocal
-   [NYI] A voxelwise confound based on the difference between 
-   the realigned timeseries and the acquired timeseries.
-gmLocal
-   A voxelwise confound based on the mean local grey matter 
-   timeseries.
-gmMask
-   The final extracted, eroded, and transformed grey matter mask 
-   in subject functional space.
-lmsLocal
-   A voxelwise confound based on the mean local timeseries.
-wmLocal
-   A voxelwise confound based on the mean local white matter 
-   timeseries.
-wmMask
-   The final extracted, eroded, and transformed white matter mask 
-   in subject functional space.
+to be written
 
 DICTIONARY
 
@@ -101,7 +71,7 @@ routine                       @0    Generating confound matrix
 
 if (( ${confound2_rps[cxt]} == 1 ))
    then
-   subroutine                 @1    [Including realignment parameters]
+   subroutine                 @1    Including realignment parameters
    rps_path=${outdir}/${prefix}_rps.1D
    exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
