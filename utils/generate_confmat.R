@@ -29,14 +29,8 @@ option_list = list(
    make_option(c("-j", "--js"), action="store", default='null', type='character',
               help=" Specify the confound require  to pull out  from frmriprep ouput
                   
-   
-                  'CSF'         : returns an unmodified matrix identical to
-                                  the argument that is not assigned a value 
-                                  of null
-                  'WhiteMatter'  : returns a matrix consisting of the first
-                                   argument concatenated horizontally to its
-                                   first and second temporal derivatives
-                  
+                comment neeeded here later 
+              
                   etc."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="Output path")
