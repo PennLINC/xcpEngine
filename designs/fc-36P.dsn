@@ -35,7 +35,7 @@
 analysis=fc_$(whoami)
 design=${XCPEDIR}/designs/fc-36P.dsn
 sequence=fc
-standard=MNI%2x2x2_via_OASIS%2x2x2
+standard=MNI%2x2x2
 
 ###################################################################
 # PIPELINE
