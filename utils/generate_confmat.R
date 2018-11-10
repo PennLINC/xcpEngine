@@ -77,6 +77,8 @@ if (in2 == 'csf') {
    mat2=cbind(mat1$X,mat1$Y,mat1$Z)
    rms=sqrt(mat2^2)
    outmat=rowMeans(rms)   
+} else if (in2 == 'fd') {
+   outmat = mat1$FramewiseDisplacement
 } else  {
  sprintf("the input is not available yet") 
 }
