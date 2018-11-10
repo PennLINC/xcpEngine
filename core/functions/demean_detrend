@@ -90,7 +90,7 @@ USAGE
       #############################################################
       # Decide whether to obtain the mean intensity as output.
       #############################################################
-      [[ -z ${meanIntensityBrain[cxt]} ]] && mean_dmdt="-x ${meanIntensityBrain[cxt]}"
+      [[ -n ${meanIntensityBrain[cxt]} ]] && mean_dmdt="-x ${meanIntensityBrain[cxt]}"
       #############################################################
       # AFNI's afni_proc.py pipeline uses a formula to determine
       # an appropriate order of polynomial detrend to apply to the

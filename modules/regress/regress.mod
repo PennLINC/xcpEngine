@@ -155,6 +155,33 @@ while (( ${#rem} > 0 ))
       intermediate=${intermediate}_${cur}
       routine_end
       ;;
+      
+      
+      
+      
+      
+   DMT)
+      #############################################################
+      # DMT removes the mean from a timeseries and additionally
+      # removes polynomial trends up to an order specified by
+      # the user.
+      #
+      # DMT uses a general linear model with y = 1 and all
+      # polynomials as predictor variables, then retains the
+      # residuals of the model as the processed timeseries.
+      #############################################################
+      routine                 @7    Demeaning and detrending BOLD timeseries
+      demean_detrend       --SIGNPOST=${signpost}           \
+                           --ORDER=${regress_dmdt[cxt]}     \
+                           --INPUT=${intermediate}          \
+                           --OUTPUT=${intermediate}_${cur}  \
+                           --1DDT=${regress_1ddt[cxt]}      \
+                           --CONFIN=${confproc[cxt]}        \
+                           --CONFOUT=${intermediate}_${cur}_confmat.1D
+      intermediate=${intermediate}_${cur}
+      configure            confproc  ${intermediate}_confmat.1D
+      routine_end
+      ;;
    
    
    
