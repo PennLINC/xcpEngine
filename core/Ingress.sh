@@ -113,8 +113,18 @@ for i in ${!ing[@]}
          done
          i[1]=${i_buffer}
       fi
+      
+      #############################################################
+      # %IDS replaced by underscore-delimited subject identifiers
+      # in order
+      #############################################################
+      if contains ${i[1]} '%IDS'
+         then
+         i[1]=${i[1]//'%IDS'/${prefix[sub]}}
+      fi
 
       #############################################################
+      #TODO
       # %OR indicates to try a series of possibilities until one
       # is matched successfully
       #############################################################
