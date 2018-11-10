@@ -10,7 +10,8 @@
 ###################################################################
 mod_name_short=confound2
 mod_name='CONFOUND MODEL MODULE'
-mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
+mod_head=${XCPEDIR}/core/CONSOLE_MODULE_G
+source ${XCPEDIR}/core/functions/library_func.sh
 
 ###################################################################
 # GENERAL MODULE HEADER
@@ -36,9 +37,12 @@ completion() {
 # OUTPUTS
 ###################################################################
 output      confmat                 null
-
+output      rel_rms                 mc/${prefix}_relRMS.1D
 
 #qc nuisance_ct nNuisanceParameters  ${prefix}_modelParameterCount.txt
+
+temporal_mask_prime
+exec_sys mkdir -p ${outdir}/mc
 
 
 << DICTIONARY
@@ -56,10 +60,36 @@ DICTIONARY
 
 
 confmat_path=${outdir}/${prefix}_confmat.1D
-routine                       @0    Generating confound matrix
+routine                       @1    Generating confound matrix
 
 
-#output      confmat                 null
+
+
+
+###################################################################
+# Make a temporal mask
+###################################################################
+subroutine                    @1.1  Generating temporal mask
+exec_xcp generate_confmat.R \
+         -i ${fmriprepconf[sub]} \
+         -j stdVARS  \
+         -o ${dvars[cxt]}
+exec_xcp generate_confmat.R \
+         -i ${fmriprepconf[sub]} \
+         -j rps \
+         -o ${rps[cxt]}
+exec_xcp generate_confmat.R \
+         -i ${fmriprepconf[sub]} \
+         -j fd \
+         -o ${rel_rms[cxt]}
+temporal_mask  --SIGNPOST=${signpost}        \
+               --INPUT=${img[sub]}           \
+               --RPS=${rps[cxt]}             \
+               --RMS=${rel_rms[cxt]}         \
+               --THRESH=${prestats_framewise[cxt]}
+
+
+
 
 
 ###################################################################
@@ -71,14 +101,7 @@ routine                       @0    Generating confound matrix
 
 if (( ${confound2_rps[cxt]} == 1 ))
    then
-   subroutine                 @1    Including realignment parameters
-   rps_path=${outdir}/${prefix}_rps.1D
-   exec_xcp generate_confmat.R \
-           -i ${fmriprepconf[sub]} \
-           -j rps  \
-           -o ${rps_path}
-    output rps  ${prefix}_rps.1D
-
+   subroutine                 @1.2  Including realignment parameters
    exec_xcp mbind.R           \
       -x ${confmat[cxt]}      \
       -y ${rps[cxt]}          \
@@ -95,18 +118,10 @@ fi
 ###################################################################
 if (( ${confound2_rms[cxt]} == 1 ))
    then
-   subroutine                 @2    Including relative RMS displacement
-   rms_path=${outdir}/${prefix}_rms.1D
-    exec_xcp generate_confmat.R \
-           -i ${fmriprepconf[sub]} \
-           -j rms  \
-           -o ${rms_path}
- 
-   output rms  ${prefix}_rms.1D
-
+   subroutine                 @1.3  Including relative RMS displacement
    exec_xcp mbind.R            \
       -x ${confmat[cxt]}       \
-      -y ${rms[cxt]}        \
+      -y ${rel_rms[cxt]}       \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
@@ -118,7 +133,7 @@ fi
 ###################################################################
 if (( ${confound2_acompcor[cxt]} == 1 ))
    then
-   subroutine                 @2    Including  acompcor
+   subroutine                 @1.4  Including  acompcor
    acompcor_path=${outdir}/${prefix}_acompcor.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -140,7 +155,7 @@ fi
 
 if (( ${confound2_csf[cxt]} == 1 ))
    then
-   subroutine                 @2    Including csf
+   subroutine                 @1.5  Including csf
     csf_path=${outdir}/${prefix}_csf.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -161,7 +176,7 @@ fi
 ###################################################################
 if (( ${confound2_tcompcor[cxt]} == 1 ))
    then
-   subroutine                 @2    Including tcompcor
+   subroutine                 @1.6  Including tcompcor
    tcompcor_path=${outdir}/${prefix}_tcompcor.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -184,7 +199,7 @@ fi
 
 if (( ${confound2_gsr[cxt]} == 1 ))
    then
-   subroutine                 @2    Including gsr
+   subroutine                 @1.7  Including gsr
     gsr_path=${outdir}/${prefix}_gsr.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -204,7 +219,7 @@ fi
 
 if (( ${confound2_wm[cxt]} == 1 ))
    then
-   subroutine                 @2    Including wm
+   subroutine                 @1.8  Including wm
     wm_path=${outdir}/${prefix}_wm.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -240,7 +255,7 @@ fi
 ###################################################################
 if (( ${confound2_past[cxt]} > 0 ))
    then
-   subroutine                 @5    "Including ${confound2_past[cxt]} prior time point(s)"
+   subroutine                 @1.9  "Including ${confound2_past[cxt]} prior time point(s)"
    exec_xcp mbind.R                 \
       -x    ${confmat[cxt]}         \
       -y    OPprev${confound2_past[cxt]} \
@@ -269,7 +284,7 @@ fi
 ###################################################################
 if (( ${confound2_dx[cxt]} > 0 ))
    then
-   subroutine                 @6    "[Including ${confound2_dx[cxt]} derivative(s)]"
+   subroutine                 @1.10 "[Including ${confound2_dx[cxt]} derivative(s)]"
    exec_xcp mbind.R                 \
       -x    ${confmat[cxt]}         \
       -y    OPdx${confound2_dx[cxt]} \
@@ -295,7 +310,7 @@ fi
 ###################################################################
 if (( ${confound2_sq[cxt]} > 1 ))
    then
-   subroutine                 @7    "[Including ${confound2_sq[cxt]} power(s)]"
+   subroutine                 @1.11 "[Including ${confound2_sq[cxt]} power(s)]"
    exec_xcp mbind.R                 \
       -x    ${confmat[cxt]}         \
       -y    OPpower${confound2_sq[cxt]} \
@@ -304,7 +319,7 @@ if (( ${confound2_sq[cxt]} > 1 ))
 fi
 
 
-routine                       @11   Validating confound model
+routine                       @2    Validating confound model
 ###################################################################
 # Verify that the confound matrix produced by the confound module
 # contains the expected number of time series.
@@ -329,7 +344,7 @@ for cts in ${confound2_custom_ts}
    read     -ra ctsn       < ${cts}
    exp=$((  ${exp} +       ${#ctsn[@]} ))
 done
-subroutine                    @11.1a   [Expected confounds: ${exp}]
+subroutine                    @2.1a   [Expected confounds: ${exp}]
 
 
 routine_end
