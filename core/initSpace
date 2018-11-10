@@ -20,7 +20,7 @@ tag=${signpost}
 #     since no metadata exist for it until processing.
 ###################################################################
 [[ -z ${sequence} ]]       && sequence=native
-space[$sub]=${prefix[sub]}_${sequence}
+[[ -z ${space[sub]} ]]     && space[$sub]=${prefix[sub]}_${sequence}
 subroutine                       ${tag}.1    [Native space: ${space[sub]}]
 
 ###################################################################
@@ -103,3 +103,26 @@ if [[ -n ${xfms} ]]
 else
    subroutine                 ${tag}.3b
 fi
+
+###################################################################
+# (4) Load coregistration if precomputed.
+# Currently, there's no sense in implementing this, since we're
+# not obtaining any appropriate reference images in native space.
+###################################################################
+<<COREG
+if [[ -n ${seq2struct[sub]} ]]
+   then
+   subroutine                 ${tag}.4    Loading coregistration
+   transform_set     ${spaces[cxt]}             \
+                     itk:${seq2struct[sub]}     \
+                     ${prefix[sub]}_${sequence} ${structural[sub]}
+   if [[ -z ${struct2seq[sub]} ]]
+      then
+      exec_ants   antsApplyTransforms -e 3 -d 3 \
+                  # reference image required
+   fi
+   transform_set     ${spaces[cxt]}             \
+                     itk:${struct2seq[sub]}     \
+                     ${structural[sub]} ${prefix[sub]}_${sequence}
+fi
+COREG
