@@ -819,13 +819,30 @@ while (( ${#rem} > 0 ))
          subroutine           @10.2 [Computing mean volume]
          proc_fsl ${meanIntensity[cxt]} \
                   fslmaths ${intermediate}.nii.gz  -Tmean   %OUTPUT
-         subroutine           @10.3 [Computing mask]
-         proc_fsl ${mask[cxt]} \
-                  fslmaths ${meanIntensity[cxt]}   -bin     %OUTPUT
-         subroutine           @10.4 [Adding link references]
-         exec_sys rln   ${referenceVolume[cxt]} ${referenceVolumeBrain[cxt]}
-         exec_sys rln   ${meanIntensity[cxt]}   ${meanIntensityBrain[cxt]}
-         exec_sys rln   ${intermediate}.nii.gz  ${intermediate}_${cur}.nii.gz
+         if ! is_image ${mask[sub]}
+            then
+            subroutine        @10.3 [Computing mask]
+            proc_fsl ${mask[cxt]} \
+                     fslmaths ${meanIntensity[cxt]} -bin    %OUTPUT
+            exec_sys rln   ${referenceVolume[cxt]} \
+                           ${referenceVolumeBrain[cxt]}
+            exec_sys rln   ${meanIntensity[cxt]}   \
+                           ${meanIntensityBrain[cxt]}
+         else
+            subroutine        @10.4 Importing mask
+            exec_fsl fslmaths ${referenceVolume[cxt]} \
+               -mul  ${mask[sub]} \
+               ${referenceVolumeBrain[cxt]}
+            exec_fsl fslmaths ${meanIntensity[cxt]} \
+               -mul  ${mask[sub]} \
+               ${meanIntensityBrain[cxt]}
+         fi
+         subroutine           @10.5 Defining spatial reference
+         space_set      ${spaces[sub]}   ${space[sub]} \
+              Map       ${meanIntensityBrain[cxt]}
+         subroutine           @10.6 [Adding link references]
+         exec_sys rln   ${intermediate}.nii.gz  \
+                        ${intermediate}_${cur}.nii.gz
          intermediate=${intermediate}_${cur}
          routine_end
          ;;
