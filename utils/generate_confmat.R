@@ -58,21 +58,23 @@ mat1 <- read.table(in1,sep = '\t', header =TRUE)
 if (in2 == 'csf') {
    outmat=mat1$CSF
 }  else if (in2 == 'wm' ) {
-   outmat=mat1$WhiteMatter
+   outmat=mat1$white_matter
 }  else if (in2 == 'gsr' ) {
-   outmat=mat1$GlobalSignal
+   outmat=mat1$global_signal
 } else if ( in2 == 'tCompCor' ) {
-   outmat <- mat1[ , grepl('tCompCor',names(mat1))]
+   outmat <- mat1[ , grepl('t_comp_cor',names(mat1))]
 } else if ( in2 == 'aCompCor' ) {
-  outmat <- mat1[ , grepl('aCompCor', names(mat1))]
+  outmat <- mat1[ , grepl('a_comp_cor', names(mat1))]
+} else if ( in2 == 'aroma' ) {
+  outmat <- mat1[ , grepl('aroma', names(mat1))]
 } else if ( in2 == 'Cosine') { 
-  outmat = mat1[ , grepl( 'Cosine', names(mat1))]
+  outmat = mat1[ , grepl( 'cosine', names(mat1))]
 } else if ( in2 == 'rps' ) {
-   outmat=cbind(mat1$X,mat1$Y,mat1$Z,mat1$RotX,mat1$RotY,mat1$RotZ)
+   outmat=cbind(mat1$trans_x,mat1$trans_y,mat1$trans_z,mat1$rot_x,mat1$rot_y,mat1$rot_z)
 } else if (in2 == 'stdVARS') { 
-  outmat=mat1$stdVARS
+  outmat=mat1$std_dvars
 } else if (in2 == 'allVARS') {
-  outmat=mat1[ , grepl( 'VARS' , names(mat1) ) ]
+  outmat=mat1[ , grepl( 'dvars' , names(mat1) ) ]
 } else if ( in2 == 'rms' ) {
    mat2=cbind(mat1$X,mat1$Y,mat1$Z)
    rms=sqrt(mat2^2)
