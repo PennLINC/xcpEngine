@@ -76,7 +76,7 @@ if (in2 == 'csf') {
 } else if (in2 == 'allVARS') {
   outmat=mat1[ , grepl( 'dvars' , names(mat1) ) ]
 } else if ( in2 == 'rms' ) {
-   mat2=cbind(mat1$X,mat1$Y,mat1$Z)
+   mat2=cbind(mat1$trans_x,mat1$trans_y,mat1$trans_z)
    rms=sqrt(mat2^2)
    outmat=rowMeans(rms)   
 } else if (in2 == 'fd') {
