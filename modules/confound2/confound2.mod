@@ -177,6 +177,28 @@ fi
 if (( ${confound2_tcompcor[cxt]} == 1 ))
    then
    subroutine                 @1.6  Including tcompcor
+   aroma_path=${outdir}/${prefix}_aroma.1D
+    exec_xcp generate_confmat.R \
+           -i ${fmriprepconf[sub]} \
+           -j aroma  \
+           -o ${aroma_path}
+   
+ output aroma ${prefix}_aroma.1D
+
+   exec_xcp mbind.R            \
+      -x ${confmat[cxt]}       \
+      -y ${aroma[cxt]}        \
+      -o ${confmat_path}
+   output confmat             ${prefix}_confmat.1D
+fi
+
+
+###################################################################
+# tCompCor
+###################################################################
+if (( ${confound2_tcompcor[cxt]} == 1 ))
+   then
+   subroutine                 @1.6  Including tcompcor
    tcompcor_path=${outdir}/${prefix}_tcompcor.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -191,6 +213,8 @@ if (( ${confound2_tcompcor[cxt]} == 1 ))
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
+
+
 
 
 ###################################################################
