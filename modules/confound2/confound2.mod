@@ -38,8 +38,13 @@ completion() {
 ###################################################################
 output      confmat                 null
 output      rel_rms                 mc/${prefix}_relRMS.1D
+output      rel_max_rms             mc/${prefix}_relMaxRMS.txt
+output      rel_mean_rms            mc/${prefix}_relMeanRMS.txt 
+output      nuisance_ct            ${prefix}_modelParameterCount.txt
 
-#qc nuisance_ct nNuisanceParameters  ${prefix}_modelParameterCount.txt
+qc nuisance_ct    nNuisanceParameters      ${prefix}_modelParameterCount.txt
+qc rel_max_rms    relMaxRMSMotion          mc/${prefix}_relMaxRMS.txt
+qc rel_mean_rms   relMeanRMSMotion         mc/${prefix}_relMeanRMS.txt
 
 temporal_mask_prime
 exec_sys mkdir -p ${outdir}/mc
@@ -87,6 +92,23 @@ temporal_mask  --SIGNPOST=${signpost}        \
                --RPS=${rps[cxt]}             \
                --RMS=${rel_rms[cxt]}         \
                --THRESH=${prestats_framewise[cxt]}
+
+
+###################################################################
+# compute relative maximum and mean motion
+###################################################################
+subroutine        @1.2  relative maximum motion
+      exec_xcp 1dTool.R \
+         -i    ${rel_rms[cxt]} \
+         -o    max \
+         -f    ${rel_max_rms[cxt]}
+
+subroutine        @1.3  relative mean motion
+      exec_xcp 1dTool.R \
+         -i    ${rel_rms[cxt]} \
+         -o    mean \
+         -f    ${rel_mean_rms[cxt]}
+
 
 
 
@@ -176,7 +198,7 @@ fi
 ###################################################################
 if (( ${confound2_tcompcor[cxt]} == 1 ))
    then
-   subroutine                 @1.6  Including tcompcor
+   subroutine                 @1.6  Including aroma
    aroma_path=${outdir}/${prefix}_aroma.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -351,8 +373,8 @@ routine                       @2    Validating confound model
 read -ra    obs      < ${confmat[cxt]}
 obs=${#obs[@]}
 exp=0
-(( ${confound2_rps[cxt]}  == 1     )) && exp=$(( ${exp} + 6 ))
-(( ${confound2_rms[cxt]} == 1     )) && exp=$(( ${exp} + 1 ))
+(( ${confound2_rps[cxt]}  == 1  )) && exp=$(( ${exp} + 6 ))
+(( ${confound2_rms[cxt]} == 1   )) && exp=$(( ${exp} + 1 ))
 [[ ${confound2_wm[cxt]}  == 1  ]] && exp=$(( ${exp} + 1 ))
 [[ ${confound2_csf[cxt]} == 1  ]] && exp=$(( ${exp} + 1 ))
 [[ ${confound2_gsr[cxt]} == 1  ]] && exp=$(( ${exp} + 1 ))
@@ -367,7 +389,12 @@ for cts in ${confound2_custom_ts}
    do
    read     -ra ctsn       < ${cts}
    exp=$((  ${exp} +       ${#ctsn[@]} ))
+  
 done
+
+exec_sys                   rm -f ${nuisance_ct[cxt]}
+echo ${exp}                >>    ${nuisance_ct[cxt]}
+
 subroutine                    @2.1a   [Expected confounds: ${exp}]
 
 
