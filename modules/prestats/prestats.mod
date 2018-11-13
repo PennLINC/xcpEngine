@@ -56,6 +56,8 @@ output      confmat                 ${prefix}_confmat.1D
 output      referenceVolume         ${prefix}_referenceVolume.nii.gz
 output      meanIntensity           ${prefix}_meanIntensity.nii.gz
 
+
+
 configure   demeaned                0
 
 qc rel_max_rms    relMaxRMSMotion   mc/${prefix}_relMaxRMS.txt
@@ -135,6 +137,30 @@ DICTIONARY
 
 
 
+routine                 @0    Ensure matching orientation
+subroutine              @0.1a Input: ${intermediate}.nii.gz
+subroutine              @0.1b Template: ${template}
+subroutine              @0.1c Output root: ${ctroot[cxt]}
+
+native_orientation=$(${AFNI_PATH}/3dinfo -orient ${intermediate}.nii.gz)
+template_orientation=$(${AFNI_PATH}/3dinfo -orient ${template})
+
+echo "NATIVE:${native_orientation} TEMPLATE:${template_orientation}"
+full_intermediate=$(ls ${intermediate}.nii* | head -n 1)
+if [ "${native_orientation}" != "${template_orientation}" ]
+then
+
+    subroutine @0.1d "${native_orientation} -> ${template_orientation}"
+    ${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${full_intermediate} \
+              -prefix ${intermediate}_${template_orientation}.nii.gz
+    intermediate=${intermediate}_${template_orientation}
+    intermediate_root=${intermediate}
+else
+
+    subroutine  @0.1d "NOT re-orienting native"
+
+fi
 
 
 
@@ -829,13 +855,20 @@ while (( ${#rem} > 0 ))
             exec_sys rln   ${meanIntensity[cxt]}   \
                            ${meanIntensityBrain[cxt]}
          else
+           
+          ${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${mask[sub]} \
+              -prefix  ${out}/prestats/${prefix}_mask.nii.gz
+              output mask  ${out}/prestats/${prefix}_mask.nii.gz
+          
             subroutine        @10.4 Importing mask
             exec_fsl fslmaths ${referenceVolume[cxt]} \
-               -mul  ${mask[sub]} \
+               -mul  ${mask[cxt]} \
                ${referenceVolumeBrain[cxt]}
             exec_fsl fslmaths ${meanIntensity[cxt]} \
-               -mul  ${mask[sub]} \
+               -mul  ${mask[cxt]} \
                ${meanIntensityBrain[cxt]}
+        
          fi
          subroutine           @10.5 Defining spatial reference
          space_set      ${spaces[sub]}   ${space[sub]} \
