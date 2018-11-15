@@ -194,22 +194,22 @@ fi
 
 
 ###################################################################
-# tCompCor
+# ICA-AROMA
 ###################################################################
-if (( ${confound2_tcompcor[cxt]} == 1 ))
+if (( ${confound2_aroma[cxt]} == 1 ))
    then
-   subroutine                 @1.6  Including aroma
+   subroutine                 @1.6  "Including ICA-AROMA"
    aroma_path=${outdir}/${prefix}_aroma.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
            -j aroma  \
            -o ${aroma_path}
    
- output aroma ${prefix}_aroma.1D
+   output aroma ${prefix}_aroma.1D
 
    exec_xcp mbind.R            \
       -x ${confmat[cxt]}       \
-      -y ${aroma[cxt]}        \
+      -y ${aroma[cxt]}         \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
