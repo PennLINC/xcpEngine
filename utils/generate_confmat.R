@@ -56,7 +56,7 @@ mat1 <- read.table(in1,sep = '\t', header =TRUE)
 
 
 if (in2 == 'csf') {
-   outmat=mat1$CSF
+   outmat=mat1$csf
 }  else if (in2 == 'wm' ) {
    outmat=mat1$white_matter
 }  else if (in2 == 'gsr' ) {
@@ -73,14 +73,23 @@ if (in2 == 'csf') {
    outmat=cbind(mat1$trans_x,mat1$trans_y,mat1$trans_z,mat1$rot_x,mat1$rot_y,mat1$rot_z)
 } else if (in2 == 'stdVARS') { 
   outmat=mat1$std_dvars
+  outmat=suppressWarnings(as.numeric(as.character(outmat)))
+  outmat[is.na(outmat)]=0
+  outmat=as.factor(outmat)
 } else if (in2 == 'allVARS') {
   outmat=mat1[ , grepl( 'dvars' , names(mat1) ) ]
+  outmat=suppressWarnings(as.numeric(as.character(outmat)))
+  outmat[is.na(outmat)]=0
+  outmat=as.factor(outmat)
 } else if ( in2 == 'rms' ) {
    mat2=cbind(mat1$trans_x,mat1$trans_y,mat1$trans_z)
    rms=sqrt(mat2^2)
    outmat=rowMeans(rms)   
 } else if (in2 == 'fd') {
-   outmat = mat1$framewise_displacement
+  outmat = mat1$framewise_displacement
+  outmat=suppressWarnings(as.numeric(as.character(outmat)))
+  outmat[is.na(outmat)]=0
+  outmat=as.factor(outmat)
 } else  {
  sprintf("the input is not available yet") 
 }
