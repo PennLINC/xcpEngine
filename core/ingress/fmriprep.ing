@@ -1,4 +1,4 @@
-img                         %ING/*T1w_desc-preproc_bold.nii.gz
-mask                        %ING/*T1w_desc-brain_mask.nii.gz
-fmriprepconf                %ING/*confounds_regressors.tsv
+img                         %ING/*T1w*preproc*.nii.gz
+mask                        %ING/*T1w*mask*.nii.gz
+fmriprepconf                %ING/*confounds*tsv
 space                       %IDS_anatomical
