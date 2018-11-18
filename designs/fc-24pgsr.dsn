@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/data/jux/BBL/studies/grmpy/processedData/fmriprepdir/test1/fc-aroma.dsn
+design=/data/jux/BBL/studies/grmpy/processedData/fmriprepdir/test1/fmriprepxcp/designfiles/fc-24pgsr.dsn
 sequence=anatomical
 standard=PNC%2x2x2
 
@@ -60,20 +60,21 @@ prestats_process[1]=REF
 # 2 CONFOUND2
 ###################################################################
 
-confound2_rps[2]=0
+confound2_rps[2]=1
 confound2_rms[2]=0
-confound2_wm[2]=1
-confound2_csf[2]=1
-confound2_gsr[2]=0
+confound2_wm[2]=0
+confound2_csf[2]=0
+confound2_gsr[2]=1	
 confound2_acompcor[2]=0
 confound2_tcompcor[2]=0
-confound2_aroma[2]=1
+confound2_aroma[2]=0
 confound2_past[2]=0
-confound2_dx[2]=0
-confound2_sq[2]=1
+confound2_dx[2]=1
+confound2_sq[2]=2
 confound2_custom[2]=
 confound2_censor[2]=0
 confound2_censor_contig[2]=0
+confound2_framewise[2]=rmss:0.083,fds:0.167,dv:2
 confound2_rerun[2]=0
 confound2_cleanup[2]=1
 

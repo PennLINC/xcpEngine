@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/data/jux/BBL/studies/grmpy/processedData/fmriprepdir/test1/fc-aroma.dsn
+design=/data/jux/BBL/studies/grmpy/processedData/fmriprepdir/test1/fc-aromagsr.dsn
 sequence=anatomical
 standard=PNC%2x2x2
 
@@ -64,7 +64,7 @@ confound2_rps[2]=0
 confound2_rms[2]=0
 confound2_wm[2]=1
 confound2_csf[2]=1
-confound2_gsr[2]=0
+confound2_gsr[2]=1
 confound2_acompcor[2]=0
 confound2_tcompcor[2]=0
 confound2_aroma[2]=1
