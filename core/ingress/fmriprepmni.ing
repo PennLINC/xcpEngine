@@ -1,0 +1,7 @@
+img                         %ING/func/*MNI*preproc*.nii.gz
+mask                        %ING/func/*MNI*mask*.nii.gz
+fmriprepconf                %ING/func/*confounds*tsv
+space                       %IDS_template
+struct                      %ING/anat/*MNI*preproc*T1w.nii.gz
+struct_head                 %ING/anat/*MNI*preproc*T1w.nii.gz
+segmentation                %ING/anat/*MNI*_dseg.nii.gz
