@@ -129,7 +129,9 @@ for i in ${!ing[@]}
       # is matched successfully
       #############################################################
 
-      [[ -z ${i_buffer} ]] && i[1]=$(abspath ${i[1]})
+      [[ -z ${i_buffer} ]]       \
+         && [[ -s ${i[1]} ]]     \
+         && i[1]=$(abspath ${i[1]})
       #############################################################
       # Determine whether the variable should be written to the
       # design file. ('!' at the beginning of the variable's name
