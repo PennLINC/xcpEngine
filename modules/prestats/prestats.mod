@@ -55,6 +55,7 @@ output      motion_vols             mc/${prefix}_nFramesHighMotion.txt
 output      confmat                 ${prefix}_confmat.1D
 output      referenceVolume         ${prefix}_referenceVolume.nii.gz
 output      meanIntensity           ${prefix}_meanIntensity.nii.gz
+output      fmriprepconf            ${prefix}_fmriconf.tsv
 
 
 
@@ -140,7 +141,7 @@ DICTIONARY
 routine                 @0    Ensure matching orientation
 subroutine              @0.1a Input: ${intermediate}.nii.gz
 subroutine              @0.1b Template: ${template}
-subroutine              @0.1c Output root: ${ctroot[cxt]}
+subroutine              @0.1c Output root:
 
 native_orientation=$(${AFNI_PATH}/3dinfo -orient ${intermediate}.nii.gz)
 template_orientation=$(${AFNI_PATH}/3dinfo -orient ${template})
@@ -165,8 +166,21 @@ fi
 
 
 
+## check if the confounmatix is present and the mask 
 
+imgprt=${img1[sub]%_*_*_*}
+conf="_desc-confounds_regressors.tsv"
+cnfmat=${imgprt}${conf}
+exec_sys cp $cnfmat $out/prestats/${prefix}_fmriconf.tsv
+imgprt2=${img1[sub]%_*_*}
+mskpart="_desc-brain_mask.nii.gz"
+mask1=${imgprt2}${mskpart}
 
+${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${mask1} \
+              -prefix  ${out}/prestats/${prefix}_mask.nii.gz
+
+output mask $out/prestats/${prefix}_mask.nii.gz
 
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
@@ -824,7 +838,6 @@ while (( ${#rem} > 0 ))
 
 
 
-
       REF)
          ##########################################################
          # REF assumes that the data have already been minimally
@@ -845,7 +858,7 @@ while (( ${#rem} > 0 ))
          subroutine           @10.2 [Computing mean volume]
          proc_fsl ${meanIntensity[cxt]} \
                   fslmaths ${intermediate}.nii.gz  -Tmean   %OUTPUT
-         if ! is_image ${mask[sub]}
+         if is_image ${mask[sub]}
             then
             subroutine        @10.3 [Computing mask]
             proc_fsl ${mask[cxt]} \
@@ -855,11 +868,6 @@ while (( ${#rem} > 0 ))
             exec_sys rln   ${meanIntensity[cxt]}   \
                            ${meanIntensityBrain[cxt]}
          else
-           
-          ${AFNI_PATH}/3dresample -orient ${template_orientation} \
-              -inset ${mask[sub]} \
-              -prefix  ${out}/prestats/${prefix}_mask.nii.gz
-              output mask  ${out}/prestats/${prefix}_mask.nii.gz
           
             subroutine        @10.4 Importing mask
             exec_fsl fslmaths ${referenceVolume[cxt]} \
@@ -890,9 +898,6 @@ while (( ${#rem} > 0 ))
          
    esac
 done
-
-
-
 
 
 ###################################################################
