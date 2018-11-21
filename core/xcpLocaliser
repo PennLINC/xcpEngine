@@ -121,6 +121,8 @@ subroutine                    @2.1  [Verifying that images are present]
 if ! is_image ${img[sub]}
    then
    abort_stream "The primary analyte is not a valid image: ${img[sub]}"
+else 
+ img1=${img[sub]}
 fi
 subroutine                    @2.2  [Conforming and localising images]
 source ${XCPEDIR}/core/imgLocalise
@@ -173,6 +175,7 @@ subroutine                    @3.2  [Evaluating subject variables]
    [[ ${normalise} == 1      ]] \
    && echo "template=${template}"               >> ${design[sub]} \
    && echo "standard=${standard[0]}"            >> ${design[sub]}
+   echo    "img1[$sub]=${img[sub]}"   >> ${design[sub]}
 routine_end
 
 ###################################################################
