@@ -91,7 +91,7 @@ temporal_mask  --SIGNPOST=${signpost}        \
                --INPUT=${img[sub]}           \
                --RPS=${rps[cxt]}             \
                --RMS=${rel_rms[cxt]}         \
-               --THRESH=${prestats_framewise[cxt]}
+               --THRESH=${confound2_framewise[cxt]}
 
 
 ###################################################################
@@ -169,6 +169,10 @@ if (( ${confound2_acompcor[cxt]} == 1 ))
       -y ${acompcor[cxt]}        \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
+
+
+
+
 fi
 
 ###################################################################
@@ -194,22 +198,22 @@ fi
 
 
 ###################################################################
-# ICA-AROMA
+# aroma
 ###################################################################
 if (( ${confound2_aroma[cxt]} == 1 ))
    then
-   subroutine                 @1.6  "Including ICA-AROMA"
+   subroutine                 @1.6  Including aroma
    aroma_path=${outdir}/${prefix}_aroma.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
            -j aroma  \
            -o ${aroma_path}
    
-   output aroma ${prefix}_aroma.1D
+ output aroma ${prefix}_aroma.1D
 
    exec_xcp mbind.R            \
       -x ${confmat[cxt]}       \
-      -y ${aroma[cxt]}         \
+      -y ${aroma[cxt]}        \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
 fi
@@ -365,6 +369,64 @@ if (( ${confound2_sq[cxt]} > 1 ))
 fi
 
 
+
+
+
+###################################################################
+# CUSTOM TIMESERIES
+# * If none are specified, skip over this section.
+# * These may include convolved or unconvolved stick/delta
+#   functions encoding stimulus onset, duration, and magnitude.
+# * These may be obtained directly from FSL's utilities as a
+#   design matrix. If they are, only the timeseries (and not 
+#   supplementary information such as peak magnitudes and total
+#   duration) should be bound into the confound matrix.
+# * Note that this is the very last step of confound matrix
+#   assembly. Thus, any temporal derivatives, powers, previous
+#   time points of custom timeseries should be included as custom
+#   timeseries.
+###################################################################
+confound2_custom_ts=${confound2_custom[cxt]//,/ }
+confound2_custom_ts=${confound2_custom[sub]//,/ }
+nvol=$(  exec_fsl             fslnvols ${img})
+for cts  in ${confound2_custom_ts}
+   do
+   subroutine                 @10   "Custom timeseries: ${cts}"
+   ################################################################
+   # Determine whether the input is a three-column stick function
+   # or an explicit timeseries. If it is a stick function, then
+   # apply a convolution and convert it to a design matrix.
+   ####################################a############################
+   readarray nlines < ${cts}
+   stick=$(arithmetic ${#nlines[@]}'<'${nvol})
+   if (( ${stick} == 1 ))
+      then
+      subroutine              @10.1
+      exec_xcp stick2lm.R     \
+         -i    ${img}         \
+         -s    ${cts}         \
+         -d    FALSE          \
+         >>    ${intermediate}convts.1D
+   else
+      subroutine              @10.2
+      exec_sys cp ${cts}      ${intermediate}convts.1D
+   fi
+   cts=${intermediate}convts.1D
+   ################################################################
+   # Identify the row in which the timeseries matrix proper
+   # begins if the input is an FSL-style design matrix.
+   ################################################################
+   exec_xcp mbind.R           \
+      -x    ${confmat[cxt]}   \
+      -y    ${cts}            \
+      -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
+   exec_sys rm -f             ${intermediate}convts.1D
+done
+routine_end
+
+
+
 routine                       @2    Validating confound model
 ###################################################################
 # Verify that the confound matrix produced by the confound module
@@ -392,7 +454,7 @@ for cts in ${confound2_custom_ts}
   
 done
 
-exec_sys                   rm -f ${nuisance_ct[cxt]}
+exec_sys                   rm -f ${nuisance_ct[cxt]oupa
 echo ${exp}                >>    ${nuisance_ct[cxt]}
 
 subroutine                    @2.1a   [Expected confounds: ${exp}]
