@@ -33,9 +33,9 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/data/jux/BBL/studies/grmpy/processedData/fmriprepdir/test1/fc-tcompcor.dsn
+design=
 sequence=anatomical
-standard=PNC%2x2x2
+standard=MNI%2x2x2
 
 ###################################################################
 # PIPELINE
