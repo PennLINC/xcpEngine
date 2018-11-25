@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/data/jux/BBL/studies/grmpy/processedData/fmriprepdir/test1/fc-36p.dsn
+design=
 sequence=anatomical
 standard=MNI%2x2x2
 
