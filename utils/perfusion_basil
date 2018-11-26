@@ -334,8 +334,8 @@ fslmaths $tempdir/asldata -Tmean $tempdir/meanasl
 
 if [ ! -z  $struct_space ]; then 
     echo "register asldata to structrual space"
-    antsApplyTransforms -e 3 -d 3  -i $infile -o $tempdir/infile2struct.nii.gz -r $struct -t $asl2struct  -n Linear
-    antsApplyTransforms -e 3 -d 3  -i $mask -o $tempdir/mask2struct.nii.gz -r $struct -t $asl2struct -n Linear
+    antsApplyTransforms -e 3 -d 3  -i $infile -o $tempdir/infile2struct.nii.gz -r $struct -t $asl2struct  -n NearestNeighbor
+    antsApplyTransforms -e 3 -d 3  -i $mask -o $tempdir/mask2struct.nii.gz -r $struct -t $asl2struct -n NearestNeighbor
     fslmaths $tempdir/mask2struct.nii.gz -bin $tempdir/mask2struct.nii.gz
     asl_file1 --data=$infile --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
     asl_file1 --data=$tempdir/infile2struct.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata_struct
@@ -513,11 +513,11 @@ if [ ! -z $pvgm ]; then
         fi
         if [ ! -z $regi ]; then
 	echo "PV GM is: $pvgm and register it to asldata"
-        antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r $mask -t $struct2asl -n Linear
+        antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
         #flirt  -in $pvgm -ref $mask-out $tempdir/pvgm.nii.gz -init $struct2asl -applyxfm
 	fslmaths $tempdir/pvgm1 -thr 0.1 -min 1 $tempdir/pvgm_inasl
 	echo "PV WM is: $pvwm and register it to asl data"
-        antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r $mask -t $struct2asl -n Linear
+        antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
         #flirt  -in $pvwm -ref $mask -out $tempdir/pvwm.nii.gz -init $struct2asl  -applyxfm
 	fslmaths $tempdir/pvwm1 -thr 0.1 -min 1 $tempdir/pvwm_inasl
 	fi
