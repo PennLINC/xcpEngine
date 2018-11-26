@@ -60,7 +60,7 @@ prestats_process[1]=REF
 # 2 CONFOUND2
 ###################################################################
 
-confound2_rps[2]=1
+confound2_rps[2]=0
 confound2_rms[2]=0
 confound2_wm[2]=0
 confound2_csf[2]=0
