@@ -156,6 +156,18 @@ fi
 if (( ${confound2_acompcor[cxt]} == 1 ))
    then
    subroutine                 @1.4  Including  acompcor
+   
+   exec_xcp mbind.R           \
+      -x ${confmat[cxt]}      \
+      -y ${rps[cxt]}          \
+      -o ${confmat_path} 
+   
+   exec_xcp mbind.R                 \
+      -x    ${confmat[cxt]}         \
+      -y    OPdx${confound2_dx[cxt]} \
+      -o    ${confmat_path}
+ 
+   
    acompcor_path=${outdir}/${prefix}_acompcor.1D
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
@@ -169,9 +181,6 @@ if (( ${confound2_acompcor[cxt]} == 1 ))
       -y ${acompcor[cxt]}        \
       -o ${confmat_path}
    output confmat             ${prefix}_confmat.1D
-
-
-
 
 fi
 
