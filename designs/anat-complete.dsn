@@ -42,7 +42,7 @@ standard=MNI%1x1x1
 # PIPELINE
 ###################################################################
 
-pipeline=struc,gmd,roiquant #,qcanat
+pipeline=struc,gmd,roiquant,qcanat
 
 ###################################################################
 # 1 STRUC
