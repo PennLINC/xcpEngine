@@ -6,7 +6,7 @@
 
 ###################################################################
 # Utility function that will create quality metrics
-# similar to work the QAP pipeline as created by Cameron Craddock
+# similar to the QAP pipeline as created by Cameron Craddock
 # see here: https://github.com/preprocessed-connectomes-project/quality-assessment-protocol
 ###################################################################
 
@@ -26,6 +26,8 @@ option_list = list(
               help="Path to the raw structural image"),
    make_option(c("-c", "--cortical"), action="store", default=NA, type='character',
               help="Path to the cortical binary mask."),
+make_option(c("-d", "--dgm"), action="store", default=NA, type='character',
+              help="Path to the dgm binary mask."),
    make_option(c("-w", "--whitemask"), action="store", default=NA, type='character',
               help="Path to the white matter binary mask."),
    make_option(c("-m", "--graymask"), action="store", default=NA, type='character',
@@ -48,6 +50,7 @@ gmpath <- opt$graymask
 wmpath <- opt$whitemask
 fgmaskpath <- opt$foreground
 corticalpath <- opt$cortical
+dgmpath <- opt$dgm
 outPath <- opt$output
 
 ###################################################################
@@ -78,6 +81,11 @@ if(!is.na(corticalpath)){
   cimg <- readNifti(corticalpath)
   cvals <- img[cimg==1]
   cCheck <- 1
+}
+if(!is.na(dgmpath)){
+    dimg <- readNifti(corticalpath)
+    dvals <- img[dimg==1]
+    dCheck <- 1
 }
 
 ###################################################################
@@ -140,6 +148,13 @@ if(cCheck > 0){
   outputVals <- cbind(outputVals, CORTCON)
 }
 ###################################################################
+# Now calculate DGM Contrasts
+###################################################################
+if(dCheck > 0){
+    DCON <- (mean(wmvals) - mean(dvals)) / ((mean(cvals) + mean(wmvals)) / 2)
+    outputVals <- cbind(outputVals, DCON)
+}
+###################################################################
 # Now calculate QI1
 ###################################################################
 if(fgCheck > 0){
@@ -185,6 +200,8 @@ cat('· [Contrast-to-noise ratio:             ',CNR,']\n', file=stderr())
 cat('CNR:',CNR, '\n', sep='')
 cat('· [Cortical contrasts:                  ',CORTCON,']\n', file=stderr())
 cat('CORTCON:',CORTCON, '\n', sep='')
+cat('· [DGM contrasts:                  ',DCON,']\n', file=stderr())
+cat('DGMCONTRAST:',DCON, '\n', sep='')
 cat('· [Entropy focus criterion:             ',EFC,']\n', file=stderr())
 cat('EFC:',EFC, '\n', sep='')
 cat('· [Grey matter kurtosis:                ',GMKURT,']\n', file=stderr())

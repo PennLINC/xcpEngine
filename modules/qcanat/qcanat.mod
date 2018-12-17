@@ -39,6 +39,7 @@ define         csfMask                 ${outdir}/${prefix}_csfMask.nii.gz
 define         gmMask                  ${outdir}/${prefix}_gmMask.nii.gz
 define         wmMask                  ${outdir}/${prefix}_wmMask.nii.gz
 define         cortMask                ${outdir}/${prefix}_cortexMask.nii.gz
+define		   dgmMask				   ${outdir}/${prefix}_dgmMask.nii.gz
 define         segmentationQA          ${outdir}/${prefix}_segmentationQA.nii.gz
 define         mniFGMask               ${XCPEDIR}/modules/qcanat/mniForeGroundMask.nii.gz
 define         coordsCSV               ${outdir}/${prefix}_landmarksCoords.csv
@@ -108,7 +109,8 @@ declare           -A tissue_classes
 tissue_classes=(  [gm]="grey matter"
                   [wm]="white matter"
                  [csf]="cerebrospinal fluid"
-                [cort]="cerebral cortex" )
+                [cort]="cerebral cortex" 
+                [dgm]="deep gray matter")
 for class in "${!tissue_classes[@]}"
    do
    ################################################################
@@ -303,12 +305,19 @@ if is_image ${cortMask[cxt]}
    subroutine                 @3.1  Using cortical mask
    argCortMask="-c ${cortMask[cxt]}"
 fi
+if is_image ${dgmMask[cxt]}
+   then
+   subroutine				  @3.2 Using DGM mask
+   argDGMMask="-d ${dgmMask[cxt]}"
+fi
 qcvals=( $(exec_xcp qcanat.R  \
    -i    ${img_raw}           \
    -m    ${gmMask[cxt]}       \
    -w    ${wmMask[cxt]}       \
    -f    ${foreground[cxt]}   \
-   ${argCortMask}) )
+   ${argCortMask}) )		  \
+   ${argDGMMask}
+   
 subroutine                    @3.2  Organising estimates
 declare -A qcanat
 for i in ${qcvals[@]}
