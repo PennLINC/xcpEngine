@@ -166,8 +166,66 @@ printx            ${task_design[cxt]} >> ${intermediate}-fsf.dsn
 mapfile           fsf_design           < ${intermediate}-fsf.dsn
 
 
+native_orientation=$(${AFNI_PATH}/3dinfo -orient ${img})
+template_orientation=$(${AFNI_PATH}/3dinfo -orient ${template})
+
+echo "NATIVE:${native_orientation} TEMPLATE:${template_orientation}"
+full_intermediate=$(ls ${img} | head -n 1)
+if [ "${native_orientation}" != "${template_orientation}" ]
+then
+
+    subroutine @0.1d "${native_orientation} -> ${template_orientation}"
+    ${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${full_intermediate} \
+              -prefix ${intermediate}_${template_orientation}.nii.gz
+    intermediate=${intermediate}_${template_orientation}
+    intermediate_root=${intermediate}
+    img=${intermediate}.nii.gz
+    
+else
+
+    subroutine  @0.1d "NOT re-orienting native"
+
+fi
 
 
+
+
+## check if the confounmatix is present and the mask 
+
+
+imgprt2=${img[sub]%_*_*}
+mskpart="_desc-brain_mask.nii.gz"
+
+
+mask1=${imgprt2}${mskpart}
+
+maskpart2=${mask1#*_*_*_*}
+strucn="${img1[sub]%/*/*}"
+
+mask2=$(ls -d ${strucn}/anat/*${maskpart2})
+
+refpart="_boldref.nii.gz"
+refvol=${imgprt2}${refpart}
+
+subroutine @ creating mask and reference volume
+
+${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${mask1} \
+              -prefix  ${out}/task/${prefix}_mask1.nii.gz
+
+${AFNI_PATH}/3dresample -master ${out}/task/${prefix}_mask1.nii.gz -inset \
+  ${mask2} -prefix ${out}/task/${prefix}_mask.nii.gz
+
+rm -rf ${out}/task/${prefix}_mask1.nii.gz
+ 
+${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${refvol} \
+              -prefix  ${out}/task/${prefix}_referenceVolume.nii.gz
+
+output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
+
+output mask  ${out}/task/${prefix}_mask.nii.gz
 
 ###################################################################
 # Variable import and search:
@@ -243,10 +301,10 @@ for l in "${!fsf_design[@]}"
              && fsf_design[l]='set feat_files(1) '${img}'\n' \
              && continue
    contains  "${chk_REF[@]}" \
-             && fsf_design[l]='set fmri(alternative_example_func) '${referenceVolume[sub]}'\n' \
+             && fsf_design[l]='set fmri(alternative_example_func) '${referenceVolume[cxt]}'\n' \
              && continue
    contains  "${chk_MSK[@]}" \
-             && fsf_design[l]='set fmri(alternative_mask) '${mask[sub]}'\n' \
+             && fsf_design[l]='set fmri(alternative_mask) '${mask[cxt]}'\n' \
              && continue
    contains  "${chk_TRP[@]}" \
              && fsf_design[l]='set fmri(tr) '${trep}'\n' \
