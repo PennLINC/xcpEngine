@@ -176,11 +176,44 @@ imgprt2=${img1[sub]%_*_*}
 mskpart="_desc-brain_mask.nii.gz"
 mask1=${imgprt2}${mskpart}
 
-${AFNI_PATH}/3dresample -orient ${template_orientation} \
-              -inset ${mask1} \
-              -prefix  ${out}/prestats/${prefix}_mask.nii.gz
+subroutine  @ convert mask to RPI
 
-output mask $out/prestats/${prefix}_mask.nii.gz
+maskpart2=${mask1#*_*_*_*}
+strucn="${img1[sub]%/*/*}"
+
+mask2=$(ls -d ${strucn}/anat/*${maskpart2})
+
+refpart="_boldref.nii.gz"
+refvol=${imgprt2}${refpart}
+
+subroutine @ creating mask and reference volume
+
+${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${mask1} -prefix ${out}/prestats/${prefix}_mask1.nii.gz
+
+${AFNI_PATH}/3dresample -master ${out}/prestats/${prefix}_mask1.nii.gz -inset \
+  ${mask2} -prefix ${out}/prestats/${prefix}_mask.nii.gz
+
+rm -rf ${out}/prestats/${prefix}_mask1.nii.gz
+ 
+${AFNI_PATH}/3dresample -orient ${template_orientation} \
+              -inset ${refvol} \
+              -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz
+
+output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
+
+output mask  ${out}/prestats/${prefix}_mask.nii.gz
+
+subroutine  @ convert segmentation to RPI and resample to mask 
+
+#echo ${segmentation[sub]}
+${AFNI_PATH}/3dresample -master ${out}/prestats/${prefix}_mask.nii.gz -inset \
+  ${segmentation[sub]} -prefix ${out}/prestats/${prefix}_segmentation.nii.gz
+
+output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
+
+
+
 
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
@@ -848,6 +881,7 @@ while (( ${#rem} > 0 ))
          routine              @10   Importing references
          subroutine           @10.0 [Assuming data are already processed]
          subroutine           @10.1 [Selecting reference volume]
+         
          nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
          midpt=$(( ${nvol} / 2))
          proc_fsl ${referenceVolume[cxt]} \
