@@ -227,6 +227,11 @@ output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
 
 output mask  ${out}/task/${prefix}_mask.nii.gz
 
+${AFNI_PATH}/3dresample -master ${out}/task/${prefix}_mask.nii.gz -inset \
+  ${segmentation[sub]} -prefix ${out}/task/${prefix}_segmentation.nii.gz
+
+output segmentation  ${out}/task/${prefix}_segmentation.nii.gz
+
 ###################################################################
 # Variable import and search:
 # Substitute the relevant lines of text in the design file.
