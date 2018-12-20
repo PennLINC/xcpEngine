@@ -34,8 +34,8 @@
 ###################################################################
 
 analysis=basil_$(whoami)
-design=${XCPEDIR}/designs/task.dsn
-sequence=nback
+design=/data/jux/BBL/studies/grmpy/processedData/basil_asl/scripts/basil_design.dsn
+sequence=basil
 standard=MNI%2x2x2
 
 ###################################################################
@@ -46,31 +46,18 @@ pipeline=prestats,coreg,basil,roiquant,norm
 ###################################################################
 # 1 PRESTATS
 ###################################################################
-prestats_dvols[1]=0
-prestats_smo[1]=0
-prestats_tmpf[1]=none
-prestats_tmpf_order[1]=0
-prestats_tmpf_pass[1]=0
-prestats_tmpf_ripple[1]=0
-prestats_tmpf_ripple2[1]=0
-prestats_hipass[1]=0
-prestats_lopass[1]=nyquist
+
 prestats_fit[1]=0.3
 prestats_bbgthr[1]=0.1
-prestats_dmdt[1]=2
-prestats_1ddt[1]=1
-prestats_censor[1]=0
-prestats_framewise[1]=rmss:0.083,fds:0.167,dv:2
-prestats_censor_contig[1]=0
 prestats_rerun[1]=0
 prestats_cleanup[1]=1
-prestats_process[1]=DVO-MPR-STM-MCO-BXT-DMT
+prestats_process[1]=MCO-BXT-REF
 
 ###################################################################
 # 2 COREG
 ###################################################################
 
-coreg_reference[2]=mean
+coreg_reference[2]=exemplar
 coreg_cfunc[2]=bbr
 coreg_seg[2]=${segmentation[sub]}
 coreg_wm[2]=3
@@ -79,7 +66,7 @@ coreg_refwt[2]=NULL
 coreg_inwt[2]=NULL
 coreg_qacut[2]=0.8,0.9,0.7,0.8
 coreg_decide[2]=1
-coreg_mask[2]=0
+coreg_mask[2]=1
 coreg_rerun[2]=0
 coreg_cleanup[2]=1
 
@@ -89,14 +76,17 @@ coreg_cleanup[2]=1
 
 basil_perfusion[3]=casl
 basil_inputformat[3]=tc 
-basil_m0_scale[3]=10
+basil_m0_scale[3]=
 basil_lambda[3]=0.9
 basil_alpha[3]=0.72
-basil_spatial[3]=1 
-basil_pvc[3]=1
-basil_tis[3]=1
+basil_spatial[3]=1
+basil_pld[3]=1.8
+basil_pvc[3]=
+basil_MOTR[3]=
+basil_tis[3]=
 basil_rerun[3]=0
-basil_cleanup[3]=0
+basil_cleanup[3]=1
+
 
 ###################################################################
 # 4 ROIQUANT
@@ -109,8 +99,7 @@ roiquant_rerun[4]=0
 roiquant_cleanup[4]=1
 
 ###################################################################
-# 4 NORM
+# 5 NORM
 ###################################################################
-norm_primary[4]=1
-norm_rerun[4]=0
-norm_cleanup[4]=1
+
+norm_rerun[5]=0
