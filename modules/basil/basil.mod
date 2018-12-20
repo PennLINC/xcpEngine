@@ -44,7 +44,6 @@ derivative            cbf_pv               ${prefix}_cbf_pv.nii.gz
 derivative            cbf_pvgm             ${prefix}_cbf_pv_gm.nii.gz
 derivative            cbf_pvwm             ${prefix}_cbf_pv_wm.nii.gz
 
-
 output           logfile              ${prefix}_logfile
 output           basil_option         ${prefix}_basil_option.txt
 output           logfile2             ${prefix}_logfile_spatial
@@ -60,6 +59,7 @@ output           cbf_pvwm_calib       ${prefix}_cbf_pv_wm_calib.nii.gz
 output           cbf_pv               ${prefix}_cbf_pv.nii.gz
 output           cbf_pvgm             ${prefix}_cbf_pv_gm.nii.gz
 output           cbf_pvwm             ${prefix}_cbf_pv_wm.nii.gz
+
 
 
 
@@ -90,6 +90,8 @@ DICTIONARY
 # Compute cerebral blood flow with basil.
 ###################################################################
    
+
+
    case ${basil_perfusion[cxt]} in
    
    casl)
@@ -105,29 +107,31 @@ DICTIONARY
       subroutine              @1.1k Template: ${template}
       subroutine              @1.1l Affine tranformation : ${antsct[sub]}/*_SubjectToTemplate0GenericAffine.mat
       subroutine              @1.1m Warp image  : ${antsct[sub]}/*_SubjectToTemplate1Warp.nii.gz
-      subroutine              @1.1n pvgm  : ${antsct[sub]}/../gmd/*_priorImage002.nii.gz
-      subroutine              @1.1o pvwm  : ${antsct[sub]}/../gmd/*_priorImage003.nii.gz
+      subroutine              @1.1n pvgm  : ${antsct[sub]}/../gmd/*_probabilityGM.nii.gz 
+      subroutine              @1.1o pvwm  : ${antsct[sub]}/../gmd/*_probabilityWM.nii.gz 
+      subroutine              @1.1p csf   : ${antsct[sub]}/../gmd/*_probabilityCSF.nii.gz
       
 
       if [  ${basil_pvc[cxt]} == 1 ]; then
           
           routine @2.1  compute CBF
          exec_xcp perf_asl \
-         -i $out/prestats/${prefix}_preprocessed.nii.gz        \
+         -i $out/prestats/${prefix}_preprocessed.nii.gz    \
          -m  $out/coreg/${prefix}_mask.nii.gz       \
-          -o $out/basil \
+         -o $out/basil  --struct=${antsct[sub]}/*ExtractedBrain0N4.nii.gz \
          --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
          --casl  --cgain=${basil_m0_scale[cxt]} \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
-         --tr=${basil_MOTR[cxt]} --pvgm=${antsct[sub]}/../gmd/*_priorImage002.nii.gz \  
-         --pvwm=${antsct[sub]}/../gmd/*_priorImage003.nii.gz   \
-         --pvcorr 
+         --tr=${basil_MOTR[cxt]} --csf=${antsct[sub]}/../gmd/*_probabilityCSF.nii.gz \
+         --pvgm=${antsct[sub]}/../gmd/*_probabilityGM.nii.gz \  
+         --pvwm=${antsct[sub]}/../gmd/*_probabilityWM.nii.gz    \
+         --pvcorr
 
         elif [ ${basil_pvc[cxt]} == 0 ]; then 
 
           routine @2.1  compute CBF
          exec_xcp perf_asl \
-         -i $out/prestats/${prefix}_preprocessed.nii.gz        \
+         -i $out/prestats/${prefix}_preprocessed.nii.gz          \
          -m  $out/coreg/${prefix}_mask.nii.gz       \
           -o $out/basil \
          --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
@@ -150,29 +154,33 @@ DICTIONARY
       subroutine              @1.1k Template: ${template}
       subroutine              @1.1l Affine tranformation : ${antsct[sub]}/*_SubjectToTemplate0GenericAffine.mat
       subroutine              @1.1m Warp image  : ${antsct[sub]}/*_SubjectToTemplate1Warp.nii.gz
-      subroutine              @1.1n pvgm  : ${antsct[sub]}/../gmd/*_BrainSegmentationPosteriors2.nii.gz
-      subroutine              @1.1o pvwm  : ${antsct[sub]}/../gmd/*_BrainSegmentationPosteriors3.nii.gz
-      
+      subroutine              @1.1n pvgm  : ${antsct[sub]}/../gmd/*_probabilityGM.nii.gz 
+      subroutine              @1.1o pvwm  : ${antsct[sub]}/../gmd/*_probabilityWM.nii.gz 
+      subroutine              @1.1p csf   : ${antsct[sub]}/../gmd/*_probabilityCSF.nii.gz
+       
 
       if [ ${basil_pvc[cxt]} == 1 ]; then
          routine @2.1  compute CBF
          exec_xcp perf_asl \
-         -i $out/prestats/${prefix}_preprocessed.nii.gz        \
-         -m  $out/coreg/${prefix}_mask.nii.gz  -o $out/basil \
-         --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt --cgain=${basil_m0_scale[cxt]} \
+         -i $out/prestats/${prefix}_preprocessed.nii.gz    \
+         -m  $out/coreg/${prefix}_mask.nii.gz       \
+         -o $out/basil  --struct=${antsct[sub]}/*ExtractedBrain0N4.nii.gz \
+         --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
+         --cgain=${basil_m0_scale[cxt]} \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
-         --tr=${basil_MOTR[cxt]} --pvgm=${antsct[sub]}/../gmd/*_priorImage002.nii.gz \  
-         --pvwm=${antsct[sub]}/../gmd/*_priorImage003.nii.gz   \
-         --pvcorr 
+         --tr=${basil_MOTR[cxt]} --csf=${antsct[sub]}/../gmd/*_probabilityCSF.nii.gz \
+         --pvgm=${antsct[sub]}/../gmd/*_probabilityGM.nii.gz \  
+         --pvwm=${antsct[sub]}/../gmd/*_probabilityWM.nii.gz    \
+         --pvcorr
 
         elif [ ${basil_pvc[cxt]} == 0 ]; then 
 
           routine @2.1  compute CBF
          exec_xcp perf_asl \
-         -i $out/prestats/${prefix}_preprocessed.nii.gz        \
+         -i $out/prestats/${prefix}_preprocessed.nii.gz   \
          -m  $out/coreg/${prefix}_mask.nii.gz  -o $out/basil \
          --M0=${referenceVolumeBrain[sub]} --struct2asl=$out/coreg/*_struct2seq.txt \
-         --cgain=${basil_m0_scale[cxt]} \
+         --cgain=${basil_m0_scale[cxt]} --csf=${antsct[sub]}/../gmd/*_priorImage001.nii.gz \
          --alpha=${basil_alpha[cxt]} --iaf=${basil_inputformat[cxt]} --tis=${basil_tis[cxt]}  --spatial  \
          --tr=${basil_MOTR[cxt]} 
       fi
@@ -229,10 +237,7 @@ routine @3 Orgainizing the output
 
   exec_fsl imcp  $out/basil/${prefix}_cbf.nii.gz  $out/${prefix}.nii.gz
   exec_sys ln -sf $out/basil/${prefix}_cbf.nii.gz $out/${prefix}.nii.gz 
-  exec_sys ln -sf $out/basil/${prefix}_cbf.nii.gz $out/prestats/${prefix}_referenceVolume.nii.gz
-  exec_sys ln -sf $out/basil/${prefix}_cbf.nii.gz $out/prestats/${prefix}_meanIntensityBrain.nii.gz
-  exec_sys ln -sf $out/basil/${prefix}_mask.nii.gz $out/coreg/${prefix}_mask.nii.gz
-
+  
 routine_end
 
 completion
