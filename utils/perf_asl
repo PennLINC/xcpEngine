@@ -3,8 +3,7 @@
 # Perfusion with basil and pve: Converts ASL images in to perfusion maps with partial volume correction
 #
 # Azeez Adebimpe, PENN BBL
-#
-# still working on it dude!
+
 
 # Make script use local copies of helper scripts/programs in the same
 # directory, if present. This allows for multiple versions of the scripts
@@ -133,9 +132,9 @@ takeargs=0;boolarg="";isbool="";
 	    takeargs=1;;
 	--t1t) t1tset=$argument; #the T1 of tissue to be used in calibration
 	    takeargs=1;;
-	--tr) tr=$argument
+	--tr) tr=$argument;
 	    takeargs=1;;
-	--struct2asl) asl2struct=$argument;
+	--struct2asl) struct2asl=$argument;
 	    takeargs=1;;
 	--subj2templatea) subj2templatea=$argument; 
 	    takeargs=1;;
@@ -145,11 +144,11 @@ takeargs=0;boolarg="";isbool="";
 	    takeargs=1;;
 	--template) template=$argument;
 	    takeargs=1;;
-	--cgain) cgain=$argument
+	--cgain) cgain=$argument;
 	    takeargs=1;;
-	--alpha) alpha=$argument
+	--alpha) alpha=$argument;
 	    takeargs=1;;
-        --tis) tis=$argument
+        --tis) tis=$argument;
 	    takeargs=1;;
 	--infert1) infert1=1
 	    ;;
@@ -165,13 +164,15 @@ takeargs=0;boolarg="";isbool="";
 		;;
 	--spatial) spatial=1
 		;;
-	--exch) exch=$argument
+	--exch) exch=$argument;
 	    takeargs=1;;
 	--pvcorr) pvcorr=1
 	    ;;
-	--pvgm) pvgm=$argument
+	--pvgm) pvgm=$argument;
 	    takeargs=1;;
-	--pvwm) pvwm=$argument
+	--pvwm) pvwm=$argument;
+	    takeargs=1;;
+        --csf) csf=$argument;
 	    takeargs=1;;
 	--fulldata) fulldata=1
 	    ;;
@@ -230,7 +231,7 @@ fi
 # deal with the temporary directory
 tmpbase=`tmpnam`
 tempdir=${tmpbase}_ox_asl
-#tempdir=/home/aadebimpe/fsl_asl
+#tempdir=/home/aadebimpe/fsl_asl2
 mkdir $tempdir
 
 echo "temp directory is : $tempdir "
@@ -284,18 +285,44 @@ echo "Saving results in natve (ASL aquisition) space to $outdir"
 
 ### End of Command line parameter interactions
 
-
+imcp $mask $tempdir/mask.nii.gz
 
 # standard pre-processing of calibration image
-if [ ! -z $calibflag ]; then
-    fslmaths $M0 $tempdir/calib
+
+
+if [ -z $te ]; then
+	#by default assume TE is zero
+	te=0
+fi
+
+if [ -z $tr ]; then
+tr=`fslinfo $M0 | grep "^dim4" | sed 's:dim4[ ]*::'`
+fi
+
+if [ -z $cgain ]; then
+	
+	cgain=1
+fi
+
+
+fslmaths $M0  $tempdir/calib
+
+fslmaths $tempdir/calib -mas $tempdir/mask $tempdir/calib
+
+## obtain sensoitivity form the mask data
+
+if [ ! -z $struct ]; then
+   echo " Generating biasfield for sensitivity" 
+   fast -B -b -o $tempdir/seg -p $struct
+   antsApplyTransforms -e 3 -d 3 -i $tempdir/seg_bias.nii.gz -o $tempdir/segsen.nii.gz  -r  $tempdir/mask.nii.gz -t $struct2asl -n NearestNeighbor
+   fslmaths $tempdir/segsen -recip -mas  $tempdir/mask.nii.gz $tempdir/sens 
 fi
 
 
 # read in ASL data
-cp $infile $tempdir/asldata.nii.gz # this is the MAIN data that we will reflect any corrections applied
+fslmaths $infile -mul 1 $tempdir/asldata.nii.gz # this is the MAIN data that we will reflect any corrections applied
 # take a copy that will not be subject to any subsequent corrections
-cp $tempdir/asldata.nii.gz $tempdir/asldata_orig.nii.gz
+fslmaths $tempdir/asldata.nii.gz -mul 1 $tempdir/asldata_orig.nii.gz
 
 ### Motion Correction (main)
 # note motion correction within calibration data is done above
@@ -307,27 +334,29 @@ fi
 # Take mean of the asl data as we might need this in the next step, and subsequent steps
 fslmaths $tempdir/asldata -Tmean $tempdir/meanasl
 
+    
+
 #aslfile1=$XCPEDIR/utils/aslfile1
 
 ### Label-control subtraction (we repeat subtraction after doing distortion correction - when applicable)
  echo " register the data to template and do asl data processing "
 #antsApplyTransforms -e 3 -d 3 -i $tempdir/asldata.nii.gz  -r ${template} -o $tempdir/asldatat.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
-fslmaths $tempdir/asldata.nii.gz $tempdir/asldatat.nii.gz
+imcp $tempdir/asldata.nii.gz $tempdir/asldatat.nii.gz
 #antsApplyTransforms -e 3 -d 3 -i $tempdir/calib.nii.gz  -r ${template} -o $tempdir/M0.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
-fslmaths $tempdir/calib.nii.gz $tempdir/M0.nii.gz 
+ 
 #antsApplyTransforms -e 3 -d 3 -i $mask -r ${template} -o $tempdir/mask.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
-fslmaths $mask $tempdir/mask.nii.gz
  
 
 $XCPEDIR/utils/asl_file1 --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
  
- 
-
-    
-
 # Generate a perfusion-weighted image by taking the mean over all TIs of the differenced data
 fslmaths $tempdir/diffdata -Tmean $tempdir/pwi
  
+
+
+
+
+
 
 ### End of : Label-control subtraction
 
@@ -411,11 +440,9 @@ echo "--tau=$boluslen" >> $tempdir/basil_options.txt
 echo "--pld=$boluslen" >> $tempdir/basil_options.txt
 
 
+
 # Infer arterial component?
-if [ -z $artoff ]; then
-    echo "--inferart " >> $tempdir/basil_options.txt
-    echo "Infer arterial component"
-fi
+
 # fix the bolus duration?
 if [ -z $fixbolus ]; then
     basil_options=$basil_options"--infertau "
@@ -487,19 +514,20 @@ if [ ! -z $pvgm ]; then
         echo "ERROR: no WM PV image has been supplied"
         fi
 	echo "PV GM is: $pvgm and register it to template"
-        antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
+        antsApplyTransforms -e 3 -d 3  -i  $pvgm -o $tempdir/pvgm1.nii.gz -r $tempdir/meanasl.nii.gz -t $struct2asl -n NearestNeighbor
 	#antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor         
 	#flirt  -in $pvgm -ref $mask-out $tempdir/pvgm.nii.gz -init $struct2asl -applyxfm
 	fslmaths $tempdir/pvgm1 -thr 0.1 -min 1 $tempdir/pvgm_inasl
 	echo "PV WM is: $pvwm and register it to asl data"
-        antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r $mask -t $struct2asl -n NearestNeighbor
+        antsApplyTransforms -e 3 -d 3  -i  $pvwm -o $tempdir/pvwm1.nii.gz -r $tempdir/meanasl.nii.gz -t $struct2asl -n NearestNeighbor
 	#antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor                
 	#flirt  -in $pvwm -ref $mask -out $tempdir/pvwm.nii.gz -init $struct2asl  -applyxfm
 	fslmaths $tempdir/pvwm1 -thr 0.1 -min 1 $tempdir/pvwm_inasl
 	pvexist=1
 fi
 
-if [ ! -z $pvexist ]; then 
+
+if [ ! -z $pvcorr ]; then 
     # make some masks 
     # these are currently used for masking after model fitting
     fslmaths $tempdir/pvgm_inasl -thr 0.1 -bin $tempdir/gmmask
@@ -512,7 +540,7 @@ fi
 ### Partial Volume Correction BASIL
 if [ ! -z $pvcorr ]; then
   echo  "Main run of BASIL on ASL data with perfusion correction" 
-  $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt --spatial --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl   
+  $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt  --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl   
 fi
 
 
@@ -557,7 +585,7 @@ if [ ! -z $calibflag ]; then
 
 	echo "Calibration is voxelwise"
 
-	fslmaths $tempdir/M0.nii.gz -Tmean -mul $cgain $outdir/M0
+	fslmaths $tempdir/calib -Tmean -mul $cgain $outdir/M0
         echo " copying M0 map"
 	Mo=$outdir/M0.nii.gz 
 	if [ 1 -eq `echo "$tr < 5" | bc`  ]; then
@@ -568,6 +596,14 @@ if [ ! -z $calibflag ]; then
 	fi
          fslmaths $Mo -mul $alpha -div 0.9 $Mo
 	#inlcude partiition co-effcient in M0 image to convert from M0 tissue to M0 arterial
+
+    
+	    # correct for (partial volume) edge effects
+	    # median smoothing and erosion
+	    fslmaths $Mo -fmedian -mas $tempdir/mask -ero $tempdir/calib_ero
+	    # extrapolation to match mask
+	    $XCPEDIR/utils/asl_file1 --data=$tempdir/calib_ero --ntis=1 --mask=$tempdir/mask --extrapolate --neighbour=5 --out=$Mo
+	
 fi
 
 
@@ -584,14 +620,15 @@ fslmaths $tempdir/mask $outdir/mask.nii.gz
 
 
 if [ ! -z $spatial ]; then 
-   fslmaths $tempdir/basil/step1/mean_ftiss -mul $tempdir/mask   $outdir/cbf
-   fslmaths $tempdir/basil/step1/mean_fblood -mul $tempdir/mask   $outdir/acbv 
+   fslcpgeom $tempdir/basil/step1/mean_ftiss $tempdir/sens -d
+   fslmaths $tempdir/basil/step1/mean_ftiss  -mas $tempdir/mask   $outdir/cbf
+   fslmaths $tempdir/basil/step1/mean_fblood -mas $tempdir/mask   $outdir/acbv 
    cp $tempdir/basil_options.txt  $outdir/basil_option.txt
    cp $tempdir/basil/step1/logfile  $outdir/logfile
    #fslmaths $tempdir/basil/step1/noise_means -mul $tempdir/mask   $outdir/noise 
    
-   fslmaths $tempdir/basil/step2/mean_ftiss -mul $tempdir/mask   $outdir/cbf_spatial
-   fslmaths $tempdir/basil/step2/mean_fblood -mul $tempdir/mask   $outdir/acbv_spatial 
+   fslmaths $tempdir/basil/step2/mean_ftiss -mas $tempdir/mask  -div $tempdir/sens  $outdir/cbf_spatial
+   fslmaths $tempdir/basil/step2/mean_fblood -mas $tempdir/mask -div $tempdir/sens  $outdir/acbv_spatial 
    cp $tempdir/basil/step2/logfile  $outdir/logfile_spatial
    #fslmaths $tempdir/basil/step2/noise_means -mul $tempdir/mask   $outdir/noise_spatial 
 
@@ -609,7 +646,7 @@ fi
 
 if [ ! -z $calibflag ]; then
    fslcpgeom $outdir/cbf $Mo -d
- 
+   fslmaths $Mo -mul $tempdir/mask $Mo
    if [ ! -z $spatial ]; then 
        fslmaths $outdir/cbf_spatial -mul 6000 -div $Mo $outdir/cbf_spatial_calib
        #fslmaths $outdir/noise_spatial -mul 6000 -div $Mo $outdir/noise_spatial_calib
@@ -631,23 +668,25 @@ fi
 #cp $tempdir/pvwm_inasl.nii.gz $outdir/pvwm_inasl.nii.gz
 #fi
 
-if [ ! -z $pvexist ]; then
+if [ ! -z $pvcorr ]; then
     # copy PV masks to output directory
     #cp $tempdir/gmmask.nii.gz $outdir/gm_mask.nii.gz
     #cp $tempdir/wmmask.nii.gz $outdir/wm_mask.nii.gz
     #cp $tempdir/gmmask_pure.nii.gz $outdir/gm_roi.nii.gz
     #cp $tempdir/wmmask_pure.nii.gz $outdir/wm_roi.nii.gz
-        
-    fslmaths $tempdir/pvcorr/step2/mean_ftiss -mul $tempdir/mask  $outdir/cbf_pv_gm
-    fslmaths $tempdir/pvcorr/step2/mean_fwm -mul $tempdir/mask  $outdir/cbf_pv_wm
+    fslcpgeom $tempdir/pvcorr/step2/mean_ftiss $tempdir/sens -d
+    fslmaths $tempdir/pvcorr/step2/mean_ftiss -div  $tempdir/sens -mas $tempdir/mask  $outdir/cbf_pv_gm
+    fslmaths $tempdir/pvcorr/step2/mean_fwm -div  $tempdir/sens -mas $tempdir/mask   $outdir/cbf_pv_wm
     #fslmaths $tempdir/pvcorr/step2/noise_means -mul $tempdir/mask   $outdir/noise_pv
     fslmaths $outdir/cbf_pv_gm -add $outdir/cbf_pv_wm $outdir/cbf_pv
+    
 fi
 
 
 if [ !  -z $calibflag ]; then 
     if [ ! -z $pvexist ]; then 
-       fslcpgeom $outdir/cbf $Mo -d
+       fslcpgeom $outdir/cbf $Mo -d 
+       fslmaths $Mo -mul $tempdir/mask $Mo 
        fslmaths $outdir/cbf_pv_gm -mul 6000 -div $Mo $outdir/cbf_pv_gm_calib
        fslmaths $outdir/cbf_pv_wm -mul 6000 -div $Mo $outdir/cbf_pv_wm_calib
        #fslmaths $outdir/noise_pv -mul 6000 -div $Mo $outdir/noise_pv_gm_calib
