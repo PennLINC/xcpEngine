@@ -312,7 +312,7 @@ fi
 # will also add powers of derivatives (and powers of derivatives
 # of previous time points)!
 ###################################################################
-if (( ${confound2_past[cxt]} > 0 ))
+if (( ${confound2_past[cxt]} != 0 ))
    then
    subroutine                 @1.9  "Including ${confound2_past[cxt]} prior time point(s)"
    exec_xcp mbind.R                 \
@@ -395,8 +395,14 @@ fi
 #   time points of custom timeseries should be included as custom
 #   timeseries.
 ###################################################################
-confound2_custom_ts=${confound2_custom[cxt]//,/ }
-confound2_custom_ts=${confound2_custom[sub]//,/ }
+
+
+
+
+
+ confound2_custom_ts=${confound2_custom[sub]//,/ }
+
+ 
 nvol=$(  exec_fsl             fslnvols ${img})
 for cts  in ${confound2_custom_ts}
    do
@@ -463,7 +469,7 @@ for cts in ${confound2_custom_ts}
   
 done
 
-exec_sys                   rm -f ${nuisance_ct[cxt]oupa
+exec_sys                   rm -f ${nuisance_ct[cxt]}
 echo ${exp}                >>    ${nuisance_ct[cxt]}
 
 subroutine                    @2.1a   [Expected confounds: ${exp}]
