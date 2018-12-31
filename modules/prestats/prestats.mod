@@ -232,11 +232,11 @@ while (( ${#rem} > 0 ))
              
                output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
              
-               rm -rf /tmp/imgmask.nii.gz
+               rm -rf /tmp/imgmask.nii.gz 2>/dev/null
                exec_afni 3dresample -orient ${template_orientation} \
                -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
          
-               rm -rf /tmp/structmask.nii.gz
+               rm -rf /tmp/structmask.nii.gz  2>/dev/null
                exec_afni 3dresample -master ${referenceVolume[cxt]} \
                   -inset ${structmask}  -prefix /tmp/structmask.nii.gz
 
@@ -342,10 +342,10 @@ while (( ${#rem} > 0 ))
                             ${intermediate}_${cur}.nii.gz -n NearestNeighbor
 
                        subroutine        @  generate mask and referenceVolumeBrain 
-                       rm -rf /tmp/imgmask.nii.gz
+                       rm -rf /tmp/imgmask.nii.gz  2>/dev/null                       
                        exec_ants antsApplyTransforms -e 3 -d 3 -v  0 -i ${mask1} -o /tmp/imgmask.nii.gz \
                         -r ${referenceVolume[cxt]} -t ${mni2t1}  -n NearestNeighbor       
-                       rm -rf /tmp/structmask.nii.gz
+                       rm -rf /tmp/structmask.nii.gz  2>/dev/null
                        exec_afni 3dresample -master ${referenceVolume[cxt]} \
                           -inset ${structmask}  -prefix /tmp/structmask.nii.gz
                       exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
@@ -404,11 +404,11 @@ while (( ${#rem} > 0 ))
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                     output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                    
-                   rm -rf /tmp/imgmask.nii.gz
+                   rm -rf /tmp/imgmask.nii.gz 2>/dev/null                 
                    exec_afni 3dresample -orient ${template_orientation} \
                          -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
                    
-                   rm -rf /tmp/structmask.nii.gz
+                   rm -rf /tmp/structmask.nii.gz  2>/dev/null
                    exec_afni 3dresample -master ${referenceVolume[cxt]} \
                     -inset ${structmask} -prefix /tmp/structmask.nii.gz
 
