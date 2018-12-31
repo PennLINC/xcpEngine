@@ -226,18 +226,17 @@ while (( ${#rem} > 0 ))
                structmask=$(ls -d ${strucn}/anat/*${maskpart2})
 
                subroutine @ resampling the ref vol to template orientation
-               exec_afni 3dresample -orient ${template_orientation} 
-                   -inset ${refvol} -prefix  \
+               exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} -prefix  \
                    ${out}/prestats/${prefix}_referenceVolume.nii.gz
              
                output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
              
-               rm -rf /tmp/imgmask.nii.gz 2>/dev/null
+               rm -rf /tmp/imgmask.nii.gz
                exec_afni 3dresample -orient ${template_orientation} \
                -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
          
-               rm -rf /tmp/structmask.nii.gz  2>/dev/null
-               exec_afni 3dresample -master ${referenceVolume[cxt]} \
+               rm -rf /tmp/structmask.nii.gz
+               exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
                   -inset ${structmask}  -prefix /tmp/structmask.nii.gz
 
                exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
@@ -246,7 +245,7 @@ while (( ${#rem} > 0 ))
 
 
                exec_afni 3dresample -master ${mask[cxt]} \
-                  -inset ${segmentation[sub]}  \
+                   -inset ${segmentation[sub]}  \
                   -prefix ${out}/prestats/${prefix}_segmentation.nii.gz
 
                output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
@@ -342,10 +341,10 @@ while (( ${#rem} > 0 ))
                             ${intermediate}_${cur}.nii.gz -n NearestNeighbor
 
                        subroutine        @  generate mask and referenceVolumeBrain 
-                       rm -rf /tmp/imgmask.nii.gz  2>/dev/null                       
+                       rm -rf /tmp/imgmask.nii.gz
                        exec_ants antsApplyTransforms -e 3 -d 3 -v  0 -i ${mask1} -o /tmp/imgmask.nii.gz \
                         -r ${referenceVolume[cxt]} -t ${mni2t1}  -n NearestNeighbor       
-                       rm -rf /tmp/structmask.nii.gz  2>/dev/null
+                       rm -rf /tmp/structmask.nii.gz
                        exec_afni 3dresample -master ${referenceVolume[cxt]} \
                           -inset ${structmask}  -prefix /tmp/structmask.nii.gz
                       exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
@@ -389,11 +388,12 @@ while (( ${#rem} > 0 ))
                          -s ${spaces[sub]}
                        hd=',MapHead='${struct_head[cxt]}
                    
-                       ${XCPEDIR}/utils/spaceMetadata  \
+                       ${XCPEDIR}/utils/spaceMetadata          \
                          -o ${spaces[sub]}                 \
-                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
-                         -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
-                         -x ${pnc2mni} -i ${mnitopnc}     \
+                         -f ${standard}:${template}        \
+                         -m ${structural[sub]}:${struct[cxt]}${hd} \
+                         -x ${t12mni}                               \
+                         -i ${mni2t1}                               \
                          -s ${spaces[sub]}
                          
                        intermediate=${intermediate}_${cur}
@@ -404,11 +404,11 @@ while (( ${#rem} > 0 ))
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                     output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                    
-                   rm -rf /tmp/imgmask.nii.gz 2>/dev/null                 
+                   rm -rf /tmp/imgmask.nii.gz
                    exec_afni 3dresample -orient ${template_orientation} \
                          -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
                    
-                   rm -rf /tmp/structmask.nii.gz  2>/dev/null
+                   rm -rf /tmp/structmask.nii.gz
                    exec_afni 3dresample -master ${referenceVolume[cxt]} \
                     -inset ${structmask} -prefix /tmp/structmask.nii.gz
 
@@ -435,22 +435,24 @@ while (( ${#rem} > 0 ))
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                 rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
-                mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+
+                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                            $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
-                pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+                       
                        mnitopnc=$( echo ${mnitopnc})
                        pnc2mni=$(echo ${pnc2mni})
                        mnitopnc=${mnitopnc// /,}
                        pnc2mni=${pnc2mni// /,}
 
-                       ${XCPEDIR}/utils/spaceMetadata          \
+                       ${XCPEDIR}/utils/spaceMetadata  \
                          -o ${spaces[sub]}                 \
                          -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
-                         -x ${pnc2mni}    \                           
-                         -i ${mnitopnc}                               \
+                         -x ${pnc2mni} -i ${mnitopnc}     \
                          -s ${spaces[sub]}
+
                 hd=',MapHead='${struct_head[cxt]}
 
                ${XCPEDIR}/utils/spaceMetadata          \
