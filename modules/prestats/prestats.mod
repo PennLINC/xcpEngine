@@ -389,12 +389,11 @@ while (( ${#rem} > 0 ))
                          -s ${spaces[sub]}
                        hd=',MapHead='${struct_head[cxt]}
                    
-                       ${XCPEDIR}/utils/spaceMetadata          \
+                       ${XCPEDIR}/utils/spaceMetadata  \
                          -o ${spaces[sub]}                 \
-                         -f ${standard}:${template}        \
-                         -m ${structural[sub]}:${struct[cxt]}${hd} \
-                         -x ${t12mni}                               \
-                         -i ${mni2t1}                               \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
+                         -x ${pnc2mni} -i ${mnitopnc}     \
                          -s ${spaces[sub]}
                          
                        intermediate=${intermediate}_${cur}
