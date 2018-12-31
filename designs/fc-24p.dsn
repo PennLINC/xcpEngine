@@ -40,7 +40,7 @@ standard=MNI%2X2X2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,confound2,regress,fcon,reho,alff,roiquant,norm
+pipeline=prestats,confound2,regress,fcon,reho,alff,seed,roiquant,norm
 
 ###################################################################
 # 1 PRESTATS
@@ -138,7 +138,7 @@ seed_smo[7]=6
 seed_rerun[7]=1
 seed_cleanup[7]=1
 ###################################################################
-# 7 ROIQUANT
+# 8 ROIQUANT
 ###################################################################
 
 roiquant_atlas[8]=all
