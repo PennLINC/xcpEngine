@@ -41,13 +41,13 @@ standard=MNI%2X2X2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,confound2,regress,fcon,reho,alff,roiquant,norm
+pipeline=prestats,confound2,regress,fcon,reho,alff,seed,roiquant,norm
 
 ###################################################################
 # 1 PRESTATS
 ###################################################################
 
-prestats_rerun[1]=1
+prestats_rerun[1]=0
 prestats_cleanup[1]=1
 prestats_process[1]=FMP
 
