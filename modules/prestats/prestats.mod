@@ -237,7 +237,7 @@ while (( ${#rem} > 0 ))
                -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
          
                rm -rf /tmp/structmask.nii.gz
-               exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
+               exec_afni 3dresample -master ${referenceVolume[cxt]} \
                   -inset ${structmask}  -prefix /tmp/structmask.nii.gz
 
                exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
@@ -245,7 +245,7 @@ while (( ${#rem} > 0 ))
                 output mask  ${out}/prestats/${prefix}_mask.nii.gz
 
 
-               exec_afni 3dresample -master ${mask[cxt]}
+               exec_afni 3dresample -master ${mask[cxt]} \
                   -inset ${segmentation[sub]}  \
                   -prefix ${out}/prestats/${prefix}_segmentation.nii.gz
 
