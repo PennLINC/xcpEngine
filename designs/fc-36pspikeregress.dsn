@@ -41,20 +41,15 @@ standard=MNI%2X2X2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,confound2,regress,fcon,reho,alff,roiquant,norm
+pipeline=prestats,confound2,regress,fcon,reho,alff,seed,roiquant,norm
 
 ###################################################################
 # 1 PRESTATS
 ###################################################################
 
-prestats_fit[1]=0.3
-prestats_bbgthr[1]=0.1
-prestats_dmdt[1]=2
-prestats_1ddt[1]=1
 prestats_rerun[1]=0
 prestats_cleanup[1]=1
-prestats_process[1]=REF
-
+prestats_process[1]=FMP
 
 ###################################################################
 # 2 CONFOUND2
@@ -133,26 +128,31 @@ alff_smo[6]=6
 alff_rerun[6]=0
 alff_cleanup[6]=1
 
+###################################################################
+# 7 SEED
+###################################################################
+
+seed_lib[7]=
+seed_metric[7]=corrcoef
+seed_sptf[7]=susan
+seed_smo[7]=6
+seed_rerun[7]=1
+seed_cleanup[7]=1
 
 ###################################################################
-# 7 ROIQUANT
+# 8 ROIQUANT
 ###################################################################
 
-roiquant_atlas[7]=all
-roiquant_globals[7]=1
-roiquant_vol[7]=0
-roiquant_rerun[7]=0
-roiquant_cleanup[7]=1
+roiquant_atlas[8]=all
+roiquant_globals[8]=1
+roiquant_vol[8]=0
+roiquant_rerun[8]=0
+roiquant_cleanup[8]=1
 
 ###################################################################
 # 9 NORM
 ###################################################################
-norm_primary[8]=1
-norm_rerun[8]=0
-norm_cleanup[8]=1
-
-
-
-
-
+norm_primary[9]=1
+norm_rerun[9]=0
+norm_cleanup[9]=1
 

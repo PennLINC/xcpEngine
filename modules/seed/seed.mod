@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+ #!/usr/bin/env bash
 
 ###################################################################
 #  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
@@ -56,12 +56,14 @@ for seed in ${seeds[cxt]}
    seed=(            ${seed//\#/ } )
    seed[0]=$(        eval echo            ${seed[0]})
    define            mapdir               ${outdir}/${seed[0]}/
+   exec_sys          mkdir -p             ${mapdir[cxt]}
    define            mapbase              ${mapdir[cxt]}/${prefix}_connectivity
    define            ${seed[0]}_ts        ${mapbase[cxt]}_${seed[0]}_ts.1D
    output            ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed.nii.gz
    derivative        ${seed[0]}           ${mapbase[cxt]}_${seed[0]}
    derivative        ${seed[0]}Z          ${mapbase[cxt]}_${seed[0]}Z
    exec_sys          mkdir -p             ${mapdir[cxt]}
+        
 done
 for k in ${kernel[cxt]}
    do
@@ -162,6 +164,8 @@ for seed in ${seeds[cxt]}
    seed[0]=$(eval echo ${seed[0]})
    seed[1]=$(eval echo ${seed[1]})
    seed[2]=$(eval echo ${seed[2]})
+   seed[3]=$(eval echo ${seed[3]})
+
    sca_seed=${seed[0]}_seed'['${cxt}']'
    sca_map=${seed[0]}'['${cxt}']'
    sca_ts=${seed[0]}_ts'['${cxt}']'
@@ -196,34 +200,29 @@ for seed in ${seeds[cxt]}
       # This process is much less intuitive than it sounds,
       # largely because of the stringent orientation requirements
       # within ANTs, and it is wrapped in the warpspace function.
-      #############################################################
-      warpspace                     \
-         ${seed[1]}                 \
-         ${intermediate}_coor_${seed[0]}.sclib \
-         ${libspace}:${space[sub]}  \
-         ${seed_voxel[cxt]}
-      #############################################################
-      # Obtain the warped coordinates.
-      #############################################################
-      subroutine              @2.3.2
-      coor=$(tail -n+2 ${intermediate}_coor_${seed[0]}.sclib)
-      coor=( ${coor//\#/ } )
-      seed[1]=${coor[1]}
-      #############################################################
-      # Use the warped coordinates and radius to generate a map
-      # of the seed region.
-      #############################################################
-      subroutine              @2.3.3
-      rm -f ${intermediate}_coor_${seed[0]}.sclib
-      echo                                         \
-"SPACE::${space[sub]}
-:#ROIName#X,Y,Z#radius
-#""${seed[0]}#${seed[1]}#${seed[2]}"               \
-         >> ${intermediate}_coor_${seed[0]}.sclib
-      exec_xcp coor2map                            \
-         -i ${intermediate}_coor_${seed[0]}.sclib  \
-         -t ${referenceVolumeBrain[sub]}           \
-         -o ${!sca_seed}
+      ##############################################################  
+    echo ${seed[1]}
+    echo ${seed[2]}
+    echo ${seed[3]}
+   subroutine              @2.3.2
+       exec_xcp coor2nifti \
+           -i ${seed[1]} -t ${libspace} \
+           -r ${seed[2]} -o ${intermediate}_coor_${seed[0]}.nii.gz
+      
+  subroutine              @2.3.3
+     warpspace                    \
+         ${intermediate}_coor_${seed[0]}.nii.gz \
+         ${intermediate}_coor1_${seed[0]}.nii.gz  \
+         ${seed[3]}:${space[sub]}  \
+         NearestNeighbor
+
+    subroutine              @2.3.4
+     exec_ants  antsApplyTransforms \
+     -i ${intermediate}_coor1_${seed[0]}.nii.gz  \
+     -r ${referenceVolumeBrain[sub]} -n Linear \
+     -o ${!sca_seed}
+
+    
       ;;
    mask)
       subroutine              @2.4.1
@@ -235,9 +234,14 @@ for seed in ${seeds[cxt]}
       #############################################################
       warpspace                     \
          ${seed[1]}                 \
-         ${!sca_seed}               \
-         ${seed[2]}:${space[sub]}   \
+         ${intermediate}_coor1_${seed[0]}.nii.gz               \
+         ${seed[3]}:${space[sub]}   \
          NearestNeighbor
+
+    exec_ants  antsApplyTransforms \
+     -i ${intermediate}_coor1_${seed[0]}.nii.gz  \
+     -r ${referenceVolumeBrain[sub]} -n Linear \
+     -o ${!sca_seed}
       ;;
    esac
    ################################################################
@@ -270,7 +274,7 @@ for seed in ${seeds[cxt]}
       if ! is_image ${!sca_zmap}
          then
          subroutine           @4    SCA at smoothness ${k} mm
-         exec_sys             rm -f    ${!sca_map}
+         exec_sys             rm -f    ${sca_map}
          exec_afni            3dTcorr1D   \
             -prefix           ${!sca_map} \
             -mask             ${mask[sub]}\
