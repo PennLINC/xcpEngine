@@ -449,7 +449,7 @@ while (( ${#rem} > 0 ))
                          -o ${spaces[sub]}                 \
                          -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
-                         -x ${pnc2mni}                               
+                         -x ${pnc2mni}    \                           
                          -i ${mnitopnc}                               \
                          -s ${spaces[sub]}
                 hd=',MapHead='${struct_head[cxt]}
