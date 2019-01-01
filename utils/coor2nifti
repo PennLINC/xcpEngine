@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
+###################################################################
+
+###################################################################
+# Function for converting a seed library into a network
+###################################################################
+
+###################################################################
+# Constants
+# "orientation" is the orientation enforced by AFNI's 3dcalc
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+Usage: coor2niffti -i <input> -o <output> <options>
+`basename $0` receives an octothorpe-delimited seed index
+  as input and creates a network map image as an output.
+Compulsory arguments:
+ -i : Input cordinates 
+
+ -o : Output network
+      The path to the file where the output network will
+      be written.
+Optional arguments:
+ -r : Override radius. If this argument is passed to the
+      conversion script, then this radius will take the place
+      of any voxel radii defined in the seed library.
+ -t : Template image [default MNI 2mm]
+      The path to an image file that defines the coordinate
+      space used in the seed library.
+ -x : Trace
+      If this flag is set, then any commands called by the
+      coor2map routine will be explicitly printed to the
+      console or log.
+ -m : mm coordinates
+      If this flag is toggled, then input coordinates will be
+      treated as mm coordinates rather than voxel coordinates, and
+      the image qform and sform will be used to convert them to
+      voxel coordinates for seed generation.
+      
+endstream
+}
+
+###################################################################
+# Define defaults
+###################################################################
+mm=0
+radius_default=5
+template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "i:o:t:r:mx" OPTION
+   do
+   case $OPTION in
+   i)
+      sclib=${OPTARG}
+      ;;
+   o)
+      out=${OPTARG}
+      ;;
+   t)
+      template=${OPTARG}
+      ! is_image ${template} && Usage && exit
+      ;;
+   r)
+      radius=${OPTARG}
+      ! is+numeric ${radius} && Usage && exit
+      ;;
+   m)
+      mm=1
+      ;;
+   x)
+      set -x
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+subroutine                    @u.1
+[[ -z ${sclib} ]]    && Usage && exit
+[[ -z ${out} ]]      && Usage && exit
+[[ -z ${template} ]] && Usage && exit
+
+
+
+
+   ################################################################
+   # Parse node information
+   # node[0] : name
+   # node[1] : coordinates
+   # node[2] : radius
+   ################################################################
+   echo ${sclib} > /tmp/coor.txt
+   subroutine                 @u.4
+   coor=$(sed 's/,/ /g' /tmp/coor.txt)
+   echo $coor > /tmp/cord.1D
+   #############$################################################
+   # Determine radius: Order of precedence is:
+   #  (1) User input
+   #  (2) sclib file
+   #  (3) default value
+   ################################################################
+   
+   if [[ -z ${radius} ]]
+      then
+      subroutine            @u.6
+      radius=${radius_default}
+   fi
+  
+ 
+   ################################################################
+   # Generate a solid ellipsoid (a sphere in true physical space)
+   #  * Note that each additional node wraps the expression from
+   #    all previous nodes in a multiplier that zeroes the values
+   #    inside the new node before the new node is added. This
+   #    will result in a much slower module, but is necessary to
+   #    ensure that there is no overlap.
+   ################################################################
+   subroutine                 @u.10
+
+   3dUndump -master ${template} -srad ${radius} -prefix ${out} -xyz /tmp/cord.1D
+   
+   rm -rf /tmp/cord.1D
+   ################################################################
+   # If expressions get too long, 3dcalc does not like the input,
+   # so networks with a large number of nodes (e.g. Power 264)
+   # will need to be split into 35-node subnetworks, then
+   # aggregated in the final step
+   ################################################################
+   
