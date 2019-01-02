@@ -10,7 +10,7 @@
 
 ###################################################################
 # Constants
-# "orientation" is the orientation enforced by AFNI's 3dcalc
+# "orientation" is the orientation enforced by AFNI
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
