@@ -150,39 +150,7 @@ fi
 
 
 
-###################################################################
-# aCompCor
-###################################################################
-if (( ${confound2_acompcor[cxt]} == 1 ))
-   then
-   subroutine                 @1.4  Including  acompcor
-   
-   exec_xcp mbind.R           \
-      -x ${confmat[cxt]}      \
-      -y ${rps[cxt]}          \
-      -o ${confmat_path} 
-   
-   exec_xcp mbind.R                 \
-      -x    ${confmat[cxt]}         \
-      -y    OPdx${confound2_dx[cxt]} \
-      -o    ${confmat_path}
- 
-   
-   acompcor_path=${outdir}/${prefix}_acompcor.1D
-    exec_xcp generate_confmat.R \
-           -i ${fmriprepconf[sub]} \
-           -j aCompCor  \
-           -o ${acompcor_path}
-   
- output acompcor  ${prefix}_acompcor.1D
 
-   exec_xcp mbind.R            \
-      -x ${confmat[cxt]}       \
-      -y ${acompcor[cxt]}        \
-      -o ${confmat_path}
-   output confmat             ${prefix}_confmat.1D
-
-fi
 
 ###################################################################
 # CSF 
@@ -205,49 +173,6 @@ if (( ${confound2_csf[cxt]} == 1 ))
    output confmat             ${prefix}_confmat.1D
 fi
 
-
-###################################################################
-# aroma
-###################################################################
-if (( ${confound2_aroma[cxt]} == 1 ))
-   then
-   subroutine                 @1.6  Including aroma
-   aroma_path=${outdir}/${prefix}_aroma.1D
-    exec_xcp generate_confmat.R \
-           -i ${fmriprepconf[sub]} \
-           -j aroma  \
-           -o ${aroma_path}
-   
- output aroma ${prefix}_aroma.1D
-
-   exec_xcp mbind.R            \
-      -x ${confmat[cxt]}       \
-      -y ${aroma[cxt]}        \
-      -o ${confmat_path}
-   output confmat             ${prefix}_confmat.1D
-fi
-
-
-###################################################################
-# tCompCor
-###################################################################
-if (( ${confound2_tcompcor[cxt]} == 1 ))
-   then
-   subroutine                 @1.6  Including tcompcor
-   tcompcor_path=${outdir}/${prefix}_tcompcor.1D
-    exec_xcp generate_confmat.R \
-           -i ${fmriprepconf[sub]} \
-           -j tCompCor  \
-           -o ${tcompcor_path}
-   
- output tcompcor  ${prefix}_tcompcor.1D
-
-   exec_xcp mbind.R            \
-      -x ${confmat[cxt]}       \
-      -y ${tcompcor[cxt]}        \
-      -o ${confmat_path}
-   output confmat             ${prefix}_confmat.1D
-fi
 
 
 
@@ -381,6 +306,82 @@ fi
 
 
 
+
+
+
+###################################################################
+# aCompCor
+###################################################################
+if (( ${confound2_acompcor[cxt]} == 1 ))
+   then
+   subroutine                 @1.4  Including  acompcor
+   
+ 
+   
+   acompcor_path=${outdir}/${prefix}_acompcor.1D
+    exec_xcp generate_confmat.R \
+           -i ${fmriprepconf[sub]} \
+           -j aCompCor  \
+           -o ${acompcor_path}
+   
+ output acompcor  ${prefix}_acompcor.1D
+
+   exec_xcp mbind.R            \
+      -x ${confmat[cxt]}       \
+      -y ${acompcor[cxt]}        \
+      -o ${confmat_path}
+   output confmat             ${prefix}_confmat.1D
+
+fi
+
+
+
+###################################################################
+# aroma
+###################################################################
+if (( ${confound2_aroma[cxt]} == 1 ))
+   then
+   subroutine                 @1.6  Including aroma
+   aroma_path=${outdir}/${prefix}_aroma.1D
+    exec_xcp generate_confmat.R \
+           -i ${fmriprepconf[sub]} \
+           -j aroma  \
+           -o ${aroma_path}
+   
+ output aroma ${prefix}_aroma.1D
+
+   exec_xcp mbind.R            \
+      -x ${confmat[cxt]}       \
+      -y ${aroma[cxt]}        \
+      -o ${confmat_path}
+   output confmat             ${prefix}_confmat.1D
+fi
+
+
+###################################################################
+# tCompCor
+###################################################################
+if (( ${confound2_tcompcor[cxt]} == 1 ))
+   then
+   subroutine                 @1.6  Including tcompcor
+   tcompcor_path=${outdir}/${prefix}_tcompcor.1D
+    exec_xcp generate_confmat.R \
+           -i ${fmriprepconf[sub]} \
+           -j tCompCor  \
+           -o ${tcompcor_path}
+   
+ output tcompcor  ${prefix}_tcompcor.1D
+
+   exec_xcp mbind.R            \
+      -x ${confmat[cxt]}       \
+      -y ${tcompcor[cxt]}        \
+      -o ${confmat_path}
+   output confmat             ${prefix}_confmat.1D
+fi
+
+
+
+
 ###################################################################
 # CUSTOM TIMESERIES
 # * If none are specified, skip over this section.
@@ -449,30 +450,12 @@ routine                       @2    Validating confound model
 ###################################################################
 read -ra    obs      < ${confmat[cxt]}
 obs=${#obs[@]}
-exp=0
-(( ${confound2_rps[cxt]}  == 1  )) && exp=$(( ${exp} + 6 ))
-(( ${confound2_rms[cxt]} == 1   )) && exp=$(( ${exp} + 1 ))
-[[ ${confound2_wm[cxt]}  == 1  ]] && exp=$(( ${exp} + 1 ))
-[[ ${confound2_csf[cxt]} == 1  ]] && exp=$(( ${exp} + 1 ))
-[[ ${confound2_gsr[cxt]} == 1  ]] && exp=$(( ${exp} + 1 ))
 
-(( ${confound2_sq[cxt]} == 0 )) && confound2_sq[cxt]=1
-past=$((    ${confound2_past[cxt]}      + 1 ))
-dx=$((      ${confound2_dx[cxt]}        + 1 ))
-exp=$((     ${exp} * ${past} * ${dx}   * ${confound2_sq[cxt]} ))
-exp=$((     ${exp} + ${confound2_acompcor[cxt]} ))
-
-for cts in ${confound2_custom_ts}
-   do
-   read     -ra ctsn       < ${cts}
-   exp=$((  ${exp} +       ${#ctsn[@]} ))
-  
-done
 
 exec_sys                   rm -f ${nuisance_ct[cxt]}
-echo ${exp}                >>    ${nuisance_ct[cxt]}
+echo ${obs}                >>    ${nuisance_ct[cxt]}
 
-subroutine                    @2.1a   [Expected confounds: ${exp}]
+subroutine                    @2.1a  
 
 
 routine_end
