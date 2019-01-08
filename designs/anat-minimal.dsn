@@ -60,7 +60,7 @@ struc_quick[1]=0
 struc_seg_priors[1]=0
 struc_rerun[1]=0
 struc_cleanup[1]=1
-struc_process[1]=BFC-ABE-REG-SEG
+struc_process[1]=ACT
 
 ###################################################################
 # 2 QCANAT
