@@ -112,6 +112,7 @@ subroutine                    @0.1
 ###################################################################
 # Parse the control sequence to determine what routine to run next.
 # Available routines include:
+#  * DMT: demean and detrend time series
 #  * DSP: despike time series
 #  * TMP: temporal filter
 #  * REG: apply the final censor and execute the regression
