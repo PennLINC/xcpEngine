@@ -33,7 +33,7 @@ update_networks() {
 }
 
 completion() {
-   write_atlas
+   #write_atlas
    
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -152,12 +152,14 @@ for net in ${atlas_names[@]}
    # If the network map has already been computed in this space,
    # then move on to the next stage.
    ################################################################
-   if is_image ${nodemap[cxt]} \
+  
+  if is_image ${nodemap[cxt]} \
    && ! rerun
       then
       subroutine              @1.2.1
       a[Type]=done
    fi
+
    mkdir -p ${fcdir[cxt]}
    case  ${a[Type]} in
    Map)
@@ -166,7 +168,6 @@ for net in ${atlas_names[@]}
       # Ensure that the network has more than one node, then map
       # it into the analyte space.
       #############################################################
-      rm -f ${nodemap[cxt]}
       range=( $(exec_fsl fslstats ${a[Map]} -R) )
       if (( $(arithmetic ${range[1]}\<=1) == 1 ))
          then
