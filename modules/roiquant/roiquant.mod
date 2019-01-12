@@ -96,15 +96,17 @@ if (( ${roiquant_globals[cxt]} == 1 ))
    then
    atlas             global
    atlas             segmentation
+    
    
    t_classes=(  $(exec_fsl fslstats \
       ${segmentation[sub]} -R) )
    t_classes=${t_classes[1]//.*/}
    (( t_classes == 6 )) && seg=segmentation6
    (( t_classes == 3 )) && seg=segmentation3
+
    
    atlas_set         segmentation Map        ${segmentation[sub]}
-   atlas_set         segmentation Space      ${structural[sub]}
+   atlas_set         segmentation Space      ${space[sub]}
    atlas_set         segmentation Type       Map
    atlas_set         segmentation NodeIndex  ${BRAINATLAS}/${seg}/${seg}NodeIndex.1D
    atlas_set         segmentation NodeNames  ${BRAINATLAS}/${seg}/${seg}NodeNames.txt
@@ -157,9 +159,10 @@ for map in ${atlas_names[@]}
    # If the network map has already been computed in this space,
    # then move on to the next stage.
    ################################################################
+  
    if is_image ${nodemap[cxt]} \
    && ! rerun
-      then
+     then
       subroutine              @1.2.1
       a[Type]=done
    fi
@@ -171,7 +174,6 @@ for map in ${atlas_names[@]}
       # Ensure that the network has more than one node, then map
       # it into the analyte space.
       #############################################################
-      rm -f ${nodemap[cxt]}
       import_image              a[Map]   ${intermediate}-${a[Name]}.nii.gz
       warpspace               ${a[Map]}                  \
                               ${nodemap[cxt]}            \
