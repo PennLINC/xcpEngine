@@ -9,11 +9,12 @@ RUN bash -c 'cd / \
     && unzip master.zip \
     && rm master.zip'
 
+
 RUN bash -c \
     'cd  /xcpEngine-master \
-    && wget -nv https://www.dropbox.com/s/92i491mrtslb56i/space.tar.xz \
-    && tar xvfJm space.tar.xz \
-    && rm space.tar.xz'
+    && wget -nv https://upenn.box.com/shared/static/i30llenk6s37kv8nkqxgulwylaxp928g.xz \
+    && tar xvfJm i30llenk6s37kv8nkqxgulwylaxp928g.xz \
+    && rm i30llenk6s37kv8nkqxgulwylaxp928g.xz'
 
 
 RUN bash -c 'BRAINATLAS=/xcpEngine-master/atlas BRAINSPACE=/xcpEngine-master/space XCPEDIR=/xcpEngine-master FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-2.2.0 /xcpEngine-master/xcpReset \
