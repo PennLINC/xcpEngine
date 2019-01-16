@@ -1,3 +1,6 @@
 .DS_Store
 *.simg
 *.wpr
+space/
+space.tar.xz
+_build/
