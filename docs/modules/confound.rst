@@ -10,7 +10,7 @@ regression/residualisation procedure is managed separately in the ``regress`` mo
 types of artefact can be modelled: physiological sources, including white matter and CSF signals;
 global signal; realignment parameters; and signals derived from principal component analysis (PCA,
 CompCor). Derivatives and squares can also be added to the confound model, as can signal during
-prior time points.
+prior time points.  
 
 If you wish to include confounds based on segmentation of T1-weighted tissue (including WM- and
 CSF-based signals), you must run ``coreg`` first.
@@ -71,16 +71,18 @@ recommended; this is an uncommon denoising strategy and is not likely to be effe
 ``confound_gm``, ``confound_wm``, and ``confound_csf``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*Tissue-based nuisance regressors.*
+*Tissue-based nuisance regressors, including aCompCor.*
 
 Tissue-based nuisance regressors are capable of reducing the influence of subject movement (as well
 as physiological artefacts) on the data. Mean white matter and cerebrospinal fluid signal are most
 often used to this end (e.g., Windischberger et al., 2002; Satterthwaite et al., 2012), but
 principal component analysis can also be used to extract signals of no interest from anatomical
-compartments (Behzadi et al., 2007: aCompCor). This approach requires a known segmentation of the
+compartments (Behzadi et al., 2007: aCompCor).  The number of aCompCor components removed can either 
+be specified as a fixed number, or by the percent variance explained (usually this is 50%  as in
+Muschelli et al., 2014.)  This approach requires a known segmentation of the
 anatomical image into tissue classes. If you provided an output directory from the ANTsCT routine
 or the anatomical stream, then a segmentation will automatically be available as the derivative
-``segmentation``.::
+``segmentation``. 
 
   # Do not use any white matter signals
   confound_wm[cxt]=0
