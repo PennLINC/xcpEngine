@@ -88,7 +88,7 @@ or the anatomical stream, then a segmentation will automatically be available as
   confound_wm[cxt]=0
 
   # Use the mean white matter signal
-  confound_wm[cxt]=mean
+  confound_wm[cxt]=1
 
   # Use the first 5 principal components from white matter (aCompCor)
   confound_wm[cxt]=5
@@ -125,7 +125,7 @@ binary-valued white matter mask, then enter ``ALL``. To enter a range of values,
   confound_wm_path=${segmentation[sub]}
 
   # Use the mean CSF signal. Use the pipeline segmentation for CSF. 1=CSF in the provided CSF segmentation path.
-  confound_csf[cxt]=mean
+  confound_csf[cxt]=1
   confound_csf_path[cxt]=${segmentation[sub]}
   confound_csf_val[cxt]=1
 
