@@ -9,6 +9,8 @@ pipeline. Each module either (a) processes the main brain image (the *analyte*),
 filtering or denoising it, or (b) uses the analyte to produce another dataset, called a
 *derivative*. (It’s also possible for modules to use derivatives to produce further derivatives).
 
+:ref:`prestats`
+
 Functional image processing
 ---------------------------
 
