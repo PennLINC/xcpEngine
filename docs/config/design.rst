@@ -49,7 +49,7 @@ Each design file includes a set of variables that are accessible at all stages o
   analysis=accelerator_$(whoami)
   design=${XCPEDIR}/designs/fc-36P.dsn
   sequence=fc-rest
-  standard=MNI%2x2x2_via_PNC%2x2x2
+  standard=MNI%1x1x1
 
 
 Pipeline definitions
