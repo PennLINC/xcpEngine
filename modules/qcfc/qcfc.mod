@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###################################################################
-#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
 
 ###################################################################
@@ -224,20 +224,20 @@ for v in "${!qvars[@]}"
 done
 tDOF=0
 exec_sys rm -f ${t_dof[cxt]}
-if [[ -n ${q[nNuisanceParameters]}  ]]
+if [[ -n ${q[nNuisanceParameters[sub]]}  ]]
    then
-   subroutine                 @4.1  ${q[nNuisanceParameters]} nuisance parameters regressed
-   tDOF=$(( ${tDOF}           +     ${q[nNuisanceParameters]}  ))
+   subroutine                 @4.1  ${q[nNuisanceParameters[sub]]} nuisance parameters regressed
+   tDOF=`expr ${tDOF}  + ${q[nNuisanceParameters[sub]]}`
 fi
-if [[ -n ${q[nICsNoise]}            ]]
+if [[ -n ${q[nICsNoise[sub]]}            ]]
    then
-   subroutine                 @4.2  ${q[nICsNoise]} IC time series flagged as noise
-   tDOF=$(( ${tDOF}           +     ${q[nICsNoise]}            ))
+   subroutine                 @4.2  ${q[nICsNoise[sub]]} IC time series flagged as noise
+   tDOF=`expr ${tDOF}   + ${q[nICsNoise[sub]]}`       
 fi
-if [[ -n ${q[nVolCensored]}         ]]
+if [[ -n ${q[nVolCensored[sub]]}         ]]
    then
-   subroutine                 @4.3  ${q[nVolCensored]} volumes censored
-   tDOF=$(( ${tDOF}           +     ${q[nVolCensored]}         ))
+   subroutine                 @4.3  ${q[nVolCensored[sub]]} volumes censored
+     tDOF=`expr ${tDOF} + ${q[nVolCensored[sub]]}` 
 fi
 subroutine                    @4.4  Total lost tDOF: ${tDOF}
 echo ${tDOF}                  >>    ${t_dof[cxt]}
@@ -255,8 +255,8 @@ if ! is_1D ${dvars_post[cxt]} \
    then
    routine                       @5    Estimating post-processing DVARS
    subroutine                    @5.1  [Computing DVARS]
-   warpspace   ${meanIntensityBrain[sub]}                \
-               ${intermediate}-meanIntensityBrain.nii.gz \
+   warpspace   ${referenceVolumeBrain[sub]}                \
+               ${intermediate}-referenceVolumeBrain.nii.gz \
                ${space[sub]}:${dn_space[cxt]}
    (( ${demeaned[sub]} == 1 )) && dm="-d 1"
    exec_xcp dvars                \
@@ -264,7 +264,7 @@ if ! is_1D ${dvars_post[cxt]} \
       -o    ${dvars_root[cxt]}   \
       -s    ${intermediate}      \
       ${dm}                      \
-      -b    ${intermediate}-meanIntensityBrain.nii.gz
+      -b    ${intermediate}-referenceVolumeBrain.nii.gz
    subroutine                    @5.2  Correlating DVARS against movement
    exec_xcp featureCorrelation.R -i "${dvars_post[cxt]},${rel_rms[sub]}" \
                                  >>  ${dv_mo_cor_post[cxt]}
