@@ -8,12 +8,13 @@ xcpEngine Docker/Singularity image.
 
 .. _singularity:
 
-test:
+test::
 
   test indent
  
 ``test two``
-```test three``
+
+```test three```
 
 Using xcpEngine with singularity
 ---------------------------------
@@ -31,7 +32,7 @@ is a ``/data`` directory that is shared across your cluster as
 an nfs mount. All your data is stored in ``/data/study`` and
 you have a cohort file and design file there. When running the
 container, these will be seen as existing relative to the
-bind point. This means they need to be specified like so.
+bind point. This means they need to be specified like so.::
 
   $ singularity run \
       -B /data:/home/user/data \
