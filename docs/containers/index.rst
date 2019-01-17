@@ -8,6 +8,8 @@ xcpEngine Docker/Singularity image.
 
 .. _singularity:
 
+  test test
+
 Using xcpEngine with singularity
 ---------------------------------
 
