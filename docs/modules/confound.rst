@@ -184,10 +184,10 @@ effects of motion, which may persist for upwards of 10 seconds following motion 
 
 Note: Do not include both previous time points (``confound2_past``) and temporal derivatives
 (``confound2_dx``) in the same model. Together with the original time series, they form a collinear
-triple, which will result in an overspecified model. That is to say, for a time series T, its
-temporal derivative D, and previous/shifted time series P,
+triple, which will result in an overspecified model. That is to say, for a time series :math:`T`, its
+temporal derivative :math:`D`, and previous/shifted time series :math:`P`,
 
-D + P = T
+:math:`D + P = T`
 
 ``confound2_dx``
 ^^^^^^^^^^^^^^^^^
@@ -209,10 +209,10 @@ al., 2012). ``confound2_dx`` must be a nonnegative integer.::
 
 Note: Do not include both previous time points (``confound2_past``) and temporal derivatives
 (``confound2_dx``) in the same model. Together with the original time series, they form a collinear
-triple, which will result in an overspecified model. That is to say, for a time series T, its
-temporal derivative D, and previous/shifted time series P,
+triple, which will result in an overspecified model. That is to say, for a time series :math:`T`, its
+temporal derivative :math:`D`, and previous/shifted time series :math:`P`,
 
-D + P = T
+:math:`D + P = T`
 
 ``confound2_sq``
 ^^^^^^^^^^^^^^^^^
