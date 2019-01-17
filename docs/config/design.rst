@@ -47,7 +47,7 @@ Analysis variables
 Each design file includes a set of variables that are accessible at all stages of the pipeline.::
 
   analysis=accelerator_$(whoami)
-  design=${XCPEDIR}/designs/fc-36P.dsn
+  design=${XCPEDIR}/designs/fc-36p.dsn
   sequence=fc-rest
   standard=MNI%1x1x1
 
