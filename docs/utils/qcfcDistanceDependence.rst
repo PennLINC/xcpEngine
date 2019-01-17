@@ -1,4 +1,4 @@
-.. _qcfc:
+.. _qcfcDistanceDependence:
 
 `qcfcDistanceDependence`
 ========================
