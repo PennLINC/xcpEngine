@@ -3,11 +3,13 @@
 QCFC
 ======
 
-_Quality control for functional connectivity._
+Quality control for functional connectivity.
+
 
 `qcfc` computes, for each edge in the connectome, the partial correlation (across subjects) of motion with the strength of that edge, after controlling for the effects of any user-provided covariates. `qcfc` is currently written as an R script (`utils/qcfc.R`). It requires as input a sample matrix containing motion estimates for each subject
 
-### Output
+Output
+------
 
 The root output path, `<output root>`, is specified as the argument to the `-o` option. Outputs of `qcfc` include:
 
@@ -17,7 +19,8 @@ The root output path, `<output root>`, is specified as the argument to the `-o` 
  * `<output root>_nSigEdges.txt`, `<out>_pctSigEdges.txt`: (if `-q` is `true`) The number and percentage of edges with significant QC-FC correlations.
  * `<output root>.svg`: (if `-f` is `true`) A visualisation of the QC-FC distribution).
 
-### Input arguments
+Input arguments
+---------------
 
 ```
 ${XCPEDIR}/utils/qcfc.R –c <cohort> -o <output root> [-s <multiple comparisons correction> -t <significance threshold> -n <confound> -y <conformula>]
@@ -38,19 +41,24 @@ DSQ,001,0.1532,processedData/DSQ_001_fc/connectome.txt
 CAT,001,0.0811,processedData/CAT_001_fc/connectome.txt
 ```
 
-#### `-s`: Correction for multiple comparisons
+`-s`: Correction for multiple comparisons
+-----------------------------------------
 
 _Default value: `fdr`_
 
 The type of correction for multiple comparisons can be specified as `fdr`, `bonferroni`, or `none`. When evaluating only a few subjects, it may be more diagnostically informative to disable multiple comparisons correction (`-s none`).
 
-#### `-t`: Alpha significance threshold
+`-t`: Alpha significance threshold
+-----------------------------------
+
 
 _Default value: `0.05`_
 
 The maximal p-value threshold necessary to establish a QC-FC relationship as significant can be specified as an argument to the `-t` option.
 
-#### `-n` and `-y`: Confound matrix and formula
+`-n` and `-y`: Confound matrix and formula
+-------------------------------------------
+
 
 The values of any model covariates that motion effects might alias (such as age and sex) should be included in another file containing the same subject identifiers as the subject list (argument to `-s`). The file containing model covariates should be provided as an argument to the `-n` option, and the formula for the model should be provided as an argument to the `-y` option, with any categorical variables specified as factors (see example below). (If the user wishes to obtain only the direct correlation between motion and functional connectivity, then no formula or covariates file is necessary.)
 
@@ -77,21 +85,28 @@ Note that sex, treated as a categorical variable in this toy example, is specifi
 age+factor(sex)+(1|id0)
 ```
 
-#### `-o`: Output root
+`-o`: Output root
+-----------------
+
 
 A prefix that points to a valid directory, where all outputs will be written after they are computed.
 
-#### `-d`: Data root path
+`-d`: Data root path
+--------------------
 
 It is sometimes desirable to define paths relative to some root directory instead of as absolute paths in order to facilitate data sharing and reproduction of results. If the paths in the `connectivity` column of the subject list (argument to `-s`) are defined in a relative manner, the root path relative to which they are defined should be provided as the argument to the `-d` option.
 
-#### `-r`: Save thresholded matrix
+`-r`: Save thresholded matrix
+-----------------------------
+
 
 _Default value: `true`_
 
 A logical-valued option indicating whether `qcfc` should save the QC-FC matrix thresholded to include only significant edges. This matrix can, for instance, be used to visualise only significant edges using a tool such as BrainNetViewer.
 
-#### `-q`: Save QC-FC summary indices
+`-q`: Save QC-FC summary indices
+--------------------------------
+
 
 _Default value: `true`_
 
