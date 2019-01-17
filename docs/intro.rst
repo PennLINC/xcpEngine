@@ -3,8 +3,8 @@ XCP Imaging Pipeline
 ====================
 
 The XCP imaging pipeline (XCP system) is a free, open-source software package for processing of
-multimodal neuroimages. The XCP system uses a [modular design](%%BASEURL/modules/index.html) to
-deploy analytic routines from leading MRI analysis platforms, including FSL, AFNI, and ANTs.
+multimodal neuroimages. The XCP system uses a modular design to deploy analytic routines from 
+leading MRI analysis platforms, including FSL, AFNI, and ANTs.
 
 The XCP system is designed to run in the Linux bash shell or from a Docker or Singularity image. We
 strongly recommend using Docker or Singularity. Users provide XCP Engine with the output from
@@ -17,7 +17,9 @@ Useful Features
 ----------------
 
 XCP Engine provides tools to take ``FMRIPREP`` output and perform the next steps required for many
-functional connectivity and structural analyses.
+functional connectivity and structural analyses.  FMRIPREP is *required* for initial preprocessing 
+of fMRI data; XCP performs denoising and computes additional derivatives used for analyses.  For
+structural processing, either FMRIPREP or the dedicated ``struct`` module in XCP can be used.
 
 Neuroimage processing
 ---------------------
@@ -39,7 +41,7 @@ voxelwise comparison.
 
 It encompasses denoising, filtering, registration, and production of any subject-level derivative
 maps (for instance, seed-based connectivity maps or task contrasts). Processing includes production
-of summary measures on both a voxelwise and ROI-wise basis. Notably, processing does not include
+of summary measures on both a voxelwise and ROI-wise basis. Notably, processing in XCP does not include
 group-level statistical analysis.
 
 Processing pipelines
@@ -78,15 +80,15 @@ Features
 The XCP system aims to provide a multimodal library of common processing routines that will improve
 scientific reproducibility. Features include:
 
+ * Compatability with ``FMRIPREP``
  * Standardized output directory structure and naming conventions
  * Systematized quality control variables computed and collated for each analysis
    (for easy identification of motion and registration outliers)
  * Region-wise quantification of any voxelwise derivative map for any number of parcellation
    schemes or regions of interest
  * Easy addition of new regions of interest, node systems, or parcellation schemes
- * *Ad hoc* generation of spherical ROI maps and node systems
  * Analyses either in standard/atlas or subject/native space
- * Registration of images of any modality to a common template
+
 
 .. figure:: _static/directoryStructure.png
     :scale: 100%
