@@ -9,7 +9,6 @@ pipeline. Each module either (a) processes the main brain image (the *analyte*),
 filtering or denoising it, or (b) uses the analyte to produce another dataset, called a
 *derivative*. (It’s also possible for modules to use derivatives to produce further derivatives).
 
-:ref:`prestats`
 
 Functional image processing
 ---------------------------
@@ -39,7 +38,7 @@ Modules that generate derivative maps from functional data.
 Anatomical image processing
 ----------------------------
 
-Modules that process the analyte for anatomical data.
+Modules that process the analyte for anatomical data. Note that anatomical imaging processing using the `struct` module is *NOT* required unless desired, anatomic processing completed as part of fMRIPREP can be used instead.
 
  * :ref:`struc`: Omnibus module for volumetric anatomical preprocessing. Leverages ANTs to execute
    N4 bias field correction, SyN diffeomorphic registration, Atropos segmentation (prior-driven or
