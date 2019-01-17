@@ -234,18 +234,18 @@ while (( ${#rem} > 0 ))
              
                output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
              
-               rm -rf /tmp/imgmask.nii.gz
-               exec_afni 3dresample -orient ${template_orientation} \
-               -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
-         
-               rm -rf /tmp/structmask.nii.gz
-               exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
-                  -inset ${structmask}  -prefix /tmp/structmask.nii.gz
 
-               exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
+               exec_afni 3dresample -orient ${template_orientation} \
+               -inset ${mask1} -prefix ${prefix}_imgmask.nii.gz
+
+               exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
+                  -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz
+
+               exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
                 output mask  ${out}/prestats/${prefix}_mask.nii.gz
-
+                rm ${prefix}_structmask.nii.gz
+                rm ${prefix}_imgmask.nii.gz
 
                exec_afni 3dresample -master ${mask[cxt]} \
                    -inset ${segmentation[sub]}  \
@@ -345,16 +345,15 @@ while (( ${#rem} > 0 ))
 
                        subroutine        @  generate mask and referenceVolumeBrain 
                      
-                              
-                       rm -rf /tmp/structmask.nii.gz
-                       exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                          -inset ${structmask}  -prefix /tmp/structmask.nii.gz
 
-                      exec_fsl fslmaths ${mask1} -mul /tmp/structmask.nii.gz \
+                       exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                          -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz
+
+                      exec_fsl fslmaths ${mask1} -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
 
                       output mask  ${out}/prestats/${prefix}_mask.nii.gz
-
+                      rm ${prefix}_structmask.nii.gz
 
                       exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
@@ -407,17 +406,17 @@ while (( ${#rem} > 0 ))
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                     output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                    
-                   rm -rf /tmp/imgmask.nii.gz
+
                    exec_afni 3dresample -orient ${template_orientation} \
-                         -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
+                    -inset ${mask1} -prefix  ${prefix}_imgmask.nii.gz
                    
-                   rm -rf /tmp/structmask.nii.gz
+
                    exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                    -inset ${structmask} -prefix /tmp/structmask.nii.gz
+                     -inset ${structmask} -prefix ${prefix}_structmask.nii.gz
 
-                   exec_fsl fslmaths  /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz ${out}/prestats/${prefix}_mask.nii.gz
+                   exec_fsl fslmaths  ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz ${out}/prestats/${prefix}_mask.nii.gz
                    output mask  ${out}/prestats/${prefix}_mask.nii.gz
-
+                    rm ${prefix}_structmask.nii.gz ${prefix}_imgmask.nii.gz
 
                   exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${segmentation1}   \
                          -prefix ${out}/prestats/${prefix}_segmentation.nii.gz
