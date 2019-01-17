@@ -8,11 +8,10 @@ documented utilities.
 
 Denoising and data quality
 --------------------------
- * :ref:`qcfc` 
- * [qcfc](%%BASEURL/utils/qcfc.html)
- * [qcfcDistanceDependence](%%BASEURL/utils/qcfcDistanceDependence.html)
+ * :ref:`qcfc` : a utility for quality control measures of functional connectitivty
+ * :ref:`qcfcDistanceDependence` : a utility to determine the distance dependence of motion artifact on functinal connectivity.
 
 Image utilities: voxelwise and regional
 --------------------------
 
- * [erodespare](%%BASEURL/utils/erodespare.html)
+ * :ref:`erodespare`
