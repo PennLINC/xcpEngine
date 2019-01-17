@@ -1,6 +1,9 @@
-# `qcfcDistanceDependence`
+.. _qcfc:
 
-_Distance-dependence of QC-FC measures._
+`qcfcDistanceDependence`
+========================
+
+Distance-dependence of QC-FC measures.
 
 `qcfcDistanceDependence` computes the distance-dependence of QC-FC relationships previously estimated using `qcfc`. (Although it was designed for diagnosing the distance-dependent profile of motion artefact, `qcfcDistanceDependence` can be used to compute the distance-dependence of any edgewise measure.)
 
