@@ -18,7 +18,7 @@ Modules that process the analyte for functional data.
  * :ref:`prestats`: Formerly an omnibus module for functional
    preprocessing. Its functionality is largely implemented in ``FMRIPREP`` and additional
    functions have been moved to other modules.
- * :ref:`confound`: Generates a matrix of nuisance time series for confound regression. Supports
+ * :ref:`confound2`: Generates a matrix of nuisance time series for confound regression. Supports
    most frequently used denoising models, including realignment parameters, tissue-based time
    series, PCA-derived time series, the global signal, and temporal expansions.
  * :ref:`regress`: Executes confound regression using the matrix
@@ -94,8 +94,7 @@ Modules that produce estimates of data quality.
  * :ref:`qcfc`: Quality assessment for functional connectivity. Generates voxelwise plots, QC-FC
    measures, and QC-FC estimates of distance-dependence to facilitate diagnosis of motion-related
    contamination and assessment of denoising efficacy.
- * :ref:`qcanat` : \[UNSUPPORTED\] Quality assessment for anatomical
-   images inspired by QAP.
+ * :ref:`qcanat` : *UNSUPPORTED* Quality assessment for anatomical images inspired by QAP.
 
 Quick Lookup
 --------------
