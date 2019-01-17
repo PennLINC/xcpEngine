@@ -3,14 +3,15 @@
 ``confound2``
 ======================================
 
-``confound2`` models artefactual signals present in a 4D time series image. The confound model
-created by this module can be used to mitigate effects of subject motion and other artefactual
-processes by residualising the 4D image with respect to the confound model. (The
-regression/residualisation procedure is managed separately in the ``regress`` module.) Several
-types of artefact can be modelled: physiological sources, including white matter and CSF signals;
+``confound2`` models artifactual signals present in a 4D time series image. The confound model
+created by this module can be used to mitigate effects of subject motion and other artifactual
+processes by residualizing the 4D image with respect to the confound model. (The
+regression/residualization procedure is managed separately in the ``regress`` module.) Several
+types of artifact can be modeled: physiological sources, including white matter and CSF signals;
 global signal; realignment parameters; and signals derived from principal component analysis (PCA,
 CompCor). Derivatives and squares can also be added to the confound model, as can signal during
-prior time points.  
+prior time points. It is a rewrite of the original ``confound`` module to use outputs from
+``FMRIPREP``.
 
 If you wish to include confounds based on segmentation of T1-weighted tissue (including WM- and
 CSF-based signals), you must run ``coreg`` first.
@@ -35,27 +36,27 @@ confound models.
 Module configuration
 ----------------------
 
-``confound_rp``
+``confound2_rps``
 ^^^^^^^^^^^^^^^^^
 
-*Realignment parameters.*
+*Realignment parameters*
 
 Early models that attempted to correct for the introduction of spurious variance by the movement of
 subjects in the scanner did so by regressing out the 6 parameters (3 translational, 3 rotational)
 used to realign each volume in the time series to a reference volume. Later work has demonstrated
-that a model consisting of realignment parameters alone is ineffective at removing motion artefact
+that a model consisting of realignment parameters alone is ineffective at removing motion artifact
 from functional MR time series.::
 
   # Use realignment parameters
-  confound_rp[cxt]=1
+  confound2_rps[cxt]=1
 
   # No realignment parameters
-  confound_rp[cxt]=0
+  confound2_rps[cxt]=0
 
-``confound_rms``
+``confound2_rms``
 ^^^^^^^^^^^^^^^^^
 
-*Relative RMS displacement*
+*Relative RMS displacement.*
 
 The relative root-mean-square displacement is estimated by FSL's MCFLIRT. This is equivalent to the
 Jenkinson formulation of framewise displacement and is approximately double the Power formulation
@@ -63,12 +64,12 @@ of framewise displacement. Using the relative RMS displacement as a confound tim
 recommended; this is an uncommon denoising strategy and is not likely to be effective.::
 
   # Use RMS displacement
-  confound_rms[cxt]=1
+  confound2_rms[cxt]=1
 
   # No RMS displacement
-  confound_rms[cxt]=0
+  confound2_rms[cxt]=0
 
-``confound_gm``, ``confound_wm``, and ``confound_csf``
+``confound2_wm``, and ``confound2_csf``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *Tissue-based nuisance regressors, including aCompCor.*
@@ -77,37 +78,25 @@ Tissue-based nuisance regressors are capable of reducing the influence of subjec
 as physiological artefacts) on the data. Mean white matter and cerebrospinal fluid signal are most
 often used to this end (e.g., Windischberger et al., 2002; Satterthwaite et al., 2012), but
 principal component analysis can also be used to extract signals of no interest from anatomical
-compartments (Behzadi et al., 2007: aCompCor).  The number of aCompCor components removed can either 
+compartments (Behzadi et al., 2007: aCompCor).  The number of aCompCor components removed can either
 be specified as a fixed number, or by the percent variance explained (usually this is 50%  as in
 Muschelli et al., 2014.)  This approach requires a known segmentation of the
 anatomical image into tissue classes. If you provided an output directory from the ANTsCT routine
 or the anatomical stream, then a segmentation will automatically be available as the derivative
-``segmentation``. 
+``segmentation``.::
 
   # Do not use any white matter signals
-  confound_wm[cxt]=0
+  confound2_wm[cxt]=0
 
   # Use the mean white matter signal
-  confound_wm[cxt]=1
+  confound2_wm[cxt]=1
 
-  # Use the first 5 principal components from white matter (aCompCor)
-  confound_wm[cxt]=5
-
-  # Use the first n principal components, where n components are sufficient to explain 50 percent of variance in the white matter
-  confound_wm[cxt]=0.5
 
 Interpreting
+~~~~~~~~~~~~~~
 
- * ``mean`` indicates that the mean time series over all voxels inside the tissue boundaries
+ * ``1`` indicates that the mean time series over all voxels inside the tissue boundaries
    should be used in the confound model.
- * A positive numeric value indicates that principal component analysis (PCA) over all voxels
-   inside the tissue boundaries should be used to obtain nuisance time series.
- * If the value is an integer *n*, then the first *n* component time series will be added to the
-   nuisance model.
- * If the value is a fractional value *k* between 0 and 1, then the first *n* component time
-   series will be added to the nuisance model, where *n* is the minimum number of components
-   necessary to explain *k* of the variance in the signal within the component boundaries. For
-   instance, *k* of ``0.5`` corresponds to 50 percent variance explained.
 
 Use of tissue-based nuisance regressors requires a known segmentation of the anatomical image into
 tissue classes. If you provided an output directory from the ANTsCT routine or the anatomical
