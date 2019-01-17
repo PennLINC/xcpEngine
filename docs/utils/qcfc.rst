@@ -1,4 +1,7 @@
-# `qcfc`
+.. _qcfc:
+
+QCFC
+======
 
 _Quality control for functional connectivity._
 
