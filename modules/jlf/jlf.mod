@@ -136,6 +136,7 @@ if ! is_image ${labels[cxt]} \
       -t       ${img}                  \
       -o       ${outdir}/${prefix}_    \
       -c       ${jlf_parallel[cxt]}    \
+      -x       or \
       ${jlfReg}
 
    routine_end
