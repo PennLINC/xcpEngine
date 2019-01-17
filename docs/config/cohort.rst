@@ -73,13 +73,16 @@ with::
 
 This is particularly useful for using directories mounted in Singularity.
 
-Anatomical processing
-~~~~~~~~~~~~~~~~~~~~~~
+Anatomical processing: Already done by ``FMRIPREP``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For anatomical processing, the cohort file is quite minimal: only the subject's anatomical image is
-required in addition to the set of identifiers. The subject's anatomical image should receive the
-header ``img``. **Anatomical processing must occur after ``FMRIPREP`` and before functional
-processing**.::
+If you aren't interested in getting structural measurements (volume, etc) or using a custom
+template, you can skip this step entirely and go to :ref:`functionalprocessing`. However, if you
+want to use a custom template you'll need to make sure to have ``T1w`` in your ``--output-spaces``
+list when you run ``FMRIPREP``. For anatomical processing, the cohort file is quite minimal: only
+the subject's anatomical image is required in addition to the set of identifiers. The subject's
+anatomical image should receive the header ``img``. **Anatomical processing must occur after
+``FMRIPREP`` and before functional processing**.::
 
   id0,id1,img
   sub-01,ses-01,sub-01/ses-01/anat/sub-01_ses-01_desc-preproc_T1w.nii.gz
@@ -87,17 +90,32 @@ processing**.::
   sub-02,ses-01,sub-02/ses-01/anat/sub-02_ses-01_desc-preproc_T1w.nii.gz
   sub-03,ses-01,sub-03/ses-01/anat/sub-03_ses-01_desc-preproc_T1w.nii.gz
 
+Again, the structural pipeline *is not necessary to run the functional pipeline* in most cases.
 
-There are some important differences in what analyses can be run depending on whether you specify
-an MNI-normalized structural image or a native space T1w image.
+.. _functionalprocessing:
 
 Functional processing
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+*Directly using preprocessed BOLD data from ``FMRIPREP``*
+
+To operate directly on the output from ``FMRIPREP`` the cohort file is very simple. The subject
+identifier variables are specified, followed by the path to the output image from ``FMRIPREP``.
+These can be in any volumetric output space (``T1w``, ``template``). Here is an example::
+
+  id0,id1,img
+  sub-01,ses-01,sub-01/ses-01/func/sub-01_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz
+  sub-01,ses-02,sub-01/ses-02/func/sub-01_ses-02_task-rest_space-T1w_desc-preproc_bold.nii.gz
+  sub-02,ses-01,sub-01/ses-01/func/sub-02_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz
+  sub-03,ses-01,sub-03/ses-01/func/sub-03_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz
+
+*After running the xcp structural pipeline*
+
 There are two ways that the cohort file for the functional processing stream can be specified. In
-the case where the T1w-space output from `FMRIPREP` (requires that `--output-spaces` included `T1w`
-in your `FMRIPREP` call) was processed with the XCP anatomical stream, you need to specify the
-directory where that output exists. An example cohort file for this use case would look like::
+the case where the T1w-space output from ``FMRIPREP`` (requires that ``--output-spaces`` included
+``T1w`` in your ``FMRIPREP`` call) was processed with the XCP anatomical stream, you need to
+specify the directory where that output exists. An example cohort file for this use case would look
+like::
 
   id0,id1,img,antsct
   sub-01,ses-01,sub-01/ses-01/func/sub-01_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz,xcp_output/sub-01/ses-01/struc
@@ -105,19 +123,17 @@ directory where that output exists. An example cohort file for this use case wou
   sub-02,ses-01,sub-01/ses-01/func/sub-02_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz,xcp_output/sub-02/ses-01/struc
   sub-03,ses-01,sub-03/ses-01/func/sub-03_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz,xcp_output/sub-03/ses-01/struc
 
-
 The first line of this cohort file would process the image
 ``${DATA_ROOT}/sub-01/ses-01/func/sub-01_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz``.
-
 
 Subject variables
 ------------------
 
 Each of the columns in the cohort file becomes a *subject variable* at runtime. Subject variables
 can be used in the design_ to assign a parameter
-subject-specific values. For instance, the ``coreg_segmentation`` parameter in the :ref:`coreg`
-can be assigned the ``segmentation`` subject variable. To
+subject-specific values. For instance, to use a custom task file for a subject the ``task_design`` parameter in the :ref:`struc`
+can be assigned the ``fsf`` subject variable. To
 indicate that the assignment is a subject variable, include the array index ``[sub]`` in the
 variable's name as shown.::
 
-  coreg_segmentation[2]=${segmentation[sub]}
+  task_design[1]=${fsf[sub]}
