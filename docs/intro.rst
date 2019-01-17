@@ -10,7 +10,7 @@ The XCP system is designed to run in the Linux bash shell or from a Docker or Si
 strongly recommend using Docker or Singularity. Users provide XCP Engine with the output from
 ``FMRIPREP`` and specify parameters for the analysis that they wish to perform. XCP Engine parses
 the user-provided parameters to build and run a processing pipeline. The XCP system supports a
-number of pipeline modalities, including functional_ connectivity, volumetric anatomical_ analysis.
+number of pipeline modalities, including functional connectivity, structural processing, and task fMRI.  
 
 
 Useful Features
