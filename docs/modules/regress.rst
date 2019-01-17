@@ -175,8 +175,4 @@ hyphens (``-``).
 
  * ``REG-TMP`` instructs the module to perform confound regression prior to temporal filtering.
  * ``TMP-REG`` instructs the module to perform temporal filtering prior to confound regression. If this option is set, then both the analyte time series and all confound time series will be filtered. This option is typically preferable to ``REG-TMP`` because it determines the confound fit using only the frequencies of interest.
- * Censoring is always performed *after* both filtering and regression.::
-
-  # Regression first ('REGBP' in Hallquist et al., 2014)
-
-  # Temporal filtering first (equivalent to 'Simult' in Hallquist et al., 2014)
+ * Note that censoring is always performed *after* both filtering and regression.
