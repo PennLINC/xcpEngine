@@ -68,7 +68,7 @@ The standard benchmarking processing stream is an abbreviated version of the FC 
   pipeline=confound,regress,fcon,qcfc
 
 The complete anatomical processing stream is:::
-  
+
   pipeline=struc,jlf,gmd,cortcon,sulc,roiquant,qcanat
 
 
@@ -77,27 +77,27 @@ Module configurations
 
 In addition to the overall backbone of the processing stream, the design file includes
 specifications for each of its constituent modules. As an illustrative example, the specifications
-of the ``coreg`` module in a standard functional connectivity stream are provided here:::
+of the ``regress`` module in a standard functional connectivity stream are provided here:::
 
-  ###################################################################
-  # 2 COREG
-  ###################################################################
+  regress_tmpf[3]=butterworth
+  regress_hipass[3]=0.01
+  regress_lopass[3]=0.08
+  regress_tmpf_order[3]=1
+  regress_tmpf_pass[3]=2
+  regress_tmpf_ripple[3]=0.5
+  regress_tmpf_ripple2[3]=20
+  regress_dmdt[3]=2
+  regress_1ddt[3]=1
+  regress_smo[3]=6
+  regress_sptf[3]=susan
+  regress_usan[3]=default
+  regress_usan_space[3]=
+  regress_rerun[3]=0
+  regress_cleanup[3]=1
+  regress_process[3]=DMT-TMP-REG
 
-  coreg_reference[2]=mean
-  coreg_cfunc[2]=bbr
-  coreg_seg[2]=${segmentation[sub]}
-  coreg_wm[2]=3
-  coreg_denoise[2]=1
-  coreg_refwt[2]=NULL
-  coreg_inwt[2]=NULL
-  coreg_qacut[2]=0.8,0.9,0.7,0.8
-  coreg_decide[2]=1
-  coreg_mask[2]=0
-  coreg_rerun[2]=0
-  coreg_cleanup[2]=1
-
-Each row defines a different parameter for the ``coreg`` module (e.g., ``coreg_cfunc`` -- the cost
-function for registration) and assigns it a value (e.g., ``bbr`` -- boundary-based registration).
+Each row defines a different parameter for the ``regress`` module (e.g., ``regress_smo`` -- the
+smoothing parameter) and assigns it a value (e.g., ``6`` -- 6mm).
 When the module is executed, it processes its inputs according to the specifications in the
 pipeline design file.
 
