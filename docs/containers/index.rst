@@ -8,6 +8,8 @@ xcpEngine Docker/Singularity image.
 
 .. _singularity:
 
+test:
+
   test test
  
  ``test``
@@ -17,7 +19,7 @@ Using xcpEngine with singularity
 
 The easiest way to get started with xcpEngine on a HPC system is
 to build a Singularity image from the xcpEngine released on
-dockerhub.
+dockerhub.:
 
   $ singularity build xcpEngine.simg docker://pennbbl/xcpengine:latest
 
