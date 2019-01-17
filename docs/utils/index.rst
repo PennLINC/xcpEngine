@@ -6,11 +6,13 @@ Unlike [modules](%%BASEURL/modules) and [functions](%%BASEURL/functions), _utili
 There are many undocumented utilities if you look in the code. Listed below are the
 documented utilities.
 
-## Denoising and data quality
-
+Denoising and data quality
+--------------------------
+ * :ref:`qcfc` 
  * [qcfc](%%BASEURL/utils/qcfc.html)
  * [qcfcDistanceDependence](%%BASEURL/utils/qcfcDistanceDependence.html)
 
-## Image utilities: voxelwise and regional
+Image utilities: voxelwise and regional
+--------------------------
 
  * [erodespare](%%BASEURL/utils/erodespare.html)
