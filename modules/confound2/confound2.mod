@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###################################################################
-#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
 
 ###################################################################
@@ -46,20 +46,26 @@ qc nuisance_ct    nNuisanceParameters      ${prefix}_modelParameterCount.txt
 qc rel_max_rms    relMaxRMSMotion          mc/${prefix}_relMaxRMS.txt
 qc rel_mean_rms   relMeanRMSMotion         mc/${prefix}_relMeanRMS.txt
 
+
+ 
+if [[ -f  ${outdir}/${prefix}_confmat.1D ]] \
+    && ! rerun 
+    then
+    echo "CONFOUND MODEL MODULE  has been run"
+    echo " if you change the design file make sure you  set rerun=1"
+    exit 1
+fi
+
 temporal_mask_prime
 exec_sys mkdir -p ${outdir}/mc
+
+
 
 
 << DICTIONARY
 to be written
 
 DICTIONARY
-
-
-
-
-
-
 
 
 
