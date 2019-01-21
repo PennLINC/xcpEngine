@@ -88,8 +88,9 @@ jobs:
             mkdir -p /tmp/data
             if [[ ! -d /tmp/data/downsampled ]]; then
               wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
-                -O ds005_downsampled.tar.gz "https://upenn.box.com/shared/static/34gjb9nlm8toouh42fgwip2mpvm5ofg7.xz"
-              tar xvfJ 34gjb9nlm8toouh42fgwip2mpvm5ofg7.xz -C /tmp/data/
+                -O downsampled.tar.xz "https://upenn.box.com/shared/static/34gjb9nlm8toouh42fgwip2mpvm5ofg7.xz"
+              tar xvfJ downsampled.tar.xz -C /tmp/data/
+              ls /tmp/data
             else
               echo "Dataset downsampled data was cached"
             fi
