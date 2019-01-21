@@ -48,7 +48,7 @@ pipeline=struc,roiquant,qcanat
 # 1 STRUC
 ###################################################################
 
-struc_denoise_anat[1]=1
+struc_denoise_anat[1]=0
 struc_prior_weight[1]=0.25
 struc_posterior_formulation[1]='Socrates[1]'
 struc_keepBEImages[1]=0

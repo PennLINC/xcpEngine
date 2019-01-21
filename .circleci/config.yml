@@ -1,7 +1,185 @@
-version: 2.1
-orbs:
-    hello: circleci/hello-build@0.0.5
+version: 2
+jobs:
+
+  build:
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+      SCRATCH: "/scratch"
+    docker:
+      - image: docker:18.01.0-ce-git
+    working_directory: /tmp/src/xcpEngine
+    steps:
+      - run:
+          name: Install parallel gzip and python3
+          command: |
+            apk add --no-cache pigz python3
+      - restore_cache:
+          keys:
+            - docker-v1-{{ .Branch }}-{{ epoch }}
+            - docker-v1-{{ .Branch }}-
+            - docker-v1-master-
+            - docker-v1-
+          paths:
+            - /tmp/cache/docker.tar.gz
+            - /tmp/cache/ubuntu.tar.gz
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Build Docker image
+          no_output_timeout: 60m
+          command: |
+            # Get version, update files.
+            THISVERSION=$( python3 about/get_version.py )
+            if [[ ${THISVERSION:0:1} == "0" ]] ; then
+              echo "WARNING: latest git tag could not be found"
+              echo "Please, make sure you fetch all tags from upstream with"
+              echo "the command ``git fetch --tags --verbose`` and push"
+              echo "them to your fork with ``git push origin --tags``"
+            fi
+            # Build docker image
+            e=1 && for i in {1..5}; do
+              docker build \
+                --cache-from=pennbbl/xcpengine \
+                --rm=false \
+                -t pennbbl/xcpengine:latest \
+                --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+                --build-arg VCS_REF=`git rev-parse --short HEAD` \
+                --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
+              && e=0 && break || sleep 15
+            done && [ "$e" -eq "0" ]
+
+      - run:
+          name: Docker save
+          no_output_timeout: 40m
+          command: |
+            mkdir -p /tmp/cache
+            docker save ubuntu:xenial-20161213 pennbbl/xcpengine:latest \
+            | pigz -8 -p 3 > /tmp/cache/docker.tar.gz
+
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - cache/docker.tar.gz
+            - src/xcpEngine
+
+  get_data:
+    machine:
+      # Ubuntu 14.04 with Docker 17.10.0-ce
+      image: circleci/classic:201711-01
+    working_directory: /home/circleci/data
+    steps:
+      - restore_cache:
+          keys:
+            - data-v1-{{ epoch }}
+            - data-v1-
+      - run:
+          name: Get test data from box
+          command: |
+            mkdir -p /tmp/data
+            if [[ ! -d /tmp/data/downsampled ]]; then
+              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
+                -O ds005_downsampled.tar.gz "https://upenn.box.com/shared/static/34gjb9nlm8toouh42fgwip2mpvm5ofg7.xz"
+              tar xvfJ 34gjb9nlm8toouh42fgwip2mpvm5ofg7.xz -C /tmp/data/
+            else
+              echo "Dataset downsampled data was cached"
+            fi
+
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - data
+      - save_cache:
+         key: data-v1-{{ epoch }}
+         paths:
+            - /tmp/data
+  update_cache:
+    machine:
+      # Ubuntu 14.04 with Docker 17.10.0-ce
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/xcpEngine
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - save_cache:
+         key: docker-v1-{{ .Branch }}-{{ epoch }}
+         paths:
+            - /tmp/cache/docker.tar.gz
+
+
 workflows:
-    "Hello Workflow":
-        jobs:
-          - hello/hello-build
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+
+      - get_data:
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - update_cache:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - t1w_pipeline:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+                - /ds054\/.*/
+                - /ds210\/.*/
+            tags:
+              only: /.*/
+
+      - mni_pipeline:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+                - /ds054\/.*/
+                - /ds210\/.*/
+            tags:
+              only: /.*/
+
+      - deploy_docker:
+          requires:
+            - build
+            - t1w_pipeline
+            - mni_pipeline
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
