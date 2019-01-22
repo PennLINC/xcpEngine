@@ -207,46 +207,6 @@ if [[ ! -s ${voxts[cxt]} ]] \
    routine_end
 fi
 
-
-
-
-
-###################################################################
-# Loss of temporal DOF
-###################################################################
-routine                       @4    Estimating loss of temporal degrees of freedom
-unset    v  q
-declare -A  q
-for v in "${!qvars[@]}"
-   do
-   vn=${qvars[v]}
-   q[${vn}]=${qvals[${v}]}
-done
-tDOF=0
-exec_sys rm -f ${t_dof[cxt]}
-if [[ -n ${q[nNuisanceParameters[sub]]}  ]]
-   then
-   subroutine                 @4.1  ${q[nNuisanceParameters[sub]]} nuisance parameters regressed
-   tDOF=`expr ${tDOF}  + ${q[nNuisanceParameters[sub]]}`
-fi
-if [[ -n ${q[nICsNoise[sub]]}            ]]
-   then
-   subroutine                 @4.2  ${q[nICsNoise[sub]]} IC time series flagged as noise
-   tDOF=`expr ${tDOF}   + ${q[nICsNoise[sub]]}`       
-fi
-if [[ -n ${q[nVolCensored[sub]]}         ]]
-   then
-   subroutine                 @4.3  ${q[nVolCensored[sub]]} volumes censored
-     tDOF=`expr ${tDOF} + ${q[nVolCensored[sub]]}` 
-fi
-subroutine                    @4.4  Total lost tDOF: ${tDOF}
-echo ${tDOF}                  >>    ${t_dof[cxt]}
-routine_end
-
-
-
-
-
 ###################################################################
 # DVARS for denoised time series
 ###################################################################
@@ -270,9 +230,5 @@ if ! is_1D ${dvars_post[cxt]} \
                                  >>  ${dv_mo_cor_post[cxt]}
    routine_end
 fi
-
-
-
-
 
 completion
