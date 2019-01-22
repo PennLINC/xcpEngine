@@ -122,7 +122,7 @@ jobs:
       - run:
           name: Check whether build should be skipped
           command: |
-            cd /home/circleci/src/xcpengine
+            cd /home/circleci/src/xcpEngine
             if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?t1fc36p\]' )" != "" ]]; then
               echo "Skipping t1fc36p build"
               circleci step halt
