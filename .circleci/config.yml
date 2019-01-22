@@ -30,10 +30,10 @@ jobs:
           command: |
             docker info
             set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
+            #if [ -f /tmp/cache/docker.tar.gz ]; then
+            #  pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+            #  docker images
+            #fi
       - run:
           name: Build Docker image
           no_output_timeout: 60m
