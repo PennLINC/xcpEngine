@@ -118,7 +118,7 @@ jobs:
     working_directory: /tmp/data
     steps:
       - checkout:
-          path: /home/circleci/src/xcpengine
+          path: /home/circleci/src/xcpEngine
       - run:
           name: Check whether build should be skipped
           command: |
@@ -168,7 +168,7 @@ jobs:
                 -v /tmp/data:/data:ro \
                 -v /tmp/t1fc36p/:/out \
                 pennbbl/xcpengine:latest \
-                -d /xcpEngine-master/designs/fc-36p.dsn \
+                -d /home/circleci/src/xcpEngine/designs/fc-36p.dsn \
                 -c /data/t1_bold_cohort.csv \
                 -o /out/xcpOutput \
                 -i /out/work \
