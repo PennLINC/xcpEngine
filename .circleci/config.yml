@@ -90,7 +90,6 @@ jobs:
               wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
                 -O downsampled.tar.xz "https://upenn.box.com/shared/static/34gjb9nlm8toouh42fgwip2mpvm5ofg7.xz"
               tar xvfJ downsampled.tar.xz -C /tmp/data/
-              ls /tmp/data
             else
               echo "Dataset downsampled data was cached"
             fi
@@ -103,6 +102,82 @@ jobs:
          key: data-v1-{{ epoch }}
          paths:
             - /tmp/data
+
+  t1fc36p:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpengine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/qsiprep
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?t1fc36p\]' )" != "" ]]; then
+              echo "Skipping t1fc36p build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - t1fc36p-anat-v1-{{ .Branch }}-{{ epoch }}
+            - t1fc36p-anat-v1-{{ .Branch }}
+            - t1fc36p-anat-v1-master
+            - t1fc36p-anat-v1-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/t1fc36p/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on t1fc36p bold
+          no_output_timeout: 2h
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/work
+            docker --rm -it pennbbl/xcpengine:latest \
+                -d /home/circleci/src/xcpengine/designs/fc-36p.dsn \
+                -c /tmp/data/downsampled_t1w.csv \
+                -o /tmp/t1fc36p/xcpOutput \
+                -i /tmp/t1fc36p/work \
+                -m s
+
+      - run:
+          name: Checking outputs of fc36p
+          command: |
+            mkdir -p /tmp/t1fc36p/test
+            find /tmp/t1fc36p/xcpOutput -path */figures -prune -o -name "*" -print | sed s+/tmp/t1fc36p/xcpOutput/++ | sort > /tmp/t1fc36p/test/outputs.out
+            diff /tmp/src/qsiprep/.circleci/t1fc36p_outputs.txt /tmp/t1fc36p/test/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/t1fc36p
+            find /tmp/t1fc36p/work -not -name "*.svg" -not -name "*.html" -not -name "*.rst" \
+                -not -name "*.mat" -not -name "*.lta" -not -name "*.json" -not -name "*.txt" -not -name "*.pklz" -type f -delete
+            find /tmp/t1fc36p/work_partial -not -name "*.svg" -not -name "*.html" -not -name "*.rst" \
+                -not -name "*.mat" -not -name "*.lta" -not -name "*.json" -not -name "*.txt" -not -name "*.pklz" -type f -delete
+
+      - store_artifacts:
+          path: /tmp/t1fc36p
+
   update_cache:
     machine:
       # Ubuntu 14.04 with Docker 17.10.0-ce
@@ -146,7 +221,7 @@ workflows:
             tags:
               only: /.*/
 
-      - t1w_pipeline:
+      - t1fc36p:
           requires:
             - get_data
             - build
@@ -177,7 +252,7 @@ workflows:
       - deploy_docker:
           requires:
             - build
-            - t1w_pipeline
+            - t1fc36p
             - mni_pipeline
           filters:
             branches:
