@@ -94,14 +94,14 @@ jobs:
               echo "Dataset downsampled data was cached"
             fi
             # Prepare a cohort for the anatomical test
-            echo "id0,img" > anat_cohort.csv
-            echo "sub-1,/anat/sub-1_desc-preproc_T1w.nii.gz" >> anat_cohort.csv
+            echo "id0,img" > /tmp/data/anat_cohort.csv
+            echo "sub-1,/anat/sub-1_desc-preproc_T1w.nii.gz" >> /tmp/data/anat_cohort.csv
             # Prepare MNI-space BOLD
-            echo "id0,img" > mni_bold_cohort.csv
-            echo "sub-1,/func/sub-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz" >> mni_bold_cohort.csv
+            echo "id0,img" > /tmp/data/mni_bold_cohort.csv
+            echo "sub-1,/func/sub-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz" >> /tmp/data/mni_bold_cohort.csv
             # Prepare T1w space BOLD
-            echo "id0,img" > t1_bold_cohort.csv
-            echo "sub-1,/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz" >> t1_bold_cohort.csv
+            echo "id0,img" > /tmp/data/t1_bold_cohort.csv
+            echo "sub-1,/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz" >> /tmp/data/t1_bold_cohort.csv
 
       - persist_to_workspace:
           root: /tmp
@@ -157,16 +157,20 @@ jobs:
           command: |
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput && \
                 sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput
+            mkdir -p /tmp/t1fc36p/work
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/work && \
                 sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/work
 
-            docker run --rm -it pennbbl/xcpengine:latest \
-                -d /home/circleci/src/xcpengine/designs/fc-36p.dsn \
-                -c /tmp/data/t1_bold_cohort.csv \
-                -o /tmp/t1fc36p/xcpOutput \
-                -i /tmp/t1fc36p/work \
+            docker run --rm -it \
+                -v /tmp/data:/data:ro \
+                -v /tmp/t1fc36p/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine-master/designs/fc-36p.dsn \
+                -c /data/t1_bold_cohort.csv \
+                -o /out/xcpOutput \
+                -i /out/work \
                 -m s \
-                -r /tmp/data/downsampled
+                -r /data/downsampled
 
       - run:
           name: Checking outputs of fc36p
