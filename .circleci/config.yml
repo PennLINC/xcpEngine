@@ -131,10 +131,10 @@ jobs:
           at: /tmp
       - restore_cache:
           keys:
-            - t1fc36p-anat-v1-{{ .Branch }}-{{ epoch }}
-            - t1fc36p-anat-v1-{{ .Branch }}
-            - t1fc36p-anat-v1-master
-            - t1fc36p-anat-v1-
+            - t1fc36p-anat-v2-{{ .Branch }}-{{ epoch }}
+            - t1fc36p-anat-v2-{{ .Branch }}
+            - t1fc36p-anat-v2-master
+            - t1fc36p-anat-v2-
       - run:
           name: Setting up test
           command: |
@@ -168,7 +168,7 @@ jobs:
                 -v /tmp/data:/data:ro \
                 -v /tmp/t1fc36p/:/out \
                 pennbbl/xcpengine:latest \
-                -d /home/circleci/src/xcpEngine/designs/fc-36p.dsn \
+                -d /xcpEngine/designs/fc-36p.dsn \
                 -c /data/t1_bold_cohort.csv \
                 -o /out/xcpOutput \
                 -i /out/work \
@@ -248,7 +248,5 @@ workflows:
               ignore:
                 - /docs?\/.*/
                 - /tests?\/.*/
-                - /ds054\/.*/
-                - /ds210\/.*/
             tags:
               only: /.*/
