@@ -34,7 +34,7 @@ update_networks() {
 
 completion() {
    #write_atlas
-   
+
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
@@ -105,9 +105,9 @@ if [[ -n ${fcon_atlas[cxt]} ]]
 else
    echo \
 "
-::XCP-WARNING: Functional connectome analysis has been requested, 
+::XCP-WARNING: Functional connectome analysis has been requested,
   but no network maps have been provided.
-  
+
   Skipping module"
    exit 1
 fi
@@ -126,7 +126,6 @@ fi
 #     space.
 #  2. Extract mean timeseries from each node of the network.
 #  3. Compute the adjacency matrix from the mean node timeseries.
-#  4. Compute a mean edge timeseries from the mean node timeseries.
 ###################################################################
 for net in ${atlas_names[@]}
    do
@@ -152,7 +151,7 @@ for net in ${atlas_names[@]}
    # If the network map has already been computed in this space,
    # then move on to the next stage.
    ################################################################
-  
+
   if is_image ${nodemap[cxt]} \
    && ! rerun
       then
@@ -271,29 +270,6 @@ for net in ${atlas_names[@]}
    fi
 
 
-
-
-
-   ################################################################
-   # [4]
-   # Compute the mean timeseries for each edge of the network.
-   # This is also called dynamic connectivity.
-   ################################################################
-   if (( ${fcon_window[cxt]} != 0 ))
-      then
-      subroutine              @1.6  Computing dynamic connectome
-      if [[ ! -s ${ts_edge[cxt]} ]]    \
-      || rerun
-         then
-         subroutine           @1.6.1   Window: ${fcon_window[cxt]} TRs
-         exec_sys rm -f ${ts_edge[cxt]}
-         exec_xcp mtd.R                \
-            -t    ${ts[cxt]}           \
-            -w    ${fcon_window[cxt]}  \
-            -p    ${fcon_pad[cxt]}     \
-            >>    ${ts_edge[cxt]}
-      fi
-   fi
    update_networks
    routine_end
 done

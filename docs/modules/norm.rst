@@ -3,17 +3,9 @@
 ``norm``
 ==========
 
-``norm`` moves 4D timeseries from acquisition space into a standard space. It is only compatible
-with ITK-/ANTs-based transforms at this time. Before running normalisation, you must run
-coregistration to compute a transformation from the subject's functional image to the subject's
-anatomical image. It may also be necessary to compute a warp from the subject's anatomical image to
-a template in the target standard space.
+``norm`` moves 4D  and 3D images from input bold  space into standard template, usually MNI(2mm or 1mm).
+This require more disk space.
 
-This module is not configurable at this time. Near-term customisability includes:
-
- * A multiplicity of target spaces for registrations
- * The option to disable registration of the primary analyte (since this often unnecessarily
-   consumes disk space) and normalise only derivative images
 
 ``norm_rerun``
 ^^^^^^^^^^^^^^^^
@@ -44,3 +36,19 @@ temporary files will be retained to facilitate error diagnosis.::
 
   # Retain temporary files
   norm_cleanup[cxt]=0
+
+``Expected output``
+^^^^^^^^^^^^^^^^^^^^
+The main outputs of ``norm`` include ::
+  - *prefix_std.nii.gz*   the residulaised bold signal in template space
+  - *prefix_maskStd.nii.gz*   the brain mask in template space
+  - *prefix_referenceVolumeBrainStd.nii.gz*  reference volume brain in template space
+  - *template.nii.gz*   the template image, usually MNI
+Other nifti image outputs depend on derivattive outputs such `reho` and `alff`
+
+There are quality control measures obtained to show the qulaity of registration to template space::
+  - *prefix_seq2std.png* picture of coregiratipon of template and BOLD signal 
+  - *prefix_normCoverage.txt* Coverage index between template and reference volume
+  - *prefix_normCrossCorr.txt* Cross correlation  between template and reference volume
+  - *prefix_normDice.txt* Dice Coefficient between template and reference volume
+  - *prefix_normJaccard.txt*  Jaccard Coefficient between template and reference volume

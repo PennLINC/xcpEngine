@@ -3,8 +3,9 @@
 ###################################################################
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
 ###################################################################
+source $FSLDIR/etc/fslconf/fsl.sh
 
-
+echo "Received options:" $@
 ###################################################################
 # Р Ћ 2015-2017
 ###################################################################
@@ -55,7 +56,7 @@
 
 XCPENGINE
 ###################################################################
-echo $@
+
 
 [[ -z    ${XCPEDIR}    ]] \
 && echo  "[XCPEDIR is undefined. Aborting.]"                && exit
@@ -66,7 +67,6 @@ source   ${XCPEDIR}/core/functions/cluster_submit
 usage(){
 cat << endstream
 ___________________________________________________________________
-
 
    Usage: `basename $0` -d <design> <options>
 
@@ -126,6 +126,11 @@ trace=0
 ###################################################################
 # Parse arguments
 ###################################################################
+if [ "$1" == '"$@"' ]
+then
+  shift
+fi
+
 while getopts "d:i:c:o:m:r:t:a:uhv" OPTION
    do
    case $OPTION in
@@ -166,11 +171,13 @@ while getopts "d:i:c:o:m:r:t:a:uhv" OPTION
 done
 shift $((OPTIND-1))
 
-
 ###################################################################
 # Validate and parse the design and cohort files.
 # All pipeline variables are available after validation.
 ###################################################################
+echo \$XCPEDIR is $XCPEDIR
+export XCPEDIR
+
 echo \
 "
 Constructing a pipeline based on user specifications
