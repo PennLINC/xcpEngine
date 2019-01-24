@@ -50,7 +50,7 @@ jobs:
               docker build \
                 --cache-from=pennbbl/xcpengine \
                 --rm=false \
-                -t pennbbl/xcpengine:latest .
+                -t pennbbl/xcpengine:latest . \
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
 
