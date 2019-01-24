@@ -21,7 +21,6 @@ jobs:
             - docker-v2-
           paths:
             - /tmp/cache/docker.tar.gz
-            - /tmp/cache/ubuntu.tar.gz
       - checkout
       - setup_remote_docker
       - run:
@@ -51,10 +50,7 @@ jobs:
               docker build \
                 --cache-from=pennbbl/xcpengine \
                 --rm=false \
-                -t pennbbl/xcpengine:latest \
-                --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-                --build-arg VCS_REF=`git rev-parse --short HEAD` \
-                --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
+                -t pennbbl/xcpengine:latest .
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
 
@@ -70,7 +66,6 @@ jobs:
           root: /tmp
           paths:
             - cache/docker.tar.gz
-            - src/xcpEngine
 
   get_data:
     machine:
@@ -111,6 +106,19 @@ jobs:
          key: data-v1-{{ epoch }}
          paths:
             - /tmp/data
+
+  update_cache:
+    machine:
+      # Ubuntu 14.04 with Docker 17.10.0-ce
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/xcpEngine
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - save_cache:
+         key: docker-v2-{{ .Branch }}-{{ epoch }}
+         paths:
+           - /tmp/cache/docker.tar.gz
 
   t1fc36p:
     machine:
@@ -153,7 +161,7 @@ jobs:
 
       - run:
           name: Run full xcpengine on t1fc36p bold
-          no_output_timeout: 2h
+          no_output_timeout: 30m
           command: |
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput && \
                 sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput
@@ -188,19 +196,6 @@ jobs:
 
       - store_artifacts:
           path: /tmp/t1fc36p
-
-  update_cache:
-    machine:
-      # Ubuntu 14.04 with Docker 17.10.0-ce
-      image: circleci/classic:201711-01
-    working_directory: /tmp/src/xcpEngine
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - save_cache:
-         key: docker-v1-{{ .Branch }}-{{ epoch }}
-         paths:
-            - /tmp/cache/docker.tar.gz
 
 
 workflows:

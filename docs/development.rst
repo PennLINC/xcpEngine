@@ -54,3 +54,36 @@ Then you can run ``xcpEngine`` in the container::
     -o /output
 
 and the pipeline should run using the code in your local copy of ``xcpEngine``.
+
+
+Using singularity
+--------------------
+
+Mounting directories in a container is not as simple using Singularity. Suppose you
+created a Singularity image using something like:::
+
+  singularity build xcpEngine-latest.simg docker://pennbbl/xcpengine:latest
+
+Assuming your data is in all the same locations as the laptop Docker example above,
+you can patch the local copy of the ``xcpEngine`` source code by::
+
+  singularity shell -B `pwd`/xcpEngine:/xcpEngine xcpEngine-latest.simg
+
+Mounting data directories is somewhat trickier because the mount point must
+exist inside the container. One convenient location for binding data is ``/mnt``.::
+
+  singularity shell \
+    -B /data:/mnt \
+    -B `pwd`/xcpEngine:/xcpEngine \
+    xcpEngine-latest.simg
+
+and you can make the call to ``xcpengine`` from inside the shell::
+
+  xcpEngine\
+    -d /xcpEngine/designs/fc-36p.dsn \
+    -c /mnt/fmriprep/cohort.csv \
+    -i /mnt/work \
+    -o /mnt/xcpOutput
+
+This way you can make quick changes to the xcp source code and see how they would
+impact your pipeline without needing to create a new Singularity image.
