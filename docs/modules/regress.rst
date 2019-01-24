@@ -3,7 +3,74 @@
 ``regress``
 ============
 
-``regress`` executes multiple linear regression to fit any confound time series computed using the ``confound`` module to the time series of each voxel in the analyte image. Any variance in the BOLD time series that is explained by the confound model is discarded from the analyte image. The residuals (unexplained variance) of the BOLD time series are retained as the denoised image. ``regress`` additionally supports temporal filtering, censoring (configured in ``prestats`` and executed in ``regress``), and production of smoothed derivative time series.
+``regress`` executes multiple linear regression to fit any confound time series computed using the
+``confound`` module to the time series of each voxel in the analyte image. Any variance in the BOLD
+time series that is explained by the confound model is discarded from the analyte image. The
+residuals (unexplained variance) of the BOLD time series are retained as the denoised image.
+``regress`` additionally supports temporal filtering, censoring, and production of smoothed
+derivative time series.
+
+Despiking
+^^^^^^^^^^^^^^^^^^^^
+Despiking is a process in which large spikes in the BOLD times series are truncated. Despiking
+reduces/limits the  amplitude or magnitude of the large spikes but preserves those data points
+with an imputed reduced amplitude.  Despiking is encouraged to be done before filtering and
+regression to minimize the impact  of spike. Despiking is very effective because it is a voxelwise
+operation, and no volume is deleted/removed.  For despiking in xcpEngine, ``DSP`` is added to
+``regress_process``::
+
+ regress_process[cxt]=DSP-TMP-REG
+
+
+Censoring/Scrubbing
+^^^^^^^^^^^^^^^^^^^^^^^^
+Censoring is the same as scrubbing. Censoring is a process in which data points with excessive
+motion outliers are identified/flaggeg. The censored data points are removed from the data. This
+is effective for removing spurious sources  of connectivity in fMRI data but must be applied very
+carefully because the censored volumes are removed and the final  BOLD signal. To
+apply censoring in xcpEngine, ``confound2_censor[cxt]=1`` should be specified in ``confound2``
+in the design file.  However, the threshold to identify the censored volumes or outliers is obtained
+from framewise displacement. The framewise displacement (FD)  is obtained from ``FMRIPREP``
+regressors. If framewise displacement (FD) at any point in time  exceeds 0.2 mm, then that time
+point will be flagged. Scrubbing/censoring uses FD,RMS and dvars to established the threshold.  The
+threshold is specified in ``confound2`` as well as
+
+  * ``confound2_framewise[cxt]=rmss:0.083,fds:0.167,dv:2``. This is standard or common threshold
+    (Ciric et al. 2012, Satterthwaite et al. 2013) and  are provided in the design files. The
+    actual threshold value is determined by the TR of the BOLD signal.
+  * ``confound2_framewise[cxt]=rmss:0.083,fds:0.167,dv:2`` is for TR=3s, which implies that
+    rmss_thresh=0.083\*3~= 0.25mm,  fd_thresh =0.167\*3 ~= 0.5mm. For TR=2s,
+  * ``confound2_framewise[cxt]=rmss:0.125,fds:0.25,dv:2`` for standard thresholds.
+
+
+Spike regression
+^^^^^^^^^^^^^^^^^^^^^^^^
+Spike regression (Satterthwaite et al. 2013)  is similar to censoring/scrubbing but the  volumes
+are flagged/censored for spike regression if their  volume-to-volume RMS displacement exceeded
+0.25mm. The threshold is indicated  in design files as ``confound2_framewise[2]=rmss:0.083,dv:2``
+for TR of 3s.  The framewise thresholds in all functional design files are based on TR=3s and
+should be edited for your TR.
+
+
+``regress_process``
+^^^^^^^^^^^^^^^^^^^^
+Specifies the order for execution of filtering and regression. Bandpass filtering the analyte time
+series but not nuisance regressors re-introduces noise-related variance at removed frequencies when
+the time series is residualised with respect to the regressors via linear fit (Hallquist et al.,
+2014). Thus, effective denoising requires either that confound regression be performed prior to
+temporal filtering or that both the analyte time series and all confound time series be subjected
+to the same temporal filter in order to prevent frequency mismatch.
+Format ``regress_process`` as a string of concatenated three-character routine codes separated by
+hyphens (``-``).
+
+  * ``REG-TMP`` instructs the module to perform confound regression prior to temporal filtering.
+  * ``TMP-REG`` instructs the module to perform temporal filtering prior to confound regression.
+    If this option is set, then both the analyte time series and all confound time series will be
+    filtered.
+    This option is typically preferable to ``REG-TMP`` because it determines the confound fit using
+    only the frequencies of interest.
+  * Note that censoring is always performed *after* both filtering and regression.
+
 
 ``regress_tmpf``
 ^^^^^^^^^^^^^^^^^
@@ -61,6 +128,7 @@ To note:
  * ``regress*tmpf*ripple`` specifies the pass-band ripple, while ``regress*tmpf*ripple2``
    specifies the stop-band ripple. (``ripple`` relevant only for Chebyshev I or elliptic filter,
    ``ripple2`` relevant only for Chebyshev II or elliptic filter.)
+
 
 ``regress_hipass`` and ``regress_lopass``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -131,6 +199,7 @@ specifies the full-width at half-maximum (FWHM) of the smoothing kernel in mm.
  * Uniform smoothing may be used as a compensatory mechanism to reduce the effects of subject
    motion on the final processed image (Scheinost et al., 2014).
 
+
 ``regress_rerun``
 ^^^^^^^^^^^^^^^^^^
 
@@ -144,6 +213,7 @@ should rerun any modules downstream of the change.::
 
   # Repeat all processing steps
   regress_rerun[cxt]=1
+
 
 ``regress_cleanup``
 ^^^^^^^^^^^^^^^^^^^^^
@@ -160,19 +230,19 @@ temporary files will be retained to facilitate error diagnosis.::
   # Retain temporary files
   regress_cleanup[cxt]=0
 
-``regress_process``
-^^^^^^^^^^^^^^^^^^^^
 
-Specifies the order for execution of filtering and regression. Bandpass filtering the analyte time
-series but not nuisance regressors re-introduces noise-related variance at removed frequencies when
-the time series is residualised with respect to the regressors via linear fit (Hallquist et al.,
-2014). Thus, effective denoising requires either that confound regression be performed prior to
-temporal filtering or that both the analyte time series and all confound time series be subjected
-to the same temporal filter in order to prevent frequency mismatch.
+Expected outputs
+^^^^^^^^^^^^^^^^^^^^^^^^
+The main output of ``regress`` module is ``prefix_residualised.nii.gz`` for the completion of the
+module. Other outputs include::
+ -  prefix_confmat.1D  # filtered regressors
+ -  prefix_confcor.txt # Pearson correlation between confound regressors
+The optional output is the spatially smoothed residualised BOLD signal. This is specificy
+``regress_sptf[cxt]`` and ``regress_smo[cxt]`` as explained previously. For instance, with::
 
-Format ``regress_process`` as a string of concatenated three-character routine codes separated by
-hyphens (``-``).
+  regress_sptf[cxt]=gaussian
+  regress_smo[cxt]=6
 
- * ``REG-TMP`` instructs the module to perform confound regression prior to temporal filtering.
- * ``TMP-REG`` instructs the module to perform temporal filtering prior to confound regression. If this option is set, then both the analyte time series and all confound time series will be filtered. This option is typically preferable to ``REG-TMP`` because it determines the confound fit using only the frequencies of interest.
- * Note that censoring is always performed *after* both filtering and regression.
+That is request to smooth residualised image with gaussian filter and kernel of 6mm. The derived
+output will be::
+  prefix_img_sm6.nii.gz

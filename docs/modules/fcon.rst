@@ -8,8 +8,7 @@ series image. To do this, ``fcon`` requires a brain atlas, or a parcellation of 
 into regions of interest (network nodes). First, the local mean timeseries within each network node
 is extracted. The connectivity between time series is subsequently used to define the edges of an
 adjacency matrix over the parcellation. Currently, static connectivity is estimated using the
-Pearson correlation and dynamic connectivity using the multiplication of temporal derivatives
-(Shine et al., 2015), but alternative metrics will likely be introduced in the future.
+Pearson correlation but alternative metrics will likely be introduced in the future.
 
 ``fcon_atlas``
 ^^^^^^^^^^^^^^^^
@@ -64,36 +63,6 @@ Sets any connections/edges with weights less than the specified number equal to 
   # Remove edges weaker than 0.5
   fcon_thr[cxt]=0.5
 
-``fcon_window``
-^^^^^^^^^^^^^^^^
-
-*Dynamic FC window length.*
-
-Specifies the window length for time-varying (dynamic) functional connectivity, in TRs, not
-seconds. Can also be used to disable dynamic functional connectivity computation.::
-
-  # Disable dynamic FC
-  fcon_window[cxt]=0
-
-  # Window length of 10 TRs
-  fcon_window[cxt]=10
-
-``fcon_pad``
-^^^^^^^^^^^^^
-
-*Time series padding for dynamic FC.*
-
-Specifies whether the regional time series should be padded prior to estimation of dynamic
-functional connectivity. If the time series are not padded, only estimates from complete windows
-will be included in the dynamic model. Padding the time series will return more values for dynamic
-FC, but values at the beginning and end of edge-wise time series will be based on a smaller number
-of observations than those near the middle.::
-
-  # Truncate dynamic FC to include only complete windows (DEFAULT).
-  fcon_pad[cxt]=TRUE
-
-  # Return n-1 observations for dynamic FC, where n is the number of TRs in the original image.
-  fcon_pad[cxt]=FALSE
 
 ``fcon_rerun``
 ^^^^^^^^^^^^^^
@@ -108,6 +77,7 @@ should rerun any modules downstream of the change.::
 
   # Repeat all processing steps
   fcon_rerun[cxt]=1
+
 
 ``regress_cleanup``
 ^^^^^^^^^^^^^^^^^^^^

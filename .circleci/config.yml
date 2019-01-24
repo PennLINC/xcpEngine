@@ -30,13 +30,13 @@ jobs:
           command: |
             docker info
             set +o pipefail
-            #if [ -f /tmp/cache/docker.tar.gz ]; then
-            #  pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-            #  docker images
-            #fi
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
       - run:
           name: Build Docker image
-          no_output_timeout: 60m
+          no_output_timeout: 2h
           command: |
             # Get version, update files.
             THISVERSION=$( python3 about/get_version.py )
@@ -63,7 +63,7 @@ jobs:
           no_output_timeout: 40m
           command: |
             mkdir -p /tmp/cache
-            docker save pennbbl/baseimages:common pennbbl/xcpengine:latest \
+            docker save neurodebian:stretch  pennbbl/xcpengine:latest \
             | pigz -8 -p 3 > /tmp/cache/docker.tar.gz
 
       - persist_to_workspace:
@@ -95,13 +95,13 @@ jobs:
             fi
             # Prepare a cohort for the anatomical test
             echo "id0,img" > /tmp/data/anat_cohort.csv
-            echo "sub-1,/anat/sub-1_desc-preproc_T1w.nii.gz" >> /tmp/data/anat_cohort.csv
+            echo "sub-1,/sub-1/anat/sub-1_desc-preproc_T1w.nii.gz" >> /tmp/data/anat_cohort.csv
             # Prepare MNI-space BOLD
             echo "id0,img" > /tmp/data/mni_bold_cohort.csv
-            echo "sub-1,/func/sub-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz" >> /tmp/data/mni_bold_cohort.csv
+            echo "sub-1,/sub-1/func/sub-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz" >> /tmp/data/mni_bold_cohort.csv
             # Prepare T1w space BOLD
             echo "id0,img" > /tmp/data/t1_bold_cohort.csv
-            echo "sub-1,/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz" >> /tmp/data/t1_bold_cohort.csv
+            echo "sub-1,/sub-1/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz" >> /tmp/data/t1_bold_cohort.csv
 
       - persist_to_workspace:
           root: /tmp
@@ -131,10 +131,10 @@ jobs:
           at: /tmp
       - restore_cache:
           keys:
-            - t1fc36p-anat-v2-{{ .Branch }}-{{ epoch }}
-            - t1fc36p-anat-v2-{{ .Branch }}
-            - t1fc36p-anat-v2-master
-            - t1fc36p-anat-v2-
+            - t1fc36p-v2-{{ .Branch }}-{{ epoch }}
+            - t1fc36p-v2-{{ .Branch }}
+            - t1fc36p-v2-master
+            - t1fc36p-v2-
       - run:
           name: Setting up test
           command: |
@@ -161,26 +161,22 @@ jobs:
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/work && \
                 sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/work
 
-            echo `find /tmp/data`
-            echo `find /xcpEngine-master/designs`
-
             docker run --rm -it \
-                -v /tmp/data:/data:ro \
+                -v /tmp/data:/data \
                 -v /tmp/t1fc36p/:/out \
                 pennbbl/xcpengine:latest \
                 -d /xcpEngine/designs/fc-36p.dsn \
-                -c /data/t1_bold_cohort.csv \
+                -c /data/t1_bold_cohort.csv  \
                 -o /out/xcpOutput \
                 -i /out/work \
                 -m s \
                 -r /data/downsampled
-
       - run:
           name: Checking outputs of fc36p
           command: |
             mkdir -p /tmp/t1fc36p/test
-            find /tmp/t1fc36p/xcpOutput -path */figures -prune -o -name "*" -print | sed s+/tmp/t1fc36p/xcpOutput/++ | sort > /tmp/t1fc36p/test/outputs.out
-            diff /tmp/src/xcpengine/.circleci/t1fc36p_outputs.txt /tmp/t1fc36p/test/outputs.out
+            find /tmp/t1fc36p/xcpOutput -path sub-1/* -prune -o -name "*" -print | sed s+/tmp/t1fc36p/xcpOutput/++ | sort > /tmp/t1fc36p/outputs.out
+            diff /xcpEngine/tests/t1fc36p_outputs.txt /tmp/t1fc36p/outputs.out
             exit $?
 
       - run:
@@ -188,10 +184,7 @@ jobs:
           when: always
           command: |
             sudo chown $(id -un):$(id -gn) -R /tmp/t1fc36p
-            find /tmp/t1fc36p/work -not -name "*.svg" -not -name "*.html" -not -name "*.rst" \
-                -not -name "*.mat" -not -name "*.lta" -not -name "*.json" -not -name "*.txt" -not -name "*.pklz" -type f -delete
-            find /tmp/t1fc36p/work_partial -not -name "*.svg" -not -name "*.html" -not -name "*.rst" \
-                -not -name "*.mat" -not -name "*.lta" -not -name "*.json" -not -name "*.txt" -not -name "*.pklz" -type f -delete
+            rm -rf /tmp/t1fc36p/work
 
       - store_artifacts:
           path: /tmp/t1fc36p

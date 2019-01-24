@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=
+design=/xcpEngine/designs/fc-36p.dsn
 sequence=anatomical
 standard=MNI%2x2x2
 
@@ -102,7 +102,6 @@ regress_process[3]=DMT-TMP-REG
 fcon_atlas[4]=all
 fcon_metric[4]=corrcoef
 fcon_thr[4]=N
-fcon_window[4]=10
 fcon_pad[4]=FALSE
 fcon_rerun[4]=0
 fcon_cleanup[4]=1
@@ -156,9 +155,3 @@ roiquant_cleanup[8]=1
 norm_primary[9]=1
 norm_rerun[9]=0
 norm_cleanup[9]=1
-
-
-
-
-
-
