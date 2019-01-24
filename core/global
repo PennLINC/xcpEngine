@@ -13,7 +13,7 @@ unset XCPEDIR RPATH FSLDIR ANTSPATH AFNI_PATH C3D_PATH NUMOUT
 # XCPEDIR stores a path to the top-level directory containing all
 # of the ingredients necessary to configure and execute functional
 # connectivity pipelines using the XCP Engine.
-export XCPEDIR=
+export XCPEDIR=/xcpEngine
 ###################################################################
 
 ###################################################################
@@ -23,32 +23,32 @@ export XCPEDIR=
 #  * pracma
 #  * signal
 #  * optparse
-export RPATH=
+export RPATH=/usr/bin/R
 ###################################################################
 
 ###################################################################
 # FSLDIR stores a path to the local installation of FSL.
-export FSLDIR=
+export FSLDIR=/opt/fsl-5.0.10
 ###################################################################
 
 ###################################################################
 # ANTSPATH stores a path to the local installation of ANTs.
-export ANTSPATH=
+export ANTSPATH=/opt/ants-latest/bin
 ###################################################################
 
 ###################################################################
 # AFNI_PATH stores a path to the local installation of AFNI.
-export AFNI_PATH=
+export AFNI_PATH=/opt/afni-latest/
 ###################################################################
 
 ###################################################################
 # C3D_PATH stores a path to the local installation of C3D.
-export C3D_PATH=
+export C3D_PATH=/opt/convert3d-nightly/bin/
 ###################################################################
 
 ###################################################################
 # JQ_PATH stores a path to the local installation of JQ.
-export JQ_PATH=
+export JQ_PATH=/xcpEngine/thirdparty/jq/jq-linux64
 ###################################################################
 
 ###################################################################

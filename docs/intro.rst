@@ -3,21 +3,21 @@ XCP Imaging Pipeline
 ====================
 
 The XCP imaging pipeline (XCP system) is a free, open-source software package for processing of
-multimodal neuroimages. The XCP system uses a modular design to deploy analytic routines from 
+multimodal neuroimages. The XCP system uses a modular design to deploy analytic routines from
 leading MRI analysis platforms, including FSL, AFNI, and ANTs.
 
 The XCP system is designed to run in the Linux bash shell or from a Docker or Singularity image. We
 strongly recommend using Docker or Singularity. Users provide XCP Engine with the output from
 ``FMRIPREP`` and specify parameters for the analysis that they wish to perform. XCP Engine parses
 the user-provided parameters to build and run a processing pipeline. The XCP system supports a
-number of pipeline modalities, including functional connectivity, structural processing, and task fMRI.  
+number of pipeline modalities, including functional connectivity, structural processing, and task fMRI.
 
 
 Useful Features
 ----------------
 
 XCP Engine provides tools to take ``FMRIPREP`` output and perform the next steps required for many
-functional connectivity and structural analyses.  FMRIPREP is *required* for initial preprocessing 
+functional connectivity and structural analyses.  FMRIPREP is *required* for initial preprocessing
 of fMRI data; XCP performs denoising and computes additional derivatives used for analyses.  For
 structural processing, either FMRIPREP or the dedicated ``struct`` module in XCP can be used.
 
@@ -52,24 +52,11 @@ research groups process neuroimages using a dedicated, standalone "pipeline" for
 modality. For instance, task activation, perfusion, and functional connectivity analyses might each
 be processed by a separate script.
 
-.. figure:: _static/pipelinesOld.png
-   :scale: 100%
-   :align: center
-
-   A standard, non-modular approach to developing pipelines with shared routines.
-
 However, this approach can easily lead to inconsistencies in output directory conventions,
 difficulty tracking pipeline versions, and limited flexibility in updating pipelines, all of which
 ultimately combine to compound reproducibility challenges. Often, many common routines are deployed
 across multiple MRI modalities, and it is in the interest of the investigator to minimize
 redundancy and maximize reproducibility.
-
-.. figure:: _static/choosingModules.gif
-    :scale: 100%
-    :align: center
-
-    In the XCP system, select the modules that you want to use and combine them into the pipeline
-    that best suits your processing needs.
 
 The modular, atomic design of the XCP system allows for streamlined reproduction and recombination
 of frequently used image processing strategies across multiple pipelines and modalities.

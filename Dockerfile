@@ -208,6 +208,8 @@ RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
           && chmod a+rx /xcpEngine/xcpEngine'
 
 ENV XCPEDIR="/xcpEngine" \
-    PATH="$PATH:$XCPEDIR"
+    AFNI_PATH="/opt/afni-latest/" \
+    C3D_PATH="/opt/convert3d-nightly/bin/" \
+    PATH="$PATH:/xcpEngine"
 
 ENTRYPOINT ["/xcpEngine/xcpEngine"]
