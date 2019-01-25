@@ -97,7 +97,7 @@ temporal_mask  --SIGNPOST=${signpost}        \
                --INPUT=${img[sub]}           \
                --RPS=${rps[cxt]}             \
                --RMS=${rel_rms[cxt]}         \
-               --THRESH=${confound2_framewise[cxt]}
+               --THRESH=${framewise[cxt]}
 
 
 ###################################################################

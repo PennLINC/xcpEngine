@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###################################################################
-#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+#  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  ☭  #
 ###################################################################
 
 ###################################################################
@@ -125,12 +125,7 @@ subroutine                    @u.1
   
  
    ################################################################
-   # Generate a solid ellipsoid (a sphere in true physical space)
-   #  * Note that each additional node wraps the expression from
-   #    all previous nodes in a multiplier that zeroes the values
-   #    inside the new node before the new node is added. This
-   #    will result in a much slower module, but is necessary to
-   #    ensure that there is no overlap.
+   # Gnenerate mask
    ################################################################
    subroutine                 @u.10
 
