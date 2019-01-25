@@ -1,6 +1,7 @@
 
 import sys
 import os
+import stat
 import os.path as op
 import re
 import subprocess
@@ -86,34 +87,44 @@ def get_parser():
 
 def main():
     """Check that the inputs are ok. If not, print a very verbose error."""
+    print("""\
+
+
+======================== Checking Inputs =============================
+
+
+""")
     parser = get_parser()
     try:
         args = parser.parse_args()
     except Exception:
-        parser
+        parser.print_help()
+        sys.exit(1)
+
     # Check that the args are all sane
     design_file = args.d
-    verbose_file_check("-d", design_file)
+    verbose_file_check("-d", design_file, makedir=False)
 
     working_dir = args.i
     if working_dir is not None:
-        verbose_file_check("-i", working_dir)
+        verbose_file_check("-i", working_dir, makedir=True)
 
-    relative_dir = opts.r
+    relative_dir = args.r
     if relative_dir is not None:
-        verbose_file_check("-r", relative_dir)
+        verbose_file_check("-r", relative_dir, makedir=False)
 
     cohort_file = args.c
-    verbose_file_check("-c", cohort_file)
+    verbose_file_check("-c", cohort_file, makedir=False)
     check_cohort_file(cohort_file, relative_dir)
 
     return 0
 
 
-def verbose_file_check(optname, filepath):
+def verbose_file_check(optname, filepath, makedir=False):
     file_dir, file_name = op.split(filepath)
     if not op.exists(filepath):
-        message = '''\
+        if not makedir:
+            message = '''\
 Error: Unable to load {filepath}, which was specified for option {optname}
 
 Check that {file_dir} exists and you have permission to read it.
@@ -127,6 +138,40 @@ If using a container, you may find the documentation helpful for
 interactively checking whether a file is accessible from within a
 container (https://xcpengine.readthedocs.io/containers/index.html).
 '''.format(filepath=filepath, optname=optname, file_dir=file_dir)
+            print(message)
+            sys.exit(1)
+
+        # The directory would be created by xcp
+        else:
+            try:
+                os.makedirs(filepath)
+            except PermissionError:
+                message = '''\
+Error: You don't have permission to create a directory {filepath}, which
+was specified to option {optname}. This directory would normally be
+created by xcpEngine, but this cannot be done in this case.
+
+If using a container, you may find the documentation helpful for
+interactively checking whether a file is accessible from within a
+container (https://xcpengine.readthedocs.io/containers/index.html).
+'''.format(filepath=filepath, optname=optname)
+                print(message)
+                sys.exit(1)
+
+    # Check read permission
+    read_access = os.access(filepath, os.R_OK)
+    if not read_access:
+        message = '''\
+Error: You don't have permission to read {filepath}, which
+was specified to option {optname}.
+
+If you are using Docker or Singularity, make sure that {file_dir}
+is correctly mounted and you can access it from within the container.
+
+If using a container, you may find the documentation helpful for
+interactively checking whether a file is accessible from within a
+container (https://xcpengine.readthedocs.io/containers/index.html).
+'''.format(filepath=filepath, optname=optname)
         print(message)
         sys.exit(1)
 

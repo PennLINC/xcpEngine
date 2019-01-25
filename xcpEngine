@@ -190,13 +190,13 @@ export XCPEDIR
 
 ###################################################################
 # Check the inputs
-#python ${XCPEDIR}/checks/check_inputs.py ${args}
-#if [ $? -eq 0 ]; then
-#    echo OK
-#else
-#    echo Your inputs would result in a failed pipeline. Exiting.
-#    exit 1
-#fi
+python ${XCPEDIR}/checks/check_inputs.py ${args}
+if [ $? -eq 0 ]; then
+    echo OK
+else
+    echo Your inputs would result in a failed pipeline. Exiting.
+    exit 1
+fi
 
 echo \
 "
