@@ -4,8 +4,18 @@
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
 ###################################################################
 source $FSLDIR/etc/fslconf/fsl.sh
+IN_CONTAINER=0
+
+if [[ -d /xcpEngine ]]
+then
+  IN_CONTAINER=1
+  source activate neuro
+  echo "[Detected that xcp is in a container]"
+fi
+export IN_CONTAINER
 
 echo "Received options:" $@
+args=`echo $@`
 ###################################################################
 # Р Ћ 2015-2017
 ###################################################################
@@ -178,6 +188,16 @@ shift $((OPTIND-1))
 echo \$XCPEDIR is $XCPEDIR
 export XCPEDIR
 
+###################################################################
+# Check the inputs
+#python ${XCPEDIR}/checks/check_inputs.py ${args}
+#if [ $? -eq 0 ]; then
+#    echo OK
+#else
+#    echo Your inputs would result in a failed pipeline. Exiting.
+#    exit 1
+#fi
+
 echo \
 "
 Constructing a pipeline based on user specifications
@@ -190,15 +210,6 @@ source ${XCPEDIR}/core/validateMode
 echo \
 "····································································"
 
-###################################################################
-# Check the inputs
-#source activate neuro
-#python ${XCPEDIR}/checks/check_inputs.py $@
-#if [ $? -eq 0 ]; then
-#    echo OK
-#else
-#    echo Your inputs would result in a failed pipeline. Exiting
-#fi
 
 ###################################################################
 # Obtain a timestamp for the current deployment of the engine.
