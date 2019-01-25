@@ -149,7 +149,7 @@ jobs:
             mkdir -p /tmp/t1fc36p/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/xcpOutput
       - run:
           name: Load Docker image layer cache
-          no_output_timeout: 30m
+          no_output_timeout: 1h
           command: |
             docker info
             set +o pipefail
