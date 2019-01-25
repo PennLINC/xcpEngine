@@ -183,9 +183,9 @@ jobs:
           name: Checking outputs of fc36p
           command: |
             mkdir -p /tmp/t1fc36p/test
-            ls /xcpEngine/testing/
+            ls /home/circleci/src/xcpEngine/testing/
             find /tmp/t1fc36p/xcpOutput -path sub-1/* -prune -o -name "*" -print | sed s+/tmp/t1fc36p/xcpOutput/++ | sort > /tmp/t1fc36p/outputs.out
-            diff /xcpEngine/testing/t1fc36p_outputs.txt /tmp/t1fc36p/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/t1fc36p_outputs.txt /tmp/t1fc36p/outputs.out
             exit $?
 
       - run:
