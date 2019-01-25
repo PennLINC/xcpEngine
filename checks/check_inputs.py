@@ -226,13 +226,14 @@ Error: unable to parse cohort file {cohort_file}
 
 def check_cohort_file_cell(rownum, column, value, rel, cohort_file):
     relative_msg = ""
+    full_path=value
     if rel is not None:
-        original_file = value
-        value = op.join(rel, value)
-        relative_msg = "Using relative path {rel}, the file {original_file} evaluates to {value}"
-        ".".format(value=value, rel=rel)
+        full_path = rel + value
+        relative_msg = "Using relative path {rel}, the file {original_file} evaluates " \
+                       "to {full_path}".format(rel=rel, original_file=value,
+                                               full_path=full_path)
 
-    if not op.exists(value):
+    if not op.exists(full_path):
         message = '''\
 Error: file specified in {cohort_file} Column {column}, Row {rownum} is not readable
 
