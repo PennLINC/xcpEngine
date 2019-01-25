@@ -3,7 +3,6 @@
 ###################################################################
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
 ###################################################################
-
 ###################################################################
 # SPECIFIC MODULE HEADER
 # This module executes confound regression and censoring.
@@ -286,6 +285,8 @@ while (( ${#rem} > 0 ))
             -ort     ${confproc[cxt]}       \
             ${locals}                       \
             -prefix  %OUTPUT
+ 
+        exec_fsl fslmaths ${mask[sub]} -mul ${intermediate}_${cur} ${intermediate}_${cur}
          intermediate=${intermediate}_${cur}
       fi
       routine_end

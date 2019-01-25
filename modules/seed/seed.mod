@@ -4,7 +4,7 @@
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
 ###################################################################
 
-###################################################################
+##################################################################
 # SPECIFIC MODULE HEADER
 # This module performs seed-based correlation analyses.
 ###################################################################
@@ -28,16 +28,15 @@ completion() {
    source ${XCPEDIR}/core/updateQuality
    source ${XCPEDIR}/core/moduleEnd
 }
-no_seeds() {
-   echo \
-"
-[WARNING: Seed-based correlation analysis has been requested,]
-[but no valid seed libraries have been provided.]
+#no_seeds() {
+ #  echo \
+#"
+#[WARNING: Seed-based correlation analysis has been requested,]
+#[but no valid seed libraries have been provided.]
   
-[Skipping module]"
-   exit 1
-}
-
+#[Skipping module]"
+  # exit 1
+#}
 
 
 
@@ -45,39 +44,57 @@ no_seeds() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-[[ ! -s ${seed_lib[cxt]} ]] &&   seed_lib[cxt]=${BRAINATLAS}/coor/${seed_lib[cxt]}.sclib
-[[ ! -s ${seed_lib[cxt]} ]] &&   no_seeds
+#[[ ! -s ${seed_lib[cxt]} ]] &&   seed_lib[cxt]=${BRAINATLAS}/coor/${seed_lib[cxt]}.sclib
+#[[ ! -s ${seed_lib[cxt]} ]] &&   no_seeds
 
-define   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
+#define   seeds                   $(grep -i '^#' ${seed_lib[cxt]} 2>/dev/null)
 define   kernel                  ${seed_smo[cxt]//,/ }
 
-for seed in ${seeds[cxt]}
+
+
+
+
+rem1=${seed_names[cxt]}
+echo $rem1
+while (( ${#rem1} > 0 ))
    do
-   seed=(            ${seed//\#/ } )
-   seed[0]=$(        eval echo            ${seed[0]})
-   define            mapdir               ${outdir}/${seed[0]}/
+   ################################################################
+   # * Extract the three-letter routine code -
+   # for seed identification 
+   ################################################################
+   cur=${rem1:0:3}
+   rem1=${rem1:4:${#rem1}}
+    echo $cur
+   
+   define            mapdir               ${outdir}/${cur}/
    exec_sys          mkdir -p             ${mapdir[cxt]}
    define            mapbase              ${mapdir[cxt]}/${prefix}_connectivity
-   define            ${seed[0]}_ts        ${mapbase[cxt]}_${seed[0]}_ts.1D
-   output            ${seed[0]}_seed      ${mapbase[cxt]}_${seed[0]}_seed.nii.gz
-   derivative        ${seed[0]}           ${mapbase[cxt]}_${seed[0]}
-   derivative        ${seed[0]}Z          ${mapbase[cxt]}_${seed[0]}Z
+   define            ${cur}_ts            ${mapbase[cxt]}_${cur}_ts.1D
+   output            ${cur}_seed          ${mapbase[cxt]}_${cur}_seed.nii.gz
+   derivative        ${cur}               ${mapbase[cxt]}_${cur}
+   derivative        ${cur}Z              ${mapbase[cxt]}_${cur}Z
    exec_sys          mkdir -p             ${mapdir[cxt]}
         
 done
+
+rem1=${seed_names[cxt]}
+
 for k in ${kernel[cxt]}
    do
-   for seed in ${seeds[cxt]}
+   while (( ${#rem1} > 0 ))
       do
-      seed=(         ${seed//\#/ } )
-      seed[0]=$(     eval echo            ${seed[0]})
-      define         mapbase              ${outdir}/${seed[0]}/${prefix}_connectivity
-      derivative     ${seed[0]}_sm${k}    ${mapbase[cxt]}_${seed[0]}_sm${k}
-      derivative     ${seed[0]}Z_sm${k}   ${mapbase[cxt]}_${seed[0]}Z_sm${k}
+  cur=${rem1:0:3}
+  rem1=${rem1:4:${#rem1}}
+    
+      define         mapbase              ${outdir}/${cur}/${prefix}_connectivity
+      derivative     ${cur}_sm${k}    ${mapbase[cxt]}_${cur}_sm${k}
+      derivative     ${cur}Z_sm${k}   ${mapbase[cxt]}_${cur}Z_sm${k}
    done
    derivative        img_sm${k}           ${prefix}_sm${k}
    derivative_set    img_sm${k}           Type     TimeSeries
 done
+
+
 
 << DICTIONARY
 
@@ -106,15 +123,21 @@ DICTIONARY
 # Retrieve all the seeds for which analysis should be run, and
 # prime the analysis.
 ###################################################################
-if [[ -s ${seed_lib[cxt]} ]]
+if [[ ${#seed_points[cxt]} > 0 ]] \
+|| [[ -s ${seed_mask[cxt]} ]]
    then
    subroutine                 @0.1
    add_reference     referenceVolume[$sub]   ${prefix}_referenceVolume
 else
-   no_seeds
+echo " no seed points or seed mask"
+exit 1
+
 fi
 
-
+if [[ ! ${seed_radius[cxt]}  ]] 
+   then
+   {seed_radius[cxt]}=5
+fi 
 
 
 
@@ -137,8 +160,8 @@ routine_end
 # Retrieve all the seeds for which SCA should be run from the
 # analysis's seed library.
 ###################################################################
-libspace=$(grep -i '^SPACE::' ${seed_lib[cxt]})
-libspace=${libspace//SPACE\:\:/}
+#libspace=$(grep -i '^SPACE::' ${seed_lib[cxt]})
+#libspace=${libspace//SPACE\:\:/}
 ###################################################################
 # Iterate through all seeds.
 #
@@ -151,37 +174,40 @@ libspace=${libspace//SPACE\:\:/}
 #  3. Compute the voxelwise correlation of the primary BOLD
 #     timeseries with the seed's mean timeseries.
 ###################################################################
-for seed in ${seeds[cxt]}
-   do
-   ################################################################
-   # Parse the current seed's information.
-   #  * seed[1] variable is overloaded; it stores either voxel
-   #    coordinates or a path to the seed mask.
-   #  * seed[2] stores either the seed radius in mm or the space
-   #    in which the seed mask is situated.
-   ################################################################
-   seed=( ${seed//\#/ } )
-   seed[0]=$(eval echo ${seed[0]})
-   seed[1]=$(eval echo ${seed[1]})
-   seed[2]=$(eval echo ${seed[2]})
-   seed[3]=$(eval echo ${seed[3]})
 
-   sca_seed=${seed[0]}_seed'['${cxt}']'
-   sca_map=${seed[0]}'['${cxt}']'
-   sca_ts=${seed[0]}_ts'['${cxt}']'
-   routine                    @2    ${seed[0]}
+rem1=${seed_names[cxt]}
+rem2=(${seed_points[cxt]//#/ }) 
+ii=0
+echo $rem1 $rem2 
+while (( ${#rem1} > 0 ))
+   do
+   cur=${rem1:0:3}
+   rem1=${rem1:4:${#rem1}}
+   
+   ################################################################
+  
+   sca_seed=${cur}_seed'['${cxt}']'
+   sca_map=${cur}'['${cxt}']'
+   sca_ts=${cur}_ts'['${cxt}']'
+   routine                    @2    ${cur}
    ################################################################
    # Determine whether the current seed is a coordinate entry in a
    # seed library or a 3D mask image.
    ################################################################
-   if contains ${seed[1]} ','
+   
+   
+ 
+  if  [[ ${#seed_points[cxt]} > 0 ]]
       then
       subroutine              @2.2.1
       seedType=coor
+      seedpoint=${rem2[ii]}
+      ii=$((ii+1))
    else
       subroutine              @2.2.2
       seedType=mask
    fi
+echo $seedpoint
    ################################################################
    # [1]
    # Based on the seed type and the space of the primary BOLD
@@ -189,11 +215,10 @@ for seed in ${seeds[cxt]}
    # the BOLD timeseries space.
    ################################################################
    case ${seedType} in
+
    coor)
       subroutine              @2.3.1   Transforming coordinates to image
       #############################################################
-      # seed[1] stores the coordinates of the seed.
-      # seed[2] stores the radius of the seed.
       #
       # If the primary BOLD timeseries is in native space, use
       # ANTs to transform seed coordinates into native space.
@@ -201,49 +226,45 @@ for seed in ${seeds[cxt]}
       # largely because of the stringent orientation requirements
       # within ANTs, and it is wrapped in the warpspace function.
       ##############################################################  
-    echo ${seed[1]}
-    echo ${seed[2]}
-    echo ${seed[3]}
    subroutine              @2.3.2
        exec_xcp coor2nifti \
-           -i ${seed[1]} -t ${libspace} \
-           -r ${seed[2]} -o ${intermediate}_coor_${seed[0]}.nii.gz
+           -i ${seedpoint} -t ${template} \
+           -r ${seed_radius[cxt]} -o ${intermediate}_coor_${cur}.nii.gz
       
   subroutine              @2.3.3
      warpspace                    \
-         ${intermediate}_coor_${seed[0]}.nii.gz \
-         ${intermediate}_coor1_${seed[0]}.nii.gz  \
-         ${seed[3]}:${space[sub]}  \
+         ${intermediate}_coor_${cur}.nii.gz \
+         ${intermediate}_coor1_${cur}.nii.gz  \
+         ${standard}:${space[sub]}  \
          NearestNeighbor
 
     subroutine              @2.3.4
      exec_ants  antsApplyTransforms \
-     -i ${intermediate}_coor1_${seed[0]}.nii.gz  \
+     -i ${intermediate}_coor1_${cur}.nii.gz  \
      -r ${referenceVolumeBrain[sub]} -n Linear \
      -o ${!sca_seed}
-
-    
       ;;
+
    mask)
       subroutine              @2.4.1
-      import_image            seed[1] ${intermediate}-${seed[0]}.nii.gz
+      import_image            ${seed_mask[cxt]} ${intermediate}-${cur}.nii.gz
       subroutine              @2.4.2 Warping seed into target space
       #############################################################
-      # seed[1] stores the path to the seed mask.
-      # seed[2] stores the space of the seed mask.
+      
       #############################################################
       warpspace                     \
-         ${seed[1]}                 \
-         ${intermediate}_coor1_${seed[0]}.nii.gz               \
-         ${seed[3]}:${space[sub]}   \
+         $${seed_mask[cxt]}                 \
+         ${intermediate}_coor1_${cur}.nii.gz               \
+         ${standard}:${space}   \
          NearestNeighbor
 
     exec_ants  antsApplyTransforms \
-     -i ${intermediate}_coor1_${seed[0]}.nii.gz  \
+     -i ${intermediate}_coor1_${cur}.nii.gz  \
      -r ${referenceVolumeBrain[sub]} -n Linear \
      -o ${!sca_seed}
       ;;
    esac
+
    ################################################################
    # [2]
    # Now that the seed map has been created in BOLD space, the
@@ -269,8 +290,8 @@ for seed in ${seeds[cxt]}
       do
       i=$(strslice ${k} 1 '#')
       k=$(strslice ${k} 2 '#')
-      sca_map=${seed[0]}'_sm'${k}'['${cxt}']'
-      sca_zmap=${seed[0]}'Z_sm'${k}'['${cxt}']'
+      sca_map=${cur}'_sm'${k}'['${cxt}']'
+      sca_zmap=${cur}'Z_sm'${k}'['${cxt}']'
       if ! is_image ${!sca_zmap}
          then
          subroutine           @4    SCA at smoothness ${k} mm
