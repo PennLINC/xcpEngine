@@ -103,6 +103,7 @@ USAGE
    # Define framewise quality criteria.
    ################################################################
    subroutine              ${tag}.3  [Selecting quality criteria]
+  
    q_criteria=( ${framewise[cxt]//,/ } )
    q_mask_sum=${img_i}-nFlags.1D
    exec_sys    rm -f ${q_mask_sum}
@@ -124,10 +125,11 @@ USAGE
       q_criterion=$(strslice ${q_criteria[i]} 1 ':')
       q_threshold=$(strslice ${q_criteria[i]} 2 ':')
       criterion_val=( ${dict_criteria[$q_criterion]//,/ } )
+      
       #############################################################
       # Compute a framewise inclusion mask
       #############################################################
-      subroutine           ${tag}.4  [Quality criterion: "${criterion_val[@]:1:} < ${q_threshold}"]
+      subroutine           ${tag}.4  [Quality criterion: "${criterion_val} < ${q_threshold}"]
       q_spkvar='n_spikes_'${q_criterion}'['${cxt}']'
       q_spkpct='pct_spikes_'${q_criterion}'['${cxt}']'
       q_cr_var=${criterion_val[0]}'['${cxt}']'
