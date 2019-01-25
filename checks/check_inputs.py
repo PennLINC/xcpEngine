@@ -204,7 +204,7 @@ Error: unable to parse cohort file {cohort_file}
             # Check that The values are ok
             column_values = cohort[column]
             for rownum, value in enumerate(column_values):
-                illegal_chars = re.match("([^A-Za-z0-9_-])", value)
+                illegal_chars = re.match("([^A-Za-z0-9_-.])", value)
                 if illegal_chars is not None:
                     cant_use = ''.join(illegal_chars.groups())
                     print("Error: Column {column}, Row {rownum} is {value}, which contains "
