@@ -14,7 +14,8 @@ def get_parser():
     """Defines the command line interface of the wrapper"""
     parser = ArgumentParser(
         description='xcpEngine: the extensible connectome pipeline',
-        formatter_class=RawTextHelpFormatter
+        formatter_class=RawTextHelpFormatter,
+        prog="xcpEngine"
     )
 
     # Standard qsiprep arguments
@@ -86,8 +87,10 @@ def get_parser():
 def main():
     """Check that the inputs are ok. If not, print a very verbose error."""
     parser = get_parser()
-    args = parser.parse_known_args()
-
+    try:
+        args = parser.parse_args()
+    except Exception:
+        parser
     # Check that the args are all sane
     design_file = args.d
     verbose_file_check("-d", design_file)
@@ -160,7 +163,7 @@ Error: unable to parse cohort file {cohort_file}
                 if illegal_chars is not None:
                     cant_use = ''.join(illegal_chars.groups())
                     print("Error: Column {column}, Row {rownum} is {value}, which contains "
-                          "special character(s) {cant_use}. Remove this character and ""
+                          "special character(s) {cant_use}. Remove this character and "
                           "try again.".format(column=column, rownum=rownum, value=value,
                                               cant_use=cant_use))
                     sys.exit(1)

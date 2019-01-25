@@ -35,7 +35,7 @@ jobs:
             fi
       - run:
           name: Build Docker image
-          no_output_timeout: 2h
+          no_output_timeout: 4h
           command: |
             # Get version, update files.
             THISVERSION=$( python3 about/get_version.py )
