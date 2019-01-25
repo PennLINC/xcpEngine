@@ -1,10 +1,4 @@
 /tmp/t1fc36p/xcpOutput
-group
-group/atlas.json
-group/dependencies
-group/dependencies/fc_root_201901232347_pipelineDescription.json
-group/error
-group/log
 sub-1
 sub-1/alff
 sub-1/alff/sub-1_alff.nii.gz
@@ -176,7 +170,6 @@ sub-1/sub-1.dsn
 sub-1/sub-1.nii.gz
 sub-1/sub-1_atlas
 sub-1/sub-1_atlas/sub-1_aal116.nii.gz
-sub-1/sub-1_atlas/sub-1_atlas.json
 sub-1/sub-1_atlas/sub-1_glasser360.nii.gz
 sub-1/sub-1_atlas/sub-1_global.nii.gz
 sub-1/sub-1_atlas/sub-1_gordon333.nii.gz
@@ -185,10 +178,6 @@ sub-1/sub-1_atlas/sub-1_schaefer100.nii.gz
 sub-1/sub-1_atlas/sub-1_schaefer200.nii.gz
 sub-1/sub-1_atlas/sub-1_schaefer400.nii.gz
 sub-1/sub-1_atlas/sub-1_segmentation.nii.gz
-sub-1/sub-1_derivatives-sub-1_anatomical.json
-sub-1/sub-1_derivatives.json
 sub-1/sub-1_logs
-sub-1/sub-1_logs/fc_root_201901232347_sub-1LOG-process
 sub-1/sub-1_logs/sub-1_audit.csv
 sub-1/sub-1_quality.csv
-sub-1/sub-1_spaces.json
