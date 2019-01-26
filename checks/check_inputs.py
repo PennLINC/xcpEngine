@@ -50,7 +50,7 @@ def get_parser():
     optional_group = parser.add_argument_group('Optional Arguments')
     optional_group.add_argument(
         '-m',
-        choices=["m", "c"],
+        choices=["s", "c"],
         action='store',
         help="Execution mode: "
         "Input can either be 's' (for serial execution on a "
