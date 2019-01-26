@@ -204,8 +204,9 @@ Error: unable to parse cohort file {cohort_file}
             # Check that The values are ok
             column_values = cohort[column]
             for rownum, value in enumerate(column_values):
-                illegal_chars = re.match("([^.A-Za-z0-9_-])", value)
-                if illegal_chars is not None:
+                sanitized = re.sub("([^.A-Za-z0-9_-]+)", "", value)
+                illegal_chars = set(value).difference(set(sanitized))
+                if illegal_chars:
                     cant_use = ''.join(illegal_chars.groups())
                     print("Error: Column {column}, Row {rownum} is {value}, which contains "
                           "special character(s) {cant_use}. Remove this character and "
@@ -228,8 +229,8 @@ def check_cohort_file_cell(rownum, column, value, rel, cohort_file):
     relative_msg = ""
     full_path=value
     if rel is not None:
-        full_path = rel + value
-        relative_msg = "Using relative path {rel}, the file {original_file} evaluates " \
+        full_path = (rel + "/" + value).replace("//", "/")
+        relative_msg = "Using relative path (-r) {rel}, the file {original_file} evaluates " \
                        "to {full_path}".format(rel=rel, original_file=value,
                                                full_path=full_path)
 

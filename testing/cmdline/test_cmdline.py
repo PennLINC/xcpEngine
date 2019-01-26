@@ -98,23 +98,23 @@ sub-01,sub-01/func/sub-01_task-mixedgamblestask_run-02_space-T1w_desc-preproc_bo
 
 anat_cohort = """\
 id0,img
-sub-1,/anat/sub-1_desc-preproc_T1w.nii.gz
+sub-01,sub-01/anat/sub-01_desc-preproc_T1w.nii.gz
 """
 
 bad_characters_cohort = """\
 id0,img
-sub-1,/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz
-sub-1,/func/sub-1>>_task-rest_space-T1w_desc-preproc_bold.nii.gz
+sub/01,sub-01/func/sub-01_task-mixedgamblestask_run-01_space-T1w_desc-preproc_bold.nii.gz
+sub-01,sub-01/func/sub-01_task-mixedgamblestask_run-02_space-T1w_desc-preproc_bold.nii.gz
 """
 
 cohort_w_antsct = """\
 id0,img,antsct
-sub-1,/func/sub-1>>_task-rest_space-T1w_desc-preproc_bold.nii.gz,/func/sub-1
+sub-01,sub-01/func/sub-01_task-mixedgamblestask_run-01_space-T1w_desc-preproc_bold.nii.gz,sub-01/anat
 """
 
 cohort_w_confound2_custom = """\
 id0,img,confound2_custom
-sub-1,/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz,sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-MELODIC_mixing.tsv
+sub-1,/sub-01/func/sub-1_task-rest_space-T1w_desc-preproc_bold.nii.gz,sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-MELODIC_mixing.tsv
 """
 
 invalid_column="""\
@@ -168,7 +168,7 @@ def get_paths(wd):
     return (op.join(wd, "fmriprep_output"), op.join(wd, "work"),
             op.join(wd, "xcpOutput"))
 
-def test_working_example(working_dir):
+def test_working_mni_example(working_dir):
     assert op.exists(working_dir)
     fmp_dir, work_dir, out_dir = get_paths(working_dir)
     cohort_file = op.join(working_dir, "mni_cohort.csv")
@@ -178,3 +178,112 @@ def test_working_example(working_dir):
                     output_arg="-o " + out_dir
                     )
     assert int(check) == 0
+
+
+def test_working_t1w_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "t1w_cohort.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) == 0
+
+
+def test_working_anat_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "anat_cohort.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) == 0
+
+
+def test_bad_characters_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "bad_characters_cohort.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) > 0
+
+
+def test_antsct_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "cohort_w_antsct.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) == 0
+
+
+def test_confound2_custom_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "cohort_w_confound2_custom.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) > 0
+
+
+def test_confound2_custom_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "cohort_w_confound2_custom.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) > 0
+
+
+def test_invalid_columns_example(working_dir):
+    assert op.exists(working_dir)
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "invalid_column.csv")
+    check = xcp_run(cohort_arg="-c " + cohort_file,
+                    relpath_arg="-r " + fmp_dir,
+                    workdir_arg="-i " + work_dir,
+                    output_arg="-o " + out_dir
+                    )
+    assert int(check) > 0
+
+def test_missing_args(working_dir):
+    fmp_dir, work_dir, out_dir = get_paths(working_dir)
+    cohort_file = op.join(working_dir, "invalid_column.csv")
+    check_no_cohort = xcp_run(cohort_arg="",
+                              relpath_arg="-r " + fmp_dir,
+                              workdir_arg="-i " + work_dir,
+                              output_arg="-o " + out_dir
+                              )
+    assert int(check_no_cohort) > 0
+
+    check_no_design = xcp_run(cohort_arg="-c " + cohort_file,
+                              relpath_arg="-r " + fmp_dir,
+                              workdir_arg="-i " + work_dir,
+                              output_arg="-o " + out_dir,
+                              design_arg=""
+                              )
+    assert int(check_no_design) > 0
+
+    check_no_output = xcp_run(cohort_arg="-c " + cohort_file,
+                              relpath_arg="-r " + fmp_dir,
+                              workdir_arg="-i " + work_dir,
+                              output_arg=""
+                              )
+    assert int(check_no_output) > 0

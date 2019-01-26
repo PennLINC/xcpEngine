@@ -62,6 +62,15 @@ jobs:
             docker save neurodebian:stretch  pennbbl/xcpengine:latest \
             | pigz -8 -p 3 > /tmp/cache/docker.tar.gz
 
+      - run:
+          name: pyTest io
+          command: |
+          docker run --rm -it \
+              -v /tmp:/tmp \
+              --entrypoint /opt/miniconda-latest/envs/neuro/bin/py.test \
+              pennbbl/xcpengine:latest \
+              /xcpEngine/testing/cmdline
+
       - persist_to_workspace:
           root: /tmp
           paths:
