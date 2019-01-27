@@ -237,6 +237,12 @@ The main output of ``regress`` module is ``prefix_residualised.nii.gz`` for the 
 module. Other outputs include::
  -  prefix_confmat.1D  # filtered regressors
  -  prefix_confcor.txt # Pearson correlation between confound regressors
+
+For Censoring and spike regression and if any volume is flagged, the other outputs include::
+ - prefix_uncensored.nii.gz # the regressed bold image with  flagged volme  interpolated
+ - prefix_nVolumesCensored.txt # number of volume censored 
+ - prefix_residualised.nii.gz # residualized volume with deleted flagged volume
+
 The optional output is the spatially smoothed residualised BOLD signal. This is specificy
 ``regress_sptf[cxt]`` and ``regress_smo[cxt]`` as explained previously. For instance, with::
 
