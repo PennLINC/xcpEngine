@@ -55,7 +55,7 @@ define   kernel                  ${seed_smo[cxt]//,/ }
 
 
 rem1=${seed_names[cxt]}
-echo $rem1
+
 while (( ${#rem1} > 0 ))
    do
    ################################################################
@@ -64,7 +64,7 @@ while (( ${#rem1} > 0 ))
    ################################################################
    cur=${rem1:0:3}
    rem1=${rem1:4:${#rem1}}
-    echo $cur
+   echo $cur
    
    define            mapdir               ${outdir}/${cur}/
    exec_sys          mkdir -p             ${mapdir[cxt]}
@@ -207,7 +207,7 @@ while (( ${#rem1} > 0 ))
       subroutine              @2.2.2
       seedType=mask
    fi
-echo $seedpoint
+
    ################################################################
    # [1]
    # Based on the seed type and the space of the primary BOLD
