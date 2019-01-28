@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/xcpEngine/designs/fc-36p.dsn
+design=/data/jux/BBL/projects/testACT/script/designfiles/fc-36p.dsn
 sequence=anatomical
 standard=MNI%2x2x2
 
@@ -132,11 +132,14 @@ alff_cleanup[6]=1
 # 7 SEED
 ###################################################################
 
-seed_lib[7]=
+seed_points[7]=0,-62,24
+seed_radius[7]=8
+seed_names[7]=PCC
+seed_mask[cxt]=
 seed_metric[7]=corrcoef
 seed_sptf[7]=susan
 seed_smo[7]=6
-seed_rerun[7]=1
+seed_rerun[7]=0
 seed_cleanup[7]=1
 
 ###################################################################
@@ -155,3 +158,11 @@ roiquant_cleanup[8]=1
 norm_primary[9]=1
 norm_rerun[9]=0
 norm_cleanup[9]=1
+
+##################################################################
+# 10 QCFC
+###################################################################
+qcfc_atlas[10]=power264
+qcfc_sig[10]=fdr
+qcfc_rerun[10]=0
+qcfc_cleanup[10]=1
