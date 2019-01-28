@@ -11,7 +11,6 @@ design file and a cohort file.
  * The cohort file is a list of subjects; it defines the
    inputs to the pipeline.
 
-.. include:: usage.rst
 .. include:: tutorial.rst
 .. include:: xcpEngine.rst
 .. include:: streams/index.rst
