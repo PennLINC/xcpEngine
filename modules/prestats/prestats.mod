@@ -404,8 +404,8 @@ while (( ${#rem} > 0 ))
 
                    
                 else 
-                    struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*")
-                    segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*")
+                    struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
+                    segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
                     structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
                     exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz -overwrite
