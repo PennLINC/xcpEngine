@@ -91,6 +91,10 @@ sub-1/norm/sub-1_std.nii.gz
 sub-1/norm/template.nii.gz
 sub-1/prestats
 sub-1/prestats/mc
+sub-1/prestats/sub-1_coregCoverage.txt
+sub-1/prestats/sub-1_coregCrossCorr.txt
+sub-1/prestats/sub-1_coregDice.txt
+sub-1/prestats/sub-1_coregJaccard.txt
 sub-1/prestats/sub-1_fmriconf.tsv
 sub-1/prestats/sub-1_mask.nii.gz
 sub-1/prestats/sub-1_preprocessed.nii.gz
