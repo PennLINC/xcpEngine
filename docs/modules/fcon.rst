@@ -93,3 +93,14 @@ temporary files will be retained to facilitate error diagnosis.::
 
   # Retain temporary files
   fcon_cleanup[cxt]=0
+
+``Expected output``
+^^^^^^^^^^^^^^^^^^^^^^
+The main outputs are:: 
+   - prefix_{atlas_name}_network.txt  # correlation matrix in vector form 
+   - prefix_{atlas_name}.net  # Pajek adjacency matrix
+   - prefix_{atlas_name}_ts.1D  # Nodal time series
+   - prefix_{atlas_name}.nii.gz # atlas in input BOLD signal space 
+
+Other outputs depend on the issues such as poor registration of atlas to BOLD image space:: 
+  - prefix_missing.txt  # index of nodes that bad, out of coverage of bold 

@@ -151,9 +151,12 @@ temporary files will be retained to facilitate error diagnosis.::
   # Retain temporary files
   qcfc_cleanup[cxt]=0
 
-.. _qcanat:
+``Expected output``
+^^^^^^^^^^^^^^^^^^^
+The main output of ``qcfc`` are::
+ - prefix_depthMap.nii.gz # layer of tissue segmentattion with depth values
+ - prefix_dvars*.1D # dvars obtained from residualised bold image
+ - prefix_tdof.txt # number of temporal degree of freedom lost
+ - prefix_voxts.png  # graphical summary of quality assessment measures
+ - prefix_motionDVCorr.txt # corerelation between dvars and rms ( before regression)
 
-``qcanat``
-============
-
-Unsupported

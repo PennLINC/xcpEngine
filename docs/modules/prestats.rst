@@ -20,7 +20,13 @@ The ``prestats`` outputs are derived directly from the ``FMRIPREP``. The expecte
     - ``prefix_segmenation.nii.gz``: segmentation tissues
     - ``prefix_struct.nii.gz``: T1w image
     - ``prefix_mask.nii.gz``: brain mask
-    - ``prefix_fmriconf.tsv``: confound regressors from ``FMRIPREP``
+    - ``prefix_fmriconf.tsv``: confound regressors from ``FMRIPREP`
 
 All  ``*nii.gz`` are expected to be have the same voxel size as the input but may have their
 orientation changed to the FSL standard.
+
+The ``prestats`` outputs also consist of Quality Assesmment between structrual and BOLD images::
+    - ``prefix_coregCoverage.txt`` : Coverage index
+    - ``prefix_coregCrossCorr.txt`` : Cross correlation
+    - ``prefix_coregDice.txt`` : Dice index
+    - ``prefix_coregJaccard.txt`` : Jaccard index 
