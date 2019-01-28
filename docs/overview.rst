@@ -35,15 +35,16 @@ installed.
 Step 1: Build a Singularity_ image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Detailed instructions can be found in the containers_ section. Essentially you just need to run::
+Detailed instructions can be found in the :ref:`containers` section. Essentially you just need to
+run::
 
   singularity build xcpEngine-latest.simg docker://pennbbl/xcpengine:latest
 
 Step 2: Create a *cohort file*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``xcpEngine`` reads images and metadata from a user-provided csv file called a *cohort file*.
-Details can be found in the cohort_ section. Briefly, the cohort file should contain
+``xcpEngine`` reads images and metadata from a user-provided csv file called a *:ref:`cohortfile`*.
+Details can be found in the :ref:`cohort` section. Briefly, the cohort file should contain
 subject metadata (without special shell characters) in ``id`` columns and paths to images
 written by ``FMRIPREP`` in the ``img`` column. In this example use case, the cohort file
 might be saved as ``/home/me/cohort.csv`` and contain::
@@ -58,7 +59,7 @@ Step 3: Choose/Configure a Pipeline *design*
 Not functional connectivity pipelines are equally effective at addressing systematic noise
 and artifacts. Many papers have compared denoising strategies and found that certain pipelines
 provide similarly effective methods for addressing this. ``xcpEngine`` has many of them
-available as *design files* that can specify the processing stages and calculation of output
+available as *:ref:`designfile`* that can specify the processing stages and calculation of output
 measures.
 
 A library of good-performing pipelines comes pre-packaged with ``xcpEngine`` and are
