@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=
+design=/data/jux/BBL/projects/testACT/script/designfiles/fc-24p_gsr.dsn
 sequence=anatomical
 standard=MNI%2x2x2
 
@@ -41,7 +41,7 @@ standard=MNI%2x2x2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,confound2,regress,fcon,reho,alff,seed,roiquant,norm
+pipeline=prestats,confound2,regress,fcon,reho,alff,seed,roiquant,norm,qcfc
 
 ###################################################################
 # 1 PRESTATS
@@ -55,20 +55,21 @@ prestats_process[1]=FMP
 # 2 CONFOUND2
 ###################################################################
 
-confound2_rps[2]=0
+confound2_rps[2]=1
 confound2_rms[2]=0
-confound2_wm[2]=1
-confound2_csf[2]=1
-confound2_gsr[2]=1
+confound2_wm[2]=0
+confound2_csf[2]=0
+confound2_gsr[2]=1	
 confound2_acompcor[2]=0
 confound2_tcompcor[2]=0
-confound2_aroma[2]=1
+confound2_aroma[2]=0
 confound2_past[2]=0
-confound2_dx[2]=0
-confound2_sq[2]=1
+confound2_dx[2]=1
+confound2_sq[2]=2
 confound2_custom[2]=
 confound2_censor[2]=0
 confound2_censor_contig[2]=0
+confound2_framewise[2]=rmss:0.083,fds:0.167,dv:2
 confound2_rerun[2]=0
 confound2_cleanup[2]=1
 
@@ -100,8 +101,6 @@ regress_process[3]=DMT-TMP-REG
 fcon_atlas[4]=all
 fcon_metric[4]=corrcoef
 fcon_thr[4]=N
-fcon_window[4]=10
-fcon_pad[4]=FALSE
 fcon_rerun[4]=0
 fcon_cleanup[4]=1
 
@@ -131,11 +130,14 @@ alff_cleanup[6]=1
 # 7 SEED
 ###################################################################
 
-seed_lib[7]=
+seed_points[7]=0,-62,24
+seed_radius[7]=8
+seed_names[7]=PCC
+seed_mask[cxt]=
 seed_metric[7]=corrcoef
 seed_sptf[7]=susan
 seed_smo[7]=6
-seed_rerun[7]=1
+seed_rerun[7]=0
 seed_cleanup[7]=1
 
 ###################################################################
@@ -154,3 +156,18 @@ roiquant_cleanup[8]=1
 norm_primary[9]=1
 norm_rerun[9]=0
 norm_cleanup[9]=1
+
+##################################################################
+# 10 QCFC
+###################################################################
+qcfc_atlas[10]=power264
+qcfc_sig[10]=fdr
+qcfc_rerun[10]=0
+qcfc_cleanup[10]=1
+
+
+
+
+
+
+
