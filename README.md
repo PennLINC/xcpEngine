@@ -1,5 +1,7 @@
 # The BBL image processing umbrella
 
+[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://xcpengine.readthedocs.io/?badge=latest)
+
 ##### Overview
 
 xcpEngine provides a configurable, modular, agnostic, and multimodal platform for neuroimage
