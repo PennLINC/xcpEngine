@@ -65,7 +65,7 @@ Processing routines
 Demeaning & detrending
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Module*: [`regress`](%%BASEURL/modules/regress)
+*Module*: ``regress``
 
 Deameaning and detrending removes the overall mean, as well as linear or polynomial trends, from
 the functional time series.
@@ -101,7 +101,7 @@ Mean global signal
 *Module*: :ref:`confound`
 
 Regression of the global signal is uniquely effective in removing widespread effects of motion and
-other spatially nonspecific artefacts from a functional time series.
+other spatially nonspecific artifacts from a functional time series.
 
 [Reference](https://www.ncbi.nlm.nih.gov/pubmed/15110027)
 
@@ -157,8 +157,8 @@ Regional homogeneity
 
 *Module*: :ref:`reho`
 
-Regional homogeneity, or ReHo, is a measure of local uniformity in the BOLD signal, operationalised
-as Kendall's W among each voxel and all other voxels in its neighbourhood.
+Regional homogeneity, or ReHo, is a measure of local uniformity in the BOLD signal, operationalized
+as Kendall's W among each voxel and all other voxels in its neighborhood.
 
 ALFF
 ~~~~~~

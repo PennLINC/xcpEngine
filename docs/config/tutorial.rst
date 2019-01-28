@@ -4,7 +4,7 @@ Pipeline tutorial
 0. Before you begin
 ~~~~~~~~~~~~~~~~~~~
 
-To get started, first [create a singularity image of xcpEngine](%%BASEURL/containers)::
+To get started, first [create a singularity image of xcpEngine::
 
   $ singularity build /data/applications/xcpEngine.simg docker://pennbbl/xcpengine:latest
 
@@ -175,9 +175,9 @@ Begin by looking at the subject-level output. Navigate to the first subject's ou
     been analyzed will exist as a NIfTI file, registered to the subject's T1w native space.
 
   * A subdirectory corresponding to each pipeline module, as defined in the ``pipeline`` variable
-    in the [design file](%%BASEURL/config/design). For the most part, these directories store
+    in the design file. For the most part, these directories store
     images and files that the pipeline uses to verify successful processing.
-    * Take a look inside the [``fcon``](%%BASEURL/modules/fcon) subdirectory. Inside, there will
+    * Take a look inside the ``fcon`` subdirectory. Inside, there will
       be a separate subdirectory for each of the atlases that the pipeline has processed. For
       instance, in the ``power264`` subdirectory (corresponding to the
       `264-node Power atlas <https://www.ncbi.nlm.nih.gov/pubmed/22099467>`_), there will be files
@@ -191,21 +191,25 @@ Begin by looking at the subject-level output. Navigate to the first subject's ou
     The verbosity of this log can be modified using the argument to the ``-t`` option). It is
     recommended that you use a verbosity level of either 1 or 2. For most cases, 1 will be
     sufficient, but 2 can sometimes provide additional, lower-level diagnostic information.
-  * A quality file (``sub-1_quality.csv``). The contents of the quality file will be discussed in detail later, along with group-level outputs.
-  * A spatial metadata file (``sub-1_spaces.json``). The pipeline uses this to determine how to move images between different [coordinate spaces](%%BASEURL/space).
+  * A quality file (``sub-1_quality.csv``). The contents of the quality file will be discussed in
+    detail later, along with group-level outputs.
+  * A spatial metadata file (``sub-1_spaces.json``). The pipeline uses this to determine how to
+    move images between different coordinate spaces.
   * The final output of processing (``sub-1.nii.gz``). This is the primary functional image, after
     all image processing steps have been applied to it. However, this file usually isn't as useful
     for analysis as are its derivatives, which brings us to ...
   * An index of derivative images (``sub-1_derivatives.json``).
     * Let's look at the content of the derivatives file now. Run the command shown, and find the
       entry for ``reho``. This JSON object corresponds to the voxelwise map of this subject's
-      regional homogeneity (_ReHo_).
+      regional homogeneity (*ReHo*).
     * The map can be found in the path next to the ``Map`` attribute. (You can open this in
       ``fslview`` if you would like.)
     * The ``Provenance`` attributes tell us that the map was produced as part of the 6th pipeline
       module, ``reho``.
     * The ``Space`` attribute tells us that the map is in 2mm isotropic MNI space.
-    * The ``Statistic`` attribute instructs the pipeline's ``roiquant`` module that it should compute the mean value within each parcel of each atlas when converting the voxelwise derivative into an ROI-wise derivative.
+    * The ``Statistic`` attribute instructs the pipeline's ``roiquant`` module that it should
+      compute the mean value within each parcel of each atlas when converting the voxelwise
+      derivative into an ROI-wise derivative.
     * The ``Type`` attribute is used by the pipeline when it makes decisions regarding
       interpolations and other processing steps.
     * There will actually be a separate index for each coordinate space that has been processed.

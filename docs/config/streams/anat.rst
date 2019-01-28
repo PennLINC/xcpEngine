@@ -47,7 +47,9 @@ ANTs registration
 
 *Module*: struc_
 
-ANTs registration uses the top-performing symmetric normalisation (SyN) approach to compute a diffeomorphic function that aligns each subject's anatomy to a sample- or population-level template brain.
+ANTs registration uses the top-performing symmetric normalisation (SyN) approach to compute a
+diffeomorphic function that aligns each subject's anatomy to a sample- or population-level template
+brain.
 
 [Reference 1](https://www.ncbi.nlm.nih.gov/pubmed/17659998)
 
@@ -60,7 +62,11 @@ Prior-guided segmentation
 
 *Products*: ``segmentation``
 
-ANTs Atropos combines Bayesian tissue-class priors in standard space with a SyN registration and a refinement step in order to produce a high-quality segmentation of the subject's anatomy into tissue classes. Typical templates will produce a 6-class segmentation, wherein 1 corresponds to cerebrospinal fluid, 2 to cortical grey matter, 3 to cortical white matter, 4 to subcortical grey matter, 5 to cerebellum, and 6 to brainstem.
+ANTs Atropos combines Bayesian tissue-class priors in standard space with a SyN registration and a
+refinement step in order to produce a high-quality segmentation of the subject's anatomy into
+tissue classes. Typical templates will produce a 6-class segmentation, wherein 1 corresponds to
+cerebrospinal fluid, 2 to cortical grey matter, 3 to cortical white matter, 4 to subcortical grey
+matter, 5 to cerebellum, and 6 to brainstem.
 
 [Reference](https://www.ncbi.nlm.nih.gov/pubmed/21373993)
 
@@ -104,11 +110,14 @@ tissue class as determined via a k-means 3-class tissue segmentation and subsequ
 Joint label fusion
 ^^^^^^^^^^^^^^^^^^^^
 
-*Module*: [``jlf``](%%BASEURL/modules/jlf)
+*Module*: ``jlf``
 
 *Products*: JLF MICCAI atlas
 
-Joint label fusion produces a custom, subject-level anatomical segmentation by diffeomorphically registering an ensemble of high-quality, manually segmented images (usually 20-40 LPBA subjects) to the subject's anatomical image. A voting procedure is then applied in order to assign each voxel of the subject's brain to a single region.
+Joint label fusion produces a custom, subject-level anatomical segmentation by diffeomorphically
+registering an ensemble of high-quality, manually segmented images (usually 20-40 LPBA subjects) to
+the subject's anatomical image. A voting procedure is then applied in order to assign each voxel of
+the subject's brain to a single region.
 
 [Reference](https://www.ncbi.nlm.nih.gov/pubmed/24319427)
 
@@ -119,22 +128,24 @@ Regional quantification
 
 Regional quantification converts voxelwise derivative maps (for instance, cortical thickness and
 grey matter density estimates) into regional values based on any number of provided parcellations.
-It is implemented in the XCP system's [``roiquant`` module](%%BASEURL/modules/roiquant).
+It is implemented in the XCP system's ``roiquant`` module.
 
 Volume estimation
 ^^^^^^^^^^^^^^^^^^
 
-*Module*: [``roiquant``](%%BASEURL/modules/roiquant)
+*Module*: ``roiquant``
 
-Estimates of global, regional, and tissue compartment volumes are computed as a part of regional quantification in the anatomical processing stream. It is implemented in the XCP system's [``roiquant`` module](%%BASEURL/modules/roiquant).
+Estimates of global, regional, and tissue compartment volumes are computed as a part of regional
+quantification in the anatomical processing stream. It is implemented in the XCP system's
+``roiquant``.
 
 Quality assessment
 ^^^^^^^^^^^^^^^^^^^^
 
-*Module*: [``qcanat``](%%BASEURL/modules/qcanat)
+*Module*: ``qcanat``
 
 Several indices of image quality are currently computable during anatomical processing. It is
-currently recommended to eschew these indices in favour of the Euler number, which has been found
+currently recommended to eschew these indices in favor of the Euler number, which has been found
 to perform better.
 
 [Reference](https://www.ncbi.nlm.nih.gov/pubmed/29278774)

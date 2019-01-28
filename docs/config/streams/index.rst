@@ -9,9 +9,9 @@ collected from the scanner into appropriate inputs to group-level statistical an
 of analytic data from a neuroimage.
 
 In the XCP system, a standard set of processing streams is available for each supported imaging
-modality. Each processing stream is parameterized by a [design file](%%BASEURL/config/design).
+modality. Each processing stream is parameterized by a design file.
 Detailed information about standard implementations of multimodal processing streams is available
-at the links below, organised by imaging modality.
+at the links below, organized by imaging modality.
 
 .. toctree::
   anat

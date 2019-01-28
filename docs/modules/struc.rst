@@ -11,9 +11,9 @@ diffeomorphic registration.
 Outputs
 ^^^^^^^^
 
- * [``corticalThickness``](%%BASEURL/products/corticalThickness.html)
- * [``mask``](%%BASEURL/products/mask.html)
- * [``segmentation``](%%BASEURL/products/segmentation.html)
+ * ``corticalThickness``
+ * ``mask``
+ * ``segmentation``
 
 Omnibus modules
 ^^^^^^^^^^^^^^^^^
