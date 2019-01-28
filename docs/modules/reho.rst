@@ -107,3 +107,11 @@ temporary files will be retained to facilitate error diagnosis.::
 
   # Retain temporary files
   reho_cleanup[cxt]=0
+
+
+``Expected output``
+The main outputs from ``reho`` include::
+  - prefix_reho.nii.gz  
+  - prefix_rehoZ.nii.gz # reho in Z score
+
+Other derived outputs are the smoothed images if it is specify in design file.

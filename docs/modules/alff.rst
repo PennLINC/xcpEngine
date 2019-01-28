@@ -96,3 +96,5 @@ temporary files will be retained to facilitate error diagnosis.::
 
   # Retain temporary files
   alff_cleanup[cxt]=0
+
+Other derived outputs are the smoothed images if it is specify in design file.
