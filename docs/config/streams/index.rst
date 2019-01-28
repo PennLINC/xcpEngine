@@ -14,5 +14,7 @@ Detailed information about standard implementations of multimodal processing str
 at the links below, organized by imaging modality.
 
 .. toctree::
-  anat
-  fc
+   :maxdepth: 1
+
+   anat
+   fc

@@ -109,12 +109,10 @@ Quick Lookup
   alff
   seed
   struc
-  jlf
   gmd
   norm
   roiquant
   fcon
   net
   qcfc
-  qcanat
   coreg

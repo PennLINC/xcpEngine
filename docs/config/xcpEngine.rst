@@ -1,3 +1,5 @@
+.. _xcpengine:
+
 ``xcpEngine``
 --------------
 
@@ -9,14 +11,14 @@ Singularity images are used, the default command that is run is ``xcpEngine``.
 ``-d``: Design file
 ~~~~~~~~~~~~~~~~~~~~
 
-The design_ file parameterizes the processing stream. Standard design files are stored in
+The :ref:`designfile` file parameterizes the processing stream. Standard design files are stored in
 ``${XCPEDIR}/designs``. New design files can be generated using the ``xcpConfig`` system or via
 manual editing.
 
 ``-c``: Cohort file
 ~~~~~~~~~~~~~~~~~~~~
 
-The cohort_ file parameterizes the pipeline's input sample, over which
+The :ref:`cohortfile` file parameterizes the pipeline's input sample, over which
 image processing is to be executed. Each row corresponds to a subject, and each column corresponds
 to a variable.
 

@@ -1,3 +1,5 @@
+.. _designfile:
+
 Pipeline design file
 ====================
 
@@ -6,7 +8,7 @@ processing system.
 
 The design file contains:
 
- * A list of the modules_ that should be executed;
+ * A list of the :ref:`modules` that should be executed;
  * The set of parameters that configure each module, as well as their values
 
 Preparing the design file
@@ -38,7 +40,7 @@ Design variables fall into four main categories:
  * *Output variables* are produced as the pipeline is run and are accessible at all stages of the
    pipeline
  * A fifth category of variable is not defined in the design file at all. *Subject variables* take
-   different values for different subjects. See the cohort_ file
+   different values for different subjects. See the :ref:`cohortfile` file
    documentation for more information about this type of variable.
 
 Analysis variables
@@ -56,7 +58,7 @@ Pipeline definitions
 ~~~~~~~~~~~~~~~~~~~~~
 
 The design file includes the ``pipeline`` variable, which defines the backbone of the pipeline: a
-comma-separated sequence of the modules_ that together comprise the
+comma-separated sequence of the :ref:`modules` that together comprise the
 processing stream.
 
 The standard functional connectivity processing stream is:::

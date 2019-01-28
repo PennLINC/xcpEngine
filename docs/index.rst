@@ -10,6 +10,4 @@ Contents
    config/index
    containers/index
    modules/index
-   space/index
-   utils/index
    development

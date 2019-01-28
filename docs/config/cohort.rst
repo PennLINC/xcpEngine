@@ -1,4 +1,4 @@
-.. _cohort:
+.. _cohortfile:
 
 Pipeline cohort file
 ====================
@@ -130,7 +130,7 @@ Subject variables
 ------------------
 
 Each of the columns in the cohort file becomes a *subject variable* at runtime. Subject variables
-can be used in the design_ to assign a parameter
+can be used in the :ref:`design` to assign a parameter
 subject-specific values. For instance, to use a custom task file for a subject the ``task_design`` parameter in the :ref:`struc`
 can be assigned the ``fsf`` subject variable. To
 indicate that the assignment is a subject variable, include the array index ``[sub]`` in the
