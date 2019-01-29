@@ -76,6 +76,7 @@ jobs:
           paths:
             - cache/docker.tar.gz
 
+
   get_data:
     machine:
       # Ubuntu 14.04 with Docker 17.10.0-ce
@@ -116,6 +117,7 @@ jobs:
          paths:
             - /tmp/data
 
+
   update_cache:
     machine:
       # Ubuntu 14.04 with Docker 17.10.0-ce
@@ -128,6 +130,7 @@ jobs:
          key: docker-v2-{{ .Branch }}-{{ epoch }}
          paths:
            - /tmp/cache/docker.tar.gz
+
 
   t1fc36p:
     machine:
@@ -381,6 +384,459 @@ jobs:
           path: /tmp/mnifc24pgsr
 
 
+  t1fc36pscrub:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?t1fc36pscrub\]' )" != "" ]]; then
+              echo "Skipping t1fc36pscrub build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - t1fc36pscrub-v2-{{ .Branch }}-{{ epoch }}
+            - t1fc36pscrub-v2-{{ .Branch }}
+            - t1fc36pscrub-v2-master
+            - t1fc36pscrub-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/t1fc36pscrub/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pscrub/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pscrub/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-36p_scrub bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pscrub/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pscrub/xcpOutput
+            mkdir -p /tmp/t1fc36pscrub/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pscrub/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pscrub/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/t1fc36pscrub/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-36p_scrub.dsn \
+                -c /data/t1_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-36p_scrub
+          command: |
+            mkdir -p /tmp/t1fc36pscrub/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/t1fc36pscrub/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/t1fc36pscrub/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/t1fc36pscrub/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/t1fc36pscrub_outputs.txt /tmp/t1fc36pscrub/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/t1fc36pscrub
+            rm -rf /tmp/t1fc36pscrub/work
+
+      - store_artifacts:
+          path: /tmp/t1fc36pscrub
+
+
+  t1fc36pdespike:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?t1fc36pdespike\]' )" != "" ]]; then
+              echo "Skipping t1fc36pdespike build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - t1fc36pdespike-v2-{{ .Branch }}-{{ epoch }}
+            - t1fc36pdespike-v2-{{ .Branch }}
+            - t1fc36pdespike-v2-master
+            - t1fc36pdespike-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/t1fc36pdespike/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pdespike/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pdespike/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-36p despike bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pdespike/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pdespike/xcpOutput
+            mkdir -p /tmp/t1fc36pdespike/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pdespike/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pdespike/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/t1fc36pdespike/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-36p_despike.dsn \
+                -c /data/t1_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-36p_despike
+          command: |
+            mkdir -p /tmp/t1fc36pdespike/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/t1fc36pdespike/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/t1fc36pdespike/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/t1fc36pdespike/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/t1fc36pdespike_outputs.txt /tmp/t1fc36pdespike/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/t1fc36pdespike
+            rm -rf /tmp/t1fc36pdespike/work
+
+      - store_artifacts:
+          path: /tmp/t1fc36pdespike
+
+
+  t1fc36pspkreg:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?t1fc36pspkreg\]' )" != "" ]]; then
+              echo "Skipping t1fc36pspkreg build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - t1fc36pspkreg-v2-{{ .Branch }}-{{ epoch }}
+            - t1fc36pspkreg-v2-{{ .Branch }}
+            - t1fc36pspkreg-v2-master
+            - t1fc36pspkreg-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/t1fc36pspkreg/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pspkreg/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pspkreg/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-aroma bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pspkreg/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pspkreg/xcpOutput
+            mkdir -p /tmp/t1fc36pspkreg/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36pspkreg/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36pspkreg/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/t1fc36pspkreg/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-36p_spkreg.dsn \
+                -c /data/t1_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-36p_spkreg
+          command: |
+            mkdir -p /tmp/t1fc36pspkreg/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/t1fc36pspkreg/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/t1fc36pspkreg/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/t1fc36pspkreg/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/t1fc36pspkreg_outputs.txt /tmp/t1fc36pspkreg/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/t1fc36pspkreg
+            rm -rf /tmp/t1fc36pspkreg/work
+
+      - store_artifacts:
+          path: /tmp/t1fc36pspkreg
+
+
+  mnifcacompcor:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?mnifcacompcor\]' )" != "" ]]; then
+              echo "Skipping mnifcacompcor build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - mnifcacompcor-v2-{{ .Branch }}-{{ epoch }}
+            - mnifcacompcor-v2-{{ .Branch }}
+            - mnifcacompcor-v2-master
+            - mnifcacompcor-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/mnifcacompcor/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifcacompcor/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/mnifcacompcor/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-acompcor bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifcacompcor/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/mnifcacompcor/xcpOutput
+            mkdir -p /tmp/mnifcacompcor/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifcacompcor/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/mnifcacompcor/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/mnifcacompcor/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-acompcor.dsn \
+                -c /data/mni_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-acompcor bold
+          command: |
+            mkdir -p /tmp/mnifcacompcor/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/mnifcacompcor/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/mnifcacompcor/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/mnifcacompcor/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/mnifcacompcor_outputs.txt /tmp/mnifcacompcor/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/mnifcacompcor
+            rm -rf /tmp/mnifcacompcor/work
+
+      - store_artifacts:
+          path: /tmp/mnifcacompcor
+
+
+  mnifctcompcor:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?mnifctcompcor\]' )" != "" ]]; then
+              echo "Skipping mnifctcompcor build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - mnifctcompcor-v2-{{ .Branch }}-{{ epoch }}
+            - mnifctcompcor-v2-{{ .Branch }}
+            - mnifctcompcor-v2-master
+            - mnifctcompcor-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/mnifctcompcor/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifctcompcor/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/mnifctcompcor/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-tcompcor bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifctcompcor/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/mnifctcompcor/xcpOutput
+            mkdir -p /tmp/mnifctcompcor/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifctcompcor/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/mnifctcompcor/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/mnifctcompcor/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-tcompcor.dsn \
+                -c /data/mni_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-tcompcor
+          command: |
+            mkdir -p /tmp/mnifctcompcor/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/mnifctcompcor/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/mnifctcompcor/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/mnifctcompcor/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/mnifctcompcor_outputs.txt /tmp/mnifctcompcor/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/mnifctcompcor
+            rm -rf /tmp/mnifctcompcor/work
+
+      - store_artifacts:
+          path: /tmp/mnifctcompcor
+
+
+  deploy_docker:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/qsiprep
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Deploy to Docker Hub
+          no_output_timeout: 40m
+          command: |
+            if [[ -n "$DOCKER_PASS" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag pennbbl/xcpengine pennbbl/xcpengine:unstable
+              docker push pennbbl/xcpengine:unstable
+              if [[ -n "$CIRCLE_TAG" ]]; then
+                docker push pennbbl/xcpengine:latest
+                docker tag pennbbl/xcpengine pennbbl/xcpengine:$CIRCLE_TAG
+                docker push pennbbl/xcpengine:$CIRCLE_TAG
+              fi
+            fi
+
 
 workflows:
   version: 2
@@ -444,5 +900,82 @@ workflows:
               ignore:
                 - /docs?\/.*/
                 - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - t1fc36pscrub:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - t1fc36pdespike:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - t1fc36pspkreg:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - mnifcacompcor:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - mnifctcompcor:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - deploy_docker:
+          requires:
+            - build
+            - t1fc36p
+            - t1fcaromagsr
+            - mnifc24pgsr
+            - t1fc36pscrub
+            - t1fc36pdespike
+            - t1fc36pspkreg
+            - mnifcacompcor
+            - mnifctcompcor
+          filters:
+            branches:
+              only: master
             tags:
               only: /.*/
