@@ -104,6 +104,15 @@ sub-1/prestats/sub-1_referenceVolumeBrain.nii.gz
 sub-1/prestats/sub-1_referenceVolume.nii.gz
 sub-1/prestats/sub-1_segmentation.nii.gz
 sub-1/prestats/sub-1_struct.nii.gz
+sub-1/qcfc
+sub-1/qcfc/sub-1_depthMap.nii.gz
+sub-1/qcfc/sub-1_dvars-mean.txt
+sub-1/qcfc/sub-1_dvars-raw.1D
+sub-1/qcfc/sub-1_dvars-std.1D
+sub-1/qcfc/sub-1_dvars-vox.1D
+sub-1/qcfc/sub-1_motionDVCorr.txt
+sub-1/qcfc/sub-1_tdof.txt
+sub-1/qcfc/sub-1_voxts.png
 sub-1/regress
 sub-1/regress/sub-1_confcor.txt
 sub-1/regress/sub-1_confmat.1D
