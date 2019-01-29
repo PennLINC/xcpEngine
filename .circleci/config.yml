@@ -213,6 +213,175 @@ jobs:
           path: /tmp/t1fc36p
 
 
+  t1fcaromagsr:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?t1fcaromagsr\]' )" != "" ]]; then
+              echo "Skipping t1fcaromagsr build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - t1fcaromagsr-v2-{{ .Branch }}-{{ epoch }}
+            - t1fcaromagsr-v2-{{ .Branch }}
+            - t1fcaromagsr-v2-master
+            - t1fcaromagsr-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/t1fcaromagsr/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fcaromagsr/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/t1fcaromagsr/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-aroma bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fcaromagsr/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fcaromagsr/xcpOutput
+            mkdir -p /tmp/t1fcaromagsr/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fcaromagsr/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/t1fcaromagsr/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/t1fcaromagsr/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-aroma.dsn \
+                -c /data/t1_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-aroma
+          command: |
+            mkdir -p /tmp/t1fcaromagsr/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/t1fcaromagsr/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/t1fcaromagsr/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/t1fcaromagsr/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/t1fcaromagsr_outputs.txt /tmp/t1fcaromagsr/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/t1fcaromagsr
+            rm -rf /tmp/t1fcaromagsr/work
+
+      - store_artifacts:
+          path: /tmp/t1fcaromagsr
+
+
+  mnifc24pgsr:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - checkout:
+          path: /home/circleci/src/xcpEngine
+      - run:
+          name: Check whether build should be skipped
+          command: |
+            cd /home/circleci/src/xcpEngine
+            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?mnifc24pgsr\]' )" != "" ]]; then
+              echo "Skipping mnifc24pgsr build"
+              circleci step halt
+            fi
+      - attach_workspace:
+          at: /tmp
+      - restore_cache:
+          keys:
+            - mnifc24pgsr-v2-{{ .Branch }}-{{ epoch }}
+            - mnifc24pgsr-v2-{{ .Branch }}
+            - mnifc24pgsr-v2-master
+            - mnifc24pgsr-v2-
+      - run:
+          name: Setting up test
+          command: |
+            mkdir -p /tmp/mnifc24pgsr/xcpOutput && sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifc24pgsr/xcpOutput && sudo setfacl -m group:$(id -gn):rwx /tmp/mnifc24pgsr/xcpOutput
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 1h
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+
+      - run:
+          name: Run full xcpengine on fc-aroma bold
+          no_output_timeout: 30m
+          command: |
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifc24pgsr/xcpOutput && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/mnifc24pgsr/xcpOutput
+            mkdir -p /tmp/mnifc24pgsr/work
+            sudo setfacl -d -m group:$(id -gn):rwx /tmp/mnifc24pgsr/work && \
+                sudo setfacl -m group:$(id -gn):rwx /tmp/mnifc24pgsr/work
+
+            docker run --rm -it \
+                -v /tmp/data:/data \
+                -v /tmp/mnifc24pgsr/:/out \
+                pennbbl/xcpengine:latest \
+                -d /xcpEngine/designs/fc-24p_gsr.dsn \
+                -c /data/mni_bold_cohort.csv  \
+                -o /out/xcpOutput \
+                -i /out/work \
+                -m s \
+                -r /data/downsampled
+      - run:
+          name: Checking outputs of fc-24p_gsr
+          command: |
+            mkdir -p /tmp/mnifc24pgsr/test
+            ls /home/circleci/src/xcpEngine/testing/
+            find /tmp/mnifc24pgsr/xcpOutput -path sub-1/* -prune -o -name "*" -print | \
+              sed s+/tmp/mnifc24pgsr/xcpOutput/++ | \
+              grep -v LOG | \
+              grep -v json | \
+              grep -v group | \
+              sort > /tmp/mnifc24pgsr/outputs.out
+            diff /home/circleci/src/xcpEngine/testing/mnifc24pgsr_outputs.txt /tmp/mnifc24pgsr/outputs.out
+            exit $?
+
+      - run:
+          name: Clean working directory
+          when: always
+          command: |
+            sudo chown $(id -un):$(id -gn) -R /tmp/mnifc24pgsr
+            rm -rf /tmp/mnifc24pgsr/work
+
+      - store_artifacts:
+          path: /tmp/mnifc24pgsr
+
+
+
 workflows:
   version: 2
   build_test_deploy:
@@ -243,6 +412,30 @@ workflows:
               only: /.*/
 
       - t1fc36p:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - t1fcaromagsr:
+          requires:
+            - get_data
+            - build
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - mnifc24pgsr:
           requires:
             - get_data
             - build
