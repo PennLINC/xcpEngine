@@ -16,7 +16,8 @@ To process your data from scanner to analysis, the steps are generally
   2. Run ``FMRIPREP`` on the BIDS-compliant data set (fmriprep_)
   3. Run ``xcpEngine`` to estimate some of many possible measures
 
-Steps 1 and 2 are well-documented and have active developers who can help you through these steps.
+Steps 1 and 2 are well-documented and have active developers who can help you through these steps; 
+this documentation will help you get started with step 3 (``xcpEngine``).
 
 
 Getting started
@@ -43,7 +44,7 @@ run::
 Step 2: Create a *cohort file*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``xcpEngine`` reads images and metadata from a user-provided csv file called a *:ref:`cohortfile`*.
+``xcpEngine`` reads images and metadata from a user-provided csv file called a :ref:`cohortfile`.
 Details can be found in the :ref:`cohort` section. Briefly, the cohort file should contain
 subject metadata (without special shell characters) in ``id`` columns and paths to images
 written by ``FMRIPREP`` in the ``img`` column. In this example use case, the cohort file
