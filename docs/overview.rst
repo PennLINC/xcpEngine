@@ -44,7 +44,7 @@ run::
 Step 2: Create a *cohort file*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``xcpEngine`` reads images and metadata from a user-provided csv file called a :ref:`cohortfile`.
+``xcpEngine`` reads images and metadata from a user-provided csv file called a :ref:`cohortfile` .
 Details can be found in the :ref:`cohort` section. Briefly, the cohort file should contain
 subject metadata (without special shell characters) in ``id`` columns and paths to images
 written by ``FMRIPREP`` in the ``img`` column. In this example use case, the cohort file
