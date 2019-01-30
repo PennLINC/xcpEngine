@@ -828,13 +828,7 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag pennbbl/xcpengine pennbbl/xcpengine:unstable
-              docker push pennbbl/xcpengine:unstable
-              if [[ -n "$CIRCLE_TAG" ]]; then
-                docker push pennbbl/xcpengine:latest
-                docker tag pennbbl/xcpengine pennbbl/xcpengine:$CIRCLE_TAG
-                docker push pennbbl/xcpengine:$CIRCLE_TAG
-              fi
+              docker push pennbbl/xcpengine:latest
             fi
 
 
