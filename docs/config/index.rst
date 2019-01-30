@@ -19,3 +19,4 @@ design file and a cohort file.
    cohort
    xcpEngine
    streams/index
+   utils/index
