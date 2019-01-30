@@ -43,7 +43,7 @@ threshold is specified in ``confound2`` as well as
   
 For Scrubbing, the threshold will be `fds:0.167` which implies that the actual threshold will be 0.167\*3 =~0.5mm
 Scrubbing also include masking out the contigious volume of more than 5. This can configure by setting::
-    confound2_censor_contig[2]=1 
+    *confound2_censor_contig[cxt]=1 
 
     
 
