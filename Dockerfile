@@ -165,6 +165,7 @@ RUN mkdir /opt/cmake \
            make \
            zlib1g-dev \
            imagemagick \
+           procps \
     && mkdir -p /tmp/ants/build \
     && git config --global url."https://".insteadOf git:// \
     && git clone https://github.com/ANTsX/ANTs.git /tmp/ants/source \
@@ -211,5 +212,7 @@ ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
     C3D_PATH="/opt/convert3d-nightly/bin/" \
     PATH="$PATH:/xcpEngine"
+
+RUN mkdir /data /out /work /design /cohort
 
 ENTRYPOINT ["/xcpEngine/xcpEngine"]

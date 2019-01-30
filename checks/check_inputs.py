@@ -239,7 +239,7 @@ def check_cohort_file_cell(rownum, column, value, rel, cohort_file):
 Error: file specified in {cohort_file} Column {column}, Row {rownum} is not readable
 
 {relative_msg}
-The file {value} cannot be read.
+The file {full_path} cannot be read.
 
 If using a container, you may find the documentation helpful for
 interactively checking whether a file is accessible from within a
@@ -248,7 +248,7 @@ container (https://xcpengine.readthedocs.io/containers/index.html).
 For an overview of cohort files and their contents see
 https://xcpengine.readthedocs.io/config/index.html#cohort-file-and-reference-directory
 '''.format(value=value, rownum=rownum, column=column, cohort_file=cohort_file,
-           relative_msg=relative_msg)
+           relative_msg=relative_msg, full_path=full_path)
         print(message)
         sys.exit(1)
 

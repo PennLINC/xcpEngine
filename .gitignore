@@ -2,3 +2,5 @@
 *.simg
 *.wpr
 _build/
+__pycache__
+*.egg_info
