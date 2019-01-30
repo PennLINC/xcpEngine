@@ -7,7 +7,7 @@ documented utilities.
 
 ## Denoising and data quality
 
- * [qcfc](%%BASEURL/utils/qcfc.html)
+ * [qcfc](%%BASEURL/config/utils/qcfc.html)
  * [qcfcDistanceDependence](%%BASEURL/utils/qcfcDistanceDependence.html)
 
 ## Image utilities: voxelwise and regional
