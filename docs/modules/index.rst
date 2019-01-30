@@ -62,11 +62,9 @@ Registration
 Modules that generate transforms between different coordinate spaces, or that apply those transforms.
 
  * :ref:`struc`: Computes transforms between a high-resolution anatomical image and a template
-   image representing a standard coordinate space using the top-performing SyN algorithm. (Combine
-   with the affine matrix obtained from ``coreg`` to warp any analyte to a standard space.)
- * :ref:`norm`: Applies the requisite transforms (computed by ``struc``
-   and/or ``coreg``) to shift all derivative maps from subject native space to a standard
-   coordinate space.
+   image representing a standard coordinate space using the top-performing SyN algorithm.
+ * :ref:`norm`: Applies the requisite transforms (computed by ``struc``) to shift all derivative
+   maps from subject native space to a standard coordinate space.
 
 Regional quantification
 ------------------------
@@ -83,8 +81,6 @@ Modules that map or analyse brain networks.
  * :ref:`fcon`: Computes the functional connectivity between each pair of regions in each provided
    brain atlas or parcellation to produce an adjacency matrix for the functional connectome.
    Computes dynamic FC using the MTD.
- * :ref:`net`: Operates on an adjacency matrix. Detects community structure and calculates
-   node-wise, edge-wise, community-wise, and graph-wise network properties. Inspired by BCT.
 
 Quality assessment
 --------------------
@@ -113,6 +109,4 @@ Quick Lookup
   norm
   roiquant
   fcon
-  net
   qcfc
-  coreg
