@@ -4,26 +4,33 @@
 =========
 
 ``seed`` performs seed-based correlation analyses given a seed region or set of seed regions. For
-each seed region, which may be provided either as a 3D volume in NIfTI format or as coordinates in
-a library file, ``seed`` computes the pairwise connectivity between each voxel and the seed region,
+each seed region, which may be provided either as a 3D volume (mask) in NIfTI format or  coordinates.
+``seed`` computes the pairwise connectivity between each voxel and the seed region,
 for instance using the Pearson correlation coefficient between timeseries (Biswal et al., 1995).
 
-``seed_lib``
-^^^^^^^^^^^^^^^^^^
+``seed_points,seed_names and seed_radius``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*Spatial coordinates library.*
+``seed_names``  is three-letters to identify a seed for naming purpose and can be more than one.
+  If this field is left blank, then no seed-based correlation analysis will be performed. The 
+  ``seed_points`` are three coordnates (in mm)  of the seed point in template space. ``seed_points``
+  and ``seed_names`` can be specify as shown below::  
 
-The spatial coordinates library (``.sclib``) is a file containing an index of the seed regions for
-which the correlation analysis should be run. Each seed is represented by a line in the ``sclib``
-file that begins with the ``#`` (hash/octothorpe) character. Seeds can be denoted using spatial
-coordinates or using volumetric NIfTI images. If this field is left blank, then no seed-based
-correlation analysis will be performed.::
+  # for  one seed point correlation
+  seed_names[cxt]=PCC # for seed at PCC
+  seed_points[cxt]=0,-62,24 # seed location of PCC
+  seed_radius[cxt]=8 # 8mm radius, 5mm will de used as if radius is not specify
 
-  # Use posterior_cingulate.sclib
-  seed_lib[cxt]=posterior_cingulate.sclib
-
-  # Skip seed-based correlation analysis
-  seed_lib[cxt]=
+  # for more than one seed loaction
+  seed_names[cxt]=PCC#VMF#LOC   # PCC, VMF and LOC
+  seed_points[cxt]=0,-62,24#0,34,-14#-36,-52,-2   # seed locations 
+  
+``seed_mask``
+^^^^^^^^^^^^^^
+A 3D mask can also be supply the mask must be derived from the template. xcpEngine assumes that 
+the mask in the same dimesnion as template::
+  seed_names[cxt]=PCC
+  seed_mask[cxt]=/path/to/mask
 
 ``seed_sptf`` and ``seed_smo``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -90,3 +97,11 @@ temporary files will be retained to facilitate error diagnosis.::
 
   # Retain temporary files
   seed_cleanup[cxt]=0
+
+``Expected outputs``
+^^^^^^^^^^^^^^^^^^^^^
+  A sub-directory of ``seed_names`` is created in ``seed`` directory. The directory constist of::
+    - prefix_connectivity_{seed_name}_seed.nii.gz # seed mask in BOLD space
+    - prefix_connectivity_{seed_name}_sm*.nii.gz # seed correlation map 
+    - prefix_connectivity_{seed_name}Z_sm*.nii.gz # Fisherz transfromed seed correlation map 
+    - prefix_connectivity_{seed_name}_ts.1D  # time series of seed point
