@@ -24,8 +24,7 @@ This can be done with `${XCPEDIR}/utils/quantifyAtlas` ::
 The output will conist of headear with ids and region names  or numbers with the correpping values atlas rois as show below::
 
      id1,id2, reho_mean_region1,reho_mean_region2,...
-     
-     sub1,sub2, 0.3456,0.7894,...
+     ses-01,sub-1, 0.3456,0.7894,...
 
 
 Similarly, users can extract time series from BOLD image with the customized atlas. This is similar to the output in `fcon` module. 
