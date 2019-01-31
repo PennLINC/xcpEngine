@@ -15,8 +15,13 @@ Denoising and data quality
  * :ref:`qcfc` : a utility for quality control measures of functional connectitivty
  * :ref:`qcfcDistanceDependence` : a utility to determine the distance dependence of motion
    artifact on functinal connectivity.
+ * :ref:`comibineoutput` :  a utility for combining the output of  all subjects simiar file into one
+  file for further analysis in other platform such as Excel, matlab, SPSS, R etc. 
 
 Image utilities: voxelwise and regional
 --------------------------
 
- * :ref:`erodespare`
+ * :ref:`erodespare` : This can be a useful tool for generating tissue maps for
+nuisance regression in a way that minimizes partial volume effects
+ * :ref:`roiquants`:  This tool allows users to use customed atlases to generate region values 
+ from the 3D and 4D images.  
