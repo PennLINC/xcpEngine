@@ -19,10 +19,19 @@ This can be done with `${XCPEDIR}/utils/quantifyAtlas` ::
       -n `atlas_name` \ # atlas name : option 
       -p  id1,id2 \ # subject idenfiers  : option 
       -r  `region_names` \ # name of regions in atlas : option
-      -o  `outputh_path.txt` 
+      -o  `output_path.txt` 
 
 The output will conist of headear with ids and region names  or numbers with the correpping values atlas rois as show below::
      id1,id2, reho_mean_region1,reho_mean_region2,...
      sub1,sub2, 0.3456,0.7894,...
 
- 
+
+Similarly, users can extract time series from BOLD image with the customized atlas. This is similar to the output in `fcon` module. 
+It is called::
+
+   $XCPEDIR/utils/roi2ts.R   \
+         -i   $input    \  # the 4D bold image 
+         -r   $atlas       \ # the atlas in the same orientation as bold
+         -l   $atlas_label \ # atlas region label  but not compulsory
+         >>    $output.txt   # output file
+   
