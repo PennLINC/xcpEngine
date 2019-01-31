@@ -5,12 +5,11 @@ Combine output files
 
 The ``xcpEgine`` provides a standalone script that help users to assemble results from each subject 
 and combine to a single file for further analysis in any other platform such as Excel, MATLAB or SPSS.
- There is ``${XCPEDIR}/utils/combineOutput`` that combine inidcated file from all the subject in the output 
- directory. This can be  very important to assemble  especially quality control file (`/{prefix}_quality.csv`)
-and ``roiquant`` outputs
-  ::
+There is ``${XCPEDIR}/utils/combineOutput`` that combine inidcated file from all the subject in the output 
+directory. This can be  very important to assemble  especially quality control file (`/{prefix}_quality.csv`)
+and ``roiquant`` outputs ::
   
-    ${XCPEDIR}/utils/combineOutput \
+   ${XCPEDIR}/utils/combineOutput \
    -p $outputdir  \  # all subjects directory  after running xcpEngine
    -f "*quality.csv" \  # the extention of the file users want to combine
    -o XCP_QAVARS.csv  # the output file in csv 
