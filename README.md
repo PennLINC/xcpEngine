@@ -1,8 +1,8 @@
 # The BBL image processing umbrella
 
-[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://xcpengine.readthedocs.io/?badge=latest)
+[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://xcpengine.readthedocs.io/?badge=latest)[![PyPI download total](https://img.shields.io/pypi/dt/ansicolortags.svg)](https://pypi.python.org/pypi/xcpengine-container/)
 
-##### Overview
+## Overview
 
 xcpEngine provides a configurable, modular, agnostic, and multimodal platform for neuroimage
 processing and quality assessment. It implements a number of high-performance denoising approaches
@@ -13,7 +13,7 @@ paper](https://www.ncbi.nlm.nih.gov/pubmed/28302591) are implementable, as are t
 evaluated in [the recent work of Parkes and
 colleagues](https://www.biorxiv.org/content/early/2017/11/05/156380).
 
-##### Documentation
+## Documentation
 
 Detailed documentation is accessible at the [pipeline's documentation
 hub](http://xcpengine.readthedocs.io)

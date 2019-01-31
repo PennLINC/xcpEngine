@@ -17,6 +17,15 @@ Denoising and data quality
    artifact on functinal connectivity.
 
 Image utilities: voxelwise and regional
---------------------------
+-----------------------------------------
 
  * :ref:`erodespare`
+
+
+.. toctree::
+   :maxdepth: 1
+
+   qcfc
+   qcfcDistanceDependence
+   roiquant
+   erodespare

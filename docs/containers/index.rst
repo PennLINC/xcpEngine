@@ -2,11 +2,13 @@
 
 .. _containers:
 
-xcpEngine containers
+xcpEngine containers (Extra Info)
 ========================================
 
 All atlases, software dependencies and scripts are included in the
-xcpEngine Docker/Singularity image.
+xcpEngine Docker/Singularity image. **These instructions are not needed
+if you are using ``xcpengine-docker`` or ``xcpengine-singularity``.
+They are here in case you need to run them manually**
 
 .. _singularity:
 
