@@ -7,7 +7,7 @@ The ``xcpEgine`` provides a standalone script that help users to assemble result
 and combine to a single file for further analysis in any other platform such as Excel, MATLAB or SPSS.
  There is ``${XCPEDIR}/utils/combineOutput`` that combine inidcated file from all the subject in the output 
  directory. This can be  very important to assemble  especially quality control file (`/{prefix}_quality.csv`)
-  and ``roiquant`` outputs
+and ``roiquant`` outputs
   ::
   
     ${XCPEDIR}/utils/combineOutput \
