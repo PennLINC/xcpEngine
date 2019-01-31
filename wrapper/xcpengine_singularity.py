@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-The xcpEngine on Docker wrapper
+The xcpEngine Singularity wrapper
 
 
 This is a lightweight Python wrapper to run xcpEngine.
-Docker must be installed and running. This can be checked
+Singularity must be installed. This can be checked
 running ::
 
-  docker info
+  singularity selftest
 
 Please report any feedback to our GitHub repository
 (https://github.com/pennbbl/xcpengine) and do not
@@ -15,46 +15,20 @@ forget to credit all the authors of software that xcpEngine
 uses.
 """
 import sys
+import stat
 import os
+import os.path as op
 import re
 import subprocess
 from warnings import warn
-from .options import get_parser
-
-__version__ = 'latest'
-__packagename__ = 'xcpengine-docker'
-__author__ = ''
-__copyright__ = 'Copyright 2019, '
-__credits__ = []
-__license__ = '3-clause BSD'
-__maintainer__ = ''
-__email__ = ''
-__url__ = 'https://github.com/pennbbl/xcpEngine'
-__bugreports__ = 'https://github.com/pennbbl/xcpEngine/issues'
-
-__description__ = """xcpEngine is a tool for denoising fMRI data and calulating
-functional connectivity after preprocessing with FMRIPREP."""
-__longdesc__ = """\
-This package is a basic wrapper for xcpEngine that generates the appropriate
-Docker commands, providing an intuitive interface to running xcpEngine
-workflow in a Docker environment."""
-
-DOWNLOAD_URL = (
-    'https://pypi.python.org/packages/source/{name[0]}/{name}/{name}-{ver}.tar.gz'.format(
-        name=__packagename__, ver=__version__))
-
-CLASSIFIERS = [
-    'Development Status :: 3 - Alpha',
-    'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 3.6',
-]
+from options import get_parser
+home = os.path.expanduser("~")
+__version__="latest"
 
 
 MISSING = """
 Image '{}' is missing
 Would you like to download? [Y/n] """
-PKG_PATH = '/usr/local/miniconda/lib/python3.6/site-packages'
 
 # Monkey-patch Py2 subprocess
 if not hasattr(subprocess, 'DEVNULL'):
@@ -92,48 +66,30 @@ except NameError:
     pass
 
 
-def check_docker():
-    """Verify that docker is installed and the user has permission to
-    run docker images.
+def check_singularity():
+    """Verify that singularity is installed and the user has permission to
+    run singularity images.
 
     Returns
     -------
-    -1  Docker can't be found
-     0  Docker found, but user can't connect to daemon
+    -1  singularity can't be found
      1  Test run OK
      """
     try:
-        ret = subprocess.run(['docker', 'version'], stdout=subprocess.PIPE,
+        ret = subprocess.run(['singularity', '--version'],
+                             stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
     except OSError as e:
         from errno import ENOENT
         if e.errno == ENOENT:
             return -1
         raise e
-    if ret.stderr.startswith(b"Cannot connect to the Docker daemon."):
-        return 0
     return 1
 
 
 def check_image(image):
-    """Check whether image is present on local system"""
-    ret = subprocess.run(['docker', 'images', '-q', image],
-                         stdout=subprocess.PIPE)
-    return bool(ret.stdout)
-
-
-def check_memory(image):
-    """Check total memory from within a docker container"""
-    ret = subprocess.run(['docker', 'run', '--rm', '--entrypoint=free',
-                          image, '-m'],
-                         stdout=subprocess.PIPE)
-    if ret.returncode:
-        return -1
-
-    mem = [line.decode().split()[1]
-           for line in ret.stdout.splitlines()
-           if line.startswith(b'Mem:')][0]
-    return int(mem)
+    """Check whether image is present and you can read it"""
+    return os.path.exists(image) and os.access(image, os.R_OK)
 
 
 def get_wrapper_parser():
@@ -142,8 +98,8 @@ def get_wrapper_parser():
     parser = get_parser()
 
     # Allow alternative images (semi-developer)
-    parser.add_argument('-i', '--image', metavar='IMG', type=str,
-                        default='pennbbl/xcpEngine:{}'.format(__version__),
+    parser.add_argument('--image', metavar='IMG', type=str,
+                        default=os.path.join(home,"xcpEngine.simg"),
                         help='image name')
 
     # Options for mapping files and directories into container
@@ -161,12 +117,17 @@ def get_wrapper_parser():
                        help='working xcpEngine repository')
     g_dev.add_argument('--shell', action='store_true',
                        help='open shell in image instead of running xcpEngine')
-    g_dev.add_argument('-e', '--env', action='append', nargs=2, metavar=('ENV_VAR', 'value'),
-                       help='Set custom environment variable within container')
-    g_dev.add_argument('-u', '--user', action='store',
-                       help='Run container as a given user/uid')
 
     return parser
+
+def mkdir(dirpath):
+    if op.exists(dirpath):
+        return 1
+    try:
+        os.makedirs(dirpath)
+    except Exception:
+        print("Unable to create {}. Exiting.".format(dirpath))
+        sys.exit(1)
 
 
 def main():
@@ -178,16 +139,14 @@ def main():
     opts = parser.parse_args()
 
     # Stop if no docker / docker fails to run
-    check = check_docker()
+    check = check_singularity()
     if check < 1:
         if opts.version:
             print('xcpEngine wrapper {!s}'.format(__version__))
         if opts.help:
             parser.print_help()
-        if check == -1:
-            print("xcpEngine: Could not find docker command... Is it installed?")
         else:
-            print("xcpEngine: Make sure you have permission to run 'docker'")
+            print("xcpEngine: Could not singularity command... Is it installed?")
         return 1
 
     # For --help or --version, ask before downloading an image
@@ -206,82 +165,68 @@ def main():
         if resp not in ('y', 'Y', ''):
             return 0
         print('Downloading. This may take a while...')
+        #XXX: Build the image
 
     # Warn on low memory allocation
-    mem_total = check_memory(opts.image)
-    if mem_total == -1:
-        print('Could not detect memory capacity of Docker container.\n'
-              'Do you have permission to run docker?')
-        return 1
-    if not (opts.help or opts.version) and mem_total < 8000:
-        print('Warning: <8GB of RAM is available within your Docker '
-              'environment.\nSome parts of xcpEngine may fail to complete.')
-        try:
-            resp = input('Continue anyway? [y/N]')
-        except KeyboardInterrupt:
-            print()
-            return 1
-        if resp not in ('y', 'Y', ''):
-            return 0
+    mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+    mem_gib = mem_bytes/(1024.**3)
+    if mem_gib < 10:
+        print('Warning: <10GB of RAM is available on your system.\n'
+              'Some parts of xcpEngine may fail to complete.')
 
-    command = ['docker', 'run', '--rm', '-it']
+    command = ['singularity', 'run']
 
     # Patch working repositories into installed package directories
     if opts.patch_xcpEngine is not None:
-        command.extend(['-v',
-                        '{}:/xcpEngine:ro'.format(opts.patch_xcpEngine) ])
-
-    if opts.env:
-        for envvar in opts.env:
-            command.extend(['-e', '%s=%s' % tuple(envvar)])
-
-    if opts.user:
-        command.extend(['-u', opts.user])
+        if not os.path.exists(opts.patch_xcpEngine):
+            print("WARNING: unable to patch xcpEngine. {} does not "
+                  "exist".format(opts.patch_xcpEngine))
+        else:
+            command.extend(['-B',
+                            '{}:/xcpEngine'.format(opts.patch_xcpEngine) ])
 
     main_args = []
     design_file = opts.d
     if design_file:
         if not design_file.startswith("/xcpEngine"):
-            command.extend(['-v', ':'.join((design_file, '/design/design.dsn', 'ro'))])
-            main_args.extend(['-d', '/design/design.dsn'])
+            design_dir, design_fname = op.split(design_file)
+            mounted_name = "/design/" + design_fname
+            command.extend(['-B', design_dir + ':/design'])
+            main_args.extend(['-d', mounted_name])
         else:
             main_args += ['-d', design_file]
 
     cohort_file = opts.c
     if cohort_file:
-        command.extend(['-v', ':'.join((cohort_file, '/cohort/cohort.csv', 'ro'))])
-        main_args.extend(['-c', '/cohort/cohort.csv'])
+        cohort_dir, cohort_fname = op.split(cohort_file)
+        mounted_cohort = "/cohort/" + cohort_fname
+        command.extend(['-B', cohort_dir + ':/cohort'])
+        main_args.extend(['-c', mounted_cohort])
 
     output_dir = opts.o
     if output_dir:
-        command.extend(['-v', ':'.join((output_dir, '/xcpOutput'))])
-        main_args.extend(['-o', '/xcpOutput'])
+        mkdir(output_dir)
+        command.extend(['-B', ':'.join((output_dir, '/out'))])
+        main_args.extend(['-o', '/out'])
 
     # only allow serial:
     main_args += ['-m', 's']
 
     relative_dir = opts.r
     if relative_dir:
-        command.extend(['-v', ':'.join((relative_dir, '/relative'))])
-        main_args.extend(['-r', 'relative'])
+        command.extend(['-B', ':'.join((relative_dir, '/data'))])
+        main_args.extend(['-r', '/data'])
 
     work_dir = opts.i
     if work_dir:
-        command.extend(['-v', ':'.join((work_dir, '/scratch'))])
-        unknown_args.extend(['-i', '/scratch'])
+        mkdir(work_dir)
+        command.extend(['-B', ':'.join((work_dir, '/work'))])
+        main_args.extend(['-i', '/work'])
 
     if opts.shell:
-        command.append('--entrypoint=bash')
+        command[1] = "shell"
 
     command.append(opts.image)
-
-    # Override help and version to describe underlying program
-    # Respects '-i' flag, so will retrieve information from any image
-    if opts.help:
-        command.append('-h')
-        targethelp = subprocess.check_output(command).decode()
-        print(merge_help(parser.format_help(), targethelp))
-        return 0
 
     if not opts.shell:
         command.extend(main_args)
@@ -289,7 +234,7 @@ def main():
     print("RUNNING: " + ' '.join(command))
     ret = subprocess.run(command)
     if ret.returncode:
-        print("xcpEngine: Please report errors to {}".format(__bugreports__))
+        print("xcpEngine: Please report errors to {github.com/pennbbl/xcpEngine/issues}")
     return ret.returncode
 
 
