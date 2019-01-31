@@ -15,7 +15,7 @@ Denoising and data quality
  * :ref:`qcfc` : a utility for quality control measures of functional connectitivty
  * :ref:`qcfcDistanceDependence` : a utility to determine the distance dependence of motion
    artifact on functinal connectivity.
- * :ref:`comibineoutput` :  a utility for combining the output of  all subjects simiar file into one file for further analysis in other platform such as Excel, matlab, SPSS, R etc. 
+ * :ref:`combineoutput` :  a utility for combining the output of  all subjects simiar file into one file for further analysis in other platform such as Excel, matlab, SPSS, R etc. 
 
 Image utilities: voxelwise and regional
 --------------------------
