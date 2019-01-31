@@ -15,7 +15,7 @@ def main():
 
     setup(
         name=info['__packagename__'],
-        version=info['__version__'],
+        version="1.0.1",
         description=info['__description__'],
         long_description=info['__longdesc__'],
         author=info['__author__'],

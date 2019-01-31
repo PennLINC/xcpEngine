@@ -21,31 +21,32 @@ operation, and no volume is deleted/removed.  For despiking in xcpEngine, ``DSP`
 
  regress_process[cxt]=DSP-TMP-REG
 
+.. _censoring:
 
 Temporal Censoring
 ^^^^^^^^^^^^^^^^^^^^^^^^
-Temporal Censoring is a process in which data points with excessive motion outliers are identified/flaggeg. 
-The censored data points are removed from the data. This is effective for removing spurious sources of connectivity 
-in fMRI data but must be applied verycarefully because the censored volumes are removed and the final BOLD signal. 
+Temporal Censoring is a process in which data points with excessive motion outliers are identified/flaggeg.
+The censored data points are removed from the data. This is effective for removing spurious sources of connectivity
+in fMRI data but must be applied verycarefully because the censored volumes are removed and the final BOLD signal.
 To apply censoring in xcpEngine, ``confound2_censor[cxt]=1`` should be specified in ``confound2``
 in the design file.  However, the threshold to identify the censored volumes or outliers is obtained
-from framewise displacement. The framewise displacement (FD) is obtained from ``FMRIPREP`` regressors. 
+from framewise displacement. The framewise displacement (FD) is obtained from ``FMRIPREP`` regressors.
 
 Framewise displacement (fd) will be used as the threshold. For Instance, the spike regression (Satterthwaite et al. 2013)
-required threshold of 0.25mm for TR of 3s and Scrubbing (Power 2012) required threshold of 0.5 mm. Any volume wiht fd above the 
-threshold will be flagged. The threshold is congigure  in `confound2` as shown below::  
+required threshold of 0.25mm for TR of 3s and Scrubbing (Power 2012) required threshold of 0.5 mm. Any volume wiht fd above the
+threshold will be flagged. The threshold is congigure  in `confound2` as shown below::
 point will be flagged. Scrubbing/censoring uses FD,RMS and dvars to established the threshold.  The
 threshold is specified in ``confound2`` as well as
 
-  * ``confound2_framewise[cxt]=fds:0.083,dv:2``. For spike regression, with TR of of 3,  the threshold will be 
-  0.083\*3 ~= 0.25mm.  with  This is standard or common threshold (Ciric et al. 2012, Satterthwaite et al. 2013) 
-  and  are provided in the design files. The actual threshold value is determined by the TR of the BOLD signal.  
-  
+  * ``confound2_framewise[cxt]=fds:0.083,dv:2``. For spike regression, with TR of of 3,  the threshold will be
+  0.083\*3 ~= 0.25mm.  with  This is standard or common threshold (Ciric et al. 2012, Satterthwaite et al. 2013)
+  and  are provided in the design files. The actual threshold value is determined by the TR of the BOLD signal.
+
 For Scrubbing, the threshold will be `fds:0.167` which implies that the actual threshold will be 0.167\*3 =~0.5mm
 Scrubbing also include masking out the contigious volume of more than 5. This can configure by setting::
-    *confound2_censor_contig[cxt]=1 
+    *confound2_censor_contig[cxt]=1
 
-    
+
 
 ``regress_process``
 ^^^^^^^^^^^^^^^^^^^^
@@ -235,7 +236,7 @@ module. Other outputs include::
 
 For Censoring and spike regression and if any volume is flagged, the other outputs include::
  - prefix_uncensored.nii.gz # the regressed bold image with  flagged volme  interpolated
- - prefix_nVolumesCensored.txt # number of volume censored 
+ - prefix_nVolumesCensored.txt # number of volume censored
  - prefix_residualised.nii.gz # residualized volume with deleted flagged volume
 
 The optional output is the spatially smoothed residualised BOLD signal. This is specificy

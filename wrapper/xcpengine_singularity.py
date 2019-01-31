@@ -164,8 +164,12 @@ def main():
                 return 1
         if resp not in ('y', 'Y', ''):
             return 0
-        print('Downloading. This may take a while...')
-        #XXX: Build the image
+        print('Downloading and building image. This may take a while...')
+        ret = subprocess.run(
+            "singularity build {} docker://pennbbl/xcpengine:latest".format(opts.image))
+        if ret > 0:
+            print("Critical Error: Unable to create singularity image {}".format(opts.image))
+            sys.exit(1)
 
     # Warn on low memory allocation
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')

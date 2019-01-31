@@ -16,12 +16,31 @@ To process your data from scanner to analysis, the steps are generally
   2. Run ``FMRIPREP`` on the BIDS-compliant data set (fmriprep_)
   3. Run ``xcpEngine`` to estimate some of many possible measures
 
-Steps 1 and 2 are well-documented and have active developers who can help you through these steps; 
+Steps 1 and 2 are well-documented and have active developers who can help you through these steps;
 this documentation will help you get started with step 3 (``xcpEngine``).
 
+Getting started on your personal computer
+------------------------------------------
 
-Getting started
-----------------
+The easiest way to use xcpEngine on your laptop or personal computer is to install Docker_ and
+the ``xcpEngine`` python wrapper. Ensure that Docker_ has access to at least 8GB of memory. Then
+you can install the Python wrapper using::
+
+  pip install xcpengine-container
+
+Once this completes you can run ``xcpEngine`` without explicitly running Docker_::
+
+  xcpengine-docker \
+    -d /xcpEngine/designs/fc-36p.dsn \
+    -c /path/to/cohort.csv \
+    -r /path/to/data/directory \
+    -i /path/to/workingdir \
+    -o /path/to/outputdir
+
+Continue reading
+
+Getting started on a HPC system
+----------------------------------
 
 Once your data is processed by ``FMRIPREP`` you are ready to use ``xcpEngine``. ``FMRIPREP``
 can write preprocessed data out in multiple spaces. At the moment, ``xcpEngine`` only supports
@@ -58,18 +77,27 @@ Step 3: Choose/Configure a Pipeline *design*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Not functional connectivity pipelines are equally effective at addressing systematic noise
-and artifacts. Many papers have proposed different denoising strategies, which may vary in 
+and artifacts. Many papers have proposed different denoising strategies, which may vary in
 effectiveness.   ``xcpEngine`` has many of the top performing de-noising strategies implemented
 available as :ref:`designfile` that can specify the processing stages and calculation of output
 measures.
 
 A library of pipelines comes pre-packaged with ``xcpEngine`` and are
-described in the accompanying paper. We recommend using these design files *as-is*
-and warn that changes to them may produce poor-quality results.
+described in the accompanying paper. We test these design files before distributing ``xcpengine``
+and recommend using them *as-is*. Changes may produce poor-quality results.
 
 These are pre-packaged in the Singularity_ image in ``/xcpEngine/designs`` and a full list
 can be found in the GitHub repository (https://github.com/PennBBL/xcpEngine/tree/master/designs).
+These designs implement the processing pipelines found in the following table:
 
+.. figure:: _static/designs.png
+    :scale: 40%
+    :align: center
+
+    Available pipeline designs
+
+.. note:: The poor-performance pipelines are not included. Also, you will need to adjust the
+   thresholds for rmss for your TR (:ref:`censoring`) if you're using a pre-packaged design file.
 
 Step 4: Process your data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
