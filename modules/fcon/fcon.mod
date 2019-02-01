@@ -33,7 +33,7 @@ update_networks() {
 }
 
 completion() {
-   #write_atlas
+   write_atlas
 
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality

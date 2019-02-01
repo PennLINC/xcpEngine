@@ -72,6 +72,10 @@ define      featdir                 ${outdir}/fsl/${prefix}
 
 qc rel_max_rms  relMaxRMSMotion     mc/${prefix}_relMaxRMS.txt
 qc rel_mean_rms relMeanRMSMotion    mc/${prefix}_relMeanRMS.txt
+qc coreg_cross_corr  coregCrossCorr ${prefix}_coregCrossCorr.txt
+qc coreg_coverage    coregCoverage  ${prefix}_coregCoverage.txt
+qc coreg_jaccard     coregJaccard   ${prefix}_coregJaccard.txt
+qc coreg_dice        coregDice      ${prefix}_coregDice.txt
 
 temporal_mask_prime
 
@@ -177,7 +181,7 @@ then
     subroutine @0.1d "${native_orientation} -> ${template_orientation}"
     ${AFNI_PATH}/3dresample -orient ${template_orientation} \
               -inset ${full_intermediate} \
-              -prefix ${intermediate}_${template_orientation}.nii.gz
+              -prefix ${intermediate}_${template_orientation}.nii.gz -overwrite
     intermediate=${intermediate}_${template_orientation}
     intermediate_root=${intermediate}
     img=${intermediate}.nii.gz
@@ -204,147 +208,165 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         mask1=${imgprt2}${mskpart}; maskpart2=${mask1#*_*_*_*}
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
          strucn="${img1[sub]%/*/*}";
+
+         
+         strucn="${img1[sub]%/*/*}";
+
+         if [[ -f  $(ls ${strucn}/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5 2>/dev/null ) ]]; then  
+                  strucn=${strucn}
+         else
+
+          anatdir=$strucn/../
+          
+          strucn=${anatdir}
+
+         fi
+         
+         
          if [[ -d ${antsct[sub]} ]]; then
-               subroutine @ getting structural from anataomical  processing output 
+               subroutine @ generate mask and struct/structhead 
               
                structmask=$(ls -d ${strucn}/anat/*${maskpart2})
 
-               subroutine @ resample the reference volume to template orientation
-             exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
-               -prefix  ${out}/task/${prefix}_referenceVolume.nii.gz
-             output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
+               subroutine @ resampling the ref vol to template orientation
+               exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} -prefix  \
+                   ${out}/task/${prefix}_referenceVolume.nii.gz -overwrite
              
-              rm -rf /tmp/imgmask.nii.gz
-             exec_afni 3dresample -orient ${template_orientation} -inset ${mask1} \
-               -prefix  /tmp/imgmask.nii.gz
-         
-               rm -rf /tmp/structmask.nii.gz
+               output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
+             
+
+               exec_afni 3dresample -orient ${template_orientation} \
+               -inset ${mask1} -prefix ${prefix}_imgmask.nii.gz -overwrite
 
                exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz \
-                  -inset ${structmask}  -prefix /tmp/structmask.nii.gz
+                  -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
 
-               exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
+               exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
                       ${out}/task/${prefix}_mask.nii.gz
                 output mask  ${out}/task/${prefix}_mask.nii.gz
+                rm ${prefix}_structmask.nii.gz
+                rm ${prefix}_imgmask.nii.gz
 
+               exec_afni 3dresample -master ${mask[cxt]} \
+                   -inset ${segmentation[sub]}  \
+                  -prefix ${out}/task/${prefix}_segmentation.nii.gz -overwrite
 
-               exec_afni 3dresample -master ${out}/task/${prefix}_mask.nii.gz -inset \
-                   ${segmentation[sub]} -prefix ${out}/task/${prefix}_segmentation.nii.gz
+               output segmentation  ${out}/task/${prefix}_segmentation.nii.gz
 
-                   output segmentation  ${out}/task/${prefix}_segmentation.nii.gz
-
-               exec_fsl fslmaths  ${out}/task/${prefix}_mask.nii.gz -mul ${out}/task/${prefix}_referenceVolume.nii.gz \
-                ${out}/task/${prefix}_referenceVolumeBrain.nii.gz 
-                output referenceVolumeBrain ${out}/task/${prefix}_referenceVolumeBrain.nii.gz
+               exec_fsl fslmaths  ${mask[cxt]} -mul \
+                   ${referenceVolume[cxt]} \
+                   ${out}/task/${prefix}_referenceVolumeBrain.nii.gz 
+                   
+               output referenceVolumeBrain ${out}/task/${prefix}_referenceVolumeBrain.nii.gz
    
-                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
-                 exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz \
-                 -inset ${struct[sub]}   -prefix ${out}/task/${prefix}_struct.nii.gz
+             
+               exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                   -inset ${struct[sub]}   -prefix ${out}/task/${prefix}_struct.nii.gz -overwrite
  
-                     output struct  ${out}/task/${prefix}_struct.nii.gz
-                     output struct_head ${out}/task/${prefix}_struct.nii.gz
-
-                       rm -f ${spaces[sub]}
-                       echo '{}'  >> ${spaces[sub]}
+               output struct  ${out}/task/${prefix}_struct.nii.gz
+               output struct_head ${out}/task/${prefix}_struct.nii.gz
+               
+               subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+               rm -f ${spaces[sub]}
+               echo '{}'  >> ${spaces[sub]}
                        
-                       mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
-                       pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
-                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
-                       mnitopnc=$( echo ${mnitopnc})
-                       pnc2mni=$(echo ${pnc2mni})
-                       mnitopnc=${mnitopnc// /,}
-                       pnc2mni=${pnc2mni// /,}
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+               mnitopnc=$( echo ${mnitopnc})
+               pnc2mni=$(echo ${pnc2mni})
+               mnitopnc=${mnitopnc// /,}
+               pnc2mni=${pnc2mni// /,}
 
-                       ${XCPEDIR}/utils/spaceMetadata          \
-                         -o ${spaces[sub]}                 \
-                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
-                         -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
-                         -x ${pnc2mni}                               \
-                         -i ${mnitopnc}                               \
-                         -s ${spaces[sub]}
-
-
-                       hd=',MapHead='${struct_head[cxt]}
-                       subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)
-                                  $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)"
-                       temp2subj="   $(ls -d ${antsct[sub]}/*TemplateToSubject0Warp.nii.gz) 
-                                  $(ls -d ${antsct[sub]}/*TemplateToSubject1GenericAffine.mat)"
-                       subj2temp=$( echo ${subj2temp})
-                       temp2subj=$(echo ${temp2subj})
-                       subj2temp=${subj2temp// /,}
-                       temp2subj=${temp2subj// /,}
-
-                       ${XCPEDIR}/utils/spaceMetadata          \
-                         -o ${spaces[sub]}                 \
-                         -f ${standard}:${template}        \
-                         -m ${structural[sub]}:${struct[cxt]}${hd} \
-                         -x ${subj2temp}                               \
-                         -i ${temp2subj}                               \
-                         -s ${spaces[sub]}
+               ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}                 \
+                    -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                    -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
+                    -x ${pnc2mni}                               \
+                    -i ${mnitopnc}                               \
+                    -s ${spaces[sub]}
 
 
-                 
-                 intermediate=${intermediate}
+              hd=',MapHead='${struct_head[cxt]}
+              subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)
+                           $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)"
+              temp2subj="   $(ls -d ${antsct[sub]}/*TemplateToSubject0Warp.nii.gz) 
+                          $(ls -d ${antsct[sub]}/*TemplateToSubject1GenericAffine.mat)"
+              subj2temp=$( echo ${subj2temp})
+              temp2subj=$(echo ${temp2subj})
+              subj2temp=${subj2temp// /,}
+              temp2subj=${temp2subj// /,}
+
+              ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}                 \
+                    -f ${standard}:${template}        \
+                    -m ${structural[sub]}:${struct[cxt]}${hd} \
+                    -x ${subj2temp}                               \
+                    -i ${temp2subj}                               \
+                    -s ${spaces[sub]}
+
+
+               exec_sys rln   ${intermediate}.nii.gz  \
+                        ${intermediate}_${cur}.nii.gz
+               intermediate=${intermediate}_${cur}
          
-               routine_end
+               
           else 
           
-                struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*")
-                segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*")
-                structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
-                mni2t1=$(ls -f  $strucn/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
-                t12mni=$(ls -f  $strucn/anat/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
+               
+               mni2t1=$(ls -f  $strucn/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
+               t12mni=$(ls -f  $strucn/anat/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
          
                 # check if the inout image has MNI and convert t T1w
                  string1='MNI152'; b1=$(basename ${img1[sub]})
                       if [[ ${b1} =~ ${string1} ]]; then 
                       ## check if the confounmatix is present and the mask 
              
-               
+                      struct1=$( ls -d $strucn/anat/*MNI*desc-preproc_T1w.nii.gz)
+                      segmentation1=$(ls -d  $strucn/anat/*MNI*dseg.nii.gz)
+                      structmask=$(ls -d  $strucn/anat/*MNI*desc-brain_mask.nii.gz)
+                      onetran=${XCPEDIR}/utils/oneratiotransform.txt
+  
                       subroutine        @ checking refvolume and structural orientation
-                      rm -rf  /tmp/ref.nii.gz
-                      exec_ants antsApplyTransforms -e 3 -d 3 -v  0 -i ${refvol} -r ${struct1}  -t ${mni2t1} \
-                         -o /tmp/ref.nii.gz -n NearestNeighbor
-                      rm -rf /tmp/ref2.nii.gz
-                      exec_afni 3dresample -master ${img} \
-                           -inset /tmp/ref.nii.gz  -prefix  /tmp/ref2.nii.gz
-                     exec_afni 3dresample -orient ${template_orientation} -inset /tmp/ref2.nii.gz \
-                           -prefix  ${out}/task/${prefix}_referenceVolume.nii.gz
+                      exec_afni 3dresample -orient  ${template_orientation} \
+                           -inset ${refvol} -prefix  ${out}/task/${prefix}_referenceVolume.nii.gz -overwrite
 
                       output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
 
-                      subroutine        @  checking img vol and structural orientation
-                      exec_ants antsApplyTransforms -e 3 -d 3 -v  0 -i ${img1[sub]}  \
-                            -r ${out}/task/${prefix}_referenceVolume.nii.gz \
-                                 -t ${mni2t1} -o ${intermediate}_1.nii.gz -n NearestNeighbor
+                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${struct1} -prefix  ${out}/task/${prefix}_struct.nii.gz -overwrite
 
-                       subroutine        @  generate mask in template orientation with structural mask 
-                       rm -rf /tmp/imgmask.nii.gz
-                       exec_ants antsApplyTransforms -e 3 -d 3 -v  0 -i ${mask1} -o /tmp/imgmask.nii.gz \
-                        -r ${out}/task/${prefix}_referenceVolume.nii.gz -t ${mni2t1}  -n NearestNeighbor       
-                       rm -rf /tmp/structmask.nii.gz
-                       exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz \
-                          -inset ${structmask}  -prefix /tmp/structmask.nii.gz
-                      exec_fsl fslmaths /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz \
-                      ${out}/task/${prefix}_mask.nii.gz
-                      output mask  ${out}/task/${prefix}_mask.nii.gz
+                      output struct_head ${out}/task/${prefix}_struct.nii.gz
+                      output struct  ${out}/task/${prefix}_struct.nii.gz
+                       
+                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${segmentation1} -prefix  ${out}/task/${prefix}_segmentation.nii.gz -overwrite
 
-                      subroutine        @  resample segmentation to img space 
-                      exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz -inset ${segmentation1} \
-                               -prefix ${out}/task/${prefix}_segmentation.nii.gz
                       output segmentation  ${out}/task/${prefix}_segmentation.nii.gz
 
-                      exec_fsl fslmaths  ${out}/task/${prefix}_mask.nii.gz -mul ${out}/task/${prefix}_referenceVolume.nii.gz \
+                       subroutine        @  generate mask and referenceVolumeBrain 
+                     
+
+                       exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                          -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
+
+                      exec_fsl fslmaths ${mask1} -mul ${prefix}_structmask.nii.gz \
+                      ${out}/task/${prefix}_mask.nii.gz
+
+                      output mask  ${out}/task/${prefix}_mask.nii.gz
+                      rm ${prefix}_structmask.nii.gz
+
+                      exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/task/${prefix}_referenceVolumeBrain.nii.gz 
-                         output referenceVolumeBrain ${out}/task/${prefix}_referenceVolumeBrain.nii.gz
+                          
+                      output referenceVolumeBrain ${out}/task/${prefix}_referenceVolumeBrain.nii.gz 
                 
                       
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
-                      exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz -inset ${struct1}   \
-                         -prefix ${out}/task/${prefix}_struct.nii.gz
-                     output struct  ${out}/task/${prefix}_struct.nii.gz
-                     output struct_head ${out}/task/${prefix}_struct.nii.gz
+
+                  
+                      output struct_head ${out}/task/${prefix}_struct.nii.gz
 
                        rm -f ${spaces[sub]}
                        echo '{}'  >> ${spaces[sub]}
@@ -370,65 +392,74 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                          -o ${spaces[sub]}                 \
                          -f ${standard}:${template}        \
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
-                         -x ${t12mni}                               \
-                         -i ${mni2t1}                               \
+                         -x ${onetran}                               \
+                         -i ${onetran}                               \
                          -s ${spaces[sub]}
-                         
-                       intermediate=${intermediate}_1
-                   routine_end
+
+                         exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+                         intermediate=${intermediate}_${cur}
+
+
+
+                   
                 else 
-          
+
+                    struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
+                    segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+                    structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
                     exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
-                       -prefix  ${out}/task/${prefix}_referenceVolume.nii.gz
-                   output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
+                       -prefix  ${out}/task/${prefix}_referenceVolume.nii.gz -overwrite
+                    output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
                    
-                   rm -rf /tmp/imgmask.nii.gz
+
                    exec_afni 3dresample -orient ${template_orientation} \
-                         -inset ${mask1} -prefix  /tmp/imgmask.nii.gz
+                    -inset ${mask1} -prefix  ${prefix}_imgmask.nii.gz -overwrite
                    
-                   rm -rf /tmp/structmask.nii.gz
-                   exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz \
-                    -inset ${structmask} -prefix /tmp/structmask.nii.gz
 
-                   exec_fsl fslmaths  /tmp/imgmask.nii.gz -mul /tmp/structmask.nii.gz ${out}/task/${prefix}_mask.nii.gz
+                   exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                     -inset ${structmask} -prefix ${prefix}_structmask.nii.gz -overwrite
+
+                   exec_fsl fslmaths  ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz ${out}/task/${prefix}_mask.nii.gz
                    output mask  ${out}/task/${prefix}_mask.nii.gz
+                    rm ${prefix}_structmask.nii.gz ${prefix}_imgmask.nii.gz
 
-
-                  exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz -inset ${segmentation1}   \
-                         -prefix ${out}/task/${prefix}_segmentation.nii.gz
+                  exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${segmentation1}   \
+                         -prefix ${out}/task/${prefix}_segmentation.nii.gz -overwrite
               
                   output segmentation  ${out}/task/${prefix}_segmentation.nii.gz
 
-                  exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz -inset ${struct1}   \
-                                -prefix ${out}/task/${prefix}_struct.nii.gz
+                  exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${struct1}   \
+                                -prefix ${out}/task/${prefix}_struct.nii.gz -overwrite
                   output struct_head ${out}/task/${prefix}_struct.nii.gz
                   output struct ${out}/task/${prefix}_struct.nii.gz
                 
-                exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz -inset ${img1[sub]}   \
-                         -prefix ${intermediate}_1.nii.gz
-                exec_fsl fslmaths  ${out}/task/${prefix}_mask.nii.gz -mul ${out}/task/${prefix}_referenceVolume.nii.gz \
-                ${out}/task/${prefix}_referenceVolumeBrain.nii.gz 
+                exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${img1[sub]}   \
+                         -prefix ${intermediate}_${cur}.nii.gz -overwrite
+                exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
+                         ${out}/task/${prefix}_referenceVolumeBrain.nii.gz 
                 output referenceVolumeBrain ${out}/task/${prefix}_referenceVolumeBrain.nii.gz
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                 rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
-                mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
-                       pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
-                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
-                       mnitpnc=$( echo ${mnitopnc})
+
+                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+                pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+                       
+                       mnitopnc=$( echo ${mnitopnc})
                        pnc2mni=$(echo ${pnc2mni})
                        mnitopnc=${mnitopnc// /,}
                        pnc2mni=${pnc2mni// /,}
 
-                       ${XCPEDIR}/utils/spaceMetadata          \
+                       ${XCPEDIR}/utils/spaceMetadata  \
                          -o ${spaces[sub]}                 \
                          -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
-                         -x ${pnc2mni}                               \
-                         -i ${mnitopnc}                               \
+                         -x ${pnc2mni} -i ${mnitopnc}     \
                          -s ${spaces[sub]}
+
                 hd=',MapHead='${struct_head[cxt]}
 
                ${XCPEDIR}/utils/spaceMetadata          \
@@ -439,15 +470,27 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                          -i ${mni2t1}                               \
                          -s ${spaces[sub]}
 
-                intermediate=${intermediate}_1
-                routine_end
+                intermediate=${intermediate}_${cur}
+                
             fi 
 
-       fi
-fi        
+   fi  
+    subroutine        @  Quality assessment
+    
+   
+    registration_quality=( $(exec_xcp \
+      maskOverlap.R           \
+      -m ${segmentation[cxt]}   \
+      -r ${referenceVolumeBrain[cxt]}) )
+
+    echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
+    echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
+    echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
+    echo  ${registration_quality[3]} > ${coreg_dice[cxt]}
+
+    routine_end 
+fi
       
-
-
 
 ###################################################################
 # Variable import and search:
@@ -657,15 +700,17 @@ if [[ -d ${featout} ]]
       exec_sys reorg ${featout}/mc/*abs_mean.rms  ${abs_mean_rms[cxt]}
       exec_sys reorg ${featout}/mc/*.mat          ${rmat[cxt]}
       exec_sys reorg ${featout}/mc/*.png          ${mcdir[cxt]}
-      exec_xcp 1dTool.R             \
+     
+   exec_xcp 1dTool.R             \
          -i    ${rel_rms[cxt]}      \
          -o    max                  \
          -f    ${rel_max_rms[cxt]}
-      temporal_mask  --SIGNPOST=${signpost}        \
-                     --INPUT=${featout}/filtered_func_data.nii.gz \
-                     --RPS=${rps[cxt]}             \
-                     --RMS=${rel_rms[cxt]}         \
-                     --THRESH=${task_framewise[cxt]}
+
+   #temporal_mask  --SIGNPOST=${signpost}        \
+                     #--INPUT=${featout}/filtered_func_data.nii.gz \
+                     #--RPS=${rps[cxt]}             \
+                     #--RMS=${rel_rms[cxt]}         \
+                     #--THRESH=${task_framewise[cxt]}
    fi
 
    ################################################################
