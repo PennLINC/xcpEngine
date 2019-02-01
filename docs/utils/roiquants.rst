@@ -14,7 +14,7 @@ region values from the output. Beware that your directories need to be mounted i
 The customed atlas and the input image such as ``rehoZ`` must  have the same dimension and
 orientation.  This can be done with ``${XCPEDIR}/utils/quantifyAtlas``.::
 
-   docker run --rm -it --entrypoint /xcpEngine/utils/roi2ts.R   \
+   docker run --rm -it --entrypoint /xcpEngine/utils/quantifyAtlas   \
        pennbbl/xcpengine:latest \
     -v ``inputfile``  \  # this is input image 3D
     -s  mean \ # the statistics, the defualt is the mean of each roi in atlas
