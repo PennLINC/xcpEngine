@@ -34,7 +34,7 @@
 
 analysis=task_$(whoami)
 design=${XCPEDIR}/designs/task.dsn
-sequence=nback
+sequence=anatomical
 standard=MNI%2x2x2
 
 ###################################################################
