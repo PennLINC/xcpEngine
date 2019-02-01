@@ -226,7 +226,15 @@ while (( ${#rem} > 0 ))
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
          strucn="${img1[sub]%/*/*}";
-         
+         if [[ -f  $(ls ${strucn}/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5 2>/dev/null ) ]]; then  
+                  strucn=${strucn}
+         else
+
+          anatdir=$strucn/../
+          
+          strucn=${anatdir}
+
+         fi
          
          if [[ -d ${antsct[sub]} ]]; then
                subroutine @ generate mask and struct/structhead 

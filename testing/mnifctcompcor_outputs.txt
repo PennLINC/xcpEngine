@@ -61,8 +61,10 @@ sub-1/prestats/sub-1_mask.nii.gz
 sub-1/prestats/sub-1_preprocessed.nii.gz
 sub-1/prestats/sub-1_referenceVolumeBrain.nii.gz
 sub-1/prestats/sub-1_referenceVolume.nii.gz
+sub-1/prestats/sub-1_segmentation.nii.gz
 sub-1/prestats/sub-1_struct.nii.gz
 sub-1/qcfc
+sub-1/qcfc/sub-1_depthMap.nii.gz
 sub-1/qcfc/sub-1_dvars-mean.txt
 sub-1/qcfc/sub-1_dvars-raw.1D
 sub-1/qcfc/sub-1_dvars-std.1D
@@ -94,6 +96,12 @@ sub-1/roiquant/power264/sub-1_power264_mean_alffZ.csv
 sub-1/roiquant/power264/sub-1_power264_mean_reho.csv
 sub-1/roiquant/power264/sub-1_power264_mean_rehoZ.csv
 sub-1/roiquant/power264/sub-1_power264.nii.gz
+sub-1/roiquant/segmentation
+sub-1/roiquant/segmentation/sub-1_segmentation_mean_alff.csv
+sub-1/roiquant/segmentation/sub-1_segmentation_mean_alffZ.csv
+sub-1/roiquant/segmentation/sub-1_segmentation_mean_reho.csv
+sub-1/roiquant/segmentation/sub-1_segmentation_mean_rehoZ.csv
+sub-1/roiquant/segmentation/sub-1_segmentation.nii.gz
 sub-1/roiquant/sub-1_referenceVolume.nii.gz
 sub-1/seed
 sub-1/seed/PCC
@@ -105,6 +113,7 @@ sub-1/seed/sub-1_referenceVolume.nii.gz
 sub-1/sub-1_atlas
 sub-1/sub-1_atlas/sub-1_global.nii.gz
 sub-1/sub-1_atlas/sub-1_power264.nii.gz
+sub-1/sub-1_atlas/sub-1_segmentation.nii.gz
 sub-1/sub-1.dsn
 sub-1/sub-1_logs
 sub-1/sub-1_logs/sub-1_audit.csv
