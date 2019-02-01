@@ -341,12 +341,14 @@ while (( ${#rem} > 0 ))
 
                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            -inset ${struct1} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
-                      
+
+                      output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                       output struct  ${out}/prestats/${prefix}_struct.nii.gz
                        
                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${segmentation} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
-                      
+                           -inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+
+                      output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
                        subroutine        @  generate mask and referenceVolumeBrain 
                      
@@ -401,6 +403,8 @@ while (( ${#rem} > 0 ))
 
                          exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
                          intermediate=${intermediate}_${cur}
+
+
 
                    
                 else 
@@ -480,8 +484,8 @@ while (( ${#rem} > 0 ))
    
     registration_quality=( $(exec_xcp \
       maskOverlap.R           \
-      -m ${referenceVolume[cxt]}   \
-      -r ${struct[cxt]}) )
+      -m ${segmentation[cxt]}   \
+      -r ${referenceVolumeBrain[cxt]}) )
     echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
     echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
     echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
