@@ -90,7 +90,7 @@ Modules that produce estimates of data quality.
  * :ref:`qcfc`: Quality assessment for functional connectivity. Generates voxelwise plots, QC-FC
    measures, and QC-FC estimates of distance-dependence to facilitate diagnosis of motion-related
    contamination and assessment of denoising efficacy.
- * :ref:`qcanat` : *UNSUPPORTED* Quality assessment for anatomical images inspired by QAP.
+ 
 
 Quick Lookup
 --------------
@@ -104,6 +104,7 @@ Quick Lookup
   reho
   alff
   seed
+  task
   struc
   gmd
   norm
