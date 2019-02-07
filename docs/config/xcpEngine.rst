@@ -68,8 +68,8 @@ Other ways  to override the default value of the variable especially in design f
  
  to select cofound matrix by overriwriting design filter
 ``-a confound=24p`` # this equivalent to confound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1
-``-a confound=36p``  # this equivalent to  onfound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1
-                  confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_gsr[cxt]=1
+
+``-a confound=36p``  # this equivalent to  onfound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1,confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_gsr[cxt]=1
                   
 ``-a confound=aroma`` #  confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_aroma[cxt]=1;
 
