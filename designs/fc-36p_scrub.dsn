@@ -129,41 +129,26 @@ alff_rerun[6]=0
 alff_cleanup[6]=1
 
 ###################################################################
-# 7 SEED
+# 7 ROIQUANT
 ###################################################################
 
-seed_points[7]=0,-62,24
-seed_radius[7]=8
-seed_names[7]=PCC
-seed_mask[cxt]=
-seed_metric[7]=corrcoef
-seed_sptf[7]=susan
-seed_smo[7]=6
-seed_rerun[7]=0
-seed_cleanup[7]=1
+roiquant_atlas[7]=all
+roiquant_globals[7]=1
+roiquant_vol[7]=0
+roiquant_rerun[7]=0
+roiquant_cleanup[7]=1
 
 ###################################################################
-# 8 ROIQUANT
+# 8 NORM
 ###################################################################
-
-roiquant_atlas[8]=power264
-roiquant_globals[8]=1
-roiquant_vol[8]=0
-roiquant_rerun[8]=0
-roiquant_cleanup[8]=1
-
-###################################################################
-# 9 NORM
-###################################################################
-norm_primary[9]=1
-norm_rerun[9]=0
-norm_cleanup[9]=1
+norm_primary[8]=1
+norm_rerun[8]=0
+norm_cleanup[8]=1
 
 ##################################################################
-# 10 QCFC
+# 9 QCFC
 ###################################################################
-qcfc_atlas[10]=power264
-qcfc_sig[10]=fdr
-qcfc_rerun[10]=0
-qcfc_cleanup[10]=1
-
+qcfc_atlas[9]=power264
+qcfc_sig[9]=fdr
+qcfc_rerun[9]=0
+qcfc_cleanup[9]=1
