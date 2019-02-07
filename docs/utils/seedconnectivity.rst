@@ -1,9 +1,8 @@
 .. _seedconnectivity:
 
-Seed-based connectivity 
-========================
 
 Seed-based connectivity 
+========================
 
 Seed-based connectivity provides the opportunity to compute the  functional connectivity between 
 the a point/region and  all other voxels in the brain. The users can specify a 3 coordinates point 
@@ -12,7 +11,7 @@ provided,  ``MNI152_T1_2mm_brain.nii.gz`` will be used as default template.
 
 The seed connectivity is done with ${XCPEDIR}/utils/seedconnectivity::
 
-      ${XCPEDIR}/utils/seedconnectivity   \
+    ${XCPEDIR}/utils/seedconnectivity   \
     -img  input4Dimage  \  #  4D inputimage usually residualised or image or filtered image
     --s=x,y,z   \ # 3 cordinates  or a mask (--s=/path/to/mask)
     -o  outputpath  \ # output directory 
