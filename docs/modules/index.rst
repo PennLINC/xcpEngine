@@ -29,7 +29,7 @@ Functional derivatives
 --------------------------
 
 Modules that generate derivative maps from functional data.
- * :ref:`task`: perfomrs FSL FEAT processing 
+ * :ref:`task`: performs FSL FEAT processing 
  * :ref:`reho`: Computes voxelwise regional homogeneity.
  * :ref:`alff`: Computes the amplitude of low-frequency fluctuations voxelwise.
  * :ref:`seed`: Computes functional connectivity to an *a priori* set of seed regions using
