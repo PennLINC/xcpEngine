@@ -1,6 +1,6 @@
 .. _qcfcDistanceDependence:
 
-qcfcDistanceDependence
+QCFCDistanceDependence
 ========================
 
 Distance-dependence of QC-FC measures.
