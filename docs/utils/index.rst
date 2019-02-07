@@ -19,8 +19,7 @@ Denoising and data quality
 
 Image utilities: voxelwise and regional
 -----------------------------------------
- * :ref:`seedconnectivity`: This computes functional connectitivty between a region
- or mask and all voxels with in the brain. 
+ * :ref:`seedconnectivity`: This computes functional connectitivty between a region or mask and all voxels with in the brain. 
  * :ref:`erodespare` : This can be a useful tool for generating tissue maps for
 nuisance regression in a way that minimizes partial volume effects
  * :ref:`roiquants`:  This tool allows users to use customed atlases to generate region values
