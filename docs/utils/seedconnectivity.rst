@@ -1,8 +1,8 @@
 .. _seedconnectivity:
 
 
-Seed-based connectivity connectivity
-====================================
+Seed-based connectivity 
+========================
 
 Seed-based connectivity 
 
