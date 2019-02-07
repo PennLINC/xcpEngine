@@ -47,7 +47,7 @@ pipeline=task,roiquant,norm
 # 1 TASK
 ###################################################################
 
-task_design[1]=${fsf[sub]}
+task_design[1]=task.fsf
 task_fmriprep[1]=1
 task_rerun[1]=N
 task_cleanup[1]=Y
