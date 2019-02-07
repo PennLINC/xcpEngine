@@ -12,7 +12,8 @@ in mm of a template or a mask with the same dimension and orietation of a templa
 provided,  ``${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz`` will be used as default template. 
 
 The seed connectivity is done with ${XCPEDIR}/utils/seedconnectivity::
-${XCPEDIR}/utils/seedconnectivity   \
+
+    ${XCPEDIR}/utils/seedconnectivity   \
     -img  input4Dimage  \  #  4D inputimage usually residualised or image or filtered image
     --s=x,y,z   \ # 3 cordinates  or a mask (--s=/path/to/mask)
     -o  outputpath  \ # output directory 
