@@ -58,7 +58,7 @@ variable to be assigned on the left-hand side and its new value on the right-han
 instance, to override the default value of the variable ``standard`` and replace it with
 ``MNI%2x2x2``, use ``-a standard=MNI%2x2x2``.
 
-Other ways  to override the default value of the variable especially in design files::
+Other ways  to override the default value of the variable especially in design files:
 
 ``-a atlas=power264``  # choose preferred atlases such as power264,schaefer 
 
@@ -70,14 +70,19 @@ Other ways  to override the default value of the variable especially in design f
 ``-a confound=24p`` # this equivalent to confound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1
 ``-a confound=36p``  # this equivalent to  onfound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1
                   confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_gsr[cxt]=1
+                  
 ``-a confound=aroma`` #  confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_aroma[cxt]=1;
+
 ``-a confound=tcompcor``  #  confound2_tcompcor[cxt] = 1
+
 ``-a confound=acompcor``  #   confound2_rps[cxt]=1; confound2_acompcor[cxt]=1; confound2_dx[cxt]=1; 
+
 
 ``-a fd_thresh=fds:0.083`` # override the framewise threshold ( threshold will be 0.083*TRs in mm) 
 
  select the regress option 
 ``-a regress=despike``  # despiking, regress_process[cxt]=DMT-DSP-TMP-REG
+
 ``-a regress=censor``  # censoring, regress_process[cxt]=DMT-TMP-REG ; censor=1 
 
 
