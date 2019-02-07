@@ -1,6 +1,6 @@
 .. _erodespare:
 
-erodespare
+Erodespare
 ==================
 
 *Label erosion tool.*
