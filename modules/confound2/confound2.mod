@@ -56,6 +56,15 @@ if [[ -f  ${outdir}/${prefix}_confmat.1D ]] \
     exit 1
 fi
 
+
+
+if [[ -n ${fd_thresh} ]]; then 
+     
+   confound2_framewise[cxt]=${fd_thresh}
+
+fi
+
+
 temporal_mask_prime
 exec_sys mkdir -p ${outdir}/mc
 
@@ -117,8 +126,23 @@ subroutine        @1.3  relative mean motion
 
 
 
+# select the file 
 
-
+ if [[ ${confound} == 24p ]] ; then 
+    confound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1
+    elif [[ $confound  == 36p ]]; then
+      confound2_rps[cxt]=1; confound2_sq[cxt]=2; confound2_dx[cxt]=1
+      confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_gsr[cxt]=1
+    elif [[ $confound == aroma ]]; then
+      confound2_wm[cxt]=1; confound2_csf[cxt]=1; confound2_aroma[cxt]=1;
+    elif [[ $confound == acompcor ]]; then
+    confound2_rps[cxt]=1; confound2_acompcor[cxt]=1; confound2_dx[cxt]=1;
+    elif [[ $confound == tcompcor ]] ; then 
+    confound2_tcompcor[cxt] = 1
+    else 
+    echo "The xcpEngine will regress the motion parameters"
+fi
+ 
 
 ###################################################################
 # REALIGNMENT PARAMETERS

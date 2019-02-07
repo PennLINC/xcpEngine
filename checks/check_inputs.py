@@ -66,6 +66,13 @@ def get_parser():
         "files are written in a dedicated scratch space. This "
         "argument enables a scratch space for intermediates.")
     optional_group.add_argument(
+        '-a',
+        action='store',
+        help=": Scratch space for pipeline intermediates: "
+        "Some systems operate more quickly when temporary "
+        "files are written in a dedicated scratch space. This "
+        "argument enables a scratch space for intermediates.")
+    optional_group.add_argument(
         '-r',
         action='store',
         help="Root directory for inputs: "

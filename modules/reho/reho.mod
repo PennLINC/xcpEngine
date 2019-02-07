@@ -39,6 +39,13 @@ completion() {
 derivative  reho                    ${prefix}_reho
 derivative  rehoZ                   ${prefix}_rehoZ
 
+
+if [[ -n ${spatialsmooth} ]]; then 
+
+   reho_smo[cxt]=${spatialsmooth}
+
+fi
+
 configure   kernel                  ${reho_smo[cxt]//,/ }
 
 for k in ${kernel[cxt]}
@@ -63,8 +70,6 @@ reho_sm
    Smoothed voxelwise maps of regional homogeneity.
 
 DICTIONARY
-
-
 
 
 

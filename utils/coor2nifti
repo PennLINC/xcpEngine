@@ -14,7 +14,7 @@
 ###################################################################
 source ${XCPEDIR}/core/constants
 source ${XCPEDIR}/core/functions/library.sh
-
+source ${XCPEDIR}/core/global
 ###################################################################
 # Usage function
 ###################################################################
@@ -127,9 +127,9 @@ subroutine                    @u.1
    ################################################################
    # Gnenerate mask
    ################################################################
-   subroutine                 @u.10
+   subroutine                 @u.10 3 cordinates to mask 
 
-   3dUndump -master ${template} -srad ${radius} -prefix ${out} -xyz /tmp/cord.1D
+    exec_afni 3dUndump -master ${template} -srad ${radius} -prefix ${out} -xyz /tmp/cord.1D
    
    rm -rf /tmp/cord.1D
    ################################################################

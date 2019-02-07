@@ -45,6 +45,13 @@ qc n_volumes_censored nVolCensored  ${prefix}_nVolumesCensored.txt
 input       confmat as confproc
 input       censor
 
+
+if [[ -n ${spatialsmooth} ]]; then 
+
+   regress_smo[cxt]=${spatialsmooth}
+
+fi
+
 smooth_spatial_prime                ${regress_smo[cxt]}
 ts_process_prime
 
@@ -107,6 +114,28 @@ then
 unset buffer
 
 subroutine                    @0.1
+
+if [[ -n ${spatialsmooth} ]]; then 
+
+   regress_smo[cxt]=${spatialsmooth}
+
+fi
+
+if [[ ${regress} == despike ]]; then 
+      regress_process[cxt]=DMT-DSP-TMP-REG 
+    elif [[ ${regress} == censor ]]; then 
+     censor[cxt]=1
+     else 
+     echo "Default settings will be applied "
+fi
+
+if [[ -n ${temporalfilter} ]]; then
+  
+   regress_hipass[cxt]=$( echo ${temporalfilter} |  cut -d, -f1)
+   regress_lopass[cxt]=$( echo ${temporalfilter} |  cut -d, -f2)
+
+fi
+
 
 ###################################################################
 # Parse the control sequence to determine what routine to run next.

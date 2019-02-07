@@ -22,6 +22,10 @@ source ${XCPEDIR}/core/parseArgsMod
 ###################################################################
 # MODULE COMPLETION AND ANCILLARY FUNCTIONS
 ###################################################################
+
+
+
+
 update_networks() {
    atlas_set      ${a[Name]}   Map               ${nodemap[cxt]}
    atlas_set      ${a[Name]}   Timeseries        ${ts[cxt]}
@@ -86,9 +90,11 @@ DICTIONARY
 
 
 
-
-
-
+if [[ -n ${atlas} ]]; then 
+ fcon_atlas[cxt]=${atlas}
+else 
+ fcon_atlas[cxt]=${fcon_atlas[cxt]};
+fi
 
 
 

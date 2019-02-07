@@ -1,0 +1,310 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Utility for seed based functional connectvity 
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/global
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+Usage: `basename $0` -img <input 4D image> -s (coordinate or mask) -o <output> <options>
+Compulsory arguments:
+ -img : 4D image 
+ -s :  three cordinates x,y,z or 3D mask in MNI/template
+ -o : output directory
+      The path where the nifti images are to be written
+Optional arguments:
+ -r  : radius of the mask, 
+    if not provided r=5 as default
+ -na  : Name
+      The name of the seeds
+ -k  : kernel smoohting 
+ -p : Subject identifiers
+      A comma-separated list of subject identifiers
+ -t : template 
+      template files. if not provided, ${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+      will be used 
+ -w : Overwrite existing
+      If -w 0 is provided, there will be no overwrittten
+      any existing output that it detects.
+endstream
+}
+
+###################################################################
+# Define defaults
+###################################################################
+radius=5
+template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+overwrite=1;
+kernel=0;
+seedname=SEED
+###################################################################
+# Parse arguments
+###################################################################
+
+
+if [ -z $1 ]; then
+    Usage
+    exit 1
+elif [ $1 = "--more" ]; then
+    Usage
+    exit 1
+fi
+
+until [ -z $1 ]; do
+
+# look at this option and determine if has an argument specified by an =
+option=`echo $1 | sed s/=.*//`
+arg="" #specifies if an argument is to be read from next item on command line (=1 is is when = is used)
+
+if [ $option = $1 ]; then
+# no argument to this command has been found with it (i.e. after an =)
+# if there is an argument it will be the next option
+    argument=$2
+else
+    arg=1
+    argument=`echo $1 | sed s/.*=//`
+fi
+takeargs=0;boolarg="";isbool="";
+    case $option in
+	-o) outflag=1; opath=$argument
+	    takeargs=1;;
+	-img) inflag=1; img=$argument
+           ! is_image ${img} && Usage && exit
+           takeargs=1;;
+	--s) seed=$argument;
+	       takeargs=1;;
+	-r) radius=$argument 
+		takeargs=1;;
+	-p) pname=$argument
+	    takeargs=1;;
+        -na) seedname=$argument
+	    takeargs=1;;
+	-k) kernel=$argument
+	    takeargs=1;;
+        -t) template=$argument;
+	    takeargs=1;;
+	*)  #Usage
+	    echo "Error! Unrecognised option on command line: $option"
+	    echo ""
+	    exit 1;;
+    esac
+
+
+    # sort out a shift required by a command line option that takes arguments
+    if [ -z $arg ]; then
+	# an argument has been supplied on the command NOT using an =
+	if [ $takeargs -eq 1 ]; then
+	    shift;
+	fi
+    fi
+    
+    if [ ! -z $isbool ]; then
+	    # this is an (explicit) boolean setting
+	if [ ! -z $arg ]; then
+	    # an argument has been supplied on the command using an =
+	    # set the variable based on the argument
+	    case $argument in
+		on) eval $boolarg=1
+		    ;;
+		off) eval $boolarg=""
+		     ;;
+		1) eval $boolarg=1
+		   ;;
+		0) eval $boolarg=""
+		   ;;
+		*)  Usage
+		    echo "Error! Unrecognised setting for boolean option: $1"
+		    echo ""
+		    exit 1;;
+	    esac
+	else
+	    # no argument has been suppled with this command (NOTE that you cannot supply an arugment to a bool option without an =)
+	    # this sets the variable to true
+	    eval $boolarg=1;
+	fi
+    fi
+
+
+    # shift to move on to next parameter
+    shift
+done
+
+
+
+
+
+
+
+routine 
+
+
+
+
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+subroutine                    @u.1 check if the input and output exist
+#[[ -z ${img} ]]    && Usage && exit
+#[[ -z ${opath} ]]      && Usage && exit
+#[[ -z ${seed} ]]      && Usage && exit
+
+###################################################################
+# Define the outputs 
+###################################################################
+
+  namedir=`echo ${pname} | tr ',' '_'`;
+  filedir=`echo ${pname} | tr ',' '/'`;
+  dirfile=${opath}/${filedir}/seed/${seedname}
+  mkdir -p ${dirfile}
+  seedmask=${dirfile}/${namedir}_connectivity_${seedname}_seed.nii.gz
+  sca_ts=${dirfile}/${namedir}_connectivity_${seedname}_ts.1D
+  sca_map=${dirfile}/${namedir}_connectivity_${seedname}_sm${kernel}.nii.gz
+  sca_zmap=${dirfile}/${namedir}_connectivity_${seedname}Z_sm${kernel}.nii.gz
+
+
+## make temporary directory
+
+
+tempdir=${dirfile}/work 
+mkdir -p ${tempdir}
+
+###################################################################
+# check if the input is mask or cordinate
+# 
+###################################################################
+echo ${seed}
+seed1=${tempdir}/seed2refvol.nii.gz 2>/dev/null
+if is_image ${seed} 2>/dev/null ; then 
+    seedType=mask
+else
+    seedType=coor 
+fi
+
+
+case ${seedType} in
+
+   coor)
+      subroutine              @2.3.1   Transforming coordinates to image
+       
+       exec_xcp coor2nifti \
+           -i ${seed} -t ${template} \
+           -r ${radius} -o ${seed1}
+    ;;
+   mask)
+    cp -a  ${seed} ${seed1} 
+    ;;
+esac
+
+###################################################################
+# get the ref volume and mask
+###################################################################
+refvol=${tempdir}/ref.nii.gz
+mask=${tempdir}/mask.nii.gz
+
+
+
+nvol=$(exec_fsl fslnvols ${img})
+midpt=$(( ${nvol} / 2))
+exec_fsl fslroi ${img} ${refvol} ${midpt} 1
+exec_fsl fslmaths ${refvol} -abs -bin  ${mask}
+
+###################################################################
+# register the template to refvol for seedmask 
+###################################################################
+
+seed1=${tempdir}/seed2refvol.nii.gz
+subroutine              @3    ants registration 
+exec_ants antsRegistrationSyNQuick.sh  -d 3  \
+          -m ${template} \
+          -f ${refvol} \
+          -o ${tempdir}/tepreg &>/dev/null
+          
+ exec_ants antsApplyTransforms -e 3 -d 3 -v  0 \
+      -i ${seed1} \
+      -r  ${refvol}\
+      -t ${tempdir}/tepreg0GenericAffine.mat \
+      -t ${tempdir}/tepreg1Warp.nii.gz \
+      -o   ${seedmask}  \
+      -n NearestNeighbor 2>/dev/null
+                 
+
+
+
+
+tmpimg=${tempdir}/img.nii.gz
+
+# partiallly smooth the image if kernel is supply
+
+
+
+subroutine              @3    smoothing 
+if [[ ${kernel} > 0 ]]; then 
+exec_xcp \
+      sfilter  \
+      -i ${img} \
+      -o ${tmpimg} \
+      -k ${kernel} \
+      -m ${mask}
+else
+tmpimg=${img}
+fi
+
+
+
+################################################################
+
+ subroutine              @3    Extracting mean timeseries
+exec_sys rm -f ${sca_ts}
+      exec_xcp tswmean.R      \
+         -i    ${tmpimg}     \
+         -r    ${seedmask}   \
+         >>    ${sca_ts} 
+
+################################################################
+# [3]
+# Using the mean timeseries, it is now possible to perform
+# voxelwise SCA.
+################################################################
+subroutine              @3   compute correlation
+exec_sys rm  -f    ${sca_map}
+
+ 
+
+ exec_afni  3dTcorr1D   \
+    -prefix  ${sca_map} \
+    -mask   ${mask} \
+     ${tmpimg}     \
+     ${sca_ts} -overwrite 
+         
+##########################################################
+# Fisher transform
+##########################################################
+subroutine              @3   fisher tranformation 
+
+exec_sys             rm -f ${sca_zmap}
+
+
+  exec_afni    3dcalc               \
+     -a          ${sca_map}          \
+     -expr       'log((1+a)/(1-a))/2' \
+      -prefix       ${sca_zmap}  -overwrite
+
+
+rm -rf ${tempdir}
+
+routine_end 
+

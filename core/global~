@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Pre-clear any globals to ensure the correct settings are applied.
+###################################################################
+unset XCPEDIR RPATH FSLDIR ANTSPATH AFNI_PATH C3D_PATH NUMOUT
+
+###################################################################
+# XCPEDIR stores a path to the top-level directory containing all
+# of the ingredients necessary to configure and execute functional
+# connectivity pipelines using the XCP Engine.
+export XCPEDIR=/data/joy/BBL/applications/xcpEngine/XCP/xcpEngine
+###################################################################
+
+###################################################################
+# RPATH stores a path to the local installation of R. Dependencies
+# may include:
+#  * ANTsR
+#  * pracma
+#  * signal
+#  * optparse
+export RPATH=/data/jag/aadebimpe/anaconda3/bin/R
+###################################################################
+
+###################################################################
+# FSLDIR stores a path to the local installation of FSL.
+export FSLDIR=/share/apps/fsl/5.0.9
+###################################################################
+
+###################################################################
+# ANTSPATH stores a path to the local installation of ANTs.
+export ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin/
+###################################################################
+
+###################################################################
+# AFNI_PATH stores a path to the local installation of AFNI.
+export AFNI_PATH=/share/apps/afni/linux_xorg7_64_16.0.00
+###################################################################
+
+###################################################################
+# C3D_PATH stores a path to the local installation of C3D.
+export C3D_PATH=/share/apps/c3d/c3d-1.1.0-Nightly-2016-02-26/bin
+###################################################################
+
+###################################################################
+# JQ_PATH stores a path to the local installation of JQ.
+export JQ_PATH=/data/joy/BBL/applications/xcpEngine/XCP/xcpEngine/thirdparty/jq/jq-linux64
+###################################################################
+
+###################################################################
+# Outputs of modules may be prepended with an integer indicating
+# their context in the pipeline. Set NUMOUT to 1 to enable this.
+export NUMOUT=0
+###################################################################
+

@@ -44,7 +44,11 @@ derivative     alffZ                   ${prefix}_alffZ
 
 derivative_set alff     Statistic      mean
 derivative_set alffZ    Statistic      mean
+if [[ -n ${spatialsmooth} ]]; then 
 
+   alff_smo[cxt]=${spatialsmooth}
+
+fi
 smooth_spatial_prime ${alff_smo[cxt]//,/ }            alff alffZ
 
 add_reference        referenceVolume[$sub]   ${prefix}_referenceVolume
@@ -66,8 +70,12 @@ img_sm
 DICTIONARY
 
 
+if [[ -n ${temporalfilter} ]]; then
+  
+   alff_hipass[cxt]=$( echo ${temporalfilter} |  cut -d, -f1)
+   alff_lopass[cxt]=$( echo ${temporalfilter} |  cut -d, -f2)
 
-
+fi
 
 
 

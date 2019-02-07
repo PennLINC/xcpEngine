@@ -61,6 +61,11 @@ mapbase
 
 DICTIONARY
 
+if [[ -n ${atlas} ]]; then 
+ roiquant_atlas[cxt]=${atlas}
+else 
+ roiquant_atlas[cxt]=${roiquant_atlas[cxt]};
+fi
 
 
 
