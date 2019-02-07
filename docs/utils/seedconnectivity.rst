@@ -1,5 +1,6 @@
 .. _seedconnectivity:
 
+
 Seed-based connectivity connectivity
 ====================================
 
