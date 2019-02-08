@@ -28,7 +28,7 @@ Other outputs include the
     - ``prefix_struct.nii.gz``: T1w image
     - ``prefix_mask.nii.gz``: brain mask
     - ``prefix_fmriconf.tsv``: confound regressors from ``FMRIPREP`
-    - ``prefix_meanIntensity.nii.gz # average volume of the BOLD
+    - ``prefix_meanIntensity.nii.gz`` # average volume of the BOLD
 
 All  ``*nii.gz`` are expected to be have the same voxel size as the input but may have their
 orientation changed to the FSL standard.
