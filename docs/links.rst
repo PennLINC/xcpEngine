@@ -3,4 +3,4 @@
 .. _`BIDS Derivatives`: https://docs.google.com/document/d/1Wwc4A6Mow4ZPPszDIWfCUCRNstn7d_zzaWPcfcHmgI4/edit
 .. _Singularity: https://www.sylabs.io/docs/
 .. _Docker: https://docs.docker.com/
-.. _`template design`: https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf
+.. _template: https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf
