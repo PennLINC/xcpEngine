@@ -14,7 +14,7 @@ The :ref:`cohortfile` for the task can inlude a task design if the subject event
    sub-01,/path/to/bold.nii.gz,/path/to/design.fsf
 
 User can create a  design file for each subject ( or group)   by running one subject in FSL GUI. This is 
-sample of  ._Python: http://www.python.org for simple experiment of `EYES OPEN` versus `EYES CLOSE`
+sample of  .. _Python: http://www.python.org  for simple experiment of `EYES OPEN` versus `EYES CLOSE`
  
 The outputs of task module is reorganized  as follow:: 
   - task/fsl   # the fsl feat directory
