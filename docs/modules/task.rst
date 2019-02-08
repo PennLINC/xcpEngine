@@ -8,13 +8,15 @@
 with  event files and full model setup.  The ``task`` module run like FEAT-FMRI analysis and the ouputs is
 compatible with other ``xcpEngine`` modules such as ``roiquant``, ``fcon`` and ``norm``.
 
-The :ref:`cohortfile` for the task can include a task design if the subject event files are different::
+The :ref:`cohortfile` for the task can include a task design if the subjects' event files are different::
 
    id0,img,task_design
-   sub-01,/path/to/bold.nii.gz,/path/to/design.fsf
+   sub-01,/path/to/bold1.nii.gz,/path/to/design1.fsf
+   sub-02,/path/to/bold2.nii.gz,/path/to/design2.fsf
+   sub-04,/path/to/bold4.nii.gz,/path/to/design4.fsf
 
-Users can create a  design file for each subject ( or group)   by running one subject in FSL GUI. This is 
-a sample of  template design : https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf  for simple 
+Users can create a  design file for each subject (or group)   by running one subject in FSL GUI. This is 
+a sample of  a template design : https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf  for simple 
 experiment of `EYES OPEN` versus `EYES CLOSE`
  
 The outputs of task module is reorganized  as follow:: 
@@ -27,8 +29,7 @@ The outputs of task module is reorganized  as follow::
   - task/pes # arcope files depend on the design file and model setup
   - task/sigchange # % signal change computed from pes
   - task/stats  # zstats files depend on the design file and model setup
-
-Other outputs include the 
+ 
  The other outputs are derived directly from the ``FMRIPREP``. The expected outputs include::
     - ``prefix_preprocessed.nii.gz``: Bold signal
     - ``prefix_referenceVolume.nii.gz``: reference volume with skull
