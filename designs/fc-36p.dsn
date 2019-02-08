@@ -41,7 +41,7 @@ standard=MNI%2x2x2
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,confound2,regress,fcon,reho,alff,seed,roiquant,norm,qcfc
+pipeline=prestats,confound2,regress,fcon,reho,alff,roiquant,norm,qcfc
 
 ###################################################################
 # 1 PRESTATS

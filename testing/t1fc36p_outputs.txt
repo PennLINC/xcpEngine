@@ -81,8 +81,6 @@ sub-1/norm/sub-1_normCoverage.txt
 sub-1/norm/sub-1_normCrossCorr.txt
 sub-1/norm/sub-1_normDice.txt
 sub-1/norm/sub-1_normJaccard.txt
-sub-1/norm/sub-1_PCC_sm6Std.nii.gz
-sub-1/norm/sub-1_PCCZ_sm6Std.nii.gz
 sub-1/norm/sub-1_referenceVolumeBrainStd.nii.gz
 sub-1/norm/sub-1_reho_sm6Std.nii.gz
 sub-1/norm/sub-1_rehoStd.nii.gz
@@ -180,13 +178,6 @@ sub-1/roiquant/segmentation/sub-1_segmentation_mean_reho.csv
 sub-1/roiquant/segmentation/sub-1_segmentation_mean_rehoZ.csv
 sub-1/roiquant/segmentation/sub-1_segmentation.nii.gz
 sub-1/roiquant/sub-1_referenceVolume.nii.gz
-sub-1/seed
-sub-1/seed/PCC
-sub-1/seed/PCC/sub-1_connectivity_PCC_seed.nii.gz
-sub-1/seed/PCC/sub-1_connectivity_PCC_sm6.nii.gz
-sub-1/seed/PCC/sub-1_connectivity_PCC_ts.1D
-sub-1/seed/PCC/sub-1_connectivity_PCCZ_sm6.nii.gz
-sub-1/seed/sub-1_referenceVolume.nii.gz
 sub-1/sub-1_atlas
 sub-1/sub-1_atlas/sub-1_aal116.nii.gz
 sub-1/sub-1_atlas/sub-1_glasser360.nii.gz
