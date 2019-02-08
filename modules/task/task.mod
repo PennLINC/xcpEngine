@@ -158,6 +158,10 @@ varcope
 DICTIONARY
 
 
+# check if the design is subject specific or group 
+if [[ -n ${task_design[sub]} ]]; then 
+     task_design=${task_design[sub]}
+fi
 
 
 

@@ -8,13 +8,14 @@
 with  event files and full model setup.  The ``task`` module run like FEAT-FMRI analysis and the ouputs is
 compatible with other ``xcpEngine`` modules such as ``roiquant``, ``fcon`` and ``norm``.
 
-The :ref:`cohortfile` for the task can inlude a task design if the subject event files are different::
+The :ref:`cohortfile` for the task can include a task design if the subject event files are different::
 
    id0,img,task_design
    sub-01,/path/to/bold.nii.gz,/path/to/design.fsf
 
-User can create a  design file for each subject ( or group)   by running one subject in FSL GUI. This is 
-sample of  template design : https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf  for simple experiment of `EYES OPEN` versus `EYES CLOSE`
+Users can create a  design file for each subject ( or group)   by running one subject in FSL GUI. This is 
+a sample of  template design : https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf  for simple 
+experiment of `EYES OPEN` versus `EYES CLOSE`
  
 The outputs of task module is reorganized  as follow:: 
   - task/fsl   # the fsl feat directory
