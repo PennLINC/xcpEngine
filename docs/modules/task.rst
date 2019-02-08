@@ -8,7 +8,7 @@
 with  event files and full model setup.  The ``task`` module run like FEAT-FMRI analysis and the ouputs is
 compatible with other ``xcpEngine`` modules such as ``roiquant``, ``fcon`` and ``norm``.
 
-The :ref:`cohortfile`: for the task can inlude a task design if the subject event files are different:: 
+The :ref:`cohortfile` for the task can inlude a task design if the subject event files are different:: 
    id0,img,task_design
    sub-01,/path/to/bold.nii.gz,/path/to/design.fsf
  
