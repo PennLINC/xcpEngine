@@ -7,6 +7,10 @@
 ``task`` module performs the General Linear Model (GLM) with FSL. It require a FSL-FEAT task design file
 with  event files and full model setup.  The ``task`` module run like FEAT-FMRI analysis and the ouputs is
 compatible with other ``xcpEngine`` modules such as ``roiquant``, ``fcon`` and ``norm``.
+
+The `cohort file <https://xcpengine.readthedocs.io/config/cohort.html#cohortfile>_` for the task can inlude a task design if the subject event files are different:: 
+   id0,img,task_design
+   sub-01,/path/to/bold.nii.gz,/path/to/design.fsf
  
 The outputs of task module is reorganized  as follow:: 
   - task/fsl   # the fsl feat directory
