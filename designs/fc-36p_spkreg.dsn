@@ -132,7 +132,7 @@ alff_cleanup[6]=1
 # 7 ROIQUANT
 ###################################################################
 
-roiquant_atlas[7]=all
+roiquant_atlas[7]=power264
 roiquant_globals[7]=1
 roiquant_vol[7]=0
 roiquant_rerun[7]=0
