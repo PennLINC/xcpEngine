@@ -96,7 +96,7 @@ regress_process[3]=DMT-TMP-REG
 # 4 FCON
 ###################################################################
 
-fcon_atlas[4]=power264
+fcon_atlas[4]=
 fcon_metric[4]=corrcoef
 fcon_thr[4]=N
 fcon_window[4]=10
@@ -130,7 +130,7 @@ alff_cleanup[6]=1
 # 7 ROIQUANT
 ###################################################################
 
-roiquant_atlas[7]=all
+roiquant_atlas[7]=power264
 roiquant_globals[7]=1
 roiquant_vol[7]=0
 roiquant_rerun[7]=0
