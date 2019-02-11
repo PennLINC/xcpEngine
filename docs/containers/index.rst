@@ -131,8 +131,7 @@ file system you will need to specify `-r`*::
   qsub xcpParallel.sh
 
 
-You will need to run group analysis with your whole cohort file after the
-jobs have all finished.
+You will need to collate group-level outputs after batching subjects with the script `${XCPEDIR}/utils/combineOutput` script, provided in `utils`.
 
 Using the bundled software
 ----------------------------
