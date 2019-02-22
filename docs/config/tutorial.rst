@@ -198,8 +198,10 @@ Begin by looking at the subject-level output. Navigate to the first subject's ou
   * A spatial metadata file (``sub-1_spaces.json``). The pipeline uses this to determine how to
     move images between different coordinate spaces.
   * The final output of processing (``sub-1.nii.gz``). This is the primary functional image, after
-    all image processing steps have been applied to it. However, this file usually isn't as useful
-    for analysis as are its derivatives, which brings us to ...
+    all image processing steps (except for smoothing) have been applied to it. If you have smoothing in your design file,
+    smoothed outputs are saved separately as files like ``sub-1_img_sm${k}.nii.gz`` inside the ``norm`` and ``regress``
+    folders, with ``${k}`` the smoothing kernel size. However, this
+    preprocessed file usually isn't as useful for analysis as are its derivatives, which brings us to ...
   * An index of derivative images (``sub-1_derivatives.json``).
 
     * Let's look at the content of the derivatives file now. Run the command shown, and find the
