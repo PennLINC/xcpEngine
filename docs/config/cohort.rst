@@ -31,7 +31,7 @@ subject. The pipeline system uses identifier variables to generate a unique outp
 input. To cast a cohort field as an identifier, give it the name ``id<i>`` in the cohort header,
 where ``<i>`` is a nonnegative integer. In the illustrative example, ``id0`` might correspond to
 the subject's identifier, ``id1`` to the time point (as in a longitudinal study). So
-``sub-01,ses-01`` would denote the first session for subject 001. Note that these do not get
+``sub-01,ses-01`` would denote the first session for subject 001. These can also be used to denote multiple runs in the same session, as ``sub-01,ses-01,run-01``. Note that these do not get
 automatically added to paths when xcp is looking for files.::
 
   id0,id1
