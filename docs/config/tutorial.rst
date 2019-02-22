@@ -280,3 +280,11 @@ Open a new issue and describe your problem. If the problem is highly dataset-spe
 contact the development team by email, but Github is almost always the preferred channel for
 communicating about pipeline functionality. You can also use the issue system to request new
 pipeline features or suggest changes.
+
+7. Common Errors
+~~~~~~~~~~~~~~~
+A non-exhaustive list of some common errors, and fixes to try.
+
+* ``ImportError: bad magic number in 'site'`` : Try running ``unset PYTHONPATH`` immediately prior to running the pipeline.
+
+* ``Cannot allocate vector of size xx Mb`` : Try increasing the amount of memory available for running the pipeline.
