@@ -235,16 +235,17 @@ module. Other outputs include::
  -  prefix_confcor.txt # Pearson correlation between confound regressors
 
 For Censoring and spike regression and if any volume is flagged, the other outputs include::
+
  - prefix_uncensored.nii.gz # the regressed bold image with  flagged volme  interpolated
  - prefix_nVolumesCensored.txt # number of volume censored
  - prefix_residualised.nii.gz # residualized volume with deleted flagged volume
 
-The optional output is the spatially smoothed residualised BOLD signal. This is specificy
+The optional output is the spatially smoothed residualised BOLD signal. This is specified with
 ``regress_sptf[cxt]`` and ``regress_smo[cxt]`` as explained previously. For instance, with::
 
   regress_sptf[cxt]=gaussian
   regress_smo[cxt]=6
 
-That is request to smooth residualised image with gaussian filter and kernel of 6mm. The derived
-output will be::
+This tells xcpEngine to smooth the residualised image with gaussian filter and kernel of 6mm. The derived
+output, which is saved in the ``regress`` folder, will be::
   prefix_img_sm6.nii.gz
