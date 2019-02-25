@@ -136,7 +136,9 @@ if [[ -n ${temporalfilter} ]]; then
 
 fi
 
-
+tr=`fslinfo ${img[sub]}  | grep ^pixdim4`
+TR=${tr##* }
+echo $TR
 ###################################################################
 # Parse the control sequence to determine what routine to run next.
 # Available routines include:
@@ -227,7 +229,8 @@ while (( ${#rem} > 0 ))
       routine                 @2    Temporally filtering image and confounds
       filter_temporal         --SIGNPOST=${signpost}              \
                               --FILTER=${regress_tmpf[cxt]}       \
-                              --INPUT=${intermediate}             \
+                              --INPUT=${intermediate}.nii.gz             \
+                              --TR=${TR} \
                               --OUTPUT=${intermediate}_${cur}     \
                               --CONFIN=${confproc[cxt]}           \
                               --CONFOUT=${intermediate}_${cur}_confmat.1D \

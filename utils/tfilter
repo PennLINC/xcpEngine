@@ -73,6 +73,8 @@ Optional arguments:
       of the timeseries are interpolated so as to eliminate
       the influence of masked-out time points on the processed
       timeseries (following Power et al., 2014).
+-a : TR 
+      image time series fro interpolation.
 
  -r : Filter order [default 1]
       The filter order indicates the number of input samples
@@ -145,7 +147,7 @@ unset tslist
 ###################################################################
 # Parse arguments
 ###################################################################
-while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
+while getopts "i:a:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
    do
    case $OPTION in
    i)
@@ -203,6 +205,10 @@ while getopts "i:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
    p)
       rpass=${OPTARG}
       ! is+numeric ${rpass} && Usage && exit
+      ;;
+   a)
+      tr=${OPTARG}
+      ! is+numeric ${tr} && Usage && exit
       ;;
    s)
       rstop=${OPTARG}
@@ -274,11 +280,12 @@ if [[ ${tmask} != ones ]]
    subroutine     @u.1a Interpolating over masked-out epochs...
    subroutine     @u.1b This will be slow
    exec_xcp \
-      interpolate.R \
-      -i "${image}" \
-      -m "${mask}" \
-      -t "${tmask}" \
-      -o "${out_root}_interpol.nii.gz"
+      interpolate.py  \
+      -i ${image} \
+      -a $tr   \
+      -m ${mask} \
+      -t ${tmask} \
+      -o ${out_root}_interpol.nii.gz
    ################################################################
    # Update pointers to indicate the post-interpolation image
    ################################################################

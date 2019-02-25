@@ -7,6 +7,7 @@ this function, ts_process_prime must be called in the module
 header.
 
 filter_temporal   --SIGNPOST=routine_signpost_tag                 \
+                  --TR=TR \
                   --FILTER=filtering_routine                      \
                   --INPUT=input_image_without_extension           \
                   --OUTPUT=output_image_without_extension         \
@@ -40,7 +41,7 @@ USAGE
    ################################################################
    local censor_tmpf con_i       con_o       hipass      img_i    \
          img_o       lopass      mask_tmpf   order       pass     \
-         pass_ripple stop_ripple tmask_tmpf  tmpf        tag
+         pass_ripple stop_ripple tmask_tmpf  tmpf        tag TR
    
    while (( $# > 0 ))
       do
@@ -52,6 +53,7 @@ USAGE
       contains ${1} '^--CONFOUT='      && con_o=${1/--CONFOUT=}
       contains ${1} '^--HIPASS='       && hipass=${1/--HIPASS=}
       contains ${1} '^--LOPASS='       && lopass=${1/--LOPASS=}
+      contains ${1} '^--TR='           && TR=${1/--TR=}
       contains ${1} '^--ORDER='        && order=${1/--ORDER=}
       contains ${1} '^--DIRECTIONS='   && pass=${1/--DIRECTIONS=}
       contains ${1} '^--RIPPLE_STOP='  && stop_ripple=${1/--RIPPLE_STOP=}
@@ -229,6 +231,7 @@ No censoring will be performed."
          tfilter                 \
          -i    ${img_i}.nii.gz   \
          -o    %OUTPUT           \
+         -a    $TR  \
          -f    ${tmpf}           \
          -h    ${hipass}         \
          -l    ${lopass}         \
@@ -239,6 +242,7 @@ No censoring will be performed."
          -i    %INPUT            \
          -o    %OUTPUT           \
          -f    ${tmpf}           \
+         -a    $TR  \
          -h    ${hipass}         \
          -l    ${lopass}         \
          ${mask_tmpf}   ${tmask_tmpf}  ${tf_order}  ${tf_direc} \

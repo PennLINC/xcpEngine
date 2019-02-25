@@ -257,7 +257,9 @@ for net in ${atlas_names[@]}
       exec_sys rm -f ${adjacency[cxt]}
       exec_sys rm -f ${pajek[cxt]}
       exec_sys rm -f ${missing[cxt]}
+
       exec_xcp ts2adjmat.R -t ${ts[cxt]} >> ${adjacency[cxt]}
+
       exec_xcp adjmat2pajek.R    \
          -a    ${adjacency[cxt]} \
          -t    ${fcon_thr[cxt]}  \

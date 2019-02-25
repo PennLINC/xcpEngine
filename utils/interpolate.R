@@ -35,6 +35,8 @@ option_list = list(
               help="Temporal mask indicating the volumes that should be
                   taken under consideration when the linear model is
                   computed. [default]: Use all volumes."),
+  make_option(c("-a", "--reptime"), action="store", type='character',
+              help="repetion time."),
    make_option(c("-s", "--ofreq"), action="store", default=8, type='numeric',
               help="Oversampling frequency; a value of at least 4 is
                   recommended [default 8]"),
@@ -66,6 +68,7 @@ tmaskpath               <- opt$tmask
 OFREQ                   <- opt$ofreq
 HIFREQ                  <- opt$hifreq
 VOXBIN                  <- opt$voxbin
+trep=opt$reptime
 
 ###################################################################
 # Compute the sequence's repetition time
