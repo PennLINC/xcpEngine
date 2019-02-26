@@ -104,11 +104,10 @@ all_samples             =   np.arange(start=t_rep,stop=t_rep*(nvol+1),step=t_rep
     # Calculate sampling frequencies
     ##########################################################################
 sampling_frequencies    =   np.arange(
-                                    start=1/(timespan*opts.ofreq),
-                                    step=1/(timespan*opts.ofreq),
-                                    stop=(opts.hifreq*n_samples_seen/
-                                        (2*timespan)+
-                                        1/(timespan*opts.ofreq)))
+                                    start=1/(timespan*8),
+                                    step=1/(timespan*8),
+                                    stop=(8*n_samples_seen/(2*timespan)+
+                                        1/(timespan*8)))
     ##########################################################################
     # Angular frequencies
     ##########################################################################
