@@ -68,9 +68,6 @@ print(opts.img)
 img             =   nib.load(opts.img)
 #t_rep           =   img.header['pixdim'][4]
 t_rep=np.asarray(opts.reptime, dtype='float64')
-opts.hifreq=np.asarray(opts.hifreq, dtype='float64')
-opts.ofreq=np.asarray(opts.ofreq, dtype='float64')
-
 mask = nib.load(opts.mask)
 mask_data       =   mask.get_fdata()
 logmask         =   np.isclose(mask_data, 1)
@@ -104,10 +101,11 @@ all_samples             =   np.arange(start=t_rep,stop=t_rep*(nvol+1),step=t_rep
     # Calculate sampling frequencies
     ##########################################################################
 sampling_frequencies    =   np.arange(
-                                    start=1/(timespan*8),
-                                    step=1/(timespan*8),
-                                    stop=(8*n_samples_seen/(2*timespan)+
-                                        1/(timespan*8)))
+                                    start=1/(timespan*opts.ofreq),
+                                    step=1/(timespan*opts.ofreq),
+                                    stop=(opts.hifreq*n_samples_seen/
+                                        (2*timespan)+
+                                        1/(timespan*opts.ofreq)))
     ##########################################################################
     # Angular frequencies
     ##########################################################################
