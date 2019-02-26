@@ -68,6 +68,9 @@ print(opts.img)
 img             =   nib.load(opts.img)
 #t_rep           =   img.header['pixdim'][4]
 t_rep=np.asarray(opts.reptime, dtype='float64')
+opts.hifreq=np.asarray(opts.hifreq, dtype='float64')
+opts.ofreq=np.asarray(opts.ofreq, dtype='float64')
+
 mask = nib.load(opts.mask)
 mask_data       =   mask.get_fdata()
 logmask         =   np.isclose(mask_data, 1)
