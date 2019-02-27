@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/data/jux/BBL/projects/testACT/script/designfiles/fc-36p_scrub.dsn
+design=/data/jux/BBL/projects/testACT/script/sscrub.dsn
 sequence=anatomical
 standard=MNI%2x2x2
 
@@ -69,7 +69,7 @@ confound2_sq[2]=2
 confound2_custom[2]=
 confound2_censor[2]=1
 confound2_censor_contig[2]=1
-confound2_framewise[2]=fds:0.1,rmss:0.07
+confound2_framewise[2]=fds:0.04
 confound2_rerun[2]=1
 confound2_cleanup[2]=1
 
