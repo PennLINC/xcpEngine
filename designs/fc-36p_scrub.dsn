@@ -24,7 +24,7 @@
 #                  These are typically array variables with array
 #                  indices equal to the value of the primary
 #                  subject identifier. They will appear only in
-#                  localised design files.
+#                  loc alised design files.
 ###################################################################
 
 
@@ -36,6 +36,7 @@ analysis=fc_$(whoami)
 design=/data/jux/BBL/projects/testACT/script/sscrub.dsn
 sequence=anatomical
 standard=MNI%2x2x2
+
 
 ###################################################################
 # PIPELINE
