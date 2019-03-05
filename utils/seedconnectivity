@@ -23,7 +23,7 @@ ___________________________________________________________________
 Usage: `basename $0` -img <input 4D image> -s (coordinate or mask) -o <output> <options>
 Compulsory arguments:
  -i : 4D image 
- -s :  three cordinates x,y,z or 3D mask in MNI/template
+ -s :  three cordinates x,y,z or 3D mask 
  -o : output directory
       The path where the nifti images are to be written
 Optional arguments:
@@ -35,7 +35,7 @@ Optional arguments:
  -p : Subject identifiers
       A comma-separated list of subject identifiers
  -t : template 
-      template files. if not provided, ${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
+      template. if not provided, refvol of the bold will be used
       will be used 
  -f : registration file 
       Require to register the template to 4D image. If not provided, seed mask will asume to have 
@@ -50,7 +50,6 @@ endstream
 # Define defaults
 ###################################################################
 radius=5
-template=${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
 overwrite=1;
 kernel=0;
 seedname=SEED
@@ -59,96 +58,44 @@ seedname=SEED
 ###################################################################
 
 
-if [ -z $1 ]; then
-    Usage
-    exit 1
-elif [ $1 = "--more" ]; then
-    Usage
-    exit 1
-fi
 
-until [ -z $1 ]; do
-
-# look at this option and determine if has an argument specified by an =
-option=`echo $1 | sed s/=.*//`
-arg="" #specifies if an argument is to be read from next item on command line (=1 is is when = is used)
-
-if [ $option = $1 ]; then
-# no argument to this command has been found with it (i.e. after an =)
-# if there is an argument it will be the next option
-    argument=$2
-else
-    arg=1
-    argument=`echo $1 | sed s/.*=//`
-fi
-takeargs=0;boolarg="";isbool="";
-    case $option in
-	-o) outflag=1; opath=$argument
-	    takeargs=1;;
-	-i) inflag=1; img=$argument
-           ! is_image ${img} && Usage && exit
-           takeargs=1;;
-	-s) seed=$argument;
-	       takeargs=1;;
-	-r) radius=$argument 
-		takeargs=1;;
-	-p) pname=$argument
-	    takeargs=1;;
-    -n) seedname=$argument
-	    takeargs=1;;
-	-k) kernel=$argument
-	    takeargs=1;;
-    -t) template=$argument;
-	    takeargs=1;;
-    -f) regfile=$argument;
-        takeargs=1;;
-	*)  #Usage
-	    echo "Error! Unrecognised option on command line: $option"
-	    echo ""
-	    exit 1;;
-    esac
-
-
-    # sort out a shift required by a command line option that takes arguments
-    if [ -z $arg ]; then
-	# an argument has been supplied on the command NOT using an =
-	if [ $takeargs -eq 1 ]; then
-	    shift;
-	fi
-    fi
-    
-    if [ ! -z $isbool ]; then
-	    # this is an (explicit) boolean setting
-	if [ ! -z $arg ]; then
-	    # an argument has been supplied on the command using an =
-	    # set the variable based on the argument
-	    case $argument in
-		on) eval $boolarg=1
-		    ;;
-		off) eval $boolarg=""
-		     ;;
-		1) eval $boolarg=1
-		   ;;
-		0) eval $boolarg=""
-		   ;;
-		*)  Usage
-		    echo "Error! Unrecognised setting for boolean option: $1"
-		    echo ""
-		    exit 1;;
-	    esac
-	else
-	    # no argument has been suppled with this command (NOTE that you cannot supply an arugment to a bool option without an =)
-	    # this sets the variable to true
-	    eval $boolarg=1;
-	fi
-    fi
-
-
-    # shift to move on to next parameter
-    shift
+while getopts "i:o:s:k:r:p:n:t:f:" OPTION
+   do
+   case $OPTION in
+   i)
+      img=${OPTARG}
+     ;;
+  o) 
+     opath=${OPTARG}
+     ;;
+  s) 
+    seed=${OPTARG}
+     ;;
+   k) 
+    kernel=${OPTARG}
+     ;;
+    r)
+     radius=${OPTARG}
+     ;;
+    p)
+     pname=${OPTARG}
+     ;;
+     n)
+      seedname=${OPTARG}
+      ;;
+     t)
+       template=${OPTARG}
+      ;;
+      f)
+        regfile=${OPTARG}
+       ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+      ;;
+   esac
 done
-
-
 
 
 
@@ -186,6 +133,27 @@ regfile1="${regfile// / -t }"
 
 tempdir=${dirfile}/work 
 mkdir -p ${tempdir}
+###################################################################
+# get the ref volume and mask
+###################################################################
+refvol=${tempdir}/ref.nii.gz
+mask=${tempdir}/mask.nii.gz
+
+
+
+nvol=$(exec_fsl fslnvols ${img})
+midpt=$(( ${nvol} / 2))
+exec_fsl fslroi ${img} ${refvol} ${midpt} 1
+exec_fsl fslmaths ${refvol} -abs -bin  ${mask}
+
+if [[ ! ${template}  ]]; then
+template=${mask}
+regfile1=${XCPEDIR}/utils/oneratiotransform.txt
+fi
+
+
+
+
 
 ###################################################################
 # check if the input is mask or cordinate
@@ -214,20 +182,6 @@ case ${seedType} in
     ;;
 esac
 
-###################################################################
-# get the ref volume and mask
-###################################################################
-refvol=${tempdir}/ref.nii.gz
-mask=${tempdir}/mask.nii.gz
-
-
-
-nvol=$(exec_fsl fslnvols ${img})
-midpt=$(( ${nvol} / 2))
-exec_fsl fslroi ${img} ${refvol} ${midpt} 1
-exec_fsl fslmaths ${refvol} -abs -bin  ${mask}
-
-if [[ -s ${regfile1}  ]]; then
 
 ###################################################################
 # register the template to refvol for seedmask 
@@ -238,14 +192,10 @@ subroutine              @3    ants registration
  exec_ants antsApplyTransforms -e 3 -d 3 -v  0 \
       -i ${seed1} \
       -r ${refvol} \
-      -t ${regfile} \
+      -t ${regfile1} \
       -o  ${seedmask}  \
       -n NearestNeighbor 2>/dev/null
-else 
 
-${seedmask}=${seed1};
-
-fi
  
 
 # partiallly smooth the image if kernel is supply
@@ -308,4 +258,3 @@ exec_sys             rm -f ${sca_zmap}
 rm -rf ${tempdir}
 
 routine_end 
-
