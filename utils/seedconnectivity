@@ -22,14 +22,14 @@ cat << endstream
 ___________________________________________________________________
 Usage: `basename $0` -img <input 4D image> -s (coordinate or mask) -o <output> <options>
 Compulsory arguments:
- -img : 4D image 
+ -i : 4D image 
  -s :  three cordinates x,y,z or 3D mask in MNI/template
  -o : output directory
       The path where the nifti images are to be written
 Optional arguments:
  -r  : radius of the mask, 
     if not provided r=5 as default
- -na  : Name
+ -n  : Name
       The name of the seeds
  -k  : kernel smoohting 
  -p : Subject identifiers
@@ -37,6 +37,9 @@ Optional arguments:
  -t : template 
       template files. if not provided, ${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
       will be used 
+ -f : registration file 
+      Require to register the template to 4D image. If not provided, seed mask will asume to have 
+      same orientation and dimenison as 4D image
  -w : Overwrite existing
       If -w 0 is provided, there will be no overwrittten
       any existing output that it detects.
@@ -82,21 +85,23 @@ takeargs=0;boolarg="";isbool="";
     case $option in
 	-o) outflag=1; opath=$argument
 	    takeargs=1;;
-	-img) inflag=1; img=$argument
+	-i) inflag=1; img=$argument
            ! is_image ${img} && Usage && exit
            takeargs=1;;
-	--s) seed=$argument;
+	-s) seed=$argument;
 	       takeargs=1;;
 	-r) radius=$argument 
 		takeargs=1;;
 	-p) pname=$argument
 	    takeargs=1;;
-        -na) seedname=$argument
+    -n) seedname=$argument
 	    takeargs=1;;
 	-k) kernel=$argument
 	    takeargs=1;;
-        -t) template=$argument;
+    -t) template=$argument;
 	    takeargs=1;;
+    -f) regfile=$argument;
+        takeargs=1;;
 	*)  #Usage
 	    echo "Error! Unrecognised option on command line: $option"
 	    echo ""
@@ -167,15 +172,15 @@ subroutine                    @u.1 check if the input and output exist
 ###################################################################
 
   namedir=`echo ${pname} | tr ',' '_'`;
-  filedir=`echo ${pname} | tr ',' '/'`;
-  dirfile=${opath}/${filedir}/seed/${seedname}
+
+  dirfile=${opath}/seed/${seedname}
   mkdir -p ${dirfile}
   seedmask=${dirfile}/${namedir}_connectivity_${seedname}_seed.nii.gz
   sca_ts=${dirfile}/${namedir}_connectivity_${seedname}_ts.1D
   sca_map=${dirfile}/${namedir}_connectivity_${seedname}_sm${kernel}.nii.gz
   sca_zmap=${dirfile}/${namedir}_connectivity_${seedname}Z_sm${kernel}.nii.gz
 
-
+regfile1="${regfile// / -t }"
 ## make temporary directory
 
 
@@ -222,34 +227,30 @@ midpt=$(( ${nvol} / 2))
 exec_fsl fslroi ${img} ${refvol} ${midpt} 1
 exec_fsl fslmaths ${refvol} -abs -bin  ${mask}
 
+if [[ -s ${regfile1}  ]]; then
+
 ###################################################################
 # register the template to refvol for seedmask 
 ###################################################################
 
-seed1=${tempdir}/seed2refvol.nii.gz
 subroutine              @3    ants registration 
-exec_ants antsRegistrationSyNQuick.sh  -d 3  \
-          -m ${template} \
-          -f ${refvol} \
-          -o ${tempdir}/tepreg &>/dev/null
           
  exec_ants antsApplyTransforms -e 3 -d 3 -v  0 \
       -i ${seed1} \
-      -r  ${refvol}\
-      -t ${tempdir}/tepreg0GenericAffine.mat \
-      -t ${tempdir}/tepreg1Warp.nii.gz \
-      -o   ${seedmask}  \
+      -r ${refvol} \
+      -t ${regfile} \
+      -o  ${seedmask}  \
       -n NearestNeighbor 2>/dev/null
-                 
+else 
 
+${seedmask}=${seed1};
 
-
-
-tmpimg=${tempdir}/img.nii.gz
+fi
+ 
 
 # partiallly smooth the image if kernel is supply
 
-
+tmpimg=${tempdir}/img.nii.gz
 
 subroutine              @3    smoothing 
 if [[ ${kernel} > 0 ]]; then 
