@@ -12,16 +12,19 @@ provided,  ``MNI152_T1_2mm_brain.nii.gz`` will be used as default template.
 The seed connectivity is done with ${XCPEDIR}/utils/seedconnectivity::
 
     ${XCPEDIR}/utils/seedconnectivity   \
-    -img  input4Dimage  \  #  4D inputimage usually residualised or image or filtered image
-    --s=x,y,z   \ # 3 cordinates  or a mask (--s=/path/to/mask)
+    -i  input4Dimage  \  #  4D inputimage usually residualised or image or filtered image
+    -s x,y,z   \ # 3 cordinates  or a mask (--s=/path/to/mask)
     -o  outputpath  \ # output directory 
     -r  radius \ #  radius of the mask for 3 points cordinates, r=5 is default
     -k  kernel \ # kernel size if the image is not filtered
-    -t  template  \ # template; MNI152_T1_2mm_brain.nii.gz is default
-    -na seed_name \ # SEED will used as default
+    -t  template  \ # template or BOLD reference 
+    -n seed_name \ # SEED will used as default
     -p  subject identifiers
+    -f template to subjece regristration file:  if there are more than one regsitration file, 
+       they can be seperated by commas, eg: `-f template2subjafffine0.txt,template2subjwarp1.nii.gz`
+       in the absence of registration file, bold reference will be used as template. 
 
-The first three opions (-img,--sand -o ) are mandatory.
+The first three opions (-i,-s and  -o ) are mandatory.
 If the input image is residualised BOLD image (regress/sub-*residualized.nii.gz) from `regress` 
 module which is not spatially smooth, theuser is encourage to smooth the image. Kernel of 5mm 
 FHWM is preffered for good connectivity results.
