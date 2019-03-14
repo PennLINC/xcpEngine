@@ -69,9 +69,9 @@ t_rep=np.asarray(opts.reptime, dtype='float64')
 # Get zooms to ensure correct TR
 img             =   nib.load(opts.img)
 header = img.header.copy()
-zooms = header.get_zooms()
+zooms = np.array(header.get_zooms())
 zooms[-1] = float(opts.reptime)
-header.set_zooms(zooms)
+header.set_zooms(tuple(zooms))
 
 #t_rep           =   img.header['pixdim'][4]
 mask = nib.load(opts.mask)
