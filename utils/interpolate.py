@@ -71,7 +71,7 @@ img             =   nib.load(opts.img)
 header = img.header.copy()
 zooms = np.array(header.get_zooms())
 zooms[-1] = float(opts.reptime)
-header.set_zooms(tuple(zooms))
+header.set_zooms(zooms)
 
 #t_rep           =   img.header['pixdim'][4]
 mask = nib.load(opts.mask)
