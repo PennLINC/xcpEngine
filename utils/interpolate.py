@@ -229,5 +229,5 @@ img_data_out[logmask]   =   img_data
 
 img_interpolated        =   nib.Nifti1Image(dataobj=img_data_out,
                                                 affine=img.affine,
-                                                header=img.header)
-nib.save(img_interpolated, opts.out, header=header)
+                                                header=header)
+img_interpolated.to_filename(opts.out, header=header)
