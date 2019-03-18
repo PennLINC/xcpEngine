@@ -70,6 +70,7 @@ t_rep=np.asarray(opts.reptime, dtype='float64')
 img             =   nib.load(opts.img)
 header = img.header.copy()
 zooms = np.array(header.get_zooms())
+zomms=list(zooms)
 zooms[-1] = float(opts.reptime)
 header.set_zooms(tuple(zooms))
 
@@ -230,4 +231,4 @@ img_data_out[logmask]   =   img_data
 img_interpolated        =   nib.Nifti1Image(dataobj=img_data_out,
                                                 affine=img.affine,
                                                 header=header)
-img_interpolated.to_filename(opts.out, header=header)
+nib.save(img_interpolated, opts.out)
