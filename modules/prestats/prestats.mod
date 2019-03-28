@@ -379,7 +379,6 @@ while (( ${#rem} > 0 ))
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                           
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
-                      
                       subroutine        @ removing nonsteady state volumes 
                      exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
@@ -465,6 +464,10 @@ while (( ${#rem} > 0 ))
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
  
+
+
+
+                
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                 rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
@@ -496,7 +499,8 @@ while (( ${#rem} > 0 ))
                          -i ${mni2t1}                               \
                          -s ${spaces[sub]}
 
-                intermediate=${intermediate}_${cur}
+                exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+                         intermediate=${intermediate}_${cur}
                 
             fi 
 

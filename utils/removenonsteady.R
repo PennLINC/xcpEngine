@@ -6,7 +6,7 @@
 
 ###################################################################
 # You are advised to avoid excessive dependency on this script
-# for the time being. Az
+# for the time being.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 ###################################################################
@@ -61,6 +61,3 @@ if (length(b) == 0 ) { img1=readNifti(img); writeNifti(img1,out1); write.table(r
         writeNifti(img2,out1)
         print(paste0("Non-steady volumes deleted: ", length(b)))
         write.table(mat1,file=out2, sep='\t',col.names = T, row.names=F,quote=F)} 
-
-
-
