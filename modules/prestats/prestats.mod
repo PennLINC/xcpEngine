@@ -278,6 +278,11 @@ while (( ${#rem} > 0 ))
  
                output struct  ${out}/prestats/${prefix}_struct.nii.gz
                output struct_head ${out}/prestats/${prefix}_struct.nii.gz
+
+                subroutine        @ removing nonsteady state volumes 
+                exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                -t $out/prestats/${prefix}_fmriconf.tsv \
+                -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
                
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                rm -f ${spaces[sub]}
@@ -374,7 +379,11 @@ while (( ${#rem} > 0 ))
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                           
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
-                
+                      
+                      subroutine        @ removing nonsteady state volumes 
+                     exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                     -t $out/prestats/${prefix}_fmriconf.tsv \
+                     -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
                       
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -450,7 +459,12 @@ while (( ${#rem} > 0 ))
                 exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                 output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
-                
+
+                subroutine        @ removing nonsteady state volumes 
+                exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                -t $out/prestats/${prefix}_fmriconf.tsv \
+                -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+ 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                 rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
@@ -1011,8 +1025,7 @@ while (( ${#rem} > 0 ))
          ;;
       
       
-      
-      
+    
       
       DMT)
          ##########################################################
