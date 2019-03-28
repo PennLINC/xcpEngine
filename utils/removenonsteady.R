@@ -53,7 +53,7 @@ outmat=as.matrix(outmat)
 outmat=rowSums(outmat)
 b=which(outmat>=1)
 
-if (length(b) == 0 ) { img1=readNifti(img); writeNifti(img1,out1); write.table(rr,file=out2, col.names = T, row.names=F,quote=F) ; print('No non-steady volumes')
+if (length(b) == 0 ) { img1=readNifti(img); writeNifti(img1,out1); write.table(rr,file=out2, sep='\t',col.names = T, row.names=F,quote=F) ; print('No non-steady volumes')
     } else  {
         bb=readNifti(img) 
         img2=bb[,,,-b] 
