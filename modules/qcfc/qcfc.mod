@@ -153,7 +153,7 @@ if [[ ! -s ${voxts[cxt]} ]] \
    ###################################################################
    # Assign default thresholds for DVARS, FD, and RMS.
    ###################################################################
-   trep=$(exec_fsl fslval ${img} pixdim4)
+   trep=$(exec_fsl fslval ${img[sub]} pixdim4)
    dv_thresh=1.5
    fd_thresh=$( arithmetic "0.167*${trep}")
    rms_thresh=$(arithmetic "0.083*${trep}")
@@ -197,7 +197,7 @@ if [[ ! -s ${voxts[cxt]} ]] \
    [[ -n ${qcfc_custom[cxt]} ]]  &&  ts_1d="${ts_1d}${qcfc_custom[cxt]},"
 
    [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
-
+ 
    ###################################################################
    # . . . and create the plot.
    ###################################################################

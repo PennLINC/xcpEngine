@@ -102,8 +102,9 @@ exec_xcp generate_confmat.R \
          -i ${fmriprepconf[sub]} \
          -j fd \
          -o ${rel_rms[cxt]}
+
 temporal_mask  --SIGNPOST=${signpost}        \
-               --INPUT=${img[sub]}           \
+               --INPUT=${img}           \
                --RPS=${rps[cxt]}             \
                --RMS=${rel_rms[cxt]}         \
                --THRESH=${framewise[cxt]}
@@ -140,7 +141,7 @@ subroutine        @1.3  relative mean motion
     elif [[ $confound == tcompcor ]] ; then 
     confound2_tcompcor[cxt] = 1
     else 
-    echo "The xcpEngine will regress the motion parameters"
+    echo "The nuisance matrix is being selected base on design file"
 fi
  
 

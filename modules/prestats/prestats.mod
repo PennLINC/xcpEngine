@@ -256,6 +256,7 @@ while (( ${#rem} > 0 ))
 
                exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
+
                 output mask  ${out}/prestats/${prefix}_mask.nii.gz
                 rm ${prefix}_structmask.nii.gz
                 rm ${prefix}_imgmask.nii.gz
@@ -336,7 +337,7 @@ while (( ${#rem} > 0 ))
                mni2t1=$(ls -f  $strucn/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
                t12mni=$(ls -f  $strucn/anat/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
          
-                # check if the inout image has MNI and convert t T1w
+                # check if the input image has MNI and convert to T1w
                  string1='MNI152'; b1=$(basename ${img1[sub]})
                       if [[ ${b1} =~ ${string1} ]]; then 
                       ## check if the confounmatix is present and the mask 
@@ -357,6 +358,8 @@ while (( ${#rem} > 0 ))
 
                       output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                       output struct  ${out}/prestats/${prefix}_struct.nii.gz
+                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${struct[cxt]} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
                        
                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            -inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
@@ -373,17 +376,25 @@ while (( ${#rem} > 0 ))
                       ${out}/prestats/${prefix}_mask.nii.gz
 
                       output mask  ${out}/prestats/${prefix}_mask.nii.gz
+                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
+
                       rm ${prefix}_structmask.nii.gz
 
                       exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                           
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
+
                       subroutine        @ removing nonsteady state volumes 
                      exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
                      -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                      
+
+                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${intermediate}.nii.gz -prefix  ${intermediate}.nii.gz -overwrite
+                  
+
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
                   
@@ -427,7 +438,8 @@ while (( ${#rem} > 0 ))
                     struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
                     segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
                     structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
-                    exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
+                    
+                 exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz -overwrite
                     output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                    
@@ -460,10 +472,13 @@ while (( ${#rem} > 0 ))
                 output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
 
                 subroutine        @ removing nonsteady state volumes 
+
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
- 
+
+                 exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${intermediate}.nii.gz   \
+                         -prefix ${intermediate}.nii.gz -overwrite
 
 
 
@@ -1184,10 +1199,7 @@ while (( ${#rem} > 0 ))
          intermediate=${intermediate}_${cur}
          routine_end
          ;;
-      
-      
-      
-      
+   
       
       *)
          subroutine           @E.1     Invalid option detected: ${cur}

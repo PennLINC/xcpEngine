@@ -126,7 +126,7 @@ if [[ ${regress} == despike ]]; then
     elif [[ ${regress} == censor ]]; then 
      censor[cxt]=1
      else 
-     echo "Default settings will be applied "
+     echo "Design files  "
 fi
 
 if [[ -n ${temporalfilter} ]]; then
@@ -204,7 +204,7 @@ while (( ${#rem} > 0 ))
       routine                 @7    Demeaning and detrending BOLD timeseries
       demean_detrend       --SIGNPOST=${signpost}           \
                            --ORDER=${regress_dmdt[cxt]}     \
-                           --INPUT=${intermediate}          \
+                           --INPUT=${img}          \
                            --OUTPUT=${intermediate}_${cur}  \
                            --1DDT=${regress_1ddt[cxt]}      \
                            --CONFIN=${confproc[cxt]}        \
