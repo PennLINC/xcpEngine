@@ -1199,7 +1199,10 @@ while (( ${#rem} > 0 ))
          intermediate=${intermediate}_${cur}
          routine_end
          ;;
-   
+      
+      
+      
+      
       
       *)
          subroutine           @E.1     Invalid option detected: ${cur}
