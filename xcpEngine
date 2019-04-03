@@ -69,7 +69,7 @@ XCPENGINE
 
 
 [[ -z    ${XCPEDIR}    ]] \
-&& echo  "[XCPEDIR is undefined. Aborting.]"                && exit
+&& echo  "[XCPEDIR is undefined. Aborting.]"             && exit
 source   ${XCPEDIR}/core/constants
 source   ${XCPEDIR}/core/functions/library.sh
 source   ${XCPEDIR}/core/functions/cluster_submit
