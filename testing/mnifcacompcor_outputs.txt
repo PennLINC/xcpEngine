@@ -104,7 +104,6 @@ sub-1/roiquant/segmentation/sub-1_segmentation_mean_reho.csv
 sub-1/roiquant/segmentation/sub-1_segmentation_mean_rehoZ.csv
 sub-1/roiquant/segmentation/sub-1_segmentation.nii.gz
 sub-1/roiquant/sub-1_referenceVolume.nii.gz
-
 sub-1/sub-1_atlas
 sub-1/sub-1_atlas/sub-1_global.nii.gz
 sub-1/sub-1_atlas/sub-1_power264.nii.gz
@@ -112,6 +111,7 @@ sub-1/sub-1_atlas/sub-1_segmentation.nii.gz
 sub-1/sub-1.dsn
 sub-1/sub-1_logs
 sub-1/sub-1_logs/sub-1_audit.csv
+sub-1/sub-1-nFlags.1D
 sub-1/sub-1.nii.gz
 sub-1/sub-1_quality.csv
 /tmp/mnifcacompcor/xcpOutput
