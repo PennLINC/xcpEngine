@@ -44,5 +44,5 @@ zooms[-1] = float(opts.trep)
 header.set_zooms(tuple(zooms))
 
 img_data=img.get_fdata()
-img1       =   nib.Nifti1Image(dataobj=img_data,affine=img.affine,header=header)
+img1      =   nib.Nifti1Image(dataobj=img_data,affine=img.affine,header=header)
 nib.save(img1, opts.out)
