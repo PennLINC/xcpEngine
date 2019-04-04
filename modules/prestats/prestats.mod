@@ -304,7 +304,7 @@ while (( ${#rem} > 0 ))
                     -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
                     -x ${pnc2mni}                               \
                     -i ${mnitopnc}                               \
-                    -s ${spaces[sub]}
+                    -s ${spaces[sub]} 2>/dev/null
 
 
               hd=',MapHead='${struct_head[cxt]}
@@ -323,7 +323,7 @@ while (( ${#rem} > 0 ))
                     -m ${structural[sub]}:${struct[cxt]}${hd} \
                     -x ${subj2temp}                               \
                     -i ${temp2subj}                               \
-                    -s ${spaces[sub]}
+                    -s ${spaces[sub]} 2>/dev/null
 
 
                exec_sys rln   ${intermediate}.nii.gz  \
@@ -417,7 +417,7 @@ while (( ${#rem} > 0 ))
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
                          -x ${pnc2mni}                               \
                          -i ${mnitopnc}                               \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
                        hd=',MapHead='${struct_head[cxt]}
                    
                        ${XCPEDIR}/utils/spaceMetadata          \
@@ -426,7 +426,7 @@ while (( ${#rem} > 0 ))
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
                          -x ${onetran}                               \
                          -i ${onetran}                               \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
 
                          exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
                          intermediate=${intermediate}_${cur}
@@ -502,7 +502,7 @@ while (( ${#rem} > 0 ))
                          -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
                          -x ${pnc2mni} -i ${mnitopnc}     \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
 
                 hd=',MapHead='${struct_head[cxt]}
 
@@ -512,7 +512,7 @@ while (( ${#rem} > 0 ))
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
                          -x ${t12mni}                                \
                          -i ${mni2t1}                               \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
 
                 exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
                          intermediate=${intermediate}_${cur}
@@ -1226,6 +1226,8 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
    exec_fsl imcp ${processed} ${preprocessed[cxt]}
+   trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+   exec_xcp addTR.py -i ${preprocessed[cxt]} -o ${preprocessed[cxt]} -t ${trep} 
    completion
 else
    subroutine                 @0.3
