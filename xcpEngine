@@ -185,6 +185,7 @@ shift $((OPTIND-1))
 # Validate and parse the design and cohort files.
 # All pipeline variables are available after validation.
 ###################################################################
+
 echo \$XCPEDIR is $XCPEDIR
 export XCPEDIR
 
