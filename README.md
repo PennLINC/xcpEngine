@@ -1,6 +1,6 @@
 # The BBL image processing umbrella
 
-[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://xcpengine.readthedocs.io/?badge=latest)[![PyPI download total](https://img.shields.io/pypi/dt/ansicolortags.svg)](https://pypi.python.org/pypi/xcpengine-container/)
+[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=1.0)](http://xcpengine.readthedocs.io/?badge=latest)[![PyPI download total](https://img.shields.io/pypi/dt/ansicolortags.svg)](https://pypi.python.org/pypi/xcpengine-container/)
 
 ## Overview
 
