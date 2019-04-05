@@ -127,12 +127,14 @@ RUN apt-get update -qq \
            xvfb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && curl -sSL --retry 5 -o /tmp/toinstall.deb http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
-    && dpkg -i /tmp/toinstall.deb \
-    && rm /tmp/toinstall.deb \
-    && curl -sSL --retry 5 -o /tmp/toinstall.deb http://mirrors.kernel.org/debian/pool/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb \
-    && dpkg -i /tmp/toinstall.deb \
-    && rm /tmp/toinstall.deb \
+    && curl -sSL --retry 5 -o /tmp/libxp6_1.0.2-2_amd64.deb http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
+    && dpkg -i /tmp/libxp6_1.0.2-2_amd64.deb \
+    && rm /tmp/libxp6_1.0.2-2_amd64.deb \
+    && apt-get clean && apt-get update && apt-get -f install &&  dpkg --configure -a && apt-get update \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && curl -o /tmp/libpng12-0_1.2.50-2+deb8u3_amd64.deb -sSL http://mirrors.kernel.org/debian/pool/main/libp/libpng/libpng12-0_1.2.50-2+deb8u3_amd64.deb \
+    && dpkg -i /tmp/libpng12-0_1.2.50-2+deb8u3_amd64.deb \
+    && rm /tmp/libpng12-0_1.2.50-2+deb8u3_amd64.deb \
     && apt-get install -f \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
