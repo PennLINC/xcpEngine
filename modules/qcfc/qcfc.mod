@@ -197,7 +197,7 @@ if [[ ! -s ${voxts[cxt]} ]] \
    [[ -n ${qcfc_custom[cxt]} ]]  &&  ts_1d="${ts_1d}${qcfc_custom[cxt]},"
 
    [[ -n ${ts_1d} ]]             &&  ts_1d="-t ${ts_1d%,}"
- 
+
    ###################################################################
    # . . . and create the plot.
    ###################################################################
@@ -284,9 +284,5 @@ if ! is_1D ${dvars_post[cxt]} \
                                  >>  ${dv_mo_cor_post[cxt]}
    routine_end
 fi
-
-
-
-
 
 completion

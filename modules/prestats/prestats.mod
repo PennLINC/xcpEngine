@@ -280,12 +280,15 @@ while (( ${#rem} > 0 ))
                output struct  ${out}/prestats/${prefix}_struct.nii.gz
                output struct_head ${out}/prestats/${prefix}_struct.nii.gz
 
-                subroutine        @ removing nonsteady state volumes 
+                subroutine        @ removing nonsteady state volumes
+ 
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-               
+                 
+             
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+
                rm -f ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
                        
@@ -391,7 +394,6 @@ while (( ${#rem} > 0 ))
                      -t $out/prestats/${prefix}_fmriconf.tsv \
                      -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
 
-                  
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -474,9 +476,6 @@ while (( ${#rem} > 0 ))
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-
-             
-
 
 
                 
@@ -1224,7 +1223,9 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    processed=$(readlink -f    ${intermediate}.nii.gz)
    exec_fsl imcp ${processed} ${preprocessed[cxt]}
    trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+
    exec_xcp addTR.py -i ${preprocessed[cxt]} -o ${preprocessed[cxt]} -t ${trep} 
+   
    completion
 else
    subroutine                 @0.3
