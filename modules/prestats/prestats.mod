@@ -391,8 +391,6 @@ while (( ${#rem} > 0 ))
                      -t $out/prestats/${prefix}_fmriconf.tsv \
                      -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
 
-                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${intermediate}.nii.gz -prefix  ${intermediate}.nii.gz -overwrite
                   
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -477,8 +475,7 @@ while (( ${#rem} > 0 ))
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
 
-                 exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${intermediate}.nii.gz   \
-                         -prefix ${intermediate}.nii.gz -overwrite
+             
 
 
 
@@ -753,23 +750,7 @@ while (( ${#rem} > 0 ))
          routine_end
          ;;
       
-         ASL)
-         routine  @1 ASL prerocessing 
-         
-
-
-
-
-
-         routine_end
-         ;;
-
-
-
-
-
-
-
+      
       
       
       
