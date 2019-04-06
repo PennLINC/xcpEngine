@@ -1,0 +1,6 @@
+struct_mask             %ING/*space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz
+wm_seg                  %ING/*space-MNI152NLin2009cAsym_label-WM_probseg.nii.gz
+gm_seg                  %ING/*space-MNI152NLin2009cAsym_label-GM_probseg.nii.gz
+csf_seg                 %ING/*space-MNI152NLin2009cAsym_label-CSF_probseg.nii.gz
+mni2t1                  %ING/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5
+t12mni                  %ING/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5

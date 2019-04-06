@@ -90,6 +90,8 @@ if ! is_image ${std[cxt]}  \
       ${img}               \
       ${std[cxt]}          \
       ${space[sub]}:${standard}
+   trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+   exec_xcp addTR.py -i ${std[cxt]} -o ${std[cxt]} -t ${trep}
 fi
 fi
 ###################################################################
