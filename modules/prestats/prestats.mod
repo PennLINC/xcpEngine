@@ -462,6 +462,7 @@ while (( ${#rem} > 0 ))
 
                   exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${struct1}   \
                                 -prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+
                   output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct ${out}/prestats/${prefix}_struct.nii.gz
                 
