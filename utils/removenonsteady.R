@@ -53,9 +53,9 @@ outmat=as.matrix(outmat)
 outmat=rowSums(outmat)
 b=which(outmat>=1)
 
-if (length(b) == 0 ) { img1=readNifti(img,internal=TRUE); writeNifti(img1,out1,template=img1,datatype = "float32"); write.table(rr,file=out2, sep='\t',col.names = T, row.names=F,quote=F) ; print('No non-steady volumes')
+if (length(b) == 0 ) { img1=readNifti(img); writeNifti(img1,out1,template=img1,datatype = "float32"); write.table(rr,file=out2, sep='\t',col.names = T, row.names=F,quote=F) ; print('No non-steady volumes')
     } else  {
-        bb=readNifti(img,internal=TRUE) 
+        bb=readNifti(img) 
         img2=bb[,,,-b] 
         mat1=rr[-b,]
         writeNifti(img2,out1,template=bb,datatype = "float32")
