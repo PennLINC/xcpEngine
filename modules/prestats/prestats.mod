@@ -164,14 +164,13 @@ then
     exec_afni 3dresample -orient ${template_orientation} \
               -inset ${full_intermediate} \
               -prefix ${intermediate}_${template_orientation}.nii.gz
-    exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${template_orientation}.nii.gz
-          intermediate_root=${intermediate}
+    intermediate=${intermediate}_${template_orientation}
+    intermediate_root=${intermediate}
 else
 
     subroutine  @0.1f "NOT re-orienting native bcos they are the same"
 
 fi
-
 
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
@@ -394,7 +393,7 @@ while (( ${#rem} > 0 ))
                      exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
                      -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                  
+                     
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -476,8 +475,7 @@ while (( ${#rem} > 0 ))
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                
-
+                 
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                 rm -f ${spaces[sub]}
