@@ -172,7 +172,6 @@ else
 
 fi
 
-
 ###################################################################
 # The variable 'buffer' stores the processing steps that are
 # already complete; it becomes the expected ending for the final
@@ -226,7 +225,15 @@ while (( ${#rem} > 0 ))
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
          strucn="${img1[sub]%/*/*}";
-         
+         if [[ -f  $(ls ${strucn}/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5 2>/dev/null ) ]]; then  
+                  strucn=${strucn}
+         else
+
+          anatdir=$strucn/../
+          
+          strucn=${anatdir}
+
+         fi
          
          if [[ -d ${antsct[sub]} ]]; then
                subroutine @ generate mask and struct/structhead 
@@ -248,6 +255,7 @@ while (( ${#rem} > 0 ))
 
                exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
+
                 output mask  ${out}/prestats/${prefix}_mask.nii.gz
                 rm ${prefix}_structmask.nii.gz
                 rm ${prefix}_imgmask.nii.gz
@@ -270,8 +278,17 @@ while (( ${#rem} > 0 ))
  
                output struct  ${out}/prestats/${prefix}_struct.nii.gz
                output struct_head ${out}/prestats/${prefix}_struct.nii.gz
-               
+
+                subroutine        @ removing nonsteady state volumes
+ 
+                exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                -t $out/prestats/${prefix}_fmriconf.tsv \
+                -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                
+                
+             
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+
                rm -f ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
                        
@@ -290,7 +307,7 @@ while (( ${#rem} > 0 ))
                     -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
                     -x ${pnc2mni}                               \
                     -i ${mnitopnc}                               \
-                    -s ${spaces[sub]}
+                    -s ${spaces[sub]} 2>/dev/null
 
 
               hd=',MapHead='${struct_head[cxt]}
@@ -309,7 +326,7 @@ while (( ${#rem} > 0 ))
                     -m ${structural[sub]}:${struct[cxt]}${hd} \
                     -x ${subj2temp}                               \
                     -i ${temp2subj}                               \
-                    -s ${spaces[sub]}
+                    -s ${spaces[sub]} 2>/dev/null
 
 
                exec_sys rln   ${intermediate}.nii.gz  \
@@ -323,7 +340,7 @@ while (( ${#rem} > 0 ))
                mni2t1=$(ls -f  $strucn/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
                t12mni=$(ls -f  $strucn/anat/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
          
-                # check if the inout image has MNI and convert t T1w
+                # check if the input image has MNI and convert to T1w
                  string1='MNI152'; b1=$(basename ${img1[sub]})
                       if [[ ${b1} =~ ${string1} ]]; then 
                       ## check if the confounmatix is present and the mask 
@@ -341,12 +358,16 @@ while (( ${#rem} > 0 ))
 
                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            -inset ${struct1} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
-                      
+
+                      output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                       output struct  ${out}/prestats/${prefix}_struct.nii.gz
+                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${struct[cxt]} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
                        
                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${segmentation} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
-                      
+                           -inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+
+                      output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
                        subroutine        @  generate mask and referenceVolumeBrain 
                      
@@ -358,14 +379,22 @@ while (( ${#rem} > 0 ))
                       ${out}/prestats/${prefix}_mask.nii.gz
 
                       output mask  ${out}/prestats/${prefix}_mask.nii.gz
+                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           -inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
+
                       rm ${prefix}_structmask.nii.gz
 
                       exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                           
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
-                
-                      
+
+                      subroutine        @ removing nonsteady state volumes 
+                     exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                     -t $out/prestats/${prefix}_fmriconf.tsv \
+                     -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                     
+
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
                   
@@ -388,7 +417,7 @@ while (( ${#rem} > 0 ))
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
                          -x ${pnc2mni}                               \
                          -i ${mnitopnc}                               \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
                        hd=',MapHead='${struct_head[cxt]}
                    
                        ${XCPEDIR}/utils/spaceMetadata          \
@@ -397,17 +426,20 @@ while (( ${#rem} > 0 ))
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
                          -x ${onetran}                               \
                          -i ${onetran}                               \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
 
                          exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
                          intermediate=${intermediate}_${cur}
 
+
+
                    
                 else 
-                    struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*")
-                    segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*")
+                    struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
+                    segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
                     structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
-                    exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
+                    
+                 exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz -overwrite
                     output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                    
@@ -430,14 +462,20 @@ while (( ${#rem} > 0 ))
 
                   exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${struct1}   \
                                 -prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+
                   output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct ${out}/prestats/${prefix}_struct.nii.gz
                 
-                exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${img1[sub]}   \
-                         -prefix ${intermediate}_${cur}.nii.gz -overwrite
                 exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                 output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
+
+                subroutine        @ removing nonsteady state volumes 
+
+                exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                -t $out/prestats/${prefix}_fmriconf.tsv \
+                -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                 
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                 rm -f ${spaces[sub]}
@@ -458,7 +496,7 @@ while (( ${#rem} > 0 ))
                          -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
                          -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
                          -x ${pnc2mni} -i ${mnitopnc}     \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
 
                 hd=',MapHead='${struct_head[cxt]}
 
@@ -468,9 +506,10 @@ while (( ${#rem} > 0 ))
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
                          -x ${t12mni}                                \
                          -i ${mni2t1}                               \
-                         -s ${spaces[sub]}
+                         -s ${spaces[sub]} 2>/dev/null
 
-                intermediate=${intermediate}_${cur}
+                exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+                         intermediate=${intermediate}_${cur}
                 
             fi 
 
@@ -480,8 +519,8 @@ while (( ${#rem} > 0 ))
    
     registration_quality=( $(exec_xcp \
       maskOverlap.R           \
-      -m ${referenceVolume[cxt]}   \
-      -r ${struct[cxt]}) )
+      -m ${segmentation[cxt]}   \
+      -r ${referenceVolumeBrain[cxt]}) )
     echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
     echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
     echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
@@ -999,8 +1038,7 @@ while (( ${#rem} > 0 ))
          ;;
       
       
-      
-      
+    
       
       DMT)
          ##########################################################
@@ -1182,6 +1220,10 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
    exec_fsl imcp ${processed} ${preprocessed[cxt]}
+   trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+   exec_xcp addTR.py -i ${preprocessed[cxt]} -o ${preprocessed[cxt]} -t ${trep} 
+   
+   
    completion
 else
    subroutine                 @0.3
