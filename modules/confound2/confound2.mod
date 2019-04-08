@@ -141,7 +141,7 @@ subroutine        @1.3  relative mean motion
     elif [[ $confound == tcompcor ]] ; then 
     confound2_tcompcor[cxt] = 1
     else 
-    echo "The nuisance matrix is being selected base on design file"
+    echo "The nuisance matrix is being selected base on design files"
 fi
  
 
