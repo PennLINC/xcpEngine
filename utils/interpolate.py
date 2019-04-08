@@ -58,23 +58,16 @@ def get_parser():
              '\nNumber of voxels to transform at one time; a higher '
              '\nnumber increases computational speed but also increases '
              '\nmemory usage')
-
+    
     return parser
 
 
 opts            =   get_parser().parse_args()
 print(opts.img)
-t_rep=np.asarray(opts.reptime, dtype='float64')
 
-# Get zooms to ensure correct TR
 img             =   nib.load(opts.img)
-header = img.header.copy()
-zooms = np.array(header.get_zooms())
-zomms=list(zooms)
-zooms[-1] = float(opts.reptime)
-header.set_zooms(tuple(zooms))
-
 #t_rep           =   img.header['pixdim'][4]
+t_rep=np.asarray(opts.reptime, dtype='float64')
 mask = nib.load(opts.mask)
 mask_data       =   mask.get_fdata()
 logmask         =   np.isclose(mask_data, 1)
@@ -86,7 +79,7 @@ nvol                =   img_data.shape[1]
 
 
 
-tmask  = np.loadtxt(opts.tmask)
+tmask  = np.loadtxt(opts.tmask) 
 indices = tmask.shape[-1]
 t_obs=np.array(np.where(tmask==0))
 
@@ -103,7 +96,7 @@ if n_samples_seen == nvol:
     # Temoral indices of all observations, seen and unseen
     ##########################################################################
 all_samples             =   np.arange(start=t_rep,stop=t_rep*(nvol+1),step=t_rep)
-
+        
     ##########################################################################
     # Calculate sampling frequencies
     ##########################################################################
@@ -128,27 +121,27 @@ offsets =   np.arctan2(
                         np.cos(2*np.outer(angular_frequencies, seen_samples)),
                         1)
                     ) / (2 * angular_frequencies)
-
+    
     ##########################################################################
     # Prepare sin and cos basis terms
     ##########################################################################
-from numpy import matlib
-cosine_term             =   np.cos(np.outer(angular_frequencies,
+from numpy import matlib 
+cosine_term             =   np.cos(np.outer(angular_frequencies, 
                                 seen_samples) -
-                                matlib.repmat(angular_frequencies*offsets,
+                                matlib.repmat(angular_frequencies*offsets, 
                                     n_samples_seen, 1).T)
-sine_term               =   np.sin(np.outer(angular_frequencies,
+sine_term               =   np.sin(np.outer(angular_frequencies, 
                                 seen_samples) -
-                                matlib.repmat(angular_frequencies*offsets,
+                                matlib.repmat(angular_frequencies*offsets, 
                                     n_samples_seen, 1).T)
 
 
 n_voxel_bins            =   int(np.ceil(nvox /opts.voxbin))
 
 for current_bin in range(1,n_voxel_bins+2):
-    print('Voxel bin ' + str(current_bin) + ' out of ' +
+    print('Voxel bin ' + str(current_bin) + ' out of ' + 
               str(n_voxel_bins+1))
-
+    
         ######################################################################
         # Extract the seen samples for the current bin
         ######################################################################
@@ -157,7 +150,7 @@ for current_bin in range(1,n_voxel_bins+2):
     bin_index           =   np.intersect1d(bin_index, range(0,nvox))
 
     voxel_bin           =   img_data[bin_index,:][:,t_obs.ravel()]
-
+   
 
     n_features              =   voxel_bin.shape[0]
     ##########################################################################
@@ -165,30 +158,30 @@ for current_bin in range(1,n_voxel_bins+2):
     # termfinal = sum(termmult,2)./sum(term.^2,2)
     # Compute numerators and denominators, then divide
     ##########################################################################
-
+    
     mult                =   np.zeros(shape=(angular_frequencies.shape[0],
                                                 n_samples_seen,
                                                 n_features))
 
     for obs in range(0,n_samples_seen):
              mult[:,obs,:]   = np.outer(cosine_term[:,obs],voxel_bin[:,obs])
-
+            
     numerator           =   np.sum(mult,1)
     denominator         =   np.sum(cosine_term**2,1)
     c                =   (numerator.T/denominator).T
-
+         
     for obs in range(0,n_samples_seen):
              mult[:,obs,:]   = np.outer(sine_term[:,obs],voxel_bin[:,obs])
-
+            
     numerator           =   np.sum(mult,1)
     denominator         =   np.sum(sine_term**2,1)
     s               =   (numerator.T/denominator).T
-
-
+    
+    
     ##########################################################################
     # Interpolate over unseen epochs, reconstruct the time series
     ##########################################################################
-
+    
     term_prod           =   np.sin(np.outer(angular_frequencies, all_samples))
     term_recon          =   np.zeros(shape=(angular_frequencies.shape[0],
                                                 nvol,n_features))
@@ -202,11 +195,11 @@ for current_bin in range(1,n_voxel_bins+2):
                                                 nvol,n_features))
     for i in range(angular_frequencies.shape[0]):
             term_recon[i,:,:] = np.outer(term_prod[i,:],c[i,:])
-    c_recon          =   np.sum(term_recon,0)
-
+    c_recon          =   np.sum(term_recon,0)   
+    
     recon                   =   (c_recon + s_recon).T
     del c_recon, s_recon
-
+        
     ##########################################################################
     # Normalise the reconstructed spectrum. This is necessary when the
     # oversampling frequency exceeds 1.
@@ -227,8 +220,8 @@ for current_bin in range(1,n_voxel_bins+2):
 
 img_data_out            =   np.zeros(shape=img.shape)
 img_data_out[logmask]   =   img_data
-
+    
 img_interpolated        =   nib.Nifti1Image(dataobj=img_data_out,
                                                 affine=img.affine,
-                                                header=header)
+                                                header=img.header)
 nib.save(img_interpolated, opts.out)

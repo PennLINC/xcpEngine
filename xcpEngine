@@ -69,7 +69,7 @@ XCPENGINE
 
 
 [[ -z    ${XCPEDIR}    ]] \
-&& echo  "[XCPEDIR is undefined. Aborting.]"             && exit
+&& echo  "[XCPEDIR is undefined. Aborting.]"                && exit
 source   ${XCPEDIR}/core/constants
 source   ${XCPEDIR}/core/functions/library.sh
 source   ${XCPEDIR}/core/functions/cluster_submit
@@ -185,19 +185,18 @@ shift $((OPTIND-1))
 # Validate and parse the design and cohort files.
 # All pipeline variables are available after validation.
 ###################################################################
-
 echo \$XCPEDIR is $XCPEDIR
 export XCPEDIR
 
 ###################################################################
 # Check the inputs
-python ${XCPEDIR}/checks/check_inputs.py ${args}
-if [ $? -eq 0 ]; then
-    echo OK
-else
-    echo Your inputs would result in a failed pipeline. Exiting.
-    exit 1
-fi
+#python ${XCPEDIR}/checks/check_inputs.py ${args}
+#if [ $? -eq 0 ]; then
+   # echo OK
+#else
+    #echo Your inputs would result in a failed pipeline. Exiting.
+    #exit 1
+#fi
 
 echo \
 "

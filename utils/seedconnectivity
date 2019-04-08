@@ -127,7 +127,7 @@ subroutine                    @u.1 check if the input and output exist
   sca_map=${dirfile}/${namedir}_connectivity_${seedname}_sm${kernel}.nii.gz
   sca_zmap=${dirfile}/${namedir}_connectivity_${seedname}Z_sm${kernel}.nii.gz
 
-regfile1="${regfile// / -t }"
+regfile1="${regfile//,/ -t }"
 ## make temporary directory
 
 

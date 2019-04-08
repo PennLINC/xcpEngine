@@ -33,7 +33,7 @@
 ###################################################################
 
 analysis=fc_$(whoami)
-design=/data/jux/BBL/projects/testACT/script/sscrub.dsn
+design=/data/jux/BBL/projects/testACT/script/designfiles/fc-36p_spkreg.dsn
 sequence=anatomical
 standard=MNI%2x2x2
 
@@ -69,7 +69,7 @@ confound2_sq[2]=2
 confound2_custom[2]=
 confound2_censor[2]=1
 confound2_censor_contig[2]=0
-confound2_framewise[2]=rmss:0.04,dv:2
+confound2_framewise[2]=rmss:0.083,dv:2
 confound2_rerun[2]=1
 confound2_cleanup[2]=1
 
@@ -92,7 +92,7 @@ regress_usan[3]=default
 regress_usan_space[3]=
 regress_rerun[3]=0
 regress_cleanup[3]=1
-regress_process[3]=DMT-REG-TMP
+regress_process[3]=DMT-TMP-REG
 
 ###################################################################
 # 4 FCON
