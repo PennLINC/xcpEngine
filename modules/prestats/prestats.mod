@@ -286,8 +286,7 @@ while (( ${#rem} > 0 ))
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
                 
-                exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                   -inset ${intermediate}.nii.gz   -prefix  ${intermediate}.nii.gz  -overwrite
+                
              
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -395,8 +394,7 @@ while (( ${#rem} > 0 ))
                      exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
                      -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                      exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                   -inset ${intermediate}.nii.gz   -prefix  ${intermediate}.nii.gz  -overwrite
+                  
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -478,8 +476,7 @@ while (( ${#rem} > 0 ))
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                  exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                   -inset ${intermediate}.nii.gz   -prefix  ${intermediate}.nii.gz  -overwrite
+                
 
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
