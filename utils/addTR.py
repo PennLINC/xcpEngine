@@ -6,12 +6,13 @@ from argparse import (ArgumentParser, RawTextHelpFormatter)
 import numpy as np
 import nibabel as nib
 
+
 def get_parser():
 
     parser = ArgumentParser(
         formatter_class=RawTextHelpFormatter,
         description='add TR to 4D image '
-                    )
+    )
     parser.add_argument(
         '-i', '--img', action='store', required=True,
         help='[required]'
@@ -31,18 +32,18 @@ def get_parser():
     return parser
 
 
-opts            =   get_parser().parse_args()
+opts = get_parser().parse_args()
 
-t_rep=np.asarray(opts.trep, dtype='float64')
+t_rep = np.asarray(opts.trep, dtype='float64')
 
 # Get zooms to ensure correct TR
-img             =   nib.load(opts.img)
+img = nib.load(opts.img)
 header = img.header.copy()
 zooms = np.array(header.get_zooms())
-zomms=list(zooms)
+zomms = list(zooms)
 zooms[-1] = float(opts.trep)
 header.set_zooms(tuple(zooms))
 
-img_data=img.get_fdata()
-img1      =   nib.Nifti1Image(dataobj=img_data,affine=img.affine,header=header)
+img_data = img.get_fdata()
+img1 = nib.Nifti1Image(dataobj=img_data, affine=img.affine, header=header)
 nib.save(img1, opts.out)

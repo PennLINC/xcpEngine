@@ -164,8 +164,8 @@ then
     exec_afni 3dresample -orient ${template_orientation} \
               -inset ${full_intermediate} \
               -prefix ${intermediate}_${template_orientation}.nii.gz
-    intermediate=${intermediate}_${template_orientation}
-    intermediate_root=${intermediate}
+    exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${template_orientation}.nii.gz
+          intermediate_root=${intermediate}
 else
 
     subroutine  @0.1f "NOT re-orienting native bcos they are the same"
@@ -285,7 +285,9 @@ while (( ${#rem} > 0 ))
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                 
+                
+                exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                   -inset ${intermediate}.nii.gz   -prefix  ${intermediate}.nii.gz  -overwrite
              
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -393,7 +395,8 @@ while (( ${#rem} > 0 ))
                      exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
                      -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-
+                      exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                   -inset ${intermediate}.nii.gz   -prefix  ${intermediate}.nii.gz  -overwrite
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -466,8 +469,6 @@ while (( ${#rem} > 0 ))
                   output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct ${out}/prestats/${prefix}_struct.nii.gz
                 
-                exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${img1[sub]}   \
-                         -prefix ${intermediate}_${cur}.nii.gz -overwrite
                 exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                 output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
@@ -477,7 +478,8 @@ while (( ${#rem} > 0 ))
                 exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
                 -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-
+                  exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                   -inset ${intermediate}.nii.gz   -prefix  ${intermediate}.nii.gz  -overwrite
 
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -1224,8 +1226,8 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    processed=$(readlink -f    ${intermediate}.nii.gz)
    exec_fsl imcp ${processed} ${preprocessed[cxt]}
    trep=$(exec_fsl fslval ${img[sub]} pixdim4)
-
    exec_xcp addTR.py -i ${preprocessed[cxt]} -o ${preprocessed[cxt]} -t ${trep} 
+   
    
    completion
 else

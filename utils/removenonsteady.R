@@ -61,3 +61,6 @@ if (length(b) == 0 ) { img1=readNifti(img); writeNifti(img1,out1,template=img1,d
         writeNifti(img2,out1,template=bb,datatype = "float32")
         print(paste0("Non-steady volumes deleted: ", length(b)))
         write.table(mat1,file=out2, sep='\t',col.names = T, row.names=F,quote=F)} 
+
+
+
