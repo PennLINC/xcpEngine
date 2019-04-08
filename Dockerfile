@@ -69,6 +69,7 @@ ENV FSLDIR="/opt/fsl-5.0.10" \
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
            bc \
+           wget \
            dc \
            file \
            libfontconfig1 \
