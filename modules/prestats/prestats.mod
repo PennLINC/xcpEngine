@@ -1232,7 +1232,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    exec_afni 3dresample -orient ${template_orientation} \
               -inset ${preprocessed[cxt]} \
               -prefix ${preprocessed[cxt]} -overwrite 
-
+  fslmaths ${preprocessed[cxt]}  -mul 1 ${preprocessed[cxt]}
    
    completion
 else
