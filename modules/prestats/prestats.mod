@@ -149,6 +149,7 @@ subroutine              @0.1b Template: ${template}
 subroutine              @0.1c Output root:
 
 subroutine @0.1d checking the orientation of img and template
+
 native_orientation=$(exec_afni 3dinfo -orient ${intermediate}.nii.gz)
 
 template_orientation=$(exec_afni 3dinfo -orient ${template})
@@ -162,9 +163,13 @@ then
     subroutine @0.1e img and template orientation are not the same
     subroutine @0.1f make it: "${native_orientation} -> ${template_orientation}"
     exec_afni 3dresample -orient ${template_orientation} \
-              -inset ${full_intermediate} \
+              -inset ${intermediate}.nii.gz \
               -prefix ${intermediate}_${template_orientation}.nii.gz
-    intermediate=${intermediate}_${template_orientation}
+
+    #intermediate=${intermediate}_${template_orientation}
+    #intermediate_root=${intermediate}
+     exec_fsl immv  ${intermediate}_${template_orientation}.nii.gz ${intermediate}.nii.gz  \
+                        
     intermediate_root=${intermediate}
 else
 
@@ -215,9 +220,9 @@ while (( ${#rem} > 0 ))
         # obtain fmriprep mask etc and struct
   
         ########################################
-        
+         
          routine @ getting data from frmiprep directory 
-                  
+        exec_fsl immv ${intermediate} ${intermediate}_${cur}   
         imgprt=${img1[sub]%_*_*_*}; conf="_desc-confounds_regressors.tsv"
         exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
@@ -281,9 +286,9 @@ while (( ${#rem} > 0 ))
 
                 subroutine        @ removing nonsteady state volumes
  
-                exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
-                -t $out/prestats/${prefix}_fmriconf.tsv \
-                -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+               exec_xcp removenonsteady.R -i  ${intermediate}_${cur}.nii.gz \
+                     -t $out/prestats/${prefix}_fmriconf.tsv \
+                     -o  $out/prestats/prepocessed.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
                 
                 
              
@@ -327,11 +332,11 @@ while (( ${#rem} > 0 ))
                     -x ${subj2temp}                               \
                     -i ${temp2subj}                               \
                     -s ${spaces[sub]} 2>/dev/null
+               
+               exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+                intermediate=${intermediate}_${cur} 
+                rm -rf $out/prestats/prepocessed.nii.gz
 
-
-               exec_sys rln   ${intermediate}.nii.gz  \
-                        ${intermediate}_${cur}.nii.gz
-               intermediate=${intermediate}_${cur}
          
                
           else 
@@ -390,9 +395,9 @@ while (( ${#rem} > 0 ))
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
 
                       subroutine        @ removing nonsteady state volumes 
-                     exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                     exec_xcp removenonsteady.R -i  ${intermediate}_${cur}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
-                     -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                     -o $out/prestats/prepocessed.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
                      
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -428,8 +433,9 @@ while (( ${#rem} > 0 ))
                          -i ${onetran}                               \
                          -s ${spaces[sub]} 2>/dev/null
 
-                         exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
-                         intermediate=${intermediate}_${cur}
+                         exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+                         intermediate=${intermediate}_${cur} 
+                         rm -rf $out/prestats/prepocessed.nii.gz
 
 
 
@@ -472,9 +478,9 @@ while (( ${#rem} > 0 ))
 
                 subroutine        @ removing nonsteady state volumes 
 
-                exec_xcp removenonsteady.R -i  ${intermediate}.nii.gz \
+                exec_xcp removenonsteady.R -i  ${intermediate}_${cur}.nii.gz \
                 -t $out/prestats/${prefix}_fmriconf.tsv \
-                -o  ${intermediate}.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                -o  $out/prestats/prepocessed.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
                  
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -508,8 +514,9 @@ while (( ${#rem} > 0 ))
                          -i ${mni2t1}                               \
                          -s ${spaces[sub]} 2>/dev/null
 
-                exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
-                         intermediate=${intermediate}_${cur}
+               exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+                intermediate=${intermediate}_${cur} 
+                rm -rf $out/prestats/prepocessed.nii.gz
                 
             fi 
 
@@ -1222,7 +1229,10 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    exec_fsl imcp ${processed} ${preprocessed[cxt]}
    trep=$(exec_fsl fslval ${img[sub]} pixdim4)
    exec_xcp addTR.py -i ${preprocessed[cxt]} -o ${preprocessed[cxt]} -t ${trep} 
-   
+   exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${preprocessed[cxt]} \
+              -prefix ${preprocessed[cxt]} -overwrite 
+
    
    completion
 else
