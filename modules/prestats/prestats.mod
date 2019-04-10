@@ -286,10 +286,9 @@ while (( ${#rem} > 0 ))
 
                 subroutine        @ removing nonsteady state volumes
  
-               exec_xcp removenonsteady.R -i  ${intermediate}_${cur}.nii.gz \
+              exec_xcp removenonsteady.py -i  ${intermediate}_${cur}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
-                     -o  $out/prestats/prepocessed.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
-                
+                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
                 
              
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -395,9 +394,9 @@ while (( ${#rem} > 0 ))
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
 
                       subroutine        @ removing nonsteady state volumes 
-                     exec_xcp removenonsteady.R -i  ${intermediate}_${cur}.nii.gz \
+                     exec_xcp removenonsteady.py -i  ${intermediate}_${cur}.nii.gz \
                      -t $out/prestats/${prefix}_fmriconf.tsv \
-                     -o $out/prestats/prepocessed.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
                      
 
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -478,9 +477,9 @@ while (( ${#rem} > 0 ))
 
                 subroutine        @ removing nonsteady state volumes 
 
-                exec_xcp removenonsteady.R -i  ${intermediate}_${cur}.nii.gz \
-                -t $out/prestats/${prefix}_fmriconf.tsv \
-                -o  $out/prestats/prepocessed.nii.gz -p $out/prestats/${prefix}_fmriconf.tsv
+                exec_xcp removenonsteady.py -i  ${intermediate}_${cur}.nii.gz \
+                     -t $out/prestats/${prefix}_fmriconf.tsv \
+                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
                  
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -536,6 +535,9 @@ while (( ${#rem} > 0 ))
       routine_end 
        ;;
       
+      ASL)
+       
+       ;;
       
       DVO)
          ##########################################################
