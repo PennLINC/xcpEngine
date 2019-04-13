@@ -435,10 +435,7 @@ while (( ${#rem} > 0 ))
                          exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
                          intermediate=${intermediate}_${cur} 
                          rm -rf $out/prestats/prepocessed.nii.gz
-
-
-
-                   
+   
                 else 
                     struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
                     segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
@@ -536,7 +533,94 @@ while (( ${#rem} > 0 ))
        ;;
       
       ASL)
-       
+       routine              @1  Preparing asl data
+       #exec_fsl immv ${intermediate} ${intermediate}_${cur}
+      if  ! is_image ${intermediate}_${cur}.nii.gz \
+         || rerun
+         subroutine        @1.1  Reading the structural and segmentation images 
+         struct1=$(find ${anatdir}/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
+         seg1=$(find ${anatdir}/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+         structmask=$(find ${anatdir}/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
+         wm_fmp=$(find ${anatdir}/ -type f -name "*WM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" )
+         csf_fmp=$(find ${anatdir}/ -type f -name "*CSF_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+         gm_fmp=$(find ${anatdir}/ -type f -name "*GM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+         mni2t1=$(ls -f  ${anatdir}/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
+         t12mni=$(ls -f  ${anatdir}/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
+
+         subroutine      @1.2  Reorient  structural  images to ${template_orientation}
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${struct1} \
+              -prefix ${out}/prestats/${prefix}_struct.nii.gz 
+         output struct  ${out}/prestats/${prefix}_struct.nii.gz
+         output struct_head  ${out}/prestats/${prefix}_struct.nii.gz
+          
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${seg1} \
+              -prefix ${out}/prestats/${prefix}_segmentation.nii.gz 
+         output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
+         output coreg_seg ${out}/prestats/${prefix}_segmentation.nii.gz
+
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${structmask} \
+              -prefix ${out}/prestats/${prefix}_structmask.nii.gz 
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${wm_fmp} \
+              -prefix ${out}/prestats/${prefix}_whitematter.nii.gz
+         output wm  ${out}/prestats/${prefix}_whitematter.nii.gz
+
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${csf_fmp} \
+              -prefix ${out}/prestats/${prefix}_csf.nii.gz
+         output csf  ${out}/prestats/${prefix}_csf.nii.gz
+
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${gm_fmp} \
+              -prefix ${out}/prestats/${prefix}_greymatter.nii.gz
+         output gm  ${out}/prestats/${prefix}_greymatter.nii.gz
+      if [[ -e ${m0[sub]} ]]
+      then
+      exec_afni 3dresample -orient {m0[sub]} \
+              -inset {m0[sub]} \
+              -prefix ${out}/prestats/${prefix}_m0.nii.gz
+      exec_fsl fslmaths ${out}/prestats/${prefix}_m0.nii.gz \
+                ${out}/prestats/${prefix}_m0.nii.gz
+      output m0  ${out}/prestats/${prefix}_m0.nii.gz
+      fi
+      subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+                rm -f ${spaces[sub]}
+                echo '{}'  >> ${spaces[sub]}
+
+                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+                pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+                       
+                       mnitopnc=$( echo ${mnitopnc})
+                       pnc2mni=$(echo ${pnc2mni})
+                       mnitopnc=${mnitopnc// /,}
+                       pnc2mni=${pnc2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
+                         -x ${pnc2mni} -i ${mnitopnc}     \
+                         -s ${spaces[sub]} 2>/dev/null
+
+                hd=',MapHead='${struct_head[cxt]}
+
+               ${XCPEDIR}/utils/spaceMetadata          \
+                         -o ${spaces[sub]}                         \
+                         -f ${standard}:${template}                \
+                         -m ${structural[sub]}:${struct[cxt]}${hd} \
+                         -x ${t12mni}                                \
+                         -i ${mni2t1}                               \
+                         -s ${spaces[sub]} 2>/dev/null
+
+         exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+         intermediate=${intermediate}_${cur}
+      fi 
+        
        ;;
       
       DVO)

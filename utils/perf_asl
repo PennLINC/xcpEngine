@@ -313,9 +313,9 @@ fslmaths $tempdir/calib -mas $tempdir/mask $tempdir/calib
 
 if [ ! -z $struct ]; then
    echo " Generating biasfield for sensitivity" 
-   fast -B -b -o $tempdir/seg -p $struct
-   antsApplyTransforms -e 3 -d 3 -i $tempdir/seg_bias.nii.gz -o $tempdir/segsen.nii.gz  -r  $tempdir/mask.nii.gz -t $struct2asl -n NearestNeighbor
-   fslmaths $tempdir/segsen -recip -mas  $tempdir/mask.nii.gz $tempdir/sens 
+   fast -B -b -o $tempdir/seg -p ${struct}
+   #antsApplyTransforms -e 3 -d 3 -i $tempdir/seg_bias.nii.gz -o $tempdir/segsen.nii.gz  -r  $tempdir/mask.nii.gz -t $struct2asl -n NearestNeighbor
+   fslmaths $tempdir/seg_bias -recip -mas  $tempdir/mask.nii.gz $tempdir/sens 
 fi
 
 
@@ -347,8 +347,7 @@ imcp $tempdir/asldata.nii.gz $tempdir/asldatat.nii.gz
 #antsApplyTransforms -e 3 -d 3 -i $mask -r ${template} -o $tempdir/mask.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
  
 
-$XCPEDIR/utils/asl_file1 --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
- 
+asl_file --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
 # Generate a perfusion-weighted image by taking the mean over all TIs of the differenced data
 fslmaths $tempdir/diffdata -Tmean $tempdir/pwi
  
@@ -495,9 +494,9 @@ echo  "Main run of BASIL on ASL data"
 
 if [ ! -z $spatial ]; then
          
-     $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt --spatial   
+     basil -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt --spatial   
  else
-     $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt
+     basil -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt
 fi	 
      
      
@@ -514,15 +513,15 @@ if [ ! -z $pvgm ]; then
         echo "ERROR: no WM PV image has been supplied"
         fi
 	echo "PV GM is: $pvgm and register it to template"
-        antsApplyTransforms -e 3 -d 3  -i  $pvgm -o $tempdir/pvgm1.nii.gz -r $tempdir/meanasl.nii.gz -t $struct2asl -n NearestNeighbor
+   #antsApplyTransforms -e 3 -d 3  -i  $pvgm -o $tempdir/pvgm1.nii.gz -r $tempdir/meanasl.nii.gz -t $struct2asl -n NearestNeighbor
 	#antsApplyTransforms -e 3 -d 3  -i $pvgm -o $tempdir/pvgm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor         
 	#flirt  -in $pvgm -ref $mask-out $tempdir/pvgm.nii.gz -init $struct2asl -applyxfm
-	fslmaths $tempdir/pvgm1 -thr 0.1 -min 1 $tempdir/pvgm_inasl
+	fslmaths $pvgm -thr 0.1 -min 1 $tempdir/pvgm_inasl
 	echo "PV WM is: $pvwm and register it to asl data"
-        antsApplyTransforms -e 3 -d 3  -i  $pvwm -o $tempdir/pvwm1.nii.gz -r $tempdir/meanasl.nii.gz -t $struct2asl -n NearestNeighbor
+    #antsApplyTransforms -e 3 -d 3  -i  $pvwm -o $tempdir/pvwm1.nii.gz -r $tempdir/meanasl.nii.gz -t $struct2asl -n NearestNeighbor
 	#antsApplyTransforms -e 3 -d 3  -i $pvwm -o $tempdir/pvwm1.nii.gz -r  ${template} -t ${subj2templatew} -t ${subj2templatea}  -n NearestNeighbor                
 	#flirt  -in $pvwm -ref $mask -out $tempdir/pvwm.nii.gz -init $struct2asl  -applyxfm
-	fslmaths $tempdir/pvwm1 -thr 0.1 -min 1 $tempdir/pvwm_inasl
+	fslmaths $pvwm -thr 0.1 -min 1 $tempdir/pvwm_inasl
 	pvexist=1
 fi
 
@@ -540,7 +539,7 @@ fi
 ### Partial Volume Correction BASIL
 if [ ! -z $pvcorr ]; then
   echo  "Main run of BASIL on ASL data with perfusion correction" 
-  $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt  --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl   
+  basil -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt  --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl   
 fi
 
 
@@ -602,7 +601,7 @@ if [ ! -z $calibflag ]; then
 	    # median smoothing and erosion
 	    fslmaths $Mo -fmedian -mas $tempdir/mask -ero $tempdir/calib_ero
 	    # extrapolation to match mask
-	    $XCPEDIR/utils/asl_file1 --data=$tempdir/calib_ero --ntis=1 --mask=$tempdir/mask --extrapolate --neighbour=5 --out=$Mo
+	    asl_file --data=$tempdir/calib_ero --ntis=1 --mask=$tempdir/mask --extrapolate --neighbour=5 --out=$Mo
 	
 fi
 
@@ -635,7 +634,7 @@ if [ ! -z $spatial ]; then
 
 else
 
-  fslmaths $tempdir/basil/step1/mean_ftiss -mul $tempdir/mask   $outdir/cbf
+   fslmaths $tempdir/basil/step1/mean_ftiss -mul $tempdir/mask   $outdir/cbf
    fslmaths $tempdir/basil/step1/mean_fblood -mul $tempdir/mask   $outdir/acbv 
    cp $tempdir/basil_options.txt  $outdir/basil_option.txt
    cp $tempdir/basil/step1/logfile  $outdir/logfile
@@ -653,7 +652,7 @@ if [ ! -z $calibflag ]; then
        fslmaths $outdir/cbf -mul 6000 -div $Mo $outdir/cbf_calib
        #fslmaths $outdir/noise -mul 6000 -div $Mo $outdir/noise_calib 
    else 
-     fslmaths $outdir/cbf -mul 6000 -div $Mo $outdir/cbf_calib
+      fslmaths $outdir/cbf -mul 6000 -div $Mo $outdir/cbf_calib
      #fslmaths $outdir/noise -mul 6000 -div $Mo $outdir/noise_calib  
  fi
 fi
@@ -695,7 +694,7 @@ if [ !  -z $calibflag ]; then
 fi
 # clearup
 
-rm -r $tempdir
+rm -rf $tempdir
 
 echo "Output is $outdir" 
 echo "persufsion as - done."

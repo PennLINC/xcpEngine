@@ -37,7 +37,7 @@ option_list = list(
                   tagged (1) or untagged (0)."),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The root output path for all voxelwise perfusion maps."),
-   make_option(c("-s", "--scalem0"), action="store", default=10, type='numeric',
+   make_option(c("-s", "--scalem0"), action="store", default=1, type='numeric',
               help="A scale factor to convert the voxelwise M0 values
                   to  [default 10]."),
    make_option(c("-l", "--lambda"), action="store", default=0.9, type='numeric',
@@ -52,7 +52,7 @@ option_list = list(
    make_option(c("-t", "--t1blood"), action="store", default=1.65, type='numeric',
               help="The longitudinal relaxation time of arterial blood
                   (T1_blood) in s [default 1.65]."),
-   make_option(c("-a", "--alpha"), action="store", default=0.72, type='numeric',
+   make_option(c("-a", "--alpha"), action="store", default=0.9, type='numeric',
               help="The labelling efficiency, which corrects for
                   background suppression pulses.")
 )
@@ -88,6 +88,8 @@ tau                     <- opt$duration
 ###################################################################
 # 1. Compute the scalar CBF factor to scale the images.
 ###################################################################
+
+
 cbf                     <- (6000 * lambda * exp(pld / t1b)) /
                            (2 * alpha * m0scale * t1b *
                            (1 - exp(-tau / t1b)))
@@ -113,7 +115,7 @@ perfusion               <- img[,,,con] - img[,,,lab]
 ###################################################################
 # 4. Compute CBF time series and mean CBF image.
 ###################################################################
-cbf_ts                  <- perfusion * cbf / rep(m0,40)
+cbf_ts                  <- perfusion * cbf / rep(m0,length(lab))
 cbf_ts[which(is.na(cbf_ts))]     <- 0
 cbf_ts[which(abs(cbf_ts)==Inf)]  <- 0
 pixdim(cbf_ts)          <- pixdim(img)

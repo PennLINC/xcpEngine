@@ -184,6 +184,9 @@ DICTIONARY
 # If BBR is the cost function being used, a white matter mask
 # must be extracted from the user-specified tissue segmentation.
 ###################################################################
+if [[ ! -e ${coreg_seg[cxt]} ]]; then 
+    ${coreg_seg[cxt]}=${coreg_seg[sub]}
+then
 if [[ ${coreg_cfunc[cxt]} == bbr ]]; then
 if [[ ! -e ${seq2struct_mat[cxt]} ]] \
 || rerun

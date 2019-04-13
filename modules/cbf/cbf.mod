@@ -69,14 +69,6 @@ tag_mask
 DICTIONARY
 
 
-
-
-
-
-
-
-
-
 ###################################################################
 # Prepare a mask indicating whether each volume is tagged or
 # untagged.
@@ -111,7 +103,27 @@ if ! is_1D ${tag_mask[cxt]} \
    routine_end
 fi
 
+subroutine @1.3 Generate m0 volume 
 
+if ! is_image ${m0[sub]} \
+   then 
+   m0=${out}/cbf/${prefix}_m0.nii.gz
+   cbf_m0_scale=1
+   if (( ${cbf_first_tagged[cxt]} == 1 ))
+      exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}'[0..$(2)]' -expr "a" 2>/dev/null   
+      else
+      exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}'[1..$(2)]' -expr "a" 2>/dev/null 
+   fi
+   exec_fsl fslmaths ${m0} -Tmean ${m0}
+   output m0  ${out}/cbf/${prefix}_m0.nii.gz
+else
+   m0=${out}/cbf/${prefix}_m0.nii.gz
+   exec_fsl fslmaths ${m0[sub]} -Tmean ${m0}
+   output m0  ${out}/cbf/${prefix}_m0.nii.gz
+fi
+
+   
+ 
 
 
 
@@ -125,7 +137,7 @@ if ! is_image ${meanPerfusion[cxt]} \
    routine                    @2    Computing cerebral blood flow
    case ${cbf_perfusion[cxt]} in
    
-   pcasl)
+   casl)
       subroutine              @2.1a PCASL -- Pseudocontinuous ASL
       subroutine              @2.1b Input: ${intermediate}.nii.gz
       subroutine              @2.1c M0: ${referenceVolumeBrain[sub]}
@@ -139,7 +151,7 @@ if ! is_image ${meanPerfusion[cxt]} \
       exec_sys rm -f ${intermediate}_perfusion*
       exec_xcp perfusion.R                   \
          -i    ${intermediate}.nii.gz        \
-         -m    ${referenceVolumeBrain[sub]}  \
+         -m    ${m0[cxt]}  \
          -v    ${tag_mask[cxt]}              \
          -o    ${intermediate}_perfusion     \
          -s    ${cbf_m0_scale[cxt]}          \
@@ -152,14 +164,27 @@ if ! is_image ${meanPerfusion[cxt]} \
       
    pasl)
       subroutine              @2.2a PASL -- Pulsed ASL
-      subroutine              @2.2b PASL not yet implemented
-      abort_stream                  PASL not yet implemented
-      ;;
-      
-   casl)
-      subroutine              @2.3a CASL -- Continuous ASL
-      subroutine              @2.3b CASL not yet implemented
-      abort_stream                  CASL not yet implemented
+      subroutine              @2.1b Input: ${intermediate}.nii.gz
+      subroutine              @2.1c M0: ${referenceVolumeBrain[sub]}
+      subroutine              @2.1d Tags: ${tag_mask[cxt]}
+      subroutine              @2.1e M0 scale: ${cbf_m0_scale[cxt]}
+      subroutine              @2.1f Partition coefficient: ${cbf_lambda[cxt]}
+      subroutine              @2.1g Invertion time: ${cbf_ti[cxt]}
+      subroutine              @2.1h bolus duration: ${cbf_ti1[cxt]}
+      subroutine              @2.1i Blood T1: ${cbf_t1blood[cxt]}
+      subroutine              @2.1j Labelling efficiency: ${cbf_alpha[cxt]}
+      exec_sys rm -f ${intermediate}_perfusion*
+      exec_xcp perfusion_pasl.R                   \
+         -i    ${intermediate}.nii.gz        \
+         -m    ${m0[cxt]}  \
+         -v    ${tag_mask[cxt]}              \
+         -o    ${intermediate}_perfusion     \
+         -s    ${cbf_m0_scale[cxt]}          \
+         -l    ${cbf_lambda[cxt]}            \
+         -b    ${cbf_ti1[cxt]}               \
+         -r    ${cbf_ti[cxt]}               \
+         -t    ${cbf_t1blood[cxt]}           \
+         -a    ${cbf_alpha[cxt]}
       ;;
       
    esac
