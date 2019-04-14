@@ -42,7 +42,7 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$img)) {
    cat('User did not specify an input ASL time series.\n')
-   cat('Use sore.R -h for an expanded usage menu.\n')
+   cat('Use scrub_cbf.R -h for an expanded usage menu.\n')
    quit()
 }
 
@@ -221,7 +221,7 @@ bb <- myrobustfit(y,mu = mu, Globalprior = Globalprior, lmd = lmd, localprior = 
 newcbf            <- meancbf;
 newcbf            <- newcbf*mask
 newcbf[mask==1]   <- bb
-outpath_cbf       <- paste(outpath,'_scrub.nii.gz',sep='')
+outpath_cbf       <- paste(outpath,'_cbf_scrub.nii.gz',sep='')
 
 writeNifti(newcbf,template = cbf,outpath_cbf)
 

@@ -285,8 +285,8 @@ routine @3 Orgainizing the output
 
 
 
-  exec_fsl imcp  $out/basil/${prefix}_cbf.nii.gz  $out/${prefix}.nii.gz
-  exec_sys ln -sf $out/basil/${prefix}_cbf.nii.gz $out/${prefix}.nii.gz 
+  #exec_fsl imcp  $out/basil/${prefix}_cbf.nii.gz  $out/${prefix}.nii.gz
+  
   
 routine_end
 

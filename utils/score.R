@@ -39,7 +39,7 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if (is.na(opt$img)) {
    cat('User did not specify an input ASL time series.\n')
-   cat('Use sore.R -h for an expanded usage menu.\n')
+   cat('Use score.R -h for an expanded usage menu.\n')
    quit()
 }
 
@@ -112,8 +112,8 @@ cbfts_recon   <-    cbfts[,,,indx==0]
 meancbf       <-    apply(cbfts_recon,c(1,2,3),mean)
 b             <-    updateNifti(meancbf,template = cbfts,datatype = 'auto')
 bb            <-    updateNifti(cbfts_recon,template = cbfts,datatype = 'auto')
-outpath_mean  <-    paste(outpath,'_score_mean.nii.gz',sep='')
-outpath_tts   <-    paste(outpath,'_score_ts.nii.gz',sep='')
+outpath_mean  <-    paste(outpath,'_cbfscore_mean.nii.gz',sep='')
+outpath_tts   <-    paste(outpath,'_cbfscore_ts.nii.gz',sep='')
 
 writeNifti(b,outpath_mean)
 writeNifti(bb,outpath_tts)
