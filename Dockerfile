@@ -153,36 +153,37 @@ RUN apt-get update -qq \
 RUN bash -c 'export PATH=/opt/afni-latest:$PATH && rPkgsInstall -pkgs ALL && rPkgsInstall -pkgs optparse,pracma,RNifti,svglite,signal,reshape2,ggplot2,lme4'
 
 # Installing ANTs latest from source
+ARG ANTS_SHA=51855944553a73960662d3e4f7c1326e584b23b2
 ADD https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh /cmake-3.11.4-Linux-x86_64.sh
 ENV ANTSPATH="/opt/ants-latest/bin" \
     PATH="/opt/ants-latest/bin:$PATH" \
     LD_LIBRARY_PATH="/opt/ants-latest/lib:$LD_LIBRARY_PATH"
 RUN mkdir /opt/cmake \
-  && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
-  && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
-  && apt-get update -qq \
+    && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
+    && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
+    && apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
-           g++ \
-           gcc \
-           git \
-           make \
-           zlib1g-dev \
-           imagemagick \
-           procps \
+    g++ \
+    gcc \
+    make \
+    zlib1g-dev \
+    imagemagick \
+    && mkdir /tmp/ants \
+    && cd /tmp \
+    && curl -sSLO https://github.com/ANTsX/ANTs/archive/${ANTS_SHA}.zip \
+    && unzip ${ANTS_SHA}.zip \
+    && mv ANTs-${ANTS_SHA} /tmp/ants/source \
+    && rm ${ANTS_SHA}.zip \
     && mkdir -p /tmp/ants/build \
-    && git config --global url."https://".insteadOf git:// \
-    && git clone https://github.com/ANTsX/ANTs.git /tmp/ants/source \
     && cd /tmp/ants/build \
+    && git config --global url."https://".insteadOf git:// \
     && cmake -DBUILD_SHARED_LIBS=ON /tmp/ants/source \
     && make -j1 \
     && mkdir -p /opt/ants-latest \
     && mv bin lib /opt/ants-latest/ \
     && mv /tmp/ants/source/Scripts/* /opt/ants-latest/bin \
     && rm -rf /tmp/ants \
-    && rm -rf /opt/cmake /usr/local/bin/cmake \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
+    && rm -rf /opt/cmake /usr/local/bin/cmake
 
 ENV C3DPATH="/opt/convert3d-nightly" \
     PATH="/opt/convert3d-nightly/bin:$PATH"
