@@ -93,7 +93,7 @@ regress_usan[3]=default
 regress_usan_space[3]=
 regress_rerun[3]=0
 regress_cleanup[3]=1
-regress_process[3]=DMT-REG-TMP
+regress_process[3]=DMT-TMP-REG
 
 ###################################################################
 # 4 FCON
