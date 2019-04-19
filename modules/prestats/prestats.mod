@@ -536,16 +536,17 @@ while (( ${#rem} > 0 ))
        routine              @1  Preparing asl data
        #exec_fsl immv ${intermediate} ${intermediate}_${cur}
       if  ! is_image ${intermediate}_${cur}.nii.gz \
-         || rerun
+         || rerun 
+         then
          subroutine        @1.1  Reading the structural and segmentation images 
-         struct1=$(find ${anatdir}/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
-         seg1=$(find ${anatdir}/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
-         structmask=$(find ${anatdir}/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
-         wm_fmp=$(find ${anatdir}/ -type f -name "*WM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" )
-         csf_fmp=$(find ${anatdir}/ -type f -name "*CSF_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
-         gm_fmp=$(find ${anatdir}/ -type f -name "*GM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
-         mni2t1=$(ls -f  ${anatdir}/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
-         t12mni=$(ls -f  ${anatdir}/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
+         struct1=$(find ${anatdir[sub]}/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
+         seg1=$(find ${anatdir[sub]}/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+         structmask=$(find ${anatdir[sub]}/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*")
+         wm_fmp=$(find ${anatdir[sub]}/ -type f -name "*WM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" )
+         csf_fmp=$(find ${anatdir[sub]}/ -type f -name "*CSF_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+         gm_fmp=$(find ${anatdir[sub]}/ -type f -name "*GM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*")
+         mni2t1=$(ls -f  ${anatdir[sub]}/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
+         t12mni=$(ls -f  ${anatdir[sub]}/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
 
          subroutine      @1.2  Reorient  structural  images to ${template_orientation}
          exec_afni 3dresample -orient ${template_orientation} \
@@ -562,7 +563,8 @@ while (( ${#rem} > 0 ))
 
          exec_afni 3dresample -orient ${template_orientation} \
               -inset ${structmask} \
-              -prefix ${out}/prestats/${prefix}_structmask.nii.gz 
+              -prefix ${out}/prestats/${prefix}_structmask.nii.gz
+         output  structmask ${out}/prestats/${prefix}_structmask.nii.gz
          exec_afni 3dresample -orient ${template_orientation} \
               -inset ${wm_fmp} \
               -prefix ${out}/prestats/${prefix}_whitematter.nii.gz
@@ -577,13 +579,12 @@ while (( ${#rem} > 0 ))
               -inset ${gm_fmp} \
               -prefix ${out}/prestats/${prefix}_greymatter.nii.gz
          output gm  ${out}/prestats/${prefix}_greymatter.nii.gz
-      if [[ -e ${m0[sub]} ]]
+
+      if  is_image ${m0[sub]}
       then
-      exec_afni 3dresample -orient {m0[sub]} \
+      exec_afni 3dresample -orient ${template_orientation} \
               -inset {m0[sub]} \
               -prefix ${out}/prestats/${prefix}_m0.nii.gz
-      exec_fsl fslmaths ${out}/prestats/${prefix}_m0.nii.gz \
-                ${out}/prestats/${prefix}_m0.nii.gz
       output m0  ${out}/prestats/${prefix}_m0.nii.gz
       fi
       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -719,6 +720,8 @@ while (( ${#rem} > 0 ))
          # exists. If it does not, extract it from the timeseries
          # midpoint for use as a reference in realignment.
          ##########################################################
+         
+
          if ! is_image ${referenceVolume[sub]} \
          || rerun
             then
@@ -817,11 +820,11 @@ while (( ${#rem} > 0 ))
             #######################################################
             # Compute framewise quality metrics.
             #######################################################
-            temporal_mask  --SIGNPOST=${signpost}        \
-                           --INPUT=${intermediate}_mc    \
-                           --RPS=${rps[cxt]}             \
-                           --RMS=${rel_rms[cxt]}         \
-                           --THRESH=${prestats_framewise[cxt]}
+          #  temporal_mask  --SIGNPOST=${signpost}        \
+                           #--INPUT=${intermediate}_mc    \
+                          # --RPS=${rps[cxt]}             \
+                          # --RMS=${rel_rms[cxt]}         \
+                          # --THRESH=${prestats_framewise[cxt]}
          fi # run check statement
          ##########################################################
          # * Remove the motion corrected image: this step should
