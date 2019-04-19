@@ -89,18 +89,25 @@ tmask2=np.where(tmask==0)
     ##########################################################################
 seen_samples            =   (t_obs + 1) * t_rep
 timespan                =   np.max(seen_samples) - np.min(seen_samples)
-n_samples_seen          =   seen_samples.shape[-1]
-if n_samples_seen == nvol:
+if timespan == 0:
+   print("Only one volume is flagged for interpolation")
+   img_int = nib.Nifti1Image(dataobj=img_data,
+                                      affine=img.affine,
+                                      header=img.header)
+   nib.save(img_int, opts.out)
+else:
+    n_samples_seen          =   seen_samples.shape[-1]
+    if n_samples_seen == nvol:
      raise ValueError('No interpolation is necessary for this dataset.')
     ##########################################################################
     # Temoral indices of all observations, seen and unseen
     ##########################################################################
-all_samples             =   np.arange(start=t_rep,stop=t_rep*(nvol+1),step=t_rep)
+    all_samples             =   np.arange(start=t_rep,stop=t_rep*(nvol+1),step=t_rep)
         
     ##########################################################################
     # Calculate sampling frequencies
     ##########################################################################
-sampling_frequencies    =   np.arange(
+    sampling_frequencies    =   np.arange(
                                     start=1/(timespan*opts.ofreq),
                                     step=1/(timespan*opts.ofreq),
                                     stop=(opts.hifreq*n_samples_seen/
@@ -109,11 +116,11 @@ sampling_frequencies    =   np.arange(
     ##########################################################################
     # Angular frequencies
     ##########################################################################
-angular_frequencies     =   2 * np.pi * sampling_frequencies
+    angular_frequencies     =   2 * np.pi * sampling_frequencies
     ##########################################################################
     # Constant offsets
     ##########################################################################
-offsets =   np.arctan2(
+    offsets =   np.arctan2(
                     np.sum(
                         np.sin(2*np.outer(angular_frequencies, seen_samples)),
                         1),
@@ -125,103 +132,105 @@ offsets =   np.arctan2(
     ##########################################################################
     # Prepare sin and cos basis terms
     ##########################################################################
-from numpy import matlib 
-cosine_term             =   np.cos(np.outer(angular_frequencies, 
+    from numpy import matlib 
+    cosine_term             =   np.cos(np.outer(angular_frequencies, 
                                 seen_samples) -
                                 matlib.repmat(angular_frequencies*offsets, 
                                     n_samples_seen, 1).T)
-sine_term               =   np.sin(np.outer(angular_frequencies, 
+    sine_term               =   np.sin(np.outer(angular_frequencies, 
                                 seen_samples) -
                                 matlib.repmat(angular_frequencies*offsets, 
                                     n_samples_seen, 1).T)
 
 
-n_voxel_bins            =   int(np.ceil(nvox /opts.voxbin))
+    n_voxel_bins            =   int(np.ceil(nvox /opts.voxbin))
 
-for current_bin in range(1,n_voxel_bins+2):
-    print('Voxel bin ' + str(current_bin) + ' out of ' + 
-              str(n_voxel_bins+1))
+
+
+    for current_bin in range(1,n_voxel_bins+2):
+        print('Voxel bin ' + str(current_bin) + ' out of ' + 
+                   str(n_voxel_bins+1))
     
         ######################################################################
         # Extract the seen samples for the current bin
         ######################################################################
-    bin_index           =   np.arange(start=(current_bin-1)*(opts.voxbin-1),
+        bin_index           =   np.arange(start=(current_bin-1)*(opts.voxbin-1),
                                           stop=current_bin*opts.voxbin)
-    bin_index           =   np.intersect1d(bin_index, range(0,nvox))
+        bin_index           =   np.intersect1d(bin_index, range(0,nvox))
 
-    voxel_bin           =   img_data[bin_index,:][:,t_obs.ravel()]
+        voxel_bin           =   img_data[bin_index,:][:,t_obs.ravel()]
    
 
-    n_features              =   voxel_bin.shape[0]
+        n_features              =   voxel_bin.shape[0]
     ##########################################################################
     # Compute the transform from seen data as follows for sin and cos terms:
     # termfinal = sum(termmult,2)./sum(term.^2,2)
     # Compute numerators and denominators, then divide
     ##########################################################################
     
-    mult                =   np.zeros(shape=(angular_frequencies.shape[0],
+        mult                =   np.zeros(shape=(angular_frequencies.shape[0],
                                                 n_samples_seen,
                                                 n_features))
 
-    for obs in range(0,n_samples_seen):
+        for obs in range(0,n_samples_seen):
              mult[:,obs,:]   = np.outer(cosine_term[:,obs],voxel_bin[:,obs])
             
-    numerator           =   np.sum(mult,1)
-    denominator         =   np.sum(cosine_term**2,1)
-    c                =   (numerator.T/denominator).T
+        numerator           =   np.sum(mult,1)
+        denominator         =   np.sum(cosine_term**2,1)
+        c                =   (numerator.T/denominator).T
          
-    for obs in range(0,n_samples_seen):
+        for obs in range(0,n_samples_seen):
              mult[:,obs,:]   = np.outer(sine_term[:,obs],voxel_bin[:,obs])
             
-    numerator           =   np.sum(mult,1)
-    denominator         =   np.sum(sine_term**2,1)
-    s               =   (numerator.T/denominator).T
+        numerator           =   np.sum(mult,1)
+        denominator         =   np.sum(sine_term**2,1)
+        s               =   (numerator.T/denominator).T
     
     
     ##########################################################################
     # Interpolate over unseen epochs, reconstruct the time series
     ##########################################################################
     
-    term_prod           =   np.sin(np.outer(angular_frequencies, all_samples))
-    term_recon          =   np.zeros(shape=(angular_frequencies.shape[0],
+        term_prod           =   np.sin(np.outer(angular_frequencies, all_samples))
+        term_recon          =   np.zeros(shape=(angular_frequencies.shape[0],
                                                 nvol,n_features))
-    for i in range(angular_frequencies.shape[0]):
+        for i in range(angular_frequencies.shape[0]):
             term_recon[i,:,:] = np.outer(term_prod[i,:],s[i,:])
 
-    s_recon          =   np.sum(term_recon,0)
+        s_recon          =   np.sum(term_recon,0)
 
-    term_prod           =   np.cos(np.outer(angular_frequencies, all_samples))
-    term_recon          =   np.zeros(shape=(angular_frequencies.shape[0],
+        term_prod           =   np.cos(np.outer(angular_frequencies, all_samples))
+        term_recon          =   np.zeros(shape=(angular_frequencies.shape[0],
                                                 nvol,n_features))
-    for i in range(angular_frequencies.shape[0]):
-            term_recon[i,:,:] = np.outer(term_prod[i,:],c[i,:])
-    c_recon          =   np.sum(term_recon,0)   
+        for i in range(angular_frequencies.shape[0]):
+               term_recon[i,:,:] = np.outer(term_prod[i,:],c[i,:])
+        c_recon          =   np.sum(term_recon,0)   
     
-    recon                   =   (c_recon + s_recon).T
-    del c_recon, s_recon
+        recon                   =   (c_recon + s_recon).T
+        del c_recon, s_recon
         
     ##########################################################################
     # Normalise the reconstructed spectrum. This is necessary when the
     # oversampling frequency exceeds 1.
     ##########################################################################
-    std_recon               =   np.std(recon,1,ddof=1)
-    std_orig                =   np.std(voxel_bin,1,ddof=1)
-    norm_fac                =   std_recon/std_orig
-    del std_recon, std_orig
-    recon                   =   (recon.T/norm_fac).T
-    del norm_fac
+        std_recon               =   np.std(recon,1,ddof=1)
+        std_orig                =   np.std(voxel_bin,1,ddof=1)
+        norm_fac                =   std_recon/std_orig
+        del std_recon, std_orig
+        recon                   =   (recon.T/norm_fac).T
+        del norm_fac
         ##################################################################
         # Write the current bin into the image matrix. Replace only unseen
         # observations with their interpolated values.
         ######################################################################
-    img_data[np.ix_(bin_index,t_obs.ravel())] \
-             = recon[:,t_obs.ravel()]
-    del recon
+        img_data[np.ix_(bin_index,t_obs.ravel())] \
+                = recon[:,t_obs.ravel()]
+        del recon
 
-img_data_out            =   np.zeros(shape=img.shape)
-img_data_out[logmask]   =   img_data
+    img_data_out            =   np.zeros(shape=img.shape)
+    img_data_out[logmask]   =   img_data
     
-img_interpolated        =   nib.Nifti1Image(dataobj=img_data_out,
+    img_interpolated        =   nib.Nifti1Image(dataobj=img_data_out,
                                                 affine=img.affine,
                                                 header=img.header)
-nib.save(img_interpolated, opts.out)
+    nib.save(img_interpolated, opts.out)
