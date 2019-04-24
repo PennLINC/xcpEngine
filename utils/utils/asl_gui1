@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+# Use modules in the same dir as wrapper script if present, then default
+# to FSL modules
+import sys, os
+for d in [os.environ.get("FSLDIR", None), 
+          os.environ.get("FSLDEVDIR", None, ),
+          os.path.dirname(os.path.abspath(sys.argv[0]))]:
+    if d:
+        sys.path.insert(0, os.path.join(d, "python"))
+
+from asl.gui import main
+try:
+    main()
+except RuntimeError as e:
+    print("Error: %s" % e)

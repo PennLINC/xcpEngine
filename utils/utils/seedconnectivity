@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Utility for seed based functional connectvity 
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+source ${XCPEDIR}/core/global
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+Usage: `basename $0` -img <input 4D image> -s (coordinate or mask) -o <output> <options>
+Compulsory arguments:
+ -i : 4D image 
+ -s :  three cordinates x,y,z or 3D mask 
+ -o : output directory
+      The path where the nifti images are to be written
+Optional arguments:
+ -r  : radius of the mask, 
+    if not provided r=5 as default
+ -n  : Name
+      The name of the seeds
+ -k  : kernel smoohting 
+ -p : Subject identifiers
+      A comma-separated list of subject identifiers
+ -t : template 
+      template. if not provided, refvol of the bold will be used
+      will be used 
+ -f : registration file 
+      Require to register the template to 4D image. If not provided, seed mask will asume to have 
+      same orientation and dimenison as 4D image
+ -w : Overwrite existing
+      If -w 0 is provided, there will be no overwrittten
+      any existing output that it detects.
+endstream
+}
+
+###################################################################
+# Define defaults
+###################################################################
+radius=5
+overwrite=1;
+kernel=0;
+seedname=SEED
+###################################################################
+# Parse arguments
+###################################################################
+
+
+
+while getopts "i:o:s:k:r:p:n:t:f:" OPTION
+   do
+   case $OPTION in
+   i)
+      img=${OPTARG}
+     ;;
+  o) 
+     opath=${OPTARG}
+     ;;
+  s) 
+    seed=${OPTARG}
+     ;;
+   k) 
+    kernel=${OPTARG}
+     ;;
+    r)
+     radius=${OPTARG}
+     ;;
+    p)
+     pname=${OPTARG}
+     ;;
+     n)
+      seedname=${OPTARG}
+      ;;
+     t)
+       template=${OPTARG}
+      ;;
+      f)
+        regfile=${OPTARG}
+       ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+      ;;
+   esac
+done
+
+
+
+
+
+routine 
+
+
+
+
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+subroutine                    @u.1 check if the input and output exist
+#[[ -z ${img} ]]    && Usage && exit
+#[[ -z ${opath} ]]      && Usage && exit
+#[[ -z ${seed} ]]      && Usage && exit
+
+###################################################################
+# Define the outputs 
+###################################################################
+
+  namedir=`echo ${pname} | tr ',' '_'`;
+
+  dirfile=${opath}/seed/${seedname}
+  mkdir -p ${dirfile}
+  seedmask=${dirfile}/${namedir}_connectivity_${seedname}_seed.nii.gz
+  sca_ts=${dirfile}/${namedir}_connectivity_${seedname}_ts.1D
+  sca_map=${dirfile}/${namedir}_connectivity_${seedname}_sm${kernel}.nii.gz
+  sca_zmap=${dirfile}/${namedir}_connectivity_${seedname}Z_sm${kernel}.nii.gz
+
+regfile1="${regfile//,/ -t }"
+## make temporary directory
+
+
+tempdir=${dirfile}/work 
+mkdir -p ${tempdir}
+###################################################################
+# get the ref volume and mask
+###################################################################
+refvol=${tempdir}/ref.nii.gz
+mask=${tempdir}/mask.nii.gz
+
+
+
+nvol=$(exec_fsl fslnvols ${img})
+midpt=$(( ${nvol} / 2))
+exec_fsl fslroi ${img} ${refvol} ${midpt} 1
+exec_fsl fslmaths ${refvol} -abs -bin  ${mask}
+
+if [[ ! ${template}  ]]; then
+template=${mask}
+regfile1=${XCPEDIR}/utils/oneratiotransform.txt
+fi
+
+
+
+
+
+###################################################################
+# check if the input is mask or cordinate
+# 
+###################################################################
+echo ${seed}
+seed1=${tempdir}/seed2refvol.nii.gz 2>/dev/null
+if is_image ${seed} 2>/dev/null ; then 
+    seedType=mask
+else
+    seedType=coor 
+fi
+
+
+case ${seedType} in
+
+   coor)
+      subroutine              @2.3.1   Transforming coordinates to image
+       
+       exec_xcp coor2nifti \
+           -i ${seed} -t ${template} \
+           -r ${radius} -o ${seed1}
+    ;;
+   mask)
+    cp -a  ${seed} ${seed1} 
+    ;;
+esac
+
+
+###################################################################
+# register the template to refvol for seedmask 
+###################################################################
+
+subroutine              @3    ants registration 
+          
+ exec_ants antsApplyTransforms -e 3 -d 3 -v  0 \
+      -i ${seed1} \
+      -r ${refvol} \
+      -t ${regfile1} \
+      -o  ${seedmask}  \
+      -n NearestNeighbor 2>/dev/null
+
+ 
+
+# partiallly smooth the image if kernel is supply
+
+tmpimg=${tempdir}/img.nii.gz
+
+subroutine              @3    smoothing 
+if [[ ${kernel} > 0 ]]; then 
+exec_xcp \
+      sfilter  \
+      -i ${img} \
+      -o ${tmpimg} \
+      -k ${kernel} \
+      -m ${mask}
+else
+tmpimg=${img}
+fi
+
+
+
+################################################################
+
+ subroutine              @3    Extracting mean timeseries
+exec_sys rm -f ${sca_ts}
+      exec_xcp tswmean.R      \
+         -i    ${tmpimg}     \
+         -r    ${seedmask}   \
+         >>    ${sca_ts} 
+
+################################################################
+# [3]
+# Using the mean timeseries, it is now possible to perform
+# voxelwise SCA.
+################################################################
+subroutine              @3   compute correlation
+exec_sys rm  -f    ${sca_map}
+
+ 
+
+ exec_afni  3dTcorr1D   \
+    -prefix  ${sca_map} \
+    -mask   ${mask} \
+     ${tmpimg}     \
+     ${sca_ts} -overwrite 
+         
+##########################################################
+# Fisher transform
+##########################################################
+subroutine              @3   fisher tranformation 
+
+exec_sys             rm -f ${sca_zmap}
+
+
+  exec_afni    3dcalc               \
+     -a          ${sca_map}          \
+     -expr       'log((1+a)/(1-a))/2' \
+      -prefix       ${sca_zmap}  -overwrite
+
+
+rm -rf ${tempdir}
+
+routine_end 

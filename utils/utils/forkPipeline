@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Enables sharing of module output among two pipelines.
+###################################################################
+source   ${XCPEDIR}/core/constants
+source   ${XCPEDIR}/core/functions/library.sh
+source   ${XCPEDIR}/core/functions/cluster_submit
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: `basename $0` -1 <out 1> -2 <out 2> -c <cohort> <options>
+
+`basename $0` enables sharing of module output among two pipelines. 
+It accepts as arguments two design files. The first should 
+correspond to a pipeline that has already run to completion, 
+while the second should correspond to a pipeline that has yet to 
+run. This provides a means of introducing a processing fork.
+
+This feature is useful if you wish to run multiple sets of analyses 
+on the same cohort and if those analyses share many processing 
+steps (such as coregistration).
+
+Compulsory arguments:
+ -1 : First output path
+      Output path corresponding to a pipeline that has run to 
+      completion.
+
+ -2 : Second output path
+      Output path corresponding to a pipeline yet to run. The 
+      desired outputs from the complete pipeline will also be
+      used as outputs from the second pipeline via symbolic
+      linking.
+
+ -c : Cohort
+      The cohort file used for both processing streams.
+
+Optional arguments:
+ -m : Share modules
+      The list of modules whose outputs should be shared between 
+      pipelines. The modules should be named as they are in the 
+      subject-level output directories of the first pipeline, 
+      e.g. prestats or 3_prestats, depending on your global 
+      settings. Multiple modules can be accepted either with 
+      multiple -m flags or as a comma-separated list.
+
+
+endstream
+}
+
+
+
+
+
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "1:2:c:m:" OPTION
+   do
+   case $OPTION in
+   1)
+      source=${OPTARG}
+      ;;
+   2)
+      target=${OPTARG}
+      ;;
+   c)
+      incohort=${OPTARG}
+      ;;
+   m)
+      modules="${modules} ${OPTARG}"
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+shift $((OPTIND-1))
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z ${source}   ]] && Usage && exit
+[[ -z ${target}   ]] && Usage && exit
+[[ -z ${incohort} ]] && Usage && exit
+[[ -z ${modules}  ]] && echo "...Nothing to be done..." && echo "" && exit
+modules=( ${modules//,/ } )
+
+
+
+
+
+###################################################################
+# Source the input design file. Access the cohort and iterate
+# through all subject output directories.
+###################################################################
+idx_offset=$(cat ${XCPEDIR}/core/SUBJECT_INDEX_OFFSET)
+mapfile -O ${idx_offset} cohort < ${incohort}
+unset cohort[idx_offset]
+for sub in ${!cohort[@]}
+   do
+   out_super=${source}
+   subject=${cohort[sub]}
+   subject_parse        ${subject} ${incohort}
+   ################################################################
+   # Iterate through modules. Symlink all requested module output
+   # to the target design's output directory.
+   ################################################################
+   for mod in "${modules[@]}"
+      do
+      srcmods=( "${srcmods[@]}" ${mod}'#'${out[sub]}/${mod} )
+   done
+   out_super=${target}
+   subject=${cohort[sub]}
+   subject_parse        ${subject} ${incohort}
+   exec_sys mkdir -p ${out[sub]}
+   for mod in "${srcmods[@]}"
+      do
+      mod=( ${mod//\#/ } )
+      modName=${mod[0]}
+      modPath=${mod[1]}
+      [[ ! -e ${out[sub]}/${modName} ]] && exec_sys ln -s ${modPath} ${out[sub]}/${modName}
+   done
+   unset srcmods
+done
+
+echo "Pipeline fork procedure complete."

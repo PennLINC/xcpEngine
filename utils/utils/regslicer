@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Function for generating visual aids for assessment of
+# registration quality using FSL's slicer tool.
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: regslicer -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -s : Source image
+      The image that has been registered to the target
+      
+ -t : Target image
+      The registration target
+
+ -o : Output
+      The path where the visual aid will be written.
+      
+Optional arguments:
+ -i : Intermediate root [default = output]
+      The path where temporary files (intermediates) will
+      be written
+
+
+endstream
+}
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "s:t:i:o:" OPTION
+   do
+   case $OPTION in
+   s)
+      source_image=${OPTARG}
+      ! is_image ${source_image} && Usage && exit
+      ;;
+   t)
+      target_image=${OPTARG}
+      ! is_image ${target_image} && Usage && exit
+      ;;
+   i)
+      intermediate_root=${OPTARG}-regslicer
+      ;;
+   o)
+      output_root=${OPTARG}
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z ${source_image} ]]      && Usage && exit
+[[ -z ${target_image} ]]      && Usage && exit
+[[ -z ${output_root} ]]       && Usage && exit
+[[ -z ${intermediate_root} ]] && intermediate_root=${output_root}
+
+subroutine                    @u.1
+exec_fsl slicer ${source_image} ${target_image} \
+   -s 2 \
+   -x 0.35 ${intermediate_root}_sla.png \
+   -x 0.45 ${intermediate_root}_slb.png \
+   -x 0.55 ${intermediate_root}_slc.png \
+   -x 0.65 ${intermediate_root}_sld.png \
+   -y 0.35 ${intermediate_root}_sle.png \
+   -y 0.45 ${intermediate_root}_slf.png \
+   -y 0.55 ${intermediate_root}_slg.png \
+   -y 0.65 ${intermediate_root}_slh.png \
+   -z 0.35 ${intermediate_root}_sli.png \
+   -z 0.45 ${intermediate_root}_slj.png \
+   -z 0.55 ${intermediate_root}_slk.png \
+   -z 0.65 ${intermediate_root}_sll.png
+exec_fsl pngappend ${intermediate_root}_sla.png \
+   + ${intermediate_root}_slb.png \
+   + ${intermediate_root}_slc.png \
+   + ${intermediate_root}_sld.png \
+   + ${intermediate_root}_sle.png \
+   + ${intermediate_root}_slf.png \
+   + ${intermediate_root}_slg.png \
+   + ${intermediate_root}_slh.png \
+   + ${intermediate_root}_sli.png \
+   + ${intermediate_root}_slj.png \
+   + ${intermediate_root}_slk.png \
+   + ${intermediate_root}_sll.png \
+   ${intermediate_root}_source2target1.png
+exec_fsl slicer ${target_image} ${source_image} \
+   -s 2 \
+   -x 0.35 ${intermediate_root}_sla.png \
+   -x 0.45 ${intermediate_root}_slb.png \
+   -x 0.55 ${intermediate_root}_slc.png \
+   -x 0.65 ${intermediate_root}_sld.png \
+   -y 0.35 ${intermediate_root}_sle.png \
+   -y 0.45 ${intermediate_root}_slf.png \
+   -y 0.55 ${intermediate_root}_slg.png \
+   -y 0.65 ${intermediate_root}_slh.png \
+   -z 0.35 ${intermediate_root}_sli.png \
+   -z 0.45 ${intermediate_root}_slj.png \
+   -z 0.55 ${intermediate_root}_slk.png \
+   -z 0.65 ${intermediate_root}_sll.png
+exec_fsl pngappend ${intermediate_root}_sla.png \
+   + ${intermediate_root}_slb.png \
+   + ${intermediate_root}_slc.png \
+   + ${intermediate_root}_sld.png \
+   + ${intermediate_root}_sle.png \
+   + ${intermediate_root}_slf.png \
+   + ${intermediate_root}_slg.png \
+   + ${intermediate_root}_slh.png \
+   + ${intermediate_root}_sli.png \
+   + ${intermediate_root}_slj.png \
+   + ${intermediate_root}_slk.png \
+   + ${intermediate_root}_sll.png \
+   ${intermediate_root}_source2target2.png
+exec_fsl pngappend ${intermediate_root}_source2target1.png \
+   - ${intermediate_root}_source2target2.png \
+   ${output_root}.png
+exec_sys rm -f ${intermediate_root}_sl*.png \
+   ${intermediate_root}_source2target1.png \
+   ${intermediate_root}_source2target2.png

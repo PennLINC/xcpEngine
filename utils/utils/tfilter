@@ -1,0 +1,547 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Generalised function for temporally filtering 4D BOLD timeseries
+# data
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: `basename $0` -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -i : Input timeseries
+      The 4D timeseries to which the temporal filter is to
+      be applied.
+
+ -o : Output timeseries
+      The path to the file where the filtered timeseries
+      will be written.
+
+Optional arguments:
+ -f : Temporal filter mode [default fft]
+      Input can be any of 'gaussian', 'fft', 'butterworth',
+      'chebyshev1', 'chebyshev2', or 'elliptic'.
+       * FFT-based filters [default] use a fast Fourier
+         transform to attenuate frequencies. An FFT-based
+         filter may not be suitable for use in designs that
+         incorporate iterative motion censoring, since
+         it will include interpolated frequencies in its
+         calculations.
+       * A Gaussian filter uses Gaussian-weighted least-
+         squares
+       * Chebyshev and elliptic filters more ideally
+         discriminate accepted and attenuated frequencies
+         than do Butterworth filters, but they introduce
+         ripples in either the passband (chebyshev1),
+         stopband (chebyshev2), or both (elliptic) that
+         result in some signal distortion.
+
+ -h : Highpass frequency [default 0.01]
+      The cutoff frequency below which all signal will be
+      removed from the timeseries, in Hz. To create a
+      bandpass filter, specify a lowpass frequency that is
+      higher than the highpass frequency.
+
+ -l : Lowpass frequency [default nyquist]
+      The cutoff frequency above which all signal will be
+      removed from the timeseries, in Hz.
+
+ -m : Mask
+      Filtering is computed only within the specified
+      binary mask.
+
+ -n : Temporal mask with interpolation
+      Filtering is computed only within the specified
+      temporal mask. Outside of the temporal mask, the values
+      of the timeseries are interpolated so as to eliminate
+      the influence of masked-out time points on the processed
+      timeseries (following Power et al., 2014).
+-a : TR 
+      image time series fro interpolation.
+
+ -r : Filter order [default 1]
+      The filter order indicates the number of input samples
+      taken under consideration when generating an output
+      signal. In general, using a higher-order filter will
+      result in a sharper cutoff between accepted and
+      attenuated frequencies. For a gentler filter, use a
+      lower order.
+      (Affects only Butterworth, Chebyshev, and elliptic
+      filters.)
+
+ -d : Filter direction [default 2]
+      The filter direction indicates whether the input signal
+      should be processed in the forward direction only [-d 1]
+      or in both forward and reverse directions [-d 2].
+      (Affects only Butterworth, Chebyshev, and elliptic
+      filters.)
+
+ -p : Pass band ripple [default 1]
+      Chebyshev I and elliptic filters allow for sharper
+      discrimination between accepted and attenuated
+      frequencies at the cost of a 'ripple' in the pass band.
+      This ripple results in somewhat uneven retention of
+      pass-band frequencies.
+      (Affects only Chebyshev I and elliptic filters)
+
+ -s : Stop band ripple [default 1]
+      Chebyshev II and elliptic filters allow for sharper
+      discrimination between accepted and attenuated
+      frequencies at the cost of a 'ripple' in the stop band.
+      This ripple results in somewhat uneven removal of
+      stop-band frequencies.
+      (Affects only Chebyshev II and elliptic filters)
+
+ -1 : 1D timeseries
+      A comma separated list of names and paths to files containing
+      one-dimensional timeseries, formatted name1:path1,name2:path2
+      Each column in the file should represent a separate
+      timeseries, and each row should represent a separate time
+      point; the number of rows must equal the number of volumes
+      present in the primary BOLD timeseries. The same filtering
+      regime that was applied to the primary BOLD timeseries will
+      be applied to each column of each 1D file
+
+ -t : Trace
+      If this flag is set, then any commands called by the
+      tfilter routine will be explicitly printed to the
+      console or log.
+
+
+endstream
+}
+
+
+
+
+
+###################################################################
+# Define defaults
+###################################################################
+filter=fft
+hipass=0.01
+lopass=nyquist
+order=1
+pass=2
+rpass=1
+rstop=1
+tmask=ones
+unset tslist
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "i:a:o:f:h:l:m:n:k:r:d:p:s:v:1:t" OPTION
+   do
+   case $OPTION in
+   i)
+      image=${OPTARG}
+      ! is_image ${image} && Usage && exit
+      ;;
+   o)
+      out=${OPTARG}
+      out_root=$(exec_fsl remove_ext ${out})
+      ;;
+   f)
+      filter=${OPTARG}
+      if [[ ${filter} != gaussian ]] \
+      && [[ ${filter} != fft ]] \
+      && [[ ${filter} != butterworth ]] \
+      && [[ ${filter} != chebyshev1 ]] \
+      && [[ ${filter} != chebyshev2 ]] \
+      && [[ ${filter} != elliptic ]]
+         then
+         echo "Unrecognised filter mode: ${filter}."
+         Usage
+         exit
+      fi
+      ;;
+   h)
+      hipass=${OPTARG}
+      ! is+numeric ${hipass} && Usage && exit
+      ;;
+   l)
+      lopass=${OPTARG}
+      ! is+numeric ${lopass} \
+         && [[ ${lopass} != nyquist ]] \
+         && Usage \
+         && exit
+      ;;
+   m)
+      mask=${OPTARG}
+      ! is_image ${mask} && Usage && exit
+      ;;
+   n)
+      tmask=${OPTARG}
+      ! is_1D ${tmask}  && Usage && exit
+      ;;
+   r)
+      order=${OPTARG}
+      ! is+integer ${order} && Usage && exit
+      ;;
+   d)
+      pass=${OPTARG}
+      (( ${pass} != 1 )) \
+         && (( ${pass} != 2 )) \
+         && Usage \
+         && exit
+      ;;
+   p)
+      rpass=${OPTARG}
+      ! is+numeric ${rpass} && Usage && exit
+      ;;
+   a)
+      tr=${OPTARG}
+      ! is+numeric ${tr} && Usage && exit
+      ;;
+   s)
+      rstop=${OPTARG}
+      ! is+numeric ${rstop} && Usage && exit
+      ;;
+   1)
+      tslist="${tslist} ${OPTARG}"
+      ;;
+   t)
+      set -x
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+[[ -z ${image} ]]  && Usage && exit
+[[ -z ${out} ]]    && Usage && exit
+[[ -z ${filter} ]] && Usage && exit
+###################################################################
+# Ensure that all 1D timeseries (including the temporal mask) have
+# the same number of volumes as the primary BOLD timeseries
+###################################################################
+nvol=$(exec_fsl fslnvols ${image})
+if [[ ${tmask} != ones ]]
+   then
+   cvol=$(wc -l < ${tmask})
+else
+   cvol=${nvol}
+fi
+if (( ${nvol} != ${cvol} ))
+   then
+   echo "Volume mismatch: temporal mask"
+   exit
+fi
+[[ -n ${tslist} ]] && tslist=${tslist//,/ }
+declare -A ts1d
+for ts in ${tslist}
+   do
+   ts_name=$(strslice ${ts} 1 :)
+   ts_path=$(strslice ${ts} 2 :)
+   ts1d[$ts_name]=${ts_path}
+   cvol=$(wc -l < ${ts_path})
+   if (( ${nvol} != ${cvol} ))
+      then
+      echo "Volume mismatch: ${ts}"
+      exit
+   fi
+done
+###################################################################
+# Compute the repetition time. This is required for all filters.
+###################################################################
+t_rep=$(exec_fsl fslval ${image} pixdim4)
+
+
+
+
+
+###################################################################
+# 1. Interpolate over masked-out epochs, if a temporal mask has
+#    been provided.
+###################################################################
+if [[ ${tmask} != ones ]]
+   then
+   subroutine     @u.1a Interpolating over masked-out epochs...
+   subroutine     @u.1b This will be slow
+   exec_xcp \
+      interpolate.py  \
+      -i ${image} \
+      -a $tr   \
+      -m ${mask} \
+      -t ${tmask} \
+      -o ${out_root}_interpol.nii.gz
+   ################################################################
+   # Update pointers to indicate the post-interpolation image
+   ################################################################
+   image=${out_root}_interpol.nii.gz
+fi
+
+
+
+
+
+###################################################################
+# Branch to the subroutine appropriate for the filter specified by
+# user input
+###################################################################
+case ${filter} in
+
+
+
+
+
+gaussian)
+   subroutine                 @u.2
+   genfilt=0
+   is_image ${mask} && maskcall="-mas ${mask}"
+   ################################################################
+   # 2a. Filter the primary 4D timeseries.
+   #---------------------------------------------------------------
+   #   * First, convert the cutoff frequencies from Hz (cycles per
+   #     second) to cycles per repetition.
+   #   * Convert from frequency cutoff (in Hz) to cycle cutoff
+   #     (in s).
+   #   * Then, determine how many cycles of the cutoff per
+   #     repetition.
+   ################################################################
+   hpw=$(arithmetic 1/${hipass})
+   hpf=$(arithmetic ${hpw}/${t_rep}/2)
+   ################################################################
+   #   * Repeat for the lowpass frequency with the following
+   #     exception: Set lowpass frequency to -1 (no attenuation)
+   #     if the lowpass frequency is set to Nyquist.
+   ################################################################
+   if [[ ${lopass} == nyquist ]]
+      then
+      subroutine              @u.2.1
+      lpf=-1
+   else
+      subroutine              @u.2.2
+      lpw=$(arithmetic 1/${lopass})
+      lpf=$(arithmetic ${lpw}/${t_rep}/2)
+   fi
+   ################################################################
+   #   * With that, it is possible to apply the filter through
+   #     fslmaths.
+   ################################################################
+   exec_fsl \
+      fslmaths ${image} \
+      -bptf ${hpf} ${lpf} \
+      ${maskcall} \
+      ${out}
+   ################################################################
+   # 3a. Filter any 1D timeseries specified by the user.
+   #---------------------------------------------------------------
+   #   * This is much more complicated than it sounds because
+   #     FSL's filter engine will only process NIfTIs.
+   #   * So, the information in each 1D timeseries must be written
+   #     into a (hopefully compact) NIfTI.
+   ################################################################
+   for tsname in "${!ts1d[@]}"
+      do
+      subroutine              @u.2.6
+      ts=${ts1d[$tsname]}
+      #############################################################
+      # * Determine the number of timeseries in the 1D timeseries
+      #   file by dividing the total number of words in the file
+      #   by the number of time points (volumes).
+      #############################################################
+      nfld=$(exec_sys wc -w < ${ts})
+      nfld=$(( ${nfld}/${nvol} ))
+      #############################################################
+      # * Through trial and error, we have found that the desired
+      #   result is obtained only if the timeseries is transposed
+      #   before conversion to NIfTI.
+      #############################################################
+      exec_afni 1dtranspose ${ts} ${out_root}_${tsname}_tp.1D
+      exec_fsl \
+         fslascii2img ${out_root}_${tsname}_tp.1D \
+         ${nfld} 1 1 \
+         ${nvol} 1 1 1 \
+         ${t_rep} \
+         ${out_root}_${tsname}.nii.gz
+      exec_fsl \
+         fslmaths ${out_root}_${tsname}.nii.gz \
+         -bptf ${hpf} ${lpf} \
+         ${out_root}_${tsname}_filt.nii.gz
+      #############################################################
+      # * Convert back to a .1D file using fslmeants with the
+      #   showall flag to return all timeseries instead of the
+      #   mean timeseries.
+      #############################################################
+      exec_fsl \
+         fslmeants -i ${out_root}_${tsname}_filt.nii.gz \
+         --showall \
+         -o ${out_root}_${tsname}.1D
+      rm -f ${out_root}_${tsname}_tp.1D
+      rm -f ${out_root}_${tsname}.nii.gz
+      rm -f ${out_root}_${tsname}_filt.nii.gz
+   done
+   ;;
+   
+   
+   
+   
+   
+fft)
+   subroutine                 @u.3
+   genfilt=0
+   is_image ${mask} && maskcall="-mask ${mask}"
+   ################################################################
+   # 2b. Filter the primary 4D timeseries.
+   #---------------------------------------------------------------
+   #   * Define the highpass and lowpass inputs to AFNI's
+   #     3dBandpass, which performs the FFT decomposition.
+   #   * According to the 3dBandpass documentation, setting the
+   #     lowpass cutoff to 99999 will remove only frequencies above
+   #     the Nyquist limit.
+   #   * So, if the user has requested all frequencies retained up
+   #     to the Nyquist limit, pass 99999 as the lowpass cutoff.
+   ################################################################
+   if [[ ${lopass} == nyquist ]]
+      then
+      subroutine              @u.3.1
+      lopass=99999
+   fi
+   ################################################################
+   #   * Apply the FFT filter.
+   #   * If the output path is already occupied by an image, then
+   #     AFNI will not by default overwrite. Clear the output path.
+   ################################################################
+   rm -rf ${out}
+   exec_afni \
+      3dBandpass \
+      -prefix ${out} \
+      -nodetrend -quiet \
+      ${maskcall} \
+      ${hipass} ${lopass} ${image} \
+      2>/dev/null
+   ################################################################
+   # 3b. Filter any 1D timeseries specified by the user.
+   #---------------------------------------------------------------
+   #   * For this purpose, the script uses 1dBandpass.
+   #   * Because 1D files do not include a header with timing
+   #     information, the repetition time must be provided so that
+   #     the program can convert cutoff frequencies to units of
+   #     sampling intervals.
+   ################################################################
+   for tsname in "${!ts1d[@]}"
+      do
+      ts=${ts1d[$tsname]}
+      exec_sys rm -rf ${out_root}_${tsname}.1D
+      exec_afni \
+         1dBandpass \
+         -nodetrend \
+         -dt ${t_rep} \
+         ${hipass} ${lopass} ${ts} \
+         >> ${out_root}_${tsname}.1D
+   done
+   ;;
+   
+   
+   
+   
+   
+butterworth)
+   subroutine                 @u.4
+   genfilt=1
+   rpcall=""
+   rscall=""
+   fcall="-f butterworth"
+   ;;
+chebyshev1)
+   subroutine                 @u.5
+   genfilt=1
+   rpcall="-p ${rpass}"
+   rscall=""
+   fcall="-f chebyshev1"
+   ;;
+chebyshev2)
+   subroutine                 @u.6
+   genfilt=1
+   rpcall=""
+   rscall="-s ${rstop}"
+   fcall="-f chebyshev2"
+   ;;
+elliptic)
+   subroutine                 @u.7
+   genfilt=1
+   rpcall="-p ${rpass}"
+   rscall="-s ${rstop}"
+   fcall="-f elliptic"
+   ;;
+esac
+
+###################################################################
+# genfilter is a utility R script that applies Butterworth,
+# Chebyshev I and II, and elliptic filters to an image.
+###################################################################
+if (( ${genfilt} == 1 ))
+   then
+   subroutine     @u.8
+   ################################################################
+   # Initialise parameters.
+   ################################################################
+   is_image ${mask} && maskcall="-m ${mask}"
+   ocall="-r ${order}"
+   dcall="-d ${pass}"
+   ################################################################
+   # Filter the primary 4D timeseries.
+   ################################################################
+   exec_sys rm -rf ${out}
+   exec_xcp \
+      genfilter.R \
+      -i ${image} \
+      -o ${out} \
+      ${fcall} \
+      ${maskcall} \
+      -c ${hipass} \
+      -l ${lopass} \
+      ${ocall} \
+      ${dcall} \
+      ${rpcall} \
+      ${rscall}
+   ################################################################
+   # Filter any 1D timeseries specified by the user.
+   #---------------------------------------------------------------
+   #   * For this purpose, the script uses 1dGenfilter.
+   #   * Because 1D files do not include a header with timing
+   #     information, the repetition time must be provided so that
+   #     the program can convert cutoff frequencies to units of
+   #     sampling intervals.
+   ################################################################
+   for tsname in "${!ts1d[@]}"
+      do
+      subroutine  @u.8.3
+      ts=${ts1d[$tsname]}
+      exec_sys rm -rf ${out_root}_${tsname}.1D
+      exec_xcp \
+         1dGenfilter.R \
+         -i ${ts} \
+         -o ${out_root}_${tsname}.1D \
+         ${fcall} \
+         -t ${t_rep} \
+         -c ${hipass} \
+         -l ${lopass} \
+         ${ocall} \
+         ${dcall} \
+         ${rpcall} \
+         ${rscall}
+   done
+fi

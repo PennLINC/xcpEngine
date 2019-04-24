@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+
+###################################################################
+#  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
+###################################################################
+
+###################################################################
+# Function for eroding a mask while retaining the deepest n percent
+# of the mask's voxels.
+###################################################################
+
+###################################################################
+# Constants
+###################################################################
+source ${XCPEDIR}/core/constants
+source ${XCPEDIR}/core/functions/library.sh
+
+###################################################################
+# Usage function
+###################################################################
+Usage(){
+cat << endstream
+___________________________________________________________________
+
+
+Usage: erodespare -i <input> -o <output> <options>
+
+Compulsory arguments:
+ -i : Input mask
+      The 3D mask to which erosion is to be applied.
+
+ -o : Output path
+      The path to the file where the eroded mask will be
+      written.
+
+Optional arguments:
+ -r : Minimum retention criterion [default 5 percent]
+      The percent of voxels that should be retained in the
+      eroded mask. The argument should be a percent value, not
+      a fractional value (e.g., 5 not 0.05 for 5 percent). For
+      instance, a value of 5 will erode all but the deepest 5
+      percent of voxels. (At least 5 percent of voxels will be
+      preserved.)
+
+ -v : Value set
+      If this variable is defined, then the specified range of
+      labels will be extracted from the provided mask prior to
+      erosion. For instance, '-v 2,4' will extract cortical and
+      deep grey matter from a standard 6-class segmentation.
+      Syntax follows the -v specification in val2mask.R. If this
+      flag is unset, then all values from the input mask will be
+      used.
+
+ -n : Intermediate output path
+      Path for input and output of temporary files (intermediates)
+      (default: current directory)
+
+ -t : Trace
+      If this flag is set, then any commands called by the
+      erodespare routine will be explicitly printed to the
+      console or log.
+
+
+endstream
+}
+
+###################################################################
+# Define defaults
+###################################################################
+minret=5
+[[ -z ${intermediate} ]] && intermediate=$(pwd)/erodespare~TEMP~
+###################################################################
+# Parse arguments
+###################################################################
+while getopts "i:o:r:v:n:t" OPTION
+   do
+   case $OPTION in
+   i)
+      image=${OPTARG}
+      ;;
+   o)
+      out=${OPTARG}
+      ;;
+   r)
+      minret=${OPTARG}
+      ! is+numeric ${minret} && Usage && exit
+      ;;
+   v)
+      value=${OPTARG}
+      ;;
+   n)
+      intermediate=${OPTARG}-erodespare
+      ;;
+   t)
+      set -x
+      ;;
+   *)
+      echo "Option not recognised: ${OPTARG}"
+      Usage
+      exit
+   esac
+done
+###################################################################
+# Ensure that all compulsory arguments have been defined
+###################################################################
+! is_image ${image}  && Usage && exit
+[[ -z      ${out} ]] && Usage && exit
+
+
+
+
+
+###################################################################
+# Binarise the segments of the image that are to be included.
+###################################################################
+if [[ -n ${value} ]]
+   then
+   subroutine                 @u.1
+   exec_xcp val2mask.R \
+      -i    ${image}   \
+      -v    ${value}   \
+      -o    ${intermediate}-bin.nii.gz
+else
+   subroutine                 @u.2
+   exec_fsl ${image}   \
+      -bin  ${intermediate}-bin.nii.gz
+fi
+image=${intermediate}-bin.nii.gz
+
+
+
+
+
+###################################################################
+# If full retention (no erosion) is requested, then return the
+# binarised/masked image.
+###################################################################
+if (( minret == 100 ))
+   then
+   subroutine                 @u.3
+   exec_fsl imcp ${image} ${out}
+###################################################################
+# Otherwise, compute the depth of each voxel as a percentile.
+###################################################################
+else
+   subroutine                 @u.4
+   exec_xcp layerLabels          \
+      -l    ${image}             \
+      -i    ${intermediate}      \
+      -o    ${intermediate}-onion.nii.gz
+   ################################################################
+   # Mask out the superficial voxels. If the deepest 10 percent of
+   # voxels are to be retained, then the most superficial 90
+   # percent can be discarded. (Note that percentiles output by
+   # layerLabels range from 100 to 200 rather than from 0 to 100.)
+   ################################################################
+   subroutine                 @u.5
+   llim=$(arithmetic 200-${minret})
+   exec_fsl fslmaths ${intermediate}-onion.nii.gz \
+      -thr  ${llim}           \
+      -uthr 200               \
+      ${out}
+fi
+
+
+
+
+   
+(( trace == 0 )) && rm -f ${intermediate}*
