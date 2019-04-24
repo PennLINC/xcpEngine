@@ -96,9 +96,9 @@ V1  <- V+1
 while (V < V1) {
     V1 <- V; R1 <- R; indx1 <- indx; CC <- -2*rep(1,cbfdim[4])
        for (s in 1:cbfdim[4]) {
-              if (indx[s] != 0 ) {
-              tmp1 <- cbfts[,,,s]; CC[s] <- cor(R[mask>0],tmp1[mask>0])
-            }
+              if (indx[s] != 0 ) { break }
+              else {
+              tmp1 <- cbfts[,,,s]; CC[s] <- cor(R[mask>0],tmp1[mask>0]) }
     
         }
     inx <-  which.max(CC); indx[inx] <- 2;
