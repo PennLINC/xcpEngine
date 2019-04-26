@@ -336,7 +336,7 @@ fslmaths $tempdir/asldata -Tmean $tempdir/meanasl
 
     
 
-#aslfile1=$XCPEDIR/utils/aslfile1
+aslfile1=$XCPEDIR/utils/aslfile1
 
 ### Label-control subtraction (we repeat subtraction after doing distortion correction - when applicable)
  echo " register the data to template and do asl data processing "
@@ -347,7 +347,7 @@ imcp $tempdir/asldata.nii.gz $tempdir/asldatat.nii.gz
 #antsApplyTransforms -e 3 -d 3 -i $mask -r ${template} -o $tempdir/mask.nii.gz  -t ${subj2templatew} -t ${subj2templatea} -t ${asl2struct} -n NearestNeighbor
  
 
-asl_file --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
+$XCPEDIR/utils/asl_file1 --data=$tempdir/asldatat.nii.gz --ntis=$ntis --iaf=$iaf --diff --out=$tempdir/diffdata
 # Generate a perfusion-weighted image by taking the mean over all TIs of the differenced data
 fslmaths $tempdir/diffdata -Tmean $tempdir/pwi
  
@@ -494,9 +494,9 @@ echo  "Main run of BASIL on ASL data"
 
 if [ ! -z $spatial ]; then
          
-     basil -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt --spatial   
+     $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt --spatial   
  else
-     basil -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt
+     $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/basil -@ $tempdir/basil_options.txt
 fi	 
      
      
@@ -539,7 +539,7 @@ fi
 ### Partial Volume Correction BASIL
 if [ ! -z $pvcorr ]; then
   echo  "Main run of BASIL on ASL data with perfusion correction" 
-  basil -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt  --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl   
+  $XCPEDIR/utils/basil1 -i $datafile -m $tempdir/mask.nii.gz -o $tempdir/pvcorr -@ $tempdir/basil_options.txt  --pgm=$tempdir/pvgm_inasl --pwm=$tempdir/pvwm_inasl --spatial  
 fi
 
 
@@ -601,7 +601,7 @@ if [ ! -z $calibflag ]; then
 	    # median smoothing and erosion
 	    fslmaths $Mo -fmedian -mas $tempdir/mask -ero $tempdir/calib_ero
 	    # extrapolation to match mask
-	    asl_file --data=$tempdir/calib_ero --ntis=1 --mask=$tempdir/mask --extrapolate --neighbour=5 --out=$Mo
+	    $XCPEDIR/utils/asl_file1 --data=$tempdir/calib_ero --ntis=1 --mask=$tempdir/mask --extrapolate --neighbour=5 --out=$Mo
 	
 fi
 
@@ -621,13 +621,13 @@ fslmaths $tempdir/mask $outdir/mask.nii.gz
 if [ ! -z $spatial ]; then 
    fslcpgeom $tempdir/basil/step1/mean_ftiss $tempdir/sens -d
    fslmaths $tempdir/basil/step1/mean_ftiss  -mas $tempdir/mask   $outdir/cbf
-   fslmaths $tempdir/basil/step1/mean_fblood -mas $tempdir/mask   $outdir/acbv 
+   #fslmaths $tempdir/basil/step1/mean_fblood -mas $tempdir/mask   $outdir/acbv 
    cp $tempdir/basil_options.txt  $outdir/basil_option.txt
    cp $tempdir/basil/step1/logfile  $outdir/logfile
    #fslmaths $tempdir/basil/step1/noise_means -mul $tempdir/mask   $outdir/noise 
    
    fslmaths $tempdir/basil/step2/mean_ftiss -mas $tempdir/mask  -div $tempdir/sens  $outdir/cbf_spatial
-   fslmaths $tempdir/basil/step2/mean_fblood -mas $tempdir/mask -div $tempdir/sens  $outdir/acbv_spatial 
+   #fslmaths $tempdir/basil/step2/mean_fblood -mas $tempdir/mask -div $tempdir/sens  $outdir/acbv_spatial 
    cp $tempdir/basil/step2/logfile  $outdir/logfile_spatial
    #fslmaths $tempdir/basil/step2/noise_means -mul $tempdir/mask   $outdir/noise_spatial 
 
@@ -635,7 +635,7 @@ if [ ! -z $spatial ]; then
 else
 
    fslmaths $tempdir/basil/step1/mean_ftiss -mul $tempdir/mask   $outdir/cbf
-   fslmaths $tempdir/basil/step1/mean_fblood -mul $tempdir/mask   $outdir/acbv 
+   #fslmaths $tempdir/basil/step1/mean_fblood -mul $tempdir/mask   $outdir/acbv 
    cp $tempdir/basil_options.txt  $outdir/basil_option.txt
    cp $tempdir/basil/step1/logfile  $outdir/logfile
    #fslmaths $tempdir/basil/step1/noise_means -mul $tempdir/mask   $outdir/noise 

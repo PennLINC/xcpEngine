@@ -33,12 +33,13 @@ completion() {
 ###################################################################
 derivative            cbf_score_ts         ${prefix}_cbfscore_ts.nii.gz    
 derivative            cbf_score_mean       ${prefix}_cbfscore_mean.nii.gz
-derivative            cbf_scrub_mean       ${prefix}_cbf_scrub.nii.gz
+derivative            cbf_scrub_mean       ${prefix}_cbfscrub.nii.gz
 
 output                cbf_score_ts         ${prefix}_cbfscore_ts.nii.gz   
 output                cbf_score_mean       ${prefix}_cbfscore_mean.nii.gz
-output                cbf_scrub_mean       ${prefix}_cbf_scrub.nii.gz
+output                cbf_scrub_mean       ${prefix}_cbfscrub.nii.gz
 
+qc nvoldel  nvoldel  ${prefix}_nvoldel.txt
 
 
 
@@ -47,49 +48,66 @@ derivative_set       cbf_score_mean     Statistic         mean
 derivative_set       cbf_scrub_mean     Statistic         mean
 
 
-process               cbf_scrub       ${prefix}_scrub.nii.gz
 
-# register the perfusion to struct 
-perf=${out}/scrub/${prefix}_perfusion.nii.gz 
-mask1=${out}/scrub/${prefix}_mask.nii.gz
-   routine  @1.0 score and scrubbing
-if ! is_image ${cbf_scrub_mean[cxt]} \
-|| rerun
-   then
-    subroutine  @1.1 perfusiion image to struct space
-    if is_image ${struct[sub]}
-    exec_ants antsApplyTransforms -r ${struct[sub]} \
-        -i ${perfusion[sub]} -t ${seq2struct[sub]} \
-        -o ${perf} -n NearestNeighbor
 
-    exec_ants antsApplyTransforms -r ${struct[sub]} \
-        -i ${mask[sub]} -t ${seq2struct[sub]} \
-        -o ${mask1} -n NearestNeighbor
-    output MASK ${out}/scrub/${prefix}_mask.nii.gz
-    fi
+gm_seq=${out}/scrub/${prefix}_gm2seq.nii.gz 
+wm_seq=${out}/scrub/${prefix}_wm2seq.nii.gz 
+csf_seq=${out}/scrub/${prefix}_csf2seq.nii.gz
+mask1=${intermediate}_mask_seq.nii.gz 
+mask_asl=${out}/scrub/${prefix}_mask_asl.nii.gz 
+struct_asl=${out}/scrub/${prefix}_struct_seq.nii.gz 
+
+if is_image ${struct[sub]}
+  then
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+        -i ${gm[sub]} -t ${struct2seq[sub]} \
+        -o ${gm_seq} -n NearestNeighbor
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+        -i ${wm[sub]} -t ${struct2seq[sub]} \
+        -o ${wm_seq} -n NearestNeighbor
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+        -i ${csf[sub]} -t ${struct2seq[sub]} \
+        -o ${csf_seq} -n NearestNeighbor
+    
+  
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+        -i ${structmask[sub]} -t ${struct2seq[sub]} \
+        -o ${mask1} -n NearestNeighbor  
+
+   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
+         -bin ${mask_asl} 
+  output mask ${out}/scrub/${prefix}_mask_asl.nii.gz 
+
+  exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+        -i ${struct[sub]} -t ${struct2seq[sub]} \
+        -o ${struct_asl} -n NearestNeighbor 
+  exec_fsl fslmaths ${referenceVolume[sub]} -mul \
+      ${mask1} ${out}/scrub/${prefix}_referenceVolumeBrain.nii.gz
+  output referenceVolumeBrain ${out}/scrub/${prefix}_referenceVolumeBrain.nii.gz
+fi
 
     subroutine  @1.2 computing cbf score
   # obtain the score 
         exec_xcp score.R                 \
-             -i     ${perf}              \
-             -g     ${gm[sub]}           \
-             -w     ${wm[sub]}           \
-             -c     ${csf[sub]}          \
+             -i     ${perfusion[sub]}              \
+             -g     ${gm_seq}           \
+             -w     ${wm_seq}           \
+             -c     ${csf_seq}          \
              -t     ${scrub_thresh[cxt]} \
              -o     ${out}/scrub/${prefix}
     subroutine  @1.3 computing cbf scrubbing
  # compute the scrub 
         exec_xcp  scrub_cbf.R           \
             -i     ${cbf_score_ts[cxt]} \
-            -g     ${gm[sub]}           \
-            -w     ${wm[sub]}           \
-            -m     ${MASK[cxt]}         \
-            -c     ${csf[sub]}          \
+            -g     ${gm_seq}           \
+            -w     ${wm_seq}          \
+            -m     ${mask[cxt]}         \
+            -c     ${csf_seq}          \
             -t     ${scrub_thresh[cxt]} \
             -o    ${out}/scrub/${prefix}
-fi
 
-exec_sys ln -sf ${prefix}_cbf_scrub.nii.gz $out/${prefix}.nii.gz 
+
+
 routine_end  
 
 completion

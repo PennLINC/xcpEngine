@@ -1,4 +1,4 @@
-!/usr/bin/env Rscript
+#!/usr/bin/env Rscript
 
 ###################################################################
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
@@ -22,8 +22,7 @@ suppressMessages(suppressWarnings(library(MASS)))
 ###################################################################
 option_list = list(
    make_option(c("-i", "--img"), action="store", default=NA, type='character',
-              help="Path to the 4D ASL time series from which perfusion
-                  will be computed."),
+              help="Path to the 4D ASL time series from which perfusionwill be computed."),
    make_option(c("-g", "--grey"), action="store", default=NA, type='character',
               help="Grey matter."),
    make_option(c("-w", "--white"), action="store", default=NA, type='character',
@@ -48,11 +47,12 @@ if (is.na(opt$img)) {
 
 # get the input data
 
-cbf_ts   <-         opt.img
-wm       <-         opt.white
-gm       <-         opt.grey
-csf      <-         opt.csf
-outpath  <-         opt.out
+cbf_ts   <-         opt$img
+wm       <-         opt$white
+gm       <-         opt$grey
+csf      <-         opt$csf
+outpath  <-         opt$out
+thresh   <-         opt$thresh
 
 #read the maps and cbf time series  
 wm       <-         readNifti(wm)
@@ -67,9 +67,9 @@ gm[gm<thresh]=0;             gm[gm>0]=1
 wm[wm<thresh]=0;             wm[wm>0]=1
 csf[csf<thresh]=0;           csf[csf>0]=1
 
-gc       <-        gm[,,,1]; 
-wmc      <-        wm[,,,1]; 
-csfc     <-        csf[,,,1];
+gc       <-        gm 
+wmc      <-        wm; 
+csfc     <-        csf;
 
 # get the total number of voxle within csf,gm and wm 
 nogm <- sum(gm>0)-1;  nowm  <- sum(wm>0)-1;  nocf  <- sum(csf>0)-1;  
@@ -96,12 +96,12 @@ V1  <- V+1
 while (V < V1) {
     V1 <- V; R1 <- R; indx1 <- indx; CC <- -2*rep(1,cbfdim[4])
        for (s in 1:cbfdim[4]) {
-              if (indx[s] != 0 ) {
-              tmp1 <- cbfts[,,,s]; CC[s] <- cor(R[mask>0],tmp1[mask>0])
-            }
+              if (indx[s] != 0 ) { break }
+              else {
+              tmp1 <- cbfts[,,,s]; CC[s] <- cor(R[mask>0],tmp1[mask>0]) }
     
         }
-    inx <-  which(CC==max(CC)); indx[inx] <- 2;
+    inx <-  which.max(CC); indx[inx] <- 2;
     R <- apply(cbfts[,,,indx==0],c(1,2,3),mean)
     V <- nogm*var(R[gm==1]) + nowm*var(R[wm==1]) + nocf*var(R[csf==1])
 }
@@ -114,6 +114,9 @@ b             <-    updateNifti(meancbf,template = cbfts,datatype = 'auto')
 bb            <-    updateNifti(cbfts_recon,template = cbfts,datatype = 'auto')
 outpath_mean  <-    paste(outpath,'_cbfscore_mean.nii.gz',sep='')
 outpath_tts   <-    paste(outpath,'_cbfscore_ts.nii.gz',sep='')
-
+ng            <- dim(cbfts_recon) 
+df=cbfdim[4]-ng[4]
+deletvol <-    paste(outpath,'_nvoldel.txt',sep='')
+ write.table(df,deletvol,quote=FALSE, row.names=FALSE,col.names=FALSE)
 writeNifti(b,outpath_mean)
 writeNifti(bb,outpath_tts)

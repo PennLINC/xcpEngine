@@ -214,8 +214,7 @@ while (( ${#rem} > 0 ))
    rem=${rem:4:${#rem}}
    buffer=${buffer}_${cur}
    case ${cur} in
-      
-      FMP)
+            FMP)
         ########################################
         # obtain fmriprep mask etc and struct
   
@@ -284,12 +283,9 @@ while (( ${#rem} > 0 ))
                output struct  ${out}/prestats/${prefix}_struct.nii.gz
                output struct_head ${out}/prestats/${prefix}_struct.nii.gz
 
-                subroutine        @ removing nonsteady state volumes
- 
-              exec_xcp removenonsteady.py -i  ${intermediate}_${cur}.nii.gz \
-                     -t $out/prestats/${prefix}_fmriconf.tsv \
-                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
                 
+ 
+             
              
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -332,9 +328,9 @@ while (( ${#rem} > 0 ))
                     -i ${temp2subj}                               \
                     -s ${spaces[sub]} 2>/dev/null
                
-               exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+             
                 intermediate=${intermediate}_${cur} 
-                rm -rf $out/prestats/prepocessed.nii.gz
+               
 
          
                
@@ -393,12 +389,7 @@ while (( ${#rem} > 0 ))
                           
                       output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
 
-                      subroutine        @ removing nonsteady state volumes 
-                     exec_xcp removenonsteady.py -i  ${intermediate}_${cur}.nii.gz \
-                     -t $out/prestats/${prefix}_fmriconf.tsv \
-                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
-                     
-
+                
                       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
                   
@@ -432,9 +423,9 @@ while (( ${#rem} > 0 ))
                          -i ${onetran}                               \
                          -s ${spaces[sub]} 2>/dev/null
 
-                         exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+                         
                          intermediate=${intermediate}_${cur} 
-                         rm -rf $out/prestats/prepocessed.nii.gz
+                
    
                 else 
                     struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" )
@@ -471,12 +462,6 @@ while (( ${#rem} > 0 ))
                 exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
                 output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
-
-                subroutine        @ removing nonsteady state volumes 
-
-                exec_xcp removenonsteady.py -i  ${intermediate}_${cur}.nii.gz \
-                     -t $out/prestats/${prefix}_fmriconf.tsv \
-                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
                  
                 
                 subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -510,9 +495,9 @@ while (( ${#rem} > 0 ))
                          -i ${mni2t1}                               \
                          -s ${spaces[sub]} 2>/dev/null
 
-               exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+               
                 intermediate=${intermediate}_${cur} 
-                rm -rf $out/prestats/prepocessed.nii.gz
+                
                 
             fi 
 
@@ -530,6 +515,21 @@ while (( ${#rem} > 0 ))
     echo  ${registration_quality[3]} > ${coreg_dice[cxt]}
 
       routine_end 
+       ;;
+
+      NST)
+         
+          routine              @1 Removing non-steady state volumes
+         #exec_fsl immv ${intermediate} ${intermediate}_${cur}
+         exec_xcp removenonsteady.py -i  ${intermediate}.nii.gz  \
+                     -t $out/prestats/${prefix}_fmriconf.tsv \
+                     -o $out/prestats/prepocessed.nii.gz -s $out/prestats/${prefix}_fmriconf.tsv
+        
+        exec_fsl immv $out/prestats/prepocessed.nii.gz  ${intermediate}_${cur}.nii.gz
+         intermediate=${intermediate}_${cur}
+                rm -rf $out/prestats/prepocessed.nii.gz
+          
+        routine_end
        ;;
       
       ASL)

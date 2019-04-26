@@ -184,9 +184,9 @@ DICTIONARY
 # If BBR is the cost function being used, a white matter mask
 # must be extracted from the user-specified tissue segmentation.
 ###################################################################
-if [[ ! -e ${coreg_seg[cxt]} ]]; then 
-    ${coreg_seg[cxt]}=${coreg_seg[sub]}
-then
+
+coreg_seg[cxt]=${segmentation[sub]}
+
 if [[ ${coreg_cfunc[cxt]} == bbr ]]; then
 if [[ ! -e ${seq2struct_mat[cxt]} ]] \
 || rerun
@@ -338,27 +338,27 @@ if [[ ! -e ${coreg_dice[cxt]} ]] \
    # Determine whether each quality index warrants flagging the
    # coregistration for poor quality.
    ################################################################
-   cc_min=$(strslice    ${coreg_qacut[cxt]} 1)
-   co_min=$(strslice    ${coreg_qacut[cxt]} 2)
-   jc_min=$(strslice    ${coreg_qacut[cxt]} 3)
-   dc_min=$(strslice    ${coreg_qacut[cxt]} 4)
-   cc_flag=$(arithmetic ${registration_quality[0]}'<'${cc_min})
-   co_flag=$(arithmetic ${registration_quality[1]}'<'${co_min})
-   jc_flag=$(arithmetic ${registration_quality[2]}'<'${jc_min})
-   dc_flag=$(arithmetic ${registration_quality[3]}'<'${dc_min})
-   declare  -A  flags
-   flags=(  [cc_flag]="Cross-correlation"
-            [co_flag]="Target coverage"
-            [jc_flag]="Jaccard coefficient"
-            [dc_flag]="Dice coefficient"     )
-   for f in "${!flags[@]}"
-      do
-      if (( ${!f} == 1 ))
-         then
-         subroutine           @5.2  [${flags[$f]} flagged]
-         flag=1
-      fi
-   done
+   #cc_min=$(strslice    ${coreg_qacut[cxt]} 1)
+   #co_min=$(strslice    ${coreg_qacut[cxt]} 2)
+   #jc_min=$(strslice    ${coreg_qacut[cxt]} 3)
+   #dc_min=$(strslice    ${coreg_qacut[cxt]} 4)
+   #cc_flag=$(arithmetic ${registration_quality[0]}'<'${cc_min})
+   #co_flag=$(arithmetic ${registration_quality[1]}'<'${co_min})
+   #jc_flag=$(arithmetic ${registration_quality[2]}'<'${jc_min})
+   #dc_flag=$(arithmetic ${registration_quality[3]}'<'${dc_min})
+   #declare  -A  flags
+   #flags=(  [cc_flag]="Cross-correlation"
+           # [co_flag]="Target coverage"
+           # [jc_flag]="Jaccard coefficient"
+           # [dc_flag]="Dice coefficient"     )
+  # for f in "${!flags[@]}"
+     # do
+      #if (( ${!f} == 1 ))
+       #  then
+        # subroutine           @5.2  [${flags[$f]} flagged]
+        # flag=1
+     # fi
+  # done
    routine_end
 fi
 

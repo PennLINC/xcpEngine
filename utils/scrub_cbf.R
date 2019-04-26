@@ -1,4 +1,4 @@
-!/usr/bin/env Rscript
+#!/usr/bin/env Rscript
 
 ###################################################################
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
@@ -22,8 +22,7 @@ suppressMessages(suppressWarnings(library(MASS)))
 ###################################################################
 option_list = list(
    make_option(c("-i", "--img"), action="store", default=NA, type='character',
-              help="Path to the 4D ASL time series from which perfusion
-                  will be computed."),
+              help="Path to the 4D ASL time series from which perfusion will be computed."),
    make_option(c("-g", "--grey"), action="store", default=NA, type='character',
               help="Grey matter."),
    make_option(c("-w", "--white"), action="store", default=NA, type='character',
@@ -31,7 +30,8 @@ option_list = list(
    make_option(c("-c", "--csf"), action="store", default=NA, type='character',
               help="cerebrospinal fluid"),
    make_option(c("-m", "--mask"), action="store", default=NA, type='character',
-              help="brain wfun"), action="store", default='huber', type='character',
+              help="brain mask"), 
+   make_option(c("-f", "--wfun"), action="store", default='huber', type='character',
               help="the wave fun. see the code for other types"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The root output path for all voxelwise perfusion maps."),
@@ -48,13 +48,14 @@ if (is.na(opt$img)) {
 
 # get the input data
 
-cbf_ts   <-         opt.img
-wm       <-         opt.white
-gm       <-         opt.grey
-csf      <-         opt.csf
-mask     <-         opt.mask
-wfun     <-         opt.wfun
-outpath  <-         opt.out
+cbf_ts   <-         opt$img
+wm       <-         opt$white
+gm       <-         opt$grey
+csf      <-         opt$csf
+mask     <-         opt$mask
+wfun     <-         opt$wfun
+outpath  <-         opt$out
+thresh   <-         opt$thresh
 
 
 
@@ -76,37 +77,38 @@ cbfts    <-         readNifti(cbf_ts)
 mask     <-         readNifti(mask)
 
 # threhdoling the prb. maps and obtain the idx
-gm <- gm*mask; gm <- gm[,,,1]; gmidx <- gm[mask==1]; 
+gm <- gm*mask; gmidx <- gm[mask==1]; 
 gmidx[gmidx<thresh] <- 0;   gmidx[gmidx>0] <- 1
-wm <- wm*mask; wm <- wm[,,,1]; wmidx <- wm[mask==1]; 
+wm <- wm*mask;  wmidx <- wm[mask==1]; 
 wmidx[wmidx<thresh] <- 0; wmidx[wmidx>0] <- 1
-csf<- csf*mask; csf <- csf[,,,1]; csfidx <- csf[mask==1];
+csf<- csf*mask;  csfidx <- csf[mask==1];
  csfidx[csfidx<thresh] <- 0; csfidx[csfidx>0] <- 1
-mask <- mask[,,,1]; midx <- mask[mask==1];
+midx <- mask[mask==1];
 
 # get the the tune value. 
+tune <- 1.345
 if ( wfun == 'andrews') { tune <- 1.339 }
-    else if (wfun == 'bisquare') { tune <- 4.685}
-    else if (wfun == 'cauchy') { tune <- 2.385}
-    else if (wfun == 'fair') { tune <- 1.4}
-    else if (wfun == 'huber') { tune <- 1.345}
-    else if (wfun == 'logistic') { tune <- 1.205}
-    else if (wfun == 'ols') {  tune <- 1}
-    else if (wfun == 'talwar') {  tune <- 2.795 }
-    else if (wfun == 'welsch') {  tune <- 2.985}
-    else {tune <- 1.345}
+if (wfun == 'bisquare') { tune <- 4.685}
+if (wfun == 'cauchy') { tune <- 2.385}
+if (wfun == 'fair') { tune <- 1.4}
+    #else if (wfun == 'huber') { tune <- 1.345}
+if (wfun == 'logistic') { tune <- 1.205}
+if (wfun == 'ols') {  tune <- 1}
+if (wfun == 'talwar') {  tune <- 2.795 }
+if (wfun == 'welsch') {  tune <- 2.985}
+
 
 weightwfun=function(wfun,r) {
          if ( wfun == 'andrews') { w <- (abs(r)<pi )* sin(r) / r; return(w) }
             else if (wfun == 'bisquare') {w <- ( abs(r)<1) * (1 - r^2)^2; return(w)}
             else if (wfun == 'cauchy') {w <- 1 / (1 + r^2); return(w) }
             else if (wfun == 'fair') {w <- 1 / (1 + abs(r)); return(w)}
-            else if (wfun == 'huber') {w <- 1 /abs(r); return(w) }
+            #else if (wfun == 'huber') {w <- 1 /abs(r); return(w) }
             else if (wfun == 'logistic') { w <- tanh(r) / r; return(w) }
             else if (wfun == 'ols') { w <- rep(1,length(r)); return(w)}
             else if (wfun == 'talwar') { w <-  1 * (abs(r)<1); return(w) }
             else if (wfun == 'welsch') { w <- exp(-(r^2)); return(w)}
-            else  {w <- 1 /abs(r); return(w)}
+            else  { w <- 1 /abs(r); return(w) }
         }  
 
 getchisquare=function(n) 
@@ -170,8 +172,8 @@ myrobustfit=function(Y,mu,Globalprior,lmd,localprior,wfun='huber',tune=1.345,fla
     
                  if ( flagstd == 1 ) 
                      { s <- sqrt(apply(radj^2,2,mean) ) 
-                    } else { rs <- apply(abs(radj),2,sort); 
-                       s <- apply(rs,2,median)/0.6745 }
+                    } else { 
+                       rs <- apply(abs(radj),2,sort); s <- apply(rs,2,median)/0.6745 }
     
               r1 <- radj*(1-flagmodrobust*exp(-repmat(modrobprior,dimcbf[1],1)))/repmat(pmax(s,tiny_s)*tune,dimcbf[1],1)
               w  <- weightwfun(wfun,r1)
@@ -194,9 +196,9 @@ ydim  <- dim(y)
 #if (flagprior == 0) { mu=0; Globalprior = 0; modrobprior=0 
 #}else {
   VV  <- apply(y,2,var); thres1 <- getchisquare (ydim[1])
-  mu1 <-  VV/(median(VV[gmidx==1])*thres1$meanmedianr);
-  mu  <- ((mu1>thres1$thresh1)&(mu1<thres1$thresh2))*(mu1-thres1$thresh1) +
-    (mu1 >=thres1$thresh2)*(1/(2*thres1$thresh2)*mu1^2)+(thres1$thresh2/2 - thres1$thresh1)
+  mu1 <-  VV/(median(VV[gmidx==1])*thres1[[3]]);
+  mu  <- ((mu1>thres1[[1]])&(mu1<thres1[[2]]))*(mu1-thres1[[1]]) +
+    (mu1 >=thres1[[2]])*(1/(2*thres1[[2]])*mu1^2)+(thres1[[2]]/2 - thres1[[1]])
   M  <- meancbf; M <- M*mask; M[mask==1] <- mu; modrobprior <- mu/10;
   gmidx2 <- as.numeric((gm>thresh) & (M==0) & (wm > csf))
   wmidx2 <- as.numeric((wm>thresh) & (M==0) & (gm > csf))
@@ -221,8 +223,6 @@ bb <- myrobustfit(y,mu = mu, Globalprior = Globalprior, lmd = lmd, localprior = 
 newcbf            <- meancbf;
 newcbf            <- newcbf*mask
 newcbf[mask==1]   <- bb
-outpath_cbf       <- paste(outpath,'_cbf_scrub.nii.gz',sep='')
+outpath_cbf       <- paste(outpath,'_cbfscrub.nii.gz',sep='')
 
-writeNifti(newcbf,template = cbf,outpath_cbf)
-
-}
+writeNifti(newcbf,template = cbfts,outpath_cbf)

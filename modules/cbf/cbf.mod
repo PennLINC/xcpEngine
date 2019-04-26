@@ -44,7 +44,7 @@ qc negative_voxels    negativeVoxels   ${prefix}_negativeVoxels.txt
 qc negative_voxels_ts negativeVoxelsTS ${prefix}_negativeVoxelsTS.txt
 
 derivative_set        meanPerfusion    Statistic         mean
-
+derivative            referenceVolumeBrain    ${prefix}_referenceVolumeBrain
 input 1dim            rps_proc or rps  as rps
 
 process               perfusion        ${prefix}_perfusion
@@ -105,14 +105,15 @@ fi
 
 subroutine @1.3 Generate m0 volume 
 
-if ! is_image ${m0[sub]} \
+if ! is_image ${m0[sub]} 
    then 
    m0=${out}/cbf/${prefix}_m0.nii.gz
-   cbf_m0_scale=1
+   cbf_m0_scale[cxt]=1
    if (( ${cbf_first_tagged[cxt]} == 1 ))
-      exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}'[0..$(2)]' -expr "a" 2>/dev/null   
+      then
+      exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}.nii.gz'[0..$(2)]' -expr "a" 2>/dev/null   
       else
-      exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}'[1..$(2)]' -expr "a" 2>/dev/null 
+      exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}.nii.gz'[1..$(2)]' -expr "a" 2>/dev/null 
    fi
    exec_fsl fslmaths ${m0} -Tmean ${m0}
    output m0  ${out}/cbf/${prefix}_m0.nii.gz
@@ -122,9 +123,21 @@ else
    output m0  ${out}/cbf/${prefix}_m0.nii.gz
 fi
 
-   
- 
+subroutine @1.3 create mask
 
+exec_ants antsApplyTransforms -i ${structmask[sub]} -r ${referenceVolume[sub]} \
+   -t ${struct2seq[sub]} -o ${out}/cbf/temp_mask.nii.gz  -n NearestNeighbor 
+
+exec_fsl fslmaths ${referenceVolume[sub]} -mul ${out}/cbf/temp_mask.nii.gz \
+         -bin ${out}/cbf/${prefix}_mask.nii.gz 
+output mask ${out}/cbf/${prefix}_mask.nii.gz 
+
+
+   
+exec_fsl fslmaths ${referenceVolume[sub]} -mul ${out}/cbf/temp_mask.nii.gz \
+                    ${out}/cbf/${prefix}_referenceVolumeBrain.nii.gz
+ 
+output referenceVolumeBrain ${out}/cbf/${prefix}_referenceVolumeBrain.nii.gz
 
 
 ###################################################################
@@ -140,7 +153,7 @@ if ! is_image ${meanPerfusion[cxt]} \
    casl)
       subroutine              @2.1a PCASL -- Pseudocontinuous ASL
       subroutine              @2.1b Input: ${intermediate}.nii.gz
-      subroutine              @2.1c M0: ${referenceVolumeBrain[sub]}
+      subroutine              @2.1c M0: ${mo[cxt]}
       subroutine              @2.1d Tags: ${tag_mask[cxt]}
       subroutine              @2.1e M0 scale: ${cbf_m0_scale[cxt]}
       subroutine              @2.1f Partition coefficient: ${cbf_lambda[cxt]}
@@ -165,7 +178,7 @@ if ! is_image ${meanPerfusion[cxt]} \
    pasl)
       subroutine              @2.2a PASL -- Pulsed ASL
       subroutine              @2.1b Input: ${intermediate}.nii.gz
-      subroutine              @2.1c M0: ${referenceVolumeBrain[sub]}
+      subroutine              @2.1c M0:  ${mo[cxt]}
       subroutine              @2.1d Tags: ${tag_mask[cxt]}
       subroutine              @2.1e M0 scale: ${cbf_m0_scale[cxt]}
       subroutine              @2.1f Partition coefficient: ${cbf_lambda[cxt]}
@@ -199,10 +212,10 @@ if ! is_image ${meanPerfusion[cxt]} \
    ################################################################
    routine                    @3    Quality and cleanup
    subroutine                 @3.1  Reorganising output
-   exec_sys mv ${intermediate}_perfusion_mean.nii.gz \
-               ${meanPerfusion[cxt]}
-   exec_sys mv ${intermediate}_perfusion_ts.nii.gz \
-               ${perfusion[cxt]}
+   exec_fsl fslmaths  ${intermediate}_perfusion_mean.nii.gz -mul \
+               ${mask[cxt]} ${meanPerfusion[cxt]}
+   exec_fsl fslmaths ${intermediate}_perfusion_ts.nii.gz -mul \
+               ${mask[cxt]} ${perfusion[cxt]}
    subroutine                 @3.2  Computing grey matter boundary
    exec_xcp    val2mask.R           \
       -i       ${segmentation[sub]} \
