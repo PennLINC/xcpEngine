@@ -31,4 +31,4 @@ After successful run, the `xcpEngine` zip the results and cohortfile to analyses
     :scale: 100%
     :align: left
 
-    xcpEngine input layout  on Flywheel
+    xcpEngine output layout  on Flywheel
