@@ -21,7 +21,7 @@ The cohort file will be created base on the FMRIPREP output. The `img` is input 
 anatomical preprocessing from FRMIPREP. The  `m0` is the M0 directory for CBF calibration if present. The `struct` is the directory for 
 T1w image for structural  preprocessing. 
 
-After successful run, the `xcpEngine` zips the results and cohort file to analyses directory of the subject as shown below::
+After successful run, the `xcpEngine` zips the results and cohort file to analyses directory of the subject as shown below.
 
 .. figure:: _static/xcpengineoutput.png 
     
