@@ -1,13 +1,13 @@
-
-``Running xcpEngine on Flywheel``
 ===================================
-The xcpEngine can be run on `flywheel <https://upenn.flywheel.io>`. The same procedure is as runnning on computers/clusters. 
+xcpEngine on Flywheel
+===================================
+The xcpEngine can be run on `flywheel <https://upenn.flywheel.io>`_. The procedure is the same is as runnning it on computers/clusters. 
 
 .. figure:: _static/xcpengineflywheel.png
     xcpEngine on Flywheel
 
-The `design file < https://xcpengine.readthedocs.io/config/design.html > ` is compulsory for any analysis. 
-Preprocessing of BOLD data required prior preprocessing with `FMRIPREP`. The FMRIPREP output directory need to be supplied 
+The `design file <https://xcpengine.readthedocs.io/config/design.html>`_ is compulsory for any analysis. 
+Preprocessing of BOLD data requires prior preprocessing with `FMRIPREP`. The FMRIPREP output directory need to be supplied 
 as shown below. 
 
 .. figure:: _static/xcpenginelayout.png 
@@ -15,11 +15,11 @@ as shown below.
 
 
 
-The cohortfile will be created based on the FMRIPREP output. The `img` inout directory for CBF. The processing of CBF require the 
-anatomical preprocessing from FRMIPREP. The  `m0` is the M0 directory for CBF claibration if present. The `struct` is the directory for 
-T1W image for sturcural preprocessing. 
+The cohort file will be created base on the FMRIPREP output. The `img` is input  directory for CBF. The processing of CBF requires the 
+anatomical preprocessing from FRMIPREP. The  `m0` is the M0 directory for CBF calibration if present. The `struct` is the directory for 
+T1w image for structural  preprocessing. 
 
-After successful run, the `xcpEngine` zip the results and cohortfile to analyses directory of the subject as hsown below;
+After successful run, the `xcpEngine` zips the results and cohort file to analyses directory of the subject as shown below::
 
 .. figure:: _static/xcpengineoutput.png 
     xcpEngine output layout  on Flywheel
