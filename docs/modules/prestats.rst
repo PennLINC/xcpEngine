@@ -13,7 +13,8 @@ functionality of ``prestats`` is mostly covered by ``FMRIPREP``.
      prestats_process[cxt]=FMP
 
 `` FMRIPREP`` may flag some initial volumes as ``non-steady state volumes``.  If you are interested in 
- deleting those volumes before other processing, then you can add `NST`::
+ deleting those volumes before other processing, then you can add `NST` ::
+ 
      prestats_process[cxt]=FMP-NST 
 
 The ``prestats`` outputs are derived directly from the ``FMRIPREP``. The expected outputs include::
