@@ -13,7 +13,7 @@ The `design file < https://xcpengine.readthedocs.io/config/design.html > ` is co
 Preprocessing of BOLD data required prior preprocessing with `FMRIPREP`. The FMRIPREP output directory need to be supplied 
 as shown below. 
 
-.. figure:: _static/xcpengineinputlayout.png 
+.. figure:: _static/xcpenginelayout.png 
     :scale: 100%
     :align: left
 
