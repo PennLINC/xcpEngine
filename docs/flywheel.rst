@@ -4,6 +4,7 @@ xcpEngine on Flywheel
 The xcpEngine can be run on `flywheel <https://upenn.flywheel.io>`_. The procedure is the same is as runnning it on computers/clusters. 
 
 .. figure:: _static/xcpengineflywheel.png
+    
     xcpEngine on Flywheel
 
 The `design file <https://xcpengine.readthedocs.io/config/design.html>`_ is compulsory for any analysis. 
@@ -11,6 +12,7 @@ Preprocessing of BOLD data requires prior preprocessing with `FMRIPREP`. The FMR
 as shown below. 
 
 .. figure:: _static/xcpenginelayout.png 
+    
     xcpEngine input layout  on Flywheel
 
 
@@ -22,4 +24,5 @@ T1w image for structural  preprocessing.
 After successful run, the `xcpEngine` zips the results and cohort file to analyses directory of the subject as shown below::
 
 .. figure:: _static/xcpengineoutput.png 
+    
     xcpEngine output layout  on Flywheel
