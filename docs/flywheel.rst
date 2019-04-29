@@ -8,7 +8,7 @@ The xcpEngine can be run on `flywheel <https://upenn.flywheel.io>`_. The procedu
     xcpEngine on Flywheel
 
 The `design file <https://xcpengine.readthedocs.io/config/design.html>`_ is compulsory for any analysis. 
-Preprocessing of BOLD data requires prior preprocessing with `FMRIPREP`. The FMRIPREP output directory need to be supplied 
+Preprocessing of BOLD data require prior preprocessing with `FMRIPREP`. The FMRIPREP output directory needs to be supplied 
 as shown below. 
 
 .. figure:: _static/xcpenginelayout.png 
