@@ -31,50 +31,28 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative            cbf                  ${prefix}_cbf.nii.gz
-derivative            cbf_calib            ${prefix}_cbf_calib.nii.gz
-derivative            cbf_spatial          ${prefix}_cbf_spatial.nii.gz
-derivative            cbf_spatial_calib    ${prefix}_cbf_spatial_calib.nii.gz
-derivative            acbv                 ${prefix}_acbv.nii.gz
-derivative            acbv_spatial         ${prefix}_acbv_spatial.nii.gz
-derivative            cbf_pv_calib         ${prefix}_cbf_pv_calib.nii.gz
-derivative            cbf_pvgm_calib       ${prefix}_cbf_pv_gm_calib.nii.gz
-derivative            cbf_pvwm_calib       ${prefix}_cbf_pv_wm_calib.nii.gz
-derivative            cbf_pv               ${prefix}_cbf_pv.nii.gz
-derivative            cbf_pvgm             ${prefix}_cbf_pv_gm.nii.gz
-derivative            cbf_pvwm             ${prefix}_cbf_pv_wm.nii.gz
+
+derivative            cbfbasil            ${prefix}_cbf_basil.nii.gz
+derivative            cbfbasilspatial     ${prefix}_cbf_basil_spatial.nii.gz
+derivative            cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
+
 
 output           logfile              ${prefix}_logfile
 output           basil_option         ${prefix}_basil_option.txt
 output           logfile2             ${prefix}_logfile_spatial
-output           cbf                  ${prefix}_cbf.nii.gz
-output           cbf_calib            ${prefix}_cbf_calib.nii.gz
-output           cbf_spatial          ${prefix}_cbf_spatial.nii.gz
-output           cbf_spatial_calib    ${prefix}_cbf_spatial_calib.nii.gz
-output           acbv                 ${prefix}_acbv.nii.gz
-output           acbv_spatial         ${prefix}_acbv_spatial.nii.gz
-output           cbf_pv_calib         ${prefix}_cbf_pv_calib.nii.gz
-output           cbf_pvgm_calib       ${prefix}_cbf_pv_gm_calib.nii.gz
-output           cbf_pvwm_calib       ${prefix}_cbf_pv_wm_calib.nii.gz
-output           cbf_pv               ${prefix}_cbf_pv.nii.gz
-output           cbf_pvgm             ${prefix}_cbf_pv_gm.nii.gz
-output           cbf_pvwm             ${prefix}_cbf_pv_wm.nii.gz
+
+output           cbfbasil            ${prefix}_cbf_basil.nii.gz
+output           cbfbasilspatial     ${prefix}_cbf_basil_spatial.nii.gz
+output           cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
 
 
 
 
-derivative_set       cbf                Statistic         mean
-derivative_set       cbf_calib          Statistic         mean
-derivative_set       cbf_spatial        Statistic         mean
-derivative_set       cbf_spatial_calib  Statistic         mean
-derivative_set       acbv               Statistic         mean
-derivative_set       acbv_spatial       Statistic         mean
-derivative_set       cbf_pv_calib       Statistic         mean
-derivative_set       cbf_pvgm_calib     Statistic         mean
-derivative_set       cbf_pvwm_calib     Statistic         mean
-derivative_set       cbf_pv             Statistic         mean
-derivative_set       cbf_pvgm           Statistic         mean
-derivative_set       cbf_pvwm           Statistic         mean
+
+derivative_set       cbfbasil            Statistic         mean
+derivative_set       cbfbasilspatial     Statistic         mean
+derivative_set       cbfbasilpv          Statistic         mean
+
 
 
 qc negative_voxels_basil    negativeVoxels_basil   ${prefix}_negativeVoxels.txt
@@ -258,14 +236,14 @@ routine @3 Orgainizing the output
 
   if [ ${basil_pvc[cxt]} == 1 ]; then 
     
-    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_calib
+    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_basil
     exec_fsl immv  $out/basil/cbf   $out/basil/${prefix}_cbf
-    exec_fsl immv  $out/basil/cbf_pv_gm_calib   $out/basil/${prefix}_cbf_pv_calib
+    exec_fsl immv  $out/basil/cbf_pv_gm_calib   $out/basil/${prefix}_cbf_basil_pv
     exec_fsl immv  $out/basil/cbf_pv_wm_calib   $out/basil/${prefix}_cbf_pv_wm_calib
     exec_fsl immv  $out/basil/cbf_pv   $out/basil/${prefix}_cbf_pv
     exec_fsl immv  $out/basil/cbf_pv_gm   $out/basil/${prefix}_cbf_pv_gm
     exec_fsl immv  $out/basil/cbf_pv_wm   $out/basil/${prefix}_cbf_pv_wm
-    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_spatial_calib
+    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_basil_spatial
     exec_fsl immv  $out/basil/cbf_spatial  $out/basil/${prefix}_cbf_spatial
     exec_fsl immv  $out/basil/M0   $out/basil/${prefix}_M0
     exec_fsl immv  $out/basil/mask   $out/basil/${prefix}_mask
@@ -283,8 +261,8 @@ routine @3 Orgainizing the output
     exec_fsl immv  $out/basil/acbv   $out/basil/${prefix}_acbv
     exec_fsl immv  $out/basil/acbv_spatial   $out/basil/${prefix}_acbv_spatial
     exec_fsl immv  $out/basil/cbf   $out/basil/${prefix}_cbf
-    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_calib
-    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_spatial_calib
+    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_basil
+    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_basil_spatial
     exec_fsl immv  $out/basil/cbf_spatial  $out/basil/${prefix}_cbf_spatial
     exec_fsl immv  $out/basil/M0   $out/basil/${prefix}_M0
     exec_fsl immv  $out/basil/mask   $out/basil/${prefix}_mask
@@ -299,7 +277,7 @@ routine @3 Orgainizing the output
  
  fi 
  
-   neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbf_calib.nii.gz          \
+   neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbf_basil.nii.gz          \
               -k    $out/basil/${prefix}_mask.nii.gz  \
               -u    0                                       \
               -V) )

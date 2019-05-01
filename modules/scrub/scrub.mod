@@ -31,21 +31,21 @@ completion() {
 ##################################################################
 # OUTPUTS
 ###################################################################
-derivative            cbf_score_ts         ${prefix}_cbfscore_ts.nii.gz    
-derivative            cbf_score_mean       ${prefix}_cbfscore_mean.nii.gz
-derivative            cbf_scrub_mean       ${prefix}_cbfscrub.nii.gz
+derivative            cbfscorets      ${prefix}_cbfscorets.nii.gz    
+derivative            cbfscore        ${prefix}_cbfscore.nii.gz
+derivative            cbfscrub        ${prefix}_cbfscrub.nii.gz
 
-output                cbf_score_ts         ${prefix}_cbfscore_ts.nii.gz   
-output                cbf_score_mean       ${prefix}_cbfscore_mean.nii.gz
-output                cbf_scrub_mean       ${prefix}_cbfscrub.nii.gz
+output                cbfscorets      ${prefix}_cbfscorets.nii.gz   
+output                cbfscore        ${prefix}_cbfscore.nii.gz
+output                cbfscrub        ${prefix}_cbfscrub.nii.gz
 
 qc nvoldel  nvoldel  ${prefix}_nvoldel.txt
 
 
 
 
-derivative_set       cbf_score_mean     Statistic         mean
-derivative_set       cbf_scrub_mean     Statistic         mean
+derivative_set       cbfscore     Statistic         mean
+derivative_set       cbfscrub     Statistic         mean
 
 
 
@@ -98,7 +98,7 @@ fi
     subroutine  @1.3 computing cbf scrubbing
  # compute the scrub 
         exec_xcp  scrub_cbf.R           \
-            -i     ${cbf_score_ts[cxt]} \
+            -i     ${cbfscorets[cxt]} \
             -g     ${gm_seq}           \
             -w     ${wm_seq}          \
             -m     ${mask[cxt]}         \

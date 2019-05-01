@@ -36,6 +36,7 @@ completion() {
 # OUTPUTS
 ###################################################################
 derivative            meanPerfusion    ${prefix}_meanPerfusion
+derivative            perfusion        ${prefix}_perfusion
 
 output                tag_mask         ${prefix}_tag_mask.txt
 output                rps_proc         ${prefix}_realignment_transform.1D
