@@ -193,6 +193,8 @@ RUN echo "Downloading Convert3D ..." \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Nightly/c3d-nightly-Linux-x86_64.tar.gz/download \
     | tar -xz -C /opt/convert3d-nightly --strip-components 1
 
+RUN apt-get install -y -q --no-install-recommends procps
+
 RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
 RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
