@@ -34,7 +34,7 @@
 ###################################################################
 
 analysis=struc-ACCELERATOR
-design=${XCPEDIR}/designs/anat-complete.dsn
+design=${XCPEDIR}/designs/anat-antsct.dsn
 sequence=anatomical
 standard=MNI%1x1x1
 
@@ -42,7 +42,7 @@ standard=MNI%1x1x1
 # PIPELINE
 ###################################################################
 
-pipeline=struc,gmd,roiquant,qcanat
+pipeline=struc,gmd,jlf,roiquant,qcanat
 
 ###################################################################
 # 1 STRUC
@@ -70,25 +70,42 @@ gmd_rerun[2]=0
 gmd_cleanup[2]=1
 
 ###################################################################
-# 3 ROIQUANT
+# 3 JLF
 ###################################################################
 
-roiquant_atlas[3]=miccai
-roiquant_vol[3]=1
-roiquant_rerun[3]=0
-roiquant_cleanup[3]=1
+jlf_quick[3]=0
+jlf_cohort[3]=Younger24
+jlf_parallel[3]=none
+jlf_rerun[3]=0
+jlf_cleanup[3]=1
 
 ###################################################################
-# 4 QCANAT
+# 4 ROIQUANT
 ###################################################################
 
-qcanat_gm[4]=Y
-qcanat_gm_val[4]=2,4
-qcanat_wm[4]=Y
-qcanat_wm_val[4]=3
-qcanat_csf[4]=Y
-qcanat_csf_val[4]=1
-qcanat_cort[4]=Y
-qcanat_cort_val[4]=4
-qcanat_rerun[4]=0
-qcanat_cleanup[4]=1
+roiquant_atlas[4]=all
+roiquant_vol[4]=1
+roiquant_rerun[4]=0
+roiquant_cleanup[4]=1
+
+###################################################################
+# 5 NORM
+###################################################################
+
+norm_primary[5]=1
+norm_rerun[5]=0
+norm_cleanup[5]=1
+
+###################################################################
+# 6 qcanat
+###################################################################
+
+qcanat_gm[6]=Y
+qcanat_gm_val[6]=2,4
+qcanat_wm[6]=Y
+qcanat_wm_val[6]=3
+qcanat_csf[6]=Y
+qcanat_csf_val[6]=1
+qcanat_cort[6]=Y
+qcanat_cort_val[6]=4
+qcanat_rerun[6]=0
