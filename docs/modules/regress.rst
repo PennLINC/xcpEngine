@@ -42,8 +42,8 @@ threshold is specified in ``confound2`` as well as
   0.083\*3 ~= 0.25mm.  with  This is standard or common threshold (Ciric et al. 2012, Satterthwaite et al. 2013)
   and  are provided in the design files. The actual threshold value is determined by the TR of the BOLD signal.
 
-For Scrubbing, the threshold will be `fds:0.167` which implies that the actual threshold will be 0.167\*3 =~0.5mm
-Scrubbing also include masking out the contigious volume of more than 5. This can configure by setting::
+For scrubbing, the threshold will be `fds:0.167` which implies that the actual threshold will be 0.167\*3 =~0.5mm
+Scrubbing also includes masking out segments of the timeseries that contain less than 5 contiguous uncensored frames. This can be configured by setting::
     *confound2_censor_contig[cxt]=1
 
 
