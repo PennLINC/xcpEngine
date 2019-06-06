@@ -61,7 +61,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     &&   pip install  --no-cache-dir \
              nipype \
              nibabel \
-             nibabel" \
+             niworkflows" \
     && rm -rf ~/.cache/pip/* \
     && sync
 
