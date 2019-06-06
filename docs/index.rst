@@ -12,4 +12,3 @@ Contents
    modules/index
    utils/index
    development
-   flywheel

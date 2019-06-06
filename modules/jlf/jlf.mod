@@ -123,7 +123,7 @@ if ! is_image ${labels[cxt]} \
    *)
       define jlf_parallel  0
    esac
-
+echo ${img[sub]} 2
    subroutine                 @1.6a Executing joint label fusion routine
    subroutine                 @1.6b Delegating control to antsJointLabelFusion
    export ANTSPATH=${ANTSPATH}/
@@ -133,7 +133,7 @@ if ! is_image ${labels[cxt]} \
       -f       0                       \
       -j       2                       \
       -k       ${jlf_keep_warps[cxt]}  \
-      -t       ${img}                  \
+      -t       ${img[sub]}             \
       -o       ${outdir}/${prefix}_    \
       -c       ${jlf_parallel[cxt]}    \
       -x       or \

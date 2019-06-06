@@ -360,6 +360,8 @@ for module in ${modules[@]}
          ${XCPEDIR}/utils/qstatus ${ids}
       fi
    fi
+
+
    ################################################################
    # GROUP-LEVEL PROCESSING
    #---------------------------------------------------------------
@@ -394,7 +396,26 @@ for module in ${modules[@]}
    (( cxt++ ))
 done
 
+echo "generating report"
 
+for sub  in  ${!cohort[@]}
+         do
+          mkdir -p ${out[sub]}/figures
+         
+         ##########################################################
+         # remvoe previous html 
+         ##########################################################
+         rm ${out[sub]}/${prefix[sub]}_report.html  2>/dev/null
+         ##########################################################
+         # Execute the current module.
+         ##########################################################
+         echo $pipeline > ${out[sub]}/module.csv
+         
+         ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz  -p ${prefix[sub]} -o ${out[sub]} -m  ${out[sub]}/module.csv
+         
+         rm -rf  ${out[sub]}/module.csv
+done
+ 
 
 
 
@@ -403,3 +424,4 @@ done
 ###################################################################
 source         ${XCPEDIR}/core/terminatePipeline
 printx         ${XCPEDIR}/core/CONSOLE_FOOTER
+ 

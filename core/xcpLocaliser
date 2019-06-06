@@ -176,6 +176,7 @@ subroutine                    @3.2  [Evaluating subject variables]
    && echo "template=${template}"               >> ${design[sub]} \
    && echo "standard=${standard[0]}"            >> ${design[sub]}
    echo    "img1[$sub]=${img[sub]}"   >> ${design[sub]}
+   cp  $template ${out[sub]}/template.nii.gz 
 routine_end
 
 ###################################################################

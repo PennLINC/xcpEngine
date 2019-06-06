@@ -1,5 +1,5 @@
 struct                  %ING/*ExtractedBrain0N4.nii.gz
-struct_head             %ING/*BrainSegmentation0N4.nii.gz
+struct_head             %ING/*ExtractedBrain0N4.nii.gz
 segmentation            %ING/*BrainSegmentation.nii.gz
 !xfms                   %ING/*SubjectToTemplate%INT*
 !ixfms                  %ING/*TemplateToSubject%INT*

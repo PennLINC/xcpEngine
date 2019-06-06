@@ -32,10 +32,9 @@ completion() {
 # OUTPUTS
 ###################################################################
 
-derivative            cbfbasil            ${prefix}_cbf_basil.nii.gz
-derivative            cbfbasilspatial     ${prefix}_cbf_basil_spatial.nii.gz
-derivative            cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
-
+derivative            cbfbasil                 ${prefix}_cbf_basil.nii.gz
+derivative            cbfbasilspatial          ${prefix}_cbf_basil_spatial.nii.gz
+derivative            cbfbasilpv               ${prefix}_cbf_basil_pv.nii.gz
 
 output           logfile              ${prefix}_logfile
 output           basil_option         ${prefix}_basil_option.txt
@@ -84,37 +83,7 @@ else
    output m0  ${out}/basil/${prefix}_m0.nii.gz
 fi
 
-subroutine @1.2 register the asl and m0 to struct space
-gm_seq=${out}/basil/${prefix}_gm2seq.nii.gz 
-wm_seq=${out}/basil/${prefix}_wm2seq.nii.gz 
-mask1=${intermediate}_mask_seq.nii.gz 
-mask_asl=${out}/basil/${prefix}_mask_asl.nii.gz 
-struct_asl=${out}/basil/${prefix}_struct_seq.nii.gz 
 
-if is_image ${struct[sub]}
-  then
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
-        -i ${gm[sub]} -t ${struct2seq[sub]} \
-        -o ${gm_seq} -n NearestNeighbor
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
-        -i ${wm[sub]} -t ${struct2seq[sub]} \
-        -o ${wm_seq} -n NearestNeighbor
-    
-  
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
-        -i ${structmask[sub]} -t ${struct2seq[sub]} \
-        -o ${mask1} -n NearestNeighbor  
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
-         -bin ${mask_asl} 
-  output mask ${out}/basil/${prefix}_mask_asl.nii.gz 
-
-  exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
-        -i ${struct[sub]} -t ${struct2seq[sub]} \
-        -o ${struct_asl} -n NearestNeighbor 
-  exec_fsl fslmaths ${referenceVolume[sub]} -mul \
-      ${out}/basil/${prefix}_mask_asl.nii.gz ${out}/basil/${prefix}_referenceVolumeBrain.nii.gz
-  output referenceVolumeBrain ${out}/basil/${prefix}_referenceVolumeBrain.nii.gz
-fi
 
 
 ###################################################################
@@ -129,24 +98,24 @@ fi
       subroutine              @1.1a PCASL/CASL -- Pseudocontinuous ASL
       subroutine              @1.1b Input: ${preprocessed[sub]}
       subroutine              @1.1c M0: ${m0[cxt]}
-      subroutine              @1.1d mask: ${mask_asl}
+      subroutine              @1.1d mask: ${mask[sub]}
       subroutine              @1.1e M0 scale: ${basil_m0_scale[cxt]}
       subroutine              @1.1f Partition coefficient: ${basil_lambda[cxt]}
       subroutine              @1.1g Post-labelling delay: ${basil_pld[cxt]}
       subroutine              @1.1i Blood T1: ${basil_t1blood[cxt]}
       subroutine              @1.1j Labelling efficiency: ${basil_alpha[cxt]}
       subroutine              @1.1k Template: ${template}
-      subroutine              @1.1n pvgm  : ${gm_seq}
-      subroutine              @1.1o pvwm  : ${wm_seq}
+      subroutine              @1.1n pvgm  : ${gm2seq[sub]}
+      subroutine              @1.1o pvwm  : ${wm2seq[sub]}
       
 
       if [  ${basil_pvc[cxt]} == 1 ]; then
           
           routine @2.1  compute CBF
            exec_xcp perf_asl -i ${preprocessed[sub]}      \
-               -m ${mask_asl}                 \
+               -m ${mask[sub]}                 \
                -o ${out}/basil                 \
-               --struct=${struct_asl}   \
+               --struct=${struct2seq_img[sub]}   \
                --casl                          \
                --M0=${m0[cxt]}                 \
                --cgain=${basil_m0_scale[cxt]}  \
@@ -155,25 +124,27 @@ fi
                --tis=${basil_tis[cxt]}         \
                --spatial                       \
                --tr=${basil_MOTR[cxt]}         \
-               --pvgm=${gm_seq}               \
-               --pvwm=${wm_seq}               \
+               --pvgm=${gm2seq[sub]}               \
+               --pvwm=${wm2seq[sub]}               \
                --pvcorr 
 
         elif [ ${basil_pvc[cxt]} == 0 ]; then 
 
           routine @2.1  compute CBF
          exec_xcp perf_asl -i ${preprocessed[sub]}      \
-               -m ${mask_asl}                 \
+               -m ${mask[sub]}                 \
                -o ${out}/basil                 \
-               --struct=${struct_asl}   \
-               --M0=${m0[sub]}                 \
+               --struct=${struct2seq_img[sub]}   \
+               --casl                          \
+               --M0=${m0[cxt]}                 \
                --cgain=${basil_m0_scale[cxt]}  \
                --alpha=${basil_alpha[cxt]}     \
                --iaf=${basil_inputformat[cxt]} \
                --tis=${basil_tis[cxt]}         \
                --spatial                       \
-               --tr=${basil_MOTR[cxt]}         \
-               --casl   
+               --tr=${basil_MOTR[cxt]}        
+               
+
       fi
       ;;
       
@@ -188,42 +159,44 @@ fi
       subroutine              @1.1i Blood T1: ${basil_t1blood[cxt]}
       subroutine              @1.1j Labelling efficiency: ${basil_alpha[cxt]}
       subroutine              @1.1k Template: ${template}
-      subroutine              @1.1n pvgm  : ${gm[sub]}
-      subroutine              @1.1o pvwm  : ${wm[sub]}
+      subroutine              @1.1n pvgm  : ${gm2seq[sub]}
+      subroutine              @1.1o pvwm  : ${wm2seq[sub]}
       
 
       if [  ${basil_pvc[cxt]} == 1 ]; then
           
           routine @2.1  compute CBF
-           exec_xcp perf_asl -i ${rawcbf}      \
-               -m ${MASK[cxt]}                 \
+           exec_xcp perf_asl -i ${preprocessed[sub]}      \
+               -m ${mask[sub]}                 \
                -o ${out}/basil                 \
-               --struct=${struct_brain[cxt]}   \
-               --M0=${M0[cxt]}                 \
+               --struct=${struct2seq_img[sub]}   \
+               --M0=${m0[cxt]}                 \
                --cgain=${basil_m0_scale[cxt]}  \
                --alpha=${basil_alpha[cxt]}     \
                --iaf=${basil_inputformat[cxt]} \
                --tis=${basil_tis[cxt]}         \
                --spatial                       \
                --tr=${basil_MOTR[cxt]}         \
-               --pvgm=${gm[sub]}               \
-               --pvwm=${wm[sub]}               \
+               --pvgm=${gm2seq[sub]}               \
+               --pvwm=${wm2seq[sub]}               \
                --pvcorr 
+
 
         elif [ ${basil_pvc[cxt]} == 0 ]; then 
 
           routine @2.1  compute CBF
-         exec_xcp perf_asl -i ${rawcbf}       \
-               -m ${MASK[cxt]}                 \
+
+        exec_xcp perf_asl -i ${preprocessed[sub]}      \
+               -m ${mask[sub]}                 \
                -o ${out}/basil                 \
-               --struct=${struct_brain[cxt]}   \
-               --M0=${M0[cxt]}                 \
+               --struct=${struct2seq_img[sub]}   \
+               --M0=${m0[cxt]}                 \
                --cgain=${basil_m0_scale[cxt]}  \
                --alpha=${basil_alpha[cxt]}     \
                --iaf=${basil_inputformat[cxt]} \
                --tis=${basil_tis[cxt]}         \
                --spatial                       \
-               --tr=${basil_MOTR[cxt]}         
+               --tr=${basil_MOTR[cxt]}                  
       fi
       ;;
      
@@ -276,6 +249,10 @@ routine @3 Orgainizing the output
     
  
  fi 
+ 
+  exec_sys rm -rf $out/basil/${prefix}_mask_asl.nii.gz
+  exec_sys rm -rf $out/basil/${prefix}_M0.nii.gz
+  exec_sys rm -rf $out/basil/${prefix}_m0.nii.gz
  
    neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbf_basil.nii.gz          \
               -k    $out/basil/${prefix}_mask.nii.gz  \

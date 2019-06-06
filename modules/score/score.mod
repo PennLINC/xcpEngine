@@ -8,8 +8,8 @@
 # SPECIFIC MODULE HEADER
 # This module aligns the analyte image to a high-resolution target.
 ###################################################################
-mod_name_short=scrub
-mod_name='CBF scrubbing'
+mod_name_short=score
+mod_name='CBF score'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
 ###################################################################
@@ -31,17 +31,21 @@ completion() {
 ##################################################################
 # OUTPUTS
 ###################################################################
-derivative            cbfscrub                 ${prefix}_cbfscrub.nii.gz
+derivative                cbfscorets      ${prefix}_cbfscorets.nii.gz   
+derivative                cbfscore        ${prefix}_cbfscore.nii.gz
 
 
 output                cbfscorets      ${prefix}_cbfscorets.nii.gz   
 output                cbfscore        ${prefix}_cbfscore.nii.gz
-output                cbfscrub        ${prefix}_cbfscrub.nii.gz
- 
 
 
-derivative_set       cbfscrub     Statistic         mean
+qc nvoldel  nvoldel  ${prefix}_nvoldel.txt 
 
+
+derivative_set       cbfscore     Statistic         mean
+
+
+process               cbfscorets        ${prefix}_cbfscorets
 
 
     subroutine  @1.2 computing cbf score
@@ -51,21 +55,9 @@ derivative_set       cbfscrub     Statistic         mean
              -g     ${gm2seq[sub]}           \
              -w     ${wm2seq[sub]}           \
              -c     ${csf2seq[sub]}          \
-             -t     ${scrub_thresh[cxt]} \
-             -o     ${out}/scrub/${prefix}
+             -t     ${score_thresh[cxt]} \
+             -o     ${out}/score/${prefix}
 
-    subroutine  @1.3 computing cbf scrubbing
- # compute the scrub 
-        exec_xcp  scrub_cbf.R           \
-            -i     ${cbfscorets[cxt]} \
-            -g     ${gm2seq[sub]}           \
-            -w     ${wm2seq[sub]}         \
-            -c     ${csf2seq[sub]}          \
-            -m     ${mask[sub]} \
-            -t     ${scrub_thresh[cxt]} \
-            -o     ${out}/scrub/${prefix}
-
-  exec_sys rm -rf ${cbfscorets[cxt]} ${cbfscore[cxt]}  ${nvoldel[cxt]}
   
 routine_end  
 

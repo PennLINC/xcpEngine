@@ -40,6 +40,13 @@ sub-1/fcon/power264/sub-1_power264_network.txt
 sub-1/fcon/power264/sub-1_power264.nii.gz
 sub-1/fcon/power264/sub-1_power264_ts.1D
 sub-1/fcon/sub-1_referenceVolume.nii.gz
+sub-1/figures
+sub-1/figures/sub-1_alff.svg
+sub-1/figures/sub-1_corrplot.svg
+sub-1/figures/sub-1_normalization.svg
+sub-1/figures/sub-1_registration.svg
+sub-1/figures/sub1_reho.svg
+sub-1/figures/sub-1_voxts.png
 sub-1/norm
 sub-1/norm/sub-1_alff_sm6Std.nii.gz
 sub-1/norm/sub-1_alffStd.nii.gz
@@ -124,4 +131,5 @@ sub-1/sub-1_logs/sub-1_audit.csv
 sub-1/sub-1-nFlags.1D
 sub-1/sub-1.nii.gz
 sub-1/sub-1_quality.csv
+sub-1/sub-1_report.html
 /tmp/t1fc36pscrub/xcpOutput

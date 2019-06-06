@@ -35,8 +35,10 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative            meanPerfusion    ${prefix}_meanPerfusion
-derivative            perfusion        ${prefix}_perfusion
+derivative            meanPerfusion            ${prefix}_meanPerfusion
+derivative            perfusion                ${prefix}_perfusion
+derivative            referenceVolumeBrain     ${prefix}_referenceVolumeBrain
+#derivative            mask                     ${prefix}_mask
 
 output                tag_mask         ${prefix}_tag_mask.txt
 output                rps_proc         ${prefix}_realignment_transform.1D
@@ -45,7 +47,7 @@ qc negative_voxels    negativeVoxels   ${prefix}_negativeVoxels.txt
 qc negative_voxels_ts negativeVoxelsTS ${prefix}_negativeVoxelsTS.txt
 
 derivative_set        meanPerfusion    Statistic         mean
-derivative            referenceVolumeBrain    ${prefix}_referenceVolumeBrain
+
 input 1dim            rps_proc or rps  as rps
 
 process               perfusion        ${prefix}_perfusion
@@ -124,21 +126,7 @@ else
    output m0  ${out}/cbf/${prefix}_m0.nii.gz
 fi
 
-subroutine @1.3 create mask
 
-exec_ants antsApplyTransforms -i ${structmask[sub]} -r ${referenceVolume[sub]} \
-   -t ${struct2seq[sub]} -o ${out}/cbf/temp_mask.nii.gz  -n NearestNeighbor 
-
-exec_fsl fslmaths ${referenceVolume[sub]} -mul ${out}/cbf/temp_mask.nii.gz \
-         -bin ${out}/cbf/${prefix}_mask.nii.gz 
-output mask ${out}/cbf/${prefix}_mask.nii.gz 
-
-
-   
-exec_fsl fslmaths ${referenceVolume[sub]} -mul ${out}/cbf/temp_mask.nii.gz \
-                    ${out}/cbf/${prefix}_referenceVolumeBrain.nii.gz
- 
-output referenceVolumeBrain ${out}/cbf/${prefix}_referenceVolumeBrain.nii.gz
 
 
 ###################################################################
@@ -214,9 +202,9 @@ if ! is_image ${meanPerfusion[cxt]} \
    routine                    @3    Quality and cleanup
    subroutine                 @3.1  Reorganising output
    exec_fsl fslmaths  ${intermediate}_perfusion_mean.nii.gz -mul \
-               ${mask[cxt]} ${meanPerfusion[cxt]}
+               ${mask[sub]} ${meanPerfusion[cxt]}
    exec_fsl fslmaths ${intermediate}_perfusion_ts.nii.gz -mul \
-               ${mask[cxt]} ${perfusion[cxt]}
+               ${mask[sub]} ${perfusion[cxt]}
    subroutine                 @3.2  Computing grey matter boundary
    exec_xcp    val2mask.R           \
       -i       ${segmentation[sub]} \
@@ -244,6 +232,7 @@ fi
 routine                       @4    Selecting realignment parameters
 subroutine                    @4.1  Averaging over tagged/untagged pairs
 exec_xcp realignment.R -m ${rps[cxt]} -t mean -o ${outdir}/${prefix}
+ 
 routine_end
 
 
