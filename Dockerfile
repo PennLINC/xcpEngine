@@ -11,6 +11,7 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
     && apt-get install -y -q --no-install-recommends \
            apt-utils \
            bzip2 \
+           python-dev \
            ca-certificates \
            curl \
            locales \
