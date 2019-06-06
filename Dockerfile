@@ -12,6 +12,7 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
            apt-utils \
            bzip2 \
            python-dev \
+           python-subprocess32 \
            ca-certificates \
            curl \
            locales \
