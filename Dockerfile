@@ -198,9 +198,9 @@ RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
 RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
-ADD . /xcpEngine
+#ADD . /xcpEngine
 
-#RUN bash -c 'cd / &&  wget https://github.com/PennBBL/xcpEngine/archive/master.zip && unzip master.zip && rm master.zip && mv xcpEngine-master/* /xcpEngine/'
+RUN bash -c 'cd / &&  wget https://github.com/PennBBL/xcpEngine/archive/master.zip && unzip master.zip && rm master.zip && mv xcpEngine-master/* /xcpEngine/'
 
 RUN bash -c \
     'cd  /xcpEngine \
