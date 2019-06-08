@@ -50,7 +50,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && sync && conda clean -tipsy && sync \
     && conda create -y -q --name neuro \
     && conda install -y -q --name neuro \
-           python=2 \
+           python=3 \
            numpy \
            pandas \
            traits \
