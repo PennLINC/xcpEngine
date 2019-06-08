@@ -60,7 +60,11 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && bash -c "source activate neuro \
     &&   pip install  --no-cache-dir \
              nipype \
-             nibabel" \
+             nibabel \
+             niworkflows \
+             nilearn \
+             matplotlib \
+             pandas" \
     && rm -rf ~/.cache/pip/* \
     && sync
 
@@ -193,8 +197,6 @@ RUN echo "Downloading Convert3D ..." \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Nightly/c3d-nightly-Linux-x86_64.tar.gz/download \
     | tar -xz -C /opt/convert3d-nightly --strip-components 1
     
-RUN  bash -c 'pip install niworkflows nilearn  nibabel matplotlib pandas '
-
 RUN apt-get install -y -q --no-install-recommends procps
 
 RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
