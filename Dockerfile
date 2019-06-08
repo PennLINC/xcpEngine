@@ -192,6 +192,8 @@ RUN echo "Downloading Convert3D ..." \
     && mkdir -p /opt/convert3d-nightly \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Nightly/c3d-nightly-Linux-x86_64.tar.gz/download \
     | tar -xz -C /opt/convert3d-nightly --strip-components 1
+    
+RUN  bash -c 'pip install niworkflows nilearn  nibabel matplotlib pandas '
 
 RUN apt-get install -y -q --no-install-recommends procps
 
@@ -209,7 +211,6 @@ RUN bash -c \
     && tar xvfJm i30llenk6s37kv8nkqxgulwylaxp928g.xz \
     && rm i30llenk6s37kv8nkqxgulwylaxp928g.xz'
     
-RUN  bash -c 'pip install  --no-cache-dir niworkflows nilearn  nibabel matplotlib pandas '
 
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
     && BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine /xcpEngine/utils/repairMetadata'
