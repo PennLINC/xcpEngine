@@ -4,12 +4,15 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
 from argparse import (ArgumentParser, RawTextHelpFormatter)
+import nilearn 
 from nilearn.image import (threshold_img, load_img)
 from nilearn.plotting import (plot_epi,plot_matrix,plot_stat_map)
+import niworkflows
 from niworkflows.viz.utils import *
 from niworkflows.viz.plots import *
 import json
 import nibabel as nib
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
