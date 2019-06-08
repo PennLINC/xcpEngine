@@ -209,7 +209,7 @@ RUN bash -c \
     && tar xvfJm i30llenk6s37kv8nkqxgulwylaxp928g.xz \
     && rm i30llenk6s37kv8nkqxgulwylaxp928g.xz'
     
-RUN  bash -c 'pip install  --no-cache-dir niworkflows'
+RUN  bash -c 'pip install  --no-cache-dir niworkflows nilearn json nibabel matplotlib pandas '
 
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
     && BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine /xcpEngine/utils/repairMetadata'
