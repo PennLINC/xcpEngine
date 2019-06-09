@@ -60,7 +60,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && conda install -y -q --name neuro libgfortran==1 \
     && sync && conda clean -tipsy && sync \
     && bash -c "source activate neuro \
-    &&  pip install  --no-cache-dir \
+    &&  /opt/miniconda-latest/bin/pip install  --no-cache-dir \
              nipype \
              nibabel \
              niworkflows \
