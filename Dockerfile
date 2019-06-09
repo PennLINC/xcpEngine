@@ -60,7 +60,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && conda install -y -q --name neuro libgfortran==1 \
     && sync && conda clean -tipsy && sync \
     && bash -c "source activate neuro \
-    &&   /opt/miniconda-latest/bin/pip install  --no-cache-dir \
+    &&  pip install  --no-cache-dir \
              nipype \
              nibabel \
              niworkflows \
@@ -215,7 +215,6 @@ RUN bash -c \
     && tar xvfJm i30llenk6s37kv8nkqxgulwylaxp928g.xz \
     && rm i30llenk6s37kv8nkqxgulwylaxp928g.xz'
     
-RUN bash -c ' pip install --no-cache flywheel-sdk '
 
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
     && BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine /xcpEngine/utils/repairMetadata'
