@@ -37,38 +37,27 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
     fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 
-ENV CONDA_DIR="/opt/miniconda-latest" \
-    PATH="/opt/miniconda-latest/bin:$PATH"
-RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
-    && echo "Downloading Miniconda installer ..." \
-    && conda_installer="/tmp/miniconda.sh" \
-    && curl -fsSL --retry 5 -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && bash "$conda_installer" -b -p /opt/miniconda-latest \
-    && rm -f "$conda_installer" \
-    && conda update -yq -nbase conda \
-    && conda config --system --prepend channels conda-forge \
-    && conda config --system --set auto_update_conda false \
-    && conda config --system --set show_channel_urls true \
-    && sync && conda clean -tipsy && sync \
-    && conda create -y -q --name neuro \
-    && conda install -y -q --name neuro \
-           python=3 \
-           numpy \
-           pandas \
-           traits \
-           scikit-learn \
-    && conda install -y -q --name neuro libgfortran==1 \
-    && sync && conda clean -tipsy && sync \
-    && bash -c "source activate neuro \
-    && pip install  --no-cache-dir \
-             nipype \
-             nibabel \
-             niworkflows \
-             nilearn \
-             matplotlib \
-             pandas" \
-    && rm -rf ~/.cache/pip/* \
-    && sync
+#ENV CONDA_DIR="/opt/miniconda-latest" \
+    #PATH="/opt/miniconda-latest/bin:$PATH"
+#RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
+   # && echo "Downloading Miniconda installer ..." \
+    #&& conda_installer="/tmp/miniconda.sh" \
+    #&& curl -fsSL --retry 5 -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    #&& bash "$conda_installer" -b -p /opt/miniconda-latest \
+    #&& rm -f "$conda_installer" \
+    #&& conda update -yq -nbase conda \
+    #&& conda config --system --prepend channels conda-forge \
+    #&& conda config --system --set auto_update_conda false \
+    #&& conda config --system --set show_channel_urls true \
+    #&& sync && conda clean -tipsy && sync \
+    #&& conda create -y -q --name neuro \
+   # && conda install -y -q --name neuro \
+RUN  apt-get update
+RUN  apt-get install python3.6
+RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
+RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn matplotlib 
+RUN  rm -rf ~/.cache/pip/* && sync
+RUN  apt-get update
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
     PATH="/opt/fsl-5.0.10/bin:$PATH"
