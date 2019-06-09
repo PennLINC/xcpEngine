@@ -60,7 +60,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && conda install -y -q --name neuro libgfortran==1 \
     && sync && conda clean -tipsy && sync \
     && bash -c "source activate neuro \
-    &&  /opt/miniconda-latest/bin/pip install  --no-cache-dir \
+    && pip install  --no-cache-dir \
              nipype \
              nibabel \
              niworkflows \
@@ -207,7 +207,7 @@ RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
 ADD . /xcpEngine
 
-#RUN bash -c 'cd / &&  wget https://github.com/PennBBL/xcpEngine/archive/master.zip && unzip master.zip && rm master.zip && mv xcpEngine-master/* /xcpEngine/'
+RUN bash -c 'cd / &&  wget https://github.com/PennBBL/xcpEngine/archive/master.zip && unzip master.zip && rm master.zip && mv xcpEngine-master/* /xcpEngine/'
 
 RUN bash -c \
     'cd  /xcpEngine \
