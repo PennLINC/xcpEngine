@@ -78,7 +78,7 @@ sub-1/figures/sub-1_alff.svg
 sub-1/figures/sub-1_corrplot.svg
 sub-1/figures/sub-1_normalization.svg
 sub-1/figures/sub-1_registration.svg
-sub-1/figures/sub1_reho.svg
+sub-1/figures/sub-1_reho.svg
 sub-1/figures/sub-1_voxts.png
 sub-1/norm
 sub-1/norm/sub-1_alff_sm6Std.nii.gz
@@ -111,6 +111,7 @@ sub-1/prestats/sub-1_preprocessed.nii.gz
 sub-1/prestats/sub-1_referenceVolumeBrain.nii.gz
 sub-1/prestats/sub-1_referenceVolume.nii.gz
 sub-1/prestats/sub-1_segmentation.nii.gz
+sub-1/prestats/sub-1_structbrain.nii.gz
 sub-1/prestats/sub-1_struct.nii.gz
 sub-1/qcfc
 sub-1/qcfc/sub-1_depthMap.nii.gz
@@ -205,4 +206,5 @@ sub-1/sub-1-nFlags.1D
 sub-1/sub-1.nii.gz
 sub-1/sub-1_quality.csv
 sub-1/sub-1_report.html
+sub-1/template.nii.gz
 /tmp/t1fc36pdespike/xcpOutput
