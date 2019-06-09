@@ -52,10 +52,11 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
     #&& sync && conda clean -tipsy && sync \
     #&& conda create -y -q --name neuro \
    # && conda install -y -q --name neuro \
-RUN  apt-get update
-RUN  apt-get install -y python-software-properties
-RUN  add-apt-repository ppa:deadsnakes/ppa
-RUN  apt-get install python3.7
+RUN apt-get update \
+  && apt-get install -y python3-pip python3-dev \
+  && cd /usr/local/bin \
+  && ln -s /usr/bin/python3 python \
+  && pip3 install --upgrade pip
 RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
 RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn matplotlib 
 RUN  rm -rf ~/.cache/pip/* && sync
