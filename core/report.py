@@ -131,28 +131,44 @@ for i in modules1:
              atlaslist.append(k)
          atlaslist.remove('global')
          atlaslist.remove('segmentation')
-
-         ng=0         
-         np1=len(atlaslist)
-         plt.clf()#ii=atlaslist[0]
-         plt.cla()
-         fig = plt.figure()
-         fig,ax1 = plt.subplots(1,np1)
-         fig.set_size_inches(500,500)
          font = {
         'weight': 'normal',
         'size': 200}
+         if (len(atlaslist) == 1 ) :
+              plt.clf()#ii=atlaslist[0]
+              plt.cla()
+              fig,ax1 = plt.subplots(1,1)
+              fig.set_size_inches(500,500)
+              tms=np.loadtxt(outdir+'/fcon/'+atlaslist+'/'+prefix+'_'+atlaslist+'_ts.1D')
+              cormatrix=np.nan_to_num(np.corrcoef(tms.T))
+              ax1.set_title(atlaslist,fontdict=font)
+              plot_matrix(mat=cormatrix,colorbar=False,vmax=1,vmin=-1,axes=ax1)
+              fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',bbox_inches="tight",pad_inches=None)
+              corrplot='figures/'+prefix+'_corrplot.svg'
+              html_report=html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="'+ corrplot +'" alt="Segmentation" width="4000"height="500"></object>'
+         else :      
+              ng=0         
+              np1=len(atlaslist)
+              plt.clf()#ii=atlaslist[0]
+              plt.cla()
+              fig = plt.figure()
+              fig,ax1 = plt.subplots(1,np1)
+              fig.set_size_inches(500,500)
+              font = {
+                'weight': 'normal',
+               'size': 200}
+              for ii in atlaslist:
+                  tms=np.loadtxt(outdir+'/fcon/'+ii+'/'+prefix+'_'+ii+'_ts.1D')
+                  cormatrix=np.nan_to_num(np.corrcoef(tms.T))
+                  axs=ax1[ng]
+                  axs.set_title(ii,fontdict=font)
+                  plot_matrix(mat=cormatrix,colorbar=False,vmax=1,vmin=-1,axes=axs)
+                  ng +=1
 
-         for ii in atlaslist:
-             tms=np.loadtxt(outdir+'/fcon/'+ii+'/'+prefix+'_'+ii+'_ts.1D')
-             cormatrix=np.nan_to_num(np.corrcoef(tms.T))
-             axs=ax1[ng]
-             axs.set_title(ii,fontdict=font)
-             plot_matrix(mat=cormatrix,colorbar=False,vmax=1,vmin=-1,axes=axs)
-             ng +=1
-         fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',bbox_inches="tight",pad_inches=None)
-         corrplot='figures/'+prefix+'_corrplot.svg'
-         html_report=html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="'+ corrplot +'" alt="Segmentation" width="4000"height="500"></object>'
+              fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',bbox_inches="tight",pad_inches=None)
+              corrplot='figures/'+prefix+'_corrplot.svg'
+              html_report=html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="'+ corrplot +'" alt="Segmentation" width="4000"height="500"></object>'
+
     elif i == 'alff' :
          statmapalff=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz')
          bgimg=load_img(outdir+'/alff/'+prefix+'_referenceVolume.nii.gz')
