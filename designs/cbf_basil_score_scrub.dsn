@@ -33,16 +33,16 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=cbf_$(whoami)
+analysis=cbfall_$(whoami)
 design=
-sequence=cbf
+sequence=cbfall
 standard=MNI%2x2x2
 
 ###################################################################
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,cbf,roiquant,norm
+pipeline=prestats,coreg,cbf,basil,score,scrub,roiquant,norm
 ###################################################################
 # 1 PRESTATS
 ###################################################################
@@ -72,6 +72,7 @@ coreg_cleanup[2]=1
 ###################################################################
 # 3 cbf
 ###################################################################
+
 cbf_first_tagged[3]=1
 cbf_perfusion[3]=casl
 cbf_m0_scale[3]=1
@@ -85,18 +86,52 @@ cbf_rerun[3]=0
 cbf_cleanup[3]=1
 
 ###################################################################
-# 4 ROIQUANT
+# 4 basil
 ###################################################################
 
-roiquant_atlas[4]=all
-roiqunat_globals[4]=1
-roiquant_vol[4]=0
-roiquant_rerun[4]=0
-roiquant_cleanup[4]=1
+basil_perfusion[4]=casl
+basil_inputformat[4]=tc 
+basil_m0_scale[4]=1
+basil_lambda[4]=0.9
+basil_alpha[4]=0.72
+basil_spatial[4]=1
+basil_pld[4]=1.8
+basil_pvc[4]=1
+basil_MOTR[4]=4
+basil_tis[4]=1
+basil_rerun[4]=0
+basil_cleanup[4]=1
 
 ###################################################################
-# 5 NORM
+# 5 score
 ###################################################################
 
-norm_rerun[5]=1
-norm_cleanup[5]=1
+score_thresh[5]=0.9
+score_rerun[5]=0
+score_cleanup[5]=1
+
+###################################################################
+# 6 srcub
+###################################################################
+
+scrub_thresh[6]=0.9
+scrub_rerun[6]=0
+scrub_cleanup[6]=1
+
+###################################################################
+# 7 ROIQUANT
+###################################################################
+
+roiquant_atlas[7]=all
+roiqunat_globals[7]=1
+roiquant_vol[7]=0
+roiquant_rerun[7]=0
+roiquant_cleanup[7]=1
+
+###################################################################
+# 8 NORM
+###################################################################
+
+norm_primary[8]=1
+norm_rerun[8]=1
+norm_cleanup[8]=1

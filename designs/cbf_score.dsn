@@ -33,16 +33,16 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=cbf_$(whoami)
+analysis=score_$(whoami)
 design=
-sequence=cbf
+sequence=score
 standard=MNI%2x2x2
 
 ###################################################################
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,cbf,roiquant,norm
+pipeline=prestats,coreg,cbf,score,roiquant,norm
 ###################################################################
 # 1 PRESTATS
 ###################################################################
@@ -85,18 +85,26 @@ cbf_rerun[3]=0
 cbf_cleanup[3]=1
 
 ###################################################################
-# 4 ROIQUANT
+# 4 score
 ###################################################################
 
-roiquant_atlas[4]=all
-roiqunat_globals[4]=1
-roiquant_vol[4]=0
-roiquant_rerun[4]=0
-roiquant_cleanup[4]=1
+score_thresh[4]=0.9
+score_rerun[4]=0
+score_cleanup[4]=1
 
 ###################################################################
-# 5 NORM
+# 5 ROIQUANT
 ###################################################################
 
-norm_rerun[5]=1
-norm_cleanup[5]=1
+roiquant_atlas[5]=all
+#roiqunat_globals[5]=1
+roiquant_vol[5]=0
+roiquant_rerun[5]=0
+roiquant_cleanup[5]=1
+
+###################################################################
+# 6 NORM
+###################################################################
+norm_primary[6]=1
+norm_rerun[6]=1
+norm_cleanup[6]=1

@@ -33,16 +33,16 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=cbf_$(whoami)
+analysis=basil_$(whoami)
 design=
-sequence=cbf
+sequence=basil
 standard=MNI%2x2x2
 
 ###################################################################
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,cbf,roiquant,norm
+pipeline=prestats,coreg,basil,roiquant,norm
 ###################################################################
 # 1 PRESTATS
 ###################################################################
@@ -69,27 +69,31 @@ coreg_mask[2]=0
 coreg_rerun[2]=0
 coreg_cleanup[2]=1
 
+
 ###################################################################
-# 3 cbf
+# 3 basil
 ###################################################################
-cbf_first_tagged[3]=1
-cbf_perfusion[3]=casl
-cbf_m0_scale[3]=1
-cbf_lambda[3]=0.9
-cbf_pld[3]=1.8
-cbf_tau[3]=1.8
-cbf_t1blood[3]=1.65
-cbf_alpha[3]=0.72
-cbf_gm_val[3]=2,4
-cbf_rerun[3]=0
-cbf_cleanup[3]=1
+
+basil_perfusion[3]=casl
+basil_inputformat[3]=tc 
+basil_m0_scale[3]=1
+basil_lambda[3]=0.9
+basil_alpha[3]=0.72
+basil_spatial[3]=1
+basil_pld[3]=1.8
+basil_pvc[3]=1
+basil_MOTR[3]=4
+basil_tis[3]=1
+basil_rerun[3]=0
+basil_cleanup[3]=1
+
 
 ###################################################################
 # 4 ROIQUANT
 ###################################################################
 
 roiquant_atlas[4]=all
-roiqunat_globals[4]=1
+#roiqunat_globals[4]=1
 roiquant_vol[4]=0
 roiquant_rerun[4]=0
 roiquant_cleanup[4]=1
