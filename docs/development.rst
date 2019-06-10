@@ -20,6 +20,7 @@ Now you can edit or add to the code however you'd like.
 The main R packages require are RNifti, optparse, pracma, signal, and python packages require are numpy,nibabel,niworkflows, nilearn and matplotlib. 
 
 The enviroment should be set as follow in the bash profile::
+
          XCPEDIR=/path/to/xcpEngine/sourcecode
          FSLDIR=/path/to/fsldir
          AFNI_PATH=/path/to/afni
@@ -27,6 +28,7 @@ The enviroment should be set as follow in the bash profile::
          ANTSPATH=/path/to/ANTs
   
 After setting the enviroment, it is require to reset the xcpEngine to link to those dependencies::
+
     source ${XCPEDIR}/xcpReset 
   
 You can use docker or singularity image. 
