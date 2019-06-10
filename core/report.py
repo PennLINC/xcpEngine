@@ -5,14 +5,11 @@
 
 from argparse import (ArgumentParser, RawTextHelpFormatter)
 import nibabel as nib
-import nilearn as nl 
 from nilearn.image import (threshold_img, load_img)
 from nilearn.plotting import (plot_epi,plot_matrix,plot_stat_map)
-import niworkflows
 from niworkflows.viz.utils import *
 from niworkflows.viz.plots import *
 import json
-import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -133,19 +130,19 @@ for i in modules1:
          atlaslist.remove('segmentation')
          font = {
         'weight': 'normal',
-        'size': 200}
+        'size': 10}
          if (len(atlaslist) == 1 ) :
               plt.clf()#ii=atlaslist[0]
               plt.cla()
               fig,ax1 = plt.subplots(1,1)
-              fig.set_size_inches(500,500)
-              tms=np.loadtxt(outdir+'/fcon/'+atlaslist+'/'+prefix+'_'+atlaslist+'_ts.1D')
+              #fig.set_size_inches(500,500)
+              tms=np.loadtxt(outdir+'/fcon/'+atlaslist[-1]+'/'+prefix+'_'+atlaslist[-1]+'_ts.1D')
               cormatrix=np.nan_to_num(np.corrcoef(tms.T))
-              ax1.set_title(atlaslist,fontdict=font)
+              ax1.set_title(atlaslist[-1],fontdict=font)
               plot_matrix(mat=cormatrix,colorbar=False,vmax=1,vmin=-1,axes=ax1)
               fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',bbox_inches="tight",pad_inches=None)
               corrplot='figures/'+prefix+'_corrplot.svg'
-              html_report=html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="'+ corrplot +'" alt="Segmentation" width="4000"height="500"></object>'
+              html_report=html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="'+ corrplot +'" alt="Segmentation" width="500"height="500"></object>'
          else :      
               ng=0         
               np1=len(atlaslist)
