@@ -111,3 +111,7 @@ Quick Lookup
   roiquant
   fcon
   qcfc
+  cbf
+  basil
+  score
+  scrub

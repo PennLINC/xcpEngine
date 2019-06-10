@@ -49,7 +49,7 @@ Note that ``aroma`` and ``acompcor`` must have been performed during your prepro
 Available modules
 ------------------
 
- * :ref:`confound`
+ * :ref:`confound2`
  * :ref:`regress`
  * :ref:`reho`
  * :ref:`alff`
