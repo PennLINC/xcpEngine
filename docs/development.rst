@@ -26,10 +26,10 @@ Now you can edit or add to the code however you'd like.
          C3D_PATH=/path/to/c3d
          ANTSPATH=/path/to/ANTs
   
-  After setting the enviroment, it is require to reset the xcpEngine to link to those dependencies::
+After setting the enviroment, it is require to reset the xcpEngine to link to those dependencies::
     source ${XCPEDIR}/xcpReset 
   
-  You can use docker or singularity image. 
+You can use docker or singularity image. 
   
 Patching a local copy of xcpEngine into a container
 -------------------------------------------------------
