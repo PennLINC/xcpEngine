@@ -79,7 +79,7 @@ should rerun any modules downstream of the change.::
   fcon_rerun[cxt]=1
 
 
-``fcon_cleanup``
+``fcon._cleanup``
 ^^^^^^^^^^^^^^^^^^^^
 
 Modules often produce numerous intermediate temporary files and images during the course of an

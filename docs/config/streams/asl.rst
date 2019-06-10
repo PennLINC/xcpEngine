@@ -7,7 +7,7 @@ Arterial spin labeling (ASL) provides non-invasive quantification of cerebral bl
 The `xcpEnigne` includes 4 standard modules for the  quantification of the CBF. The modules are: 
 1. `CBF`: The standard quantification of CBF that based on the relatively basic model `Buxton et al 1998 <https://www.ncbi.nlm.nih.gov/pubmed/9727941>`_ 
 
-2. `BASIL` : The `BASIL<https://asl-docs.readthedocs.io/en/latest/>`_ uses Bayesian inference method for the kinetic model inversion and was origibally debvloped for multidelay data. 
+2.  `BASIL`:  The `BASIL <https://asl-docs.readthedocs.io/en/latest/>`_ uses Bayesian inference method for the kinetic model inversion and was origibally debvloped for multidelay data. 
 BASIL provides vearious advantages inckluding spatial regularization of the estimated perfusion image and correction of partial volume effects. It is part of `FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BASIL>`_ and 
 can also be used as standalone. 
 
