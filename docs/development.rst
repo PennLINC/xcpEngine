@@ -16,10 +16,10 @@ To download the master branch from GitHub, you can do the following::
   git clone https://github.com/PennBBL/xcpEngine.git
 
 Now you can edit or add to the code however you'd like.
+``xcpEngine`` depends on number of dependencies including `ANTS <https://github.com/ANTsX/ANTs>`_, `FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki>`_, `c3d <https://sourceforge.net/projects/c3d/>`_, `AFNI <https://afni.nimh.nih.gov/>`_, R and Python packages. 
+The main R packages require are RNifti, optparse, pracma, signal, and python packages require are numpy,nibabel,niworkflows, nilearn and matplotlib. 
 
- ``xcpEngine`` depends on number of dependencies including `ANTS <https://github.com/ANTsX/ANTs>`_, `FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki>`_, `c3d <https://sourceforge.net/projects/c3d/>`_, `AFNI <https://afni.nimh.nih.gov/>`_, R and Python packages. 
- The main R packages require are RNifti, optparse, pracma, signal, and python packages require are numpy,nibabel,niworkflows, nilearn and matplotlib. 
- The enviroment should be set as follow in the bash profile::
+The enviroment should be set as follow in the bash profile::
          XCPEDIR=/path/to/xcpEngine/sourcecode
          FSLDIR=/path/to/fsldir
          AFNI_PATH=/path/to/afni
