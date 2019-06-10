@@ -13,7 +13,7 @@ unset XCPEDIR RPATH FSLDIR ANTSPATH AFNI_PATH C3D_PATH NUMOUT
 # XCPEDIR stores a path to the top-level directory containing all
 # of the ingredients necessary to configure and execute functional
 # connectivity pipelines using the XCP Engine.
-export XCPEDIR=/data/joy/BBL/applications/xcpEngine
+export XCPEDIR=
 ###################################################################
 
 ###################################################################
@@ -23,32 +23,32 @@ export XCPEDIR=/data/joy/BBL/applications/xcpEngine
 #  * pracma
 #  * signal
 #  * optparse
-export RPATH=/data/jag/aadebimpe/anaconda3/bin/R
+export RPATH=
 ###################################################################
 
 ###################################################################
 # FSLDIR stores a path to the local installation of FSL.
-export FSLDIR=/share/apps/fsl/5.0.9
+export FSLDIR=
 ###################################################################
 
 ###################################################################
 # ANTSPATH stores a path to the local installation of ANTs.
-export ANTSPATH=/data/joy/BBL/applications/ants_20151007/bin/
+export ANTSPATH=
 ###################################################################
 
 ###################################################################
 # AFNI_PATH stores a path to the local installation of AFNI.
-export AFNI_PATH=/share/apps/afni/linux_xorg7_64_16.0.00
+export AFNI_PATH=
 ###################################################################
 
 ###################################################################
 # C3D_PATH stores a path to the local installation of C3D.
-export C3D_PATH=/share/apps/c3d/c3d-1.1.0-Nightly-2016-02-26/bin
+export C3D_PATH=
 ###################################################################
 
 ###################################################################
 # JQ_PATH stores a path to the local installation of JQ.
-export JQ_PATH=/data/joy/BBL/applications/xcpEngine/thirdparty/jq/jq-linux64
+export JQ_PATH=
 ###################################################################
 
 ###################################################################
