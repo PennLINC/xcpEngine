@@ -7,7 +7,7 @@ Basil module computes the CBF and the derivatives using Bayesian inference metho
 can aslo be run independently. 
 
 
-``basil_perfusiion`
+``basil_perfusiion``
 ^^^^^^^^^^^^^^^^^^^^
 *Labelling approach methods.*
 

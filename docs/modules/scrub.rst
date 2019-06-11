@@ -23,9 +23,10 @@ logistic,talwar and welsch.::
 
 
 
- ``Expected output``
+``Expected output``
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The main outputs are:: 
+
    - prefix_cbfscrub.nii.gz  # mean scrub cbf 
-   
+
