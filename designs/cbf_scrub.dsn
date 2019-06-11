@@ -89,6 +89,7 @@ cbf_cleanup[3]=1
 ###################################################################
 
 scrub_thresh[4]=0.9
+scrub_wfun[4]=huber
 scrub_rerun[4]=0
 scrub_cleanup[4]=1
 
