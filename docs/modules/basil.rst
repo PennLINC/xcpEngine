@@ -21,8 +21,8 @@ As of now, only two popular label strategies are implemented:.::
 
 PASL is default if none is supply.
  
- ``basil_inputformat``
-^^^^^^^^^^^^^^^^
+``basil_inputformat``
+^^^^^^^^^^^^^^^^^^^^^^^
 *Volume label*
 The `basil_inputformat` identifies which pair of volume is label or control volume. 
 There are three types- tc (label-control), ct(control-label) and diff (cbf).::
