@@ -126,6 +126,21 @@ like::
 The first line of this cohort file would process the image
 ``${DATA_ROOT}/sub-01/ses-01/func/sub-01_ses-01_task-rest_space-T1w_desc-preproc_bold.nii.gz``.
 
+ASL processing
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ASL processing requires ASL image, M0 scan for caibration (if available). In the absence of M0 scan, the average  
+control volumes is used as reference or M0 scan (scale=1). The ASL processing requires anatomical processing directory of either 
+`FMRIPREP` or the :ref:`struc`: module  of `xcpEngine`. Here is an example of cohort file with anatomical directory of `FMRIPREP`.::
+
+  id0,img,m0,anatdir
+  sub-1,/path/to/asl.nii.gz,/path/to/m0.nii.gz,fmriprep/sub-xx/anat
+
+With the :ref:`struc`: directory of the `xcpEngine` output, the cohort file is shown below.::
+  id0,img,m0,anatct
+  sub-1,/path/to/asl.nii.gz,/path/to/m0.nii.gz,/path/to/struc
+
+
 Subject variables
 ------------------
 

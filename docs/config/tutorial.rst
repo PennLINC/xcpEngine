@@ -78,7 +78,15 @@ new cohort file::
      -r ${HOME}/data
 
 
-3. Arguments
+3. Running a ASL processing pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Processing ASL data for computation of CBF  can be done using  .
+`design files <https://github.com/PennBBL/xcpEngine/blob/master/designs/cbf.dsn>`_
+This will take the ASL,M0 (if available) and anatomical directory. 
+The ASL image is run just like both anatomical anf functional connectivity pipelines.
+
+4. Arguments
 ~~~~~~~~~~~~
 
 While the pipeline is running, let's break down the call that we made to the XCP Engine. We passed
@@ -153,7 +161,7 @@ Why edit the existing cohort file instead of creating a new one?
     new cohort file with just the new subject, group-level data would be pulled from only that
     subject. Not much of a group, then.
 
-4. Output files
+5. Output files
 ~~~~~~~~~~~~~~~
 
 To see what the remaining arguments to ``xcpEngine`` do, we will need to look at the pipeline's
@@ -253,7 +261,7 @@ you will find:
   successfully run for each subject. ``1`` indicates successful completion, while ``0`` indicates
   a nonstandard exit condition.
 
-5. Anatomy of the pipeline system
+6. Anatomy of the pipeline system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now, let's pull this information together to consider how the pipeline system operates.
@@ -273,7 +281,7 @@ Now, let's pull this information together to consider how the pipeline system op
    *delocaliser*. Shift of processing from the subject level to the sample level is called
    *delocalisation* or a *reduce* step.
 
-6. Getting help
+7. Getting help
 ~~~~~~~~~~~~~~~
 
 To get help, the correct channel to use is
@@ -283,7 +291,7 @@ contact the development team by email, but Github is almost always the preferred
 communicating about pipeline functionality. You can also use the issue system to request new
 pipeline features or suggest changes.
 
-7. Common Errors
+8. Common Errors
 ~~~~~~~~~~~~~~~
 A non-exhaustive list of some common errors, and fixes to try.
 
