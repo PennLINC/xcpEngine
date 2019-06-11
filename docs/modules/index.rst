@@ -61,15 +61,15 @@ ASL image processing
 Modules that process the analyte for ASL image to produced CBF  are .
 
  * :ref:`cbf`: compute cerbral blood flow (cbf) from asl data with basic model. 
- * :ref:`basil`: compute cerbral blood flow (cbf) from asl data using Bayesian model inversion with addtional derivatives 
+ * :ref:`basil`: compute cerbral blood flow (cbf) from asl data using Bayesian model inversion with additional derivatives 
  such as spatial regularized and partial volume corrected cbf.
 
 ASL derivatives
 -----------------------
 
 Modules that generate derivative maps from ASL data:
- * :ref:`score`: detects and discards the cbf volumes that might contribute to artifact before comuting the average.
- * :ref:`scrub`: compute average cbf from cbf timeseries by using bayerisan inference method with the aim of removing the white noise.
+ * :ref:`score`: detects and discards the cbf volumes that might contribute to artifact.
+ * :ref:`scrub`: compute average cbf from cbf timeseries by using Bayesian inference method with the aim of removing the white noise.
 
 
 Registration

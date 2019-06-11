@@ -136,7 +136,9 @@ control volumes is used as reference or M0 scan (scale=1). The ASL processing re
   id0,img,m0,anatdir
   sub-1,/path/to/asl.nii.gz,/path/to/m0.nii.gz,fmriprep/sub-xx/anat
 
+
 With the :ref:`struc`: directory of the `xcpEngine` output, the cohort file is shown below.::
+
   id0,img,m0,antsct
   sub-1,/path/to/asl.nii.gz,/path/to/m0.nii.gz,/path/to/struc
 
