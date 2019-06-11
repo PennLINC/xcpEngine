@@ -4,7 +4,7 @@
 =========
 
 ``cbf`` module computes the mean CBF and CBF timeseries by subtracting label-conttol pairs and modeled  by the kinetic model. 
-The module requires some parameters to be specified and standard parameters are supplied if they are not supply or provided. 
+The module requires some parameters to be specified and standard parameters are supplied if those parameters are not provided. 
 
 
 ``cbf_first_tagged``
@@ -26,7 +26,7 @@ If `cbf_first_tagged is 1, that means the first of pair volume is label and the 
 
 *Labelling approach methods.*
 
-As of now, only two popular label strategies are implemented:.::
+As of now, only two popular label strategies are implemente in xcpEngine .::
 
   # for pulsed ASL (PASL)
   cbf_perfusion[cxt]=pasl
@@ -50,7 +50,7 @@ if there is no M0, `cbf_m0_scale` is set to 1, and average control volume is use
 
 ``cbf_lambda``
 ^^^^^^^^^^^^^^
-The lambda is the blood-brain partition coefficient that scals the signal intentisty of tissues to that of blood.
+The lambda is the blood-brain partition coefficient that scales the signal intentisty of the tissues to that of the blood.
 The common or standard value is ƛ=0.90 ml/g.::
 
   # 
@@ -70,9 +70,9 @@ These two parameters are applicable to only CASL/PCASL. the cbf_tau is the label
 ``cbf_t1blood``, ``cbf_alpha``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`cbf_t1blood` is the longitutdinal relaxation time of blood in seconds and the standard value denpend on the  field strength of MRI machine. 
+`cbf_t1blood` is the longitutdinal relaxation time of the blood in seconds and the standard value denpends on the  field strength of MRI machine. 
 For 3T and 1.5T, the standard `cbf_t1blood` values are 1.650s and 1.350s respectively. The `cbf_alpha` is the labelling efficiency and values are
-different for PASL and CASL/PCASL. The standard value is 0.85 for CASL/PCASL and 0.08 for PASL.::
+different for PASL and CASL/PCASL. The standard value is 0.85 for CASL/PCASL and 0.98 for PASL.::
   # 
   cbf_t1blood[cxt]=1.65 # for 3T MRI
   cbf_alpha[cxt]=0.85 # for PCASL  

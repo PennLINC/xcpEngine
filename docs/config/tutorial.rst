@@ -81,10 +81,12 @@ new cohort file::
 3. Running a ASL processing pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Processing ASL data for computation of CBF  can be done using  .
+Processing ASL data for computation of CBF  can be done using
 `design files <https://github.com/PennBBL/xcpEngine/blob/master/designs/cbf.dsn>`_
 This will take the ASL,M0 (if available) and anatomical directory. 
-The ASL image is run just like both anatomical anf functional connectivity pipelines.
+ASL processing steps is the same like  both anatomical anf functional connectivity pipelines, 
+the only different is cohort file and design files. 
+
 
 4. Arguments
 ~~~~~~~~~~~~

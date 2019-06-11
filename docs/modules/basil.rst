@@ -3,7 +3,7 @@
 ``basil``
 =========
 
-``basil`` module computes the CBF and the derivatives using Bayesian inference method for the kinetic model inversion. It also part of FSL and
+Basil module computes the CBF and the derivatives using Bayesian inference method for the kinetic model inversion. It also part of FSL and
 can aslo be run independently. 
 
 
@@ -33,14 +33,14 @@ There are three types- tc (label-control), ct(control-label) and diff (cbf).::
   # the first volume is control
   basil_inputformat[[cxt]=ct
 
- # each volume is cbf
+ # each volume is cbf, already substracted
   basil_inputformat[[cxt]=diff
 
 
-``basil_spatial``,``basil_pvc``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``basil_spatial``  and  ``basil_pvc``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If the spatial regulaization (basil_spatial) by kernel  and  the partial 
+If the spatial regularization (basil_spatial) by kernel  and  the partial 
 voulme correction (basil_pvc) are require, they are set to 1s or otherwise 0s ::
 
   # spatial regulaization
@@ -50,7 +50,7 @@ voulme correction (basil_pvc) are require, they are set to 1s or otherwise 0s ::
   basil_pvc[cxt]=1 
 
 ``basil_m0_scale``
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 *M0 scale.*
 
@@ -63,7 +63,7 @@ if there is no M0, `basil_m0_scale` is set to 1, and average control volume is u
 
 ``basil_lambda``
 ^^^^^^^^^^^^^^
-The lambda is the blood-brain partition coefficient that scals the signal intentisty of tissues to that of blood.
+The lambda is the blood-brain partition coefficient that scales the signal intentisty of tissues to that of blood.
 The common or standard value is ƛ=0.90 ml/g.::
 
   # 
@@ -73,9 +73,9 @@ The common or standard value is ƛ=0.90 ml/g.::
 ``basil_pld`` and ``basil_tis``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 These are  applicable to only CASL/PCASL. `basil_pld` is the post
- labeling delay time in seconds and basil_tis is the invertion time. The invetion time 
- is sometime the sum of label duration and post labelling delay. BASIL accepts multiple pld and tis 
- separated by commas::
+labeling delay time in seconds and basil_tis is the invertion time. The invetion time 
+is  the sum of label duration and post labelling delay. BASIL accepts multiple pld and tis 
+separated by commas::
 
   # single pld
   basil_pld[cxt]=1.8 
@@ -88,17 +88,17 @@ These are  applicable to only CASL/PCASL. `basil_pld` is the post
 ``basil_t1blood``, ``basil_alpha``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`basil_t1blood` is the longitutdinal relaxation tume of blood in seconds and the standard value denpend on the  field strength of MRI machine. 
+`basil_t1blood` is the longitutdinal relaxation time of blood in seconds and the standard value denpend on the  field strength of MRI machine. 
 For 3T and 1.5T, the standard `cbf_t1blood` values are 1.650s and 1.350s respectively. The `basil_alpha` is the labelling efficiency and values are
-different for PASL and CASL/PCASL. The standard value is 0.85 for CASL/PCASL and 0.08 for PASL.::
+different for PASL and CASL/PCASL. The standard value is 0.85 for CASL/PCASL and 0.98 for PASL.::
   # 
   basil_t1blood[cxt]=1.65 # for 3T MRI
   basil_alpha[cxt]=0.85 # for PCASL  
 
 ``basil_MOTR``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This is for the TR of MO scan if it is available. It is very important for the purpose of calibration and also account foe shorter TR value.
-the default is 3.2s but it also read from the MO scan image.  
+This is for the TR of MO scan if it is available. It is very important for the purpose of calibration and also account for shorter TR value.
+The default is 3.2s but it also read from the MO scan image.  
 
 
 ``Expected output``
