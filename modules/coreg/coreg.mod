@@ -456,7 +456,7 @@ if (( ${registered} == 1  ))
    subroutine                 @7.1  [Slicewise rendering]
    exec_xcp regslicer               \
       -s    ${seq2struct_img[cxt]}  \
-      -t    ${struct[sub]}          \
+      -t    ${struct_head[sub]}          \
       -i    ${intermediate}         \
       -o    ${outdir}/${prefix}_seq2struct
    routine_end
