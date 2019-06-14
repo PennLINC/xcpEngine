@@ -123,7 +123,7 @@ scrub_cleanup[6]=1
 ###################################################################
 
 roiquant_atlas[7]=all
-roiqunat_globals[7]=1
+roiquant_globals[7]=1
 roiquant_vol[7]=0
 roiquant_rerun[7]=0
 roiquant_cleanup[7]=1
