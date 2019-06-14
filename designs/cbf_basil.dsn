@@ -93,7 +93,7 @@ basil_cleanup[3]=1
 ###################################################################
 
 roiquant_atlas[4]=all
-#roiqunat_globals[4]=1
+roiquant_globals[4]=1
 roiquant_vol[4]=0
 roiquant_rerun[4]=0
 roiquant_cleanup[4]=1
