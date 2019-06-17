@@ -133,7 +133,7 @@ echo ${img[sub]} 2
       -f       0                       \
       -j       2                       \
       -k       ${jlf_keep_warps[cxt]}  \
-      -t       ${img[sub]}             \
+      -t       ${img}             \
       -o       ${outdir}/${prefix}_    \
       -c       ${jlf_parallel[cxt]}    \
       -x       or \
