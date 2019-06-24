@@ -25,7 +25,7 @@ operation, and no volume is deleted/removed.  For despiking in xcpEngine, ``DSP`
 
 Temporal Censoring
 ^^^^^^^^^^^^^^^^^^^^^^^^
-Temporal Censoring is a process in which data points with excessive motion outliers are identified/flaggeg.
+Temporal Censoring is a process in which data points with excessive motion outliers are identified/flagged.
 The censored data points are removed from the data. This is effective for removing spurious sources of connectivity
 in fMRI data but must be applied verycarefully because the censored volumes are removed and the final BOLD signal.
 To apply censoring in xcpEngine, ``confound2_censor[cxt]=1`` should be specified in ``confound2``
