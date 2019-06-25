@@ -13,6 +13,7 @@ import json
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 def get_parser():
     parser = ArgumentParser(
         formatter_class=RawTextHelpFormatter,
@@ -49,7 +50,7 @@ def ulify(elements):
 
 modulelist=ulify(modules)
 
-modulewant=['coreg','prestats','struc','norm','qcfc','jlf','fcon','alff','reho','cbf','basil','score','scrub']
+modulewant=['coreg','prestats','task','struc','norm','qcfc','jlf','fcon','alff','reho','cbf','basil','score','scrub']
 modules1=[]
 for j in modulewant:
      if j in modules:
@@ -181,10 +182,15 @@ for i in modules1:
          rehoplot='figures/'+prefix+'_reho.svg'
          html_report=html_report + '<h1> reho module </h1> <object type="image/svg+xml" data="'+ rehoplot +'" alt="Segmentation" width="2000"height="400"></object>'
     elif i == 'norm' :
-           moving=load_img(outdir+'/norm/'+prefix+'_referenceVolumeBrainStd.nii.gz')
+           moving=os.path.isfile(outdir+'/norm/'+prefix+'_referenceVolumeBrainStd.nii.gz')
+           if moving: 
+               moving=load_img(outdir+'/norm/'+prefix+'_referenceVolumeBrainStd.nii.gz')
+           else :
+               moving=load_img(outdir+'/norm/'+prefix+'_intensityStd.nii.gz')
+           
            mask=threshold_img(moving,1e-3)
            cuts=cuts_from_bbox(mask_nii=mask,cuts=7)
-           f1=plot_registration(moving,'fixed-image',cuts=cuts,label='Functional')
+           f1=plot_registration(moving,'fixed-image',cuts=cuts,label='subject volume')
            f2=plot_registration(load_img(template),'moving-image',cuts=cuts,label='Template')
            compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_normalization.svg')
            normreg='figures/'+prefix+'_normalization.svg'
@@ -238,6 +244,19 @@ for i in modules1:
              atlaslist.append(k)
          atlasused=ulify(atlaslist)
          html_report=html_report + '<h1> roiquant module </h1> <h3> The atlas used: ' + atlasused +' </h3> ' 
+    elif i == 'task' :
+         os.system('cp  '+ outdir+'/task/fsl/'+prefix+'.feat/design.png '  +outdir+'/figures/'+prefix+'_taskdesign.png')
+         taskdeign=outdir+'/figures/'+prefix+'_taskdesign.png'
+         moving=load_img(outdir+'/task/'+prefix+'_referenceVolumeBrain.nii.gz')
+         fixedim=load_img(outdir+'/task/'+prefix+'_struct.nii.gz')
+         mask=threshold_img(moving,1e-3)
+         cuts=cuts_from_bbox(mask_nii=mask,cuts=7)
+         f1=plot_registration(moving,'fixed-image',cuts=cuts,label='functional')
+         f2=plot_registration(fixedim,'moving-image',cuts=cuts,label='structural')
+         compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_taskregistration.svg')
+         taskreg='figures/'+prefix+'_taskregistration.svg'
+         html_report=html_report + '<h1> task module </h1>  <p> Coregistration of T1w and Fucntional image <p> <object type="image/svg+xml" data="'+ taskreg + '" alt="Segmentation" width="2000"height="800"></object> \
+           <h3> Task design </h3> <p> Task design with 24 motion parameters </p> </h3>  <p> <p>   <object type="image/svg+xml" data="'+ taskdeign + '" alt="Segmentation" width="1200"height="420"></object>'
     elif i == 'qcfc' :
          os.system('cp '+ outdir+'/qcfc/'+prefix+'_voxts.png ' +outdir+'/figures/'+prefix+'_voxts.png')
          qcplot='figures/'+prefix+'_voxts.png'
