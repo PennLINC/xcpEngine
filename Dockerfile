@@ -197,6 +197,8 @@ RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
 RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
+RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
+
 ADD . /xcpEngine
 
 RUN bash -c \
