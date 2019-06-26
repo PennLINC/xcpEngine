@@ -43,6 +43,7 @@ The task contrast (file.json).::
               "eyesclose-eyesopen":[-1,1]
               }
 
+The name of task (from fmriprep output)  to be processed is required in the configuration panel. 
 
 The length of the  weight must be equal to the number of events.
 
