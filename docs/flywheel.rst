@@ -42,3 +42,6 @@ The task contrast (file.json.::
               }
 
 The length of weight must be equal to number of events.
+
+Running task-regression functional connectivity only requires event file. The event file will be convolved  with the  Hemodynamic Response Function (HRF) before 
+regression. 
