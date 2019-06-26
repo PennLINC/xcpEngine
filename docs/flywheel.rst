@@ -36,11 +36,11 @@ The task contrast (file.json).::
 
 
            { 
-              "eyeopen":[1,0],
-              "eyeclose":[0,1],
+              "eyesopen":[1,0],
+              "eyesclose":[0,1],
               "openandclose":[1,1],
-              "eyeopen-eyesclose":[1,-1],
-              "eyelose-eyeopen":[-1,1]
+              "eyesopen-eyesclose":[1,-1],
+              "eyesclose-eyesopen":[-1,1]
               }
 
 
