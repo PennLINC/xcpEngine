@@ -32,7 +32,7 @@ For example, eyes-open and eyes-close experiment events can be combine as follow
               1          0
 
 
-The task contrast (file.json.::
+The task contrast (file.json).::
 
 
            { 
