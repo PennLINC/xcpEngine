@@ -2,8 +2,7 @@
 xcpEngine on Flywheel
 ===================================
 The xcpEngine can be run on `flywheel <https://upenn.flywheel.io>`_. The procedure is the same as runnning it on computers/clusters. 
-   
-    xcpEngine on Flywheel
+
 
 The `design file <https://xcpengine.readthedocs.io/config/design.html>`_ is compulsory for any analysis. 
 Preprocessing of BOLD data require prior preprocessing with `FMRIPREP`. The FMRIPREP output directory needs to be supplied 
@@ -32,7 +31,10 @@ For example, eyes-open and eyes-close experiment events can be combine as follow
               ..         ..
               1          0
 
+
 The task contrast (file.json.::
+
+
            { 
               "eyeopen":[1,0],
               "eyeclose":[0,1],
@@ -41,7 +43,8 @@ The task contrast (file.json.::
               "eyelose-eyeopen":[-1,1]
               }
 
-The length of weight must be equal to number of events.
+
+The length of the  weight must be equal to the number of events.
 
 Running task-regression functional connectivity only requires event file. The event file will be convolved  with the  Hemodynamic Response Function (HRF) before 
 regression. 
