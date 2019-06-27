@@ -23,7 +23,7 @@ suppressMessages(suppressWarnings(library(MASS)))
 option_list = list(
    make_option(c("-i", "--img"), action="store", default=NA, type='character',
               help="Path to the 4D ASL time series from which perfusion will be computed."),
-   make_option(c("-g", "--grey"), action="store", default=NA, type='character',
+   make_option(c("-y", "--grey"), action="store", default=NA, type='character',
               help="Grey matter."),
    make_option(c("-w", "--white"), action="store", default=NA, type='character',
               help="white matter"),

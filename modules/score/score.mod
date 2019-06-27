@@ -52,7 +52,7 @@ process               cbfscorets        ${prefix}_cbfscorets
   # obtain the score 
         exec_xcp score.R                 \
              -i     ${perfusion[sub]}       \
-             -g     ${gm2seq[sub]}           \
+             -y     ${gm2seq[sub]}           \
              -w     ${wm2seq[sub]}           \
              -c     ${csf2seq[sub]}          \
              -t     ${score_thresh[cxt]} \

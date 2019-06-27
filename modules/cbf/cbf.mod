@@ -111,7 +111,6 @@ subroutine @1.3 Generate m0 volume
 if ! is_image ${m0[sub]} 
    then 
    m0=${out}/cbf/${prefix}_m0.nii.gz
-   cbf_m0_scale[cxt]=1
    if (( ${cbf_first_tagged[cxt]} == 1 ))
       then
       exec_afni 3dcalc -prefix ${m0}  -a ${intermediate}.nii.gz'[0..$(2)]' -expr "a" 2>/dev/null   

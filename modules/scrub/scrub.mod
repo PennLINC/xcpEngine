@@ -48,7 +48,7 @@ derivative_set       cbfscrub     Statistic         mean
   # obtain the score 
         exec_xcp score.R                 \
              -i     ${perfusion[sub]}       \
-             -g     ${gm2seq[sub]}           \
+             -y     ${gm2seq[sub]}          \
              -w     ${wm2seq[sub]}           \
              -c     ${csf2seq[sub]}          \
              -t     ${scrub_thresh[cxt]} \
@@ -58,7 +58,7 @@ derivative_set       cbfscrub     Statistic         mean
  # compute the scrub 
         exec_xcp  scrub_cbf.R           \
             -i     ${cbfscorets[cxt]} \
-            -g     ${gm2seq[sub]}           \
+            -y     ${gm2seq[sub]}           \
             -w     ${wm2seq[sub]}         \
             -c     ${csf2seq[sub]}          \
             -m     ${mask[sub]} \
