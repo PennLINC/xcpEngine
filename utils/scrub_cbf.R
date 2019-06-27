@@ -77,11 +77,11 @@ cbfts    <-         readNifti(cbf_ts)
 mask     <-         readNifti(mask)
 
 # threhdoling the prb. maps and obtain the idx
-gm <- gm*mask; gmidx <- gm[mask==1]; 
+gm1 <- gm*mask; gmidx <- gm1[mask==1]; 
 gmidx[gmidx<thresh] <- 0;   gmidx[gmidx>0] <- 1
-wm <- wm*mask;  wmidx <- wm[mask==1]; 
+wm1 <- wm*mask;  wmidx <- wm1[mask==1]; 
 wmidx[wmidx<thresh] <- 0; wmidx[wmidx>0] <- 1
-csf<- csf*mask;  csfidx <- csf[mask==1];
+csf1<- csf*mask;  csfidx <- csf1[mask==1];
  csfidx[csfidx<thresh] <- 0; csfidx[csfidx>0] <- 1
 midx <- mask[mask==1];
 
@@ -200,17 +200,17 @@ ydim  <- dim(y)
   mu  <- ((mu1>thres1[[1]])&(mu1<thres1[[2]]))*(mu1-thres1[[1]]) +
     (mu1 >=thres1[[2]])*(1/(2*thres1[[2]])*mu1^2)+(thres1[[2]]/2 - thres1[[1]])
   M  <- meancbf; M <- M*mask; M[mask==1] <- mu; modrobprior <- mu/10;
-  gmidx2 <- as.numeric((gm>thresh) & (M==0) & (wm > csf))
-  wmidx2 <- as.numeric((wm>thresh) & (M==0) & (gm > csf))
+  gmidx2 <- as.numeric((gm1>thresh) & (M==0) & (wm1 > csf1))
+  wmidx2 <- as.numeric((wm1>thresh) & (M==0) & (gm1 > csf1))
   if (sum(gmidx2)==0 | sum(wmidx2)==0) { 
       gmidx2 <- as.numeric(gm>thresh); wmidx2 <- as.numeric(wm>thresh)}
   idxx <- as.numeric(gmidx2 | wmidx2)
   X    <- zeros(length(idxx),2)
-  X[,1] <- gm[gm>-1]*idxx; 
-  X[,2] <- wm[wm>-1]*idxx
+  X[,1] <- gm1[gm1>-1]*idxx; 
+  X[,2] <- wm1[wm1>-1]*idxx
   A     <- (meancbf[idxx>=0])*idxx; 
   c     <- mldivide(X, A);
-  Globalpriorfull <- c[1]*gm +c[2]*wm
+  Globalpriorfull <- c[1]*gm1 +c[2]*wm1
   Globalprior     <- Globalpriorfull[mask==1];
 #}
 
