@@ -76,6 +76,9 @@ csf      <-         readNifti(csf)
 cbfts    <-         readNifti(cbf_ts) 
 mask     <-         readNifti(mask)
 
+if ( length(dim(gm)) == 4 ) { gm=gm[,,,1]; wm=wm[,,,1]; csf=csf[,,,1] }
+if ( length(dim(mask)) == 4 ) { mask=mask[,,,1] }
+
 # threhdoling the prb. maps and obtain the idx
 gm1 <- gm*mask; gmidx <- gm1[mask==1]; 
 gmidx[gmidx<thresh] <- 0;   gmidx[gmidx>0] <- 1
