@@ -161,7 +161,7 @@ myrobustfit=function(Y,mu,Globalprior,lmd,localprior,wfun='huber',tune=1.345,fla
   
   
         tiny_s    <-  (1e-6)*(apply(h,2,sd));tiny_s[tiny_s==0]=1
-        D         <-  sqrt(eps(type.convert(X)))
+        D         <-  sqrt(eps((X)))
         iter <- 0; interlim <- 100
   
          while (iter<interlim) {
@@ -221,7 +221,7 @@ localprior <-  0
 lmd        <-  0
 
 
-bb <- myrobustfit(y,mu = mu, Globalprior = Globalprior, lmd = lmd, localprior = localprior, wfun = wfun,tune = tune,flagstd = flagstd,flagmodrobust =flagmodrobust, modrobprior = modrobprior)
+bb <- myrobustfit(Y=y,mu = mu, Globalprior = Globalprior, lmd = lmd, localprior = localprior, wfun = wfun,tune = tune,flagstd = flagstd,flagmodrobust =flagmodrobust, modrobprior = modrobprior)
 
 newcbf            <- meancbf;
 newcbf            <- newcbf*mask
