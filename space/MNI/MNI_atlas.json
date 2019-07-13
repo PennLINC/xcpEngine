@@ -1,9 +1,25 @@
 {
+  "HarvardOxford": {
+    "Map": "${BRAINATLAS}/HarvardOxford/HarvardOxfordMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/HarvardOxford/HarvardOxfordNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/HarvardOxford/HarvardOxfordNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
   "aal116": {
     "Citation": "${BRAINATLAS}/aal116/aal116Reference.bib",
     "Map": "${BRAINATLAS}/aal116/aal116MNI.nii.gz",
     "NodeIndex": "${BRAINATLAS}/aal116/aal116NodeIndex.1D",
     "NodeNames": "${BRAINATLAS}/aal116/aal116NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "desikanKilliany": {
+    "Map": "${BRAINATLAS}/desikanKilliany/desikanKillianyMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/desikanKilliany/desikanKillianyNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/desikanKilliany/desikanKillianyNodeNames.txt",
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
@@ -21,8 +37,6 @@
     "Citation": "${BRAINATLAS}/gordon333/gordon333Reference.bib",
     "CommunityNamesAPriori": "${BRAINATLAS}/gordon333/gordon333CommunityNames.txt",
     "CommunityPartitionAPriori": "${BRAINATLAS}/gordon333/gordon333CommunityAffiliation.1D",
-    "CommunityPartitionAPriori": "${BRAINATLAS}/gordon333/gordon333CommunityAffiliation.1D",
-    "CommunityPartitionAPrioriIDS": "${BRAINATLAS}/gordon333/gordon333CommunityAffiliation.1D",
     "Map": "${BRAINATLAS}/gordon333/gordon333MNI.nii.gz",
     "NodeIndex": "${BRAINATLAS}/gordon333/gordon333NodeIndex.1D",
     "NodeNames": "${BRAINATLAS}/gordon333/gordon333NodeNames.txt",
