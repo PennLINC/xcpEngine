@@ -229,7 +229,7 @@ while (( ${#rem} > 0 ))
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
          strucn="${img1[sub]%/*/*}";
-         if [[ -f  $(ls ${strucn}/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5 2>/dev/null ) ]]; then  
+         if [[ -d  ${strucn}/anat/ ]]; then  
                   strucn=${strucn}
          else
 
@@ -240,20 +240,18 @@ while (( ${#rem} > 0 ))
          fi
          
          if [[ -d ${antsct[sub]} ]]; then
-               subroutine @ generate mask and struct/structhead 
+               subroutine @ generate mask and structural head/mask 
               
                structmask=$(ls -d ${strucn}/anat/*${maskpart2})
 
-               subroutine @ resampling the ref vol to template orientation
+               subroutine @ reoreint the reference volume/mask to template orientation
                exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} -prefix  \
                    ${out}/prestats/${prefix}_referenceVolume.nii.gz -overwrite
              
                output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
                
-             
-
                exec_afni 3dresample -orient ${template_orientation} \
-               -inset ${mask1} -prefix ${prefix}_imgmask.nii.gz -overwrite
+                  -inset ${mask1} -prefix ${prefix}_imgmask.nii.gz -overwrite
 
                exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
                   -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
@@ -288,15 +286,27 @@ while (( ${#rem} > 0 ))
                output struct_head ${out}/prestats/${prefix}_structbrain.nii.gz  
                exec_sys rm -rf ${prefix}_structmask.nii.gz
 
-                
- 
-             
-             
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
                rm -f ${spaces[sub]}
-               echo '{}'  >> ${spaces[sub]}
+               echo '{}'  >> ${spaces[sub]} 2>/dev/null 
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
+
                mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                         $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
                pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
@@ -340,71 +350,76 @@ while (( ${#rem} > 0 ))
          
                
           else 
-          
+               #  find which template is present 
+               b1=${img1[sub]##*space-}; 
+               if [[ ${b1} == ${img1[sub]} ]]; then 
+                echo \
+                "The bold is in native space, xcpEngine is not 
+                supporting native space now.  
+                "
+                exit 1
+               fi 
                
-               mni2t1=$(ls -f  $strucn/anat/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5)
-               t12mni=$(ls -f  $strucn/anat/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5)
-         
-                # check if the input image has MNI and convert to T1w
-                 string1='MNI152'; b1=$(basename ${img1[sub]})
-                      if [[ ${b1} =~ ${string1} ]]; then 
-                      ## check if the confounmatix is present and the mask 
-             
-                      struct1=$( ls -d $strucn/anat/*MNI*desc-preproc_T1w.nii.gz)
-                      segmentation1=$(ls -d  $strucn/anat/*MNI*dseg.nii.gz)
-                      structmask=$(ls -d  $strucn/anat/*MNI*desc-brain_mask.nii.gz)
-                      onetran=${XCPEDIR}/utils/oneratiotransform.txt
-  
-                      subroutine        @ checking refvolume and structural orientation
-                      exec_afni 3dresample -orient  ${template_orientation} \
+               template_label=${b1%%_*} 
+               if [[ ${template_label} != 'T1w' ]]; then 
+
+                   struct1=$( ls -d $strucn/anat/*${template_label}*desc-preproc_T1w.nii.gz)
+                   segmentation1=$(ls -d  $strucn/anat/*${template_label}*dseg.nii.gz)
+                   structmask=$(ls -d  $strucn/anat/*${template_label}*desc-brain_mask.nii.gz)
+                   onetran=${XCPEDIR}/utils/oneratiotransform.txt
+
+                   subroutine        @ checking refvolume and structural orientation
+                   exec_afni 3dresample -orient  ${template_orientation} \
                            -inset ${refvol} -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz -overwrite
 
-                      output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
-
-                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                  output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
+   
+                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            -inset ${struct1} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
 
                       #output struct_head ${out}/prestats/${prefix}_struct.nii.gz
-                      output struct  ${out}/prestats/${prefix}_struct.nii.gz
-                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                  output struct  ${out}/prestats/${prefix}_struct.nii.gz
+                  output struct_head  ${out}/prestats/${prefix}_struct.nii.gz
+
+                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            -inset ${struct[cxt]} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
                        
-                      exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            -inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
 
-                      output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
+                  output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
-                       subroutine        @  generate mask and referenceVolumeBrain 
-                     
-
-                       exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                  subroutine        @  generate mask and referenceVolumeBrain 
+                  exec_afni 3dresample -master ${referenceVolume[cxt]} \
                           -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
-
-                      exec_fsl fslmaths ${mask1} -mul ${prefix}_structmask.nii.gz \
+                  exec_fsl fslmaths ${mask1} -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
+                  output mask  ${out}/prestats/${prefix}_mask.nii.gz
+                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                      -inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
+                  exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
+                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz       
+                  output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
 
-                      output mask  ${out}/prestats/${prefix}_mask.nii.gz
-                       exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
-
-                      
-
-                      exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
-                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
-                          
-                      output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
-
-                
-                      subroutine        @  generate new ${spaces[sub]} with spaceMetadata
- 
-                     exec_fsl  fslmaths ${mask[cxt]} -mul ${out}/prestats/${prefix}_struct.nii.gz \
-                  ${out}/prestats/${prefix}_structbrain.nii.gz
-               
-                    output struct_head ${out}/prestats/${prefix}_structbrain.nii.gz  
-                    exec_sys rm -rf ${prefix}_structmask.nii.gz
-
-                       rm -f ${spaces[sub]}
+                  rm -f ${spaces[sub]}
                        echo '{}'  >> ${spaces[sub]}
+                       mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                      oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+                       
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
+
                        mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                                     $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
                        pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
@@ -434,11 +449,24 @@ while (( ${#rem} > 0 ))
                          
                          intermediate=${intermediate}_${cur} 
                 
-   
                 else 
-                    struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" ) 
-                    segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" -not -path "*space*")
-                    structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*" -not -path  "*space*")
+                  
+                  template_label1=${standard%'%'*}
+                  temptot1w1=$(find $strucn/anat/ -type f -name "*${template_label1}*to-T1w_mode-image_xfm.h5")
+                  t1wtotemp1=$(find $strucn/anat/ -type f -name "*from-T1w_to*${template_label1}*_mode-image_xfm.h5")
+
+                  temptot1w=$(echo $temptot1w1 | cut --delimiter " " --fields 1) 
+                  t1wtotemp=$(echo $t1wtotemp1 | cut --delimiter " " --fields 1) 
+                   
+                   echo \
+                   "
+                   The template is ${template_label1}
+                   xcpEngine only support MNI, PNC and OASIS templates for now
+                   "
+
+                  struct1=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" ) 
+                  segmentation1=$(find $strucn/anat/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" -not -path "*space*")
+                  structmask=$(find $strucn/anat/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*" -not -path  "*space*")
                     
                  exec_afni 3dresample -orient ${template_orientation} -inset ${refvol} \
                        -prefix  ${out}/prestats/${prefix}_referenceVolume.nii.gz -overwrite
@@ -450,9 +478,9 @@ while (( ${#rem} > 0 ))
                    
 
                    exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                     -inset ${structmask} -prefix ${prefix}_structmask.nii.gz -overwrite
+                     -inset ${structmask} -prefix $out/prestats/${prefix}_structmask.nii.gz -overwrite
 
-                   exec_fsl fslmaths  ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz ${out}/prestats/${prefix}_mask.nii.gz
+                   exec_fsl fslmaths  ${prefix}_imgmask.nii.gz -mul $out/prestats/${prefix}_structmask.nii.gz  ${out}/prestats/${prefix}_mask.nii.gz
                    output mask  ${out}/prestats/${prefix}_mask.nii.gz
                     rm  ${prefix}_imgmask.nii.gz
 
@@ -467,26 +495,46 @@ while (( ${#rem} > 0 ))
                   output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct ${out}/prestats/${prefix}_struct.nii.gz
                 
-                exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
+                   exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                          ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
-                output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
+                   output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
                  
-                 exec_fsl  fslmaths ${mask[cxt]} -mul ${out}/prestats/${prefix}_struct.nii.gz \
-                ${out}/prestats/${prefix}_structbrain.nii.gz
+                   exec_fsl  fslmaths ${mask[cxt]} -mul ${out}/prestats/${prefix}_struct.nii.gz \
+                   ${out}/prestats/${prefix}_structbrain.nii.gz
                
-               output struct_head ${out}/prestats/${prefix}_structbrain.nii.gz  
-               exec_sys rm -rf ${prefix}_structmask.nii.gz
+                   output struct_head ${out}/prestats/${prefix}_structbrain.nii.gz 
+
+                   exec_sys rm -rf $out/prestats/${prefix}_structmask.nii.gz
                 
-                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
-                rm -f ${spaces[sub]}
+                   subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+                   rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
+
+
+                mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+                       
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
+
 
                 mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                            $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
                 pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                        
-                       mnitopnc=$( echo ${mnitopnc})
+                       mnitopnc=$(echo ${mnitopnc})
                        pnc2mni=$(echo ${pnc2mni})
                        mnitopnc=${mnitopnc// /,}
                        pnc2mni=${pnc2mni// /,}
@@ -498,17 +546,19 @@ while (( ${#rem} > 0 ))
                          -x ${pnc2mni} -i ${mnitopnc}     \
                          -s ${spaces[sub]} 2>/dev/null
 
+
+
+
                 hd=',MapHead='${struct_head[cxt]}
 
                ${XCPEDIR}/utils/spaceMetadata          \
                          -o ${spaces[sub]}                         \
                          -f ${standard}:${template}                \
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
-                         -x ${t12mni}                                \
-                         -i ${mni2t1}                               \
+                         -i ${temptot1w}                                \
+                         -x ${t1wtotemp}                               \
                          -s ${spaces[sub]} 2>/dev/null
 
-               
                 intermediate=${intermediate}_${cur} 
                 
                 
@@ -613,6 +663,23 @@ while (( ${#rem} > 0 ))
                 rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
 
+                mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+                       
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
+
                 mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                            $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
                 pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
@@ -699,6 +766,22 @@ while (( ${#rem} > 0 ))
 
                rm -f ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+                       
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
                        
                mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                         $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
