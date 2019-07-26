@@ -170,6 +170,10 @@ sub-1/roiquant/gordon333/sub-1_gordon333_mean_reho.csv
 sub-1/roiquant/gordon333/sub-1_gordon333_mean_rehoZ.csv
 sub-1/roiquant/gordon333/sub-1_gordon333.nii.gz
 sub-1/roiquant/HarvardOxford
+sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_alff.csv
+sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_alffZ.csv
+sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_reho.csv
+sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_rehoZ.csv
 sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford.nii.gz
 sub-1/roiquant/power264
 sub-1/roiquant/power264/sub-1_power264_mean_alff.csv
