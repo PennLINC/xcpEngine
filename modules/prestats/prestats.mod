@@ -400,6 +400,11 @@ while (( ${#rem} > 0 ))
                   exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz       
                   output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
+                  
+                  exec_fsl  fslmaths ${mask[cxt]} -mul ${out}/prestats/${prefix}_struct.nii.gz \
+                   ${out}/prestats/${prefix}_structbrain.nii.gz
+               
+                   output struct_head ${out}/prestats/${prefix}_structbrain.nii.gz
 
                   rm -f ${spaces[sub]}
                        echo '{}'  >> ${spaces[sub]}
