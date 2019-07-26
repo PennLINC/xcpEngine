@@ -220,7 +220,7 @@ while (( ${#rem} > 0 ))
   
         ########################################
          
-         routine @ getting data from fmriprep directory 
+        routine @ getting data from fmriprep directory 
         exec_fsl immv ${intermediate} ${intermediate}_${cur}   
         imgprt=${img1[sub]%_*_*_*}; conf="_desc-confounds_regressors.tsv"
         exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
@@ -602,14 +602,19 @@ while (( ${#rem} > 0 ))
        #exec_fsl immv ${intermediate} ${intermediate}_${cur}
    
          subroutine        @1.1  Reading the structural and segmentation images 
-         struct1=$(find ${anatdir[sub]}/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" 2>/dev/null )
-         seg1=$(find ${anatdir[sub]}/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" 2>/dev/null )
-         structmask=$(find ${anatdir[sub]}/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*" 2>/dev/null )
-         wm_fmp=$(find ${anatdir[sub]}/ -type f -name "*WM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" 2>/dev/null )
-         csf_fmp=$(find ${anatdir[sub]}/ -type f -name "*CSF_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" 2>/dev/null )
-         gm_fmp=$(find ${anatdir[sub]}/ -type f -name "*GM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" 2>/dev/null )
-         mni2t1=$(ls -f  ${anatdir[sub]}/*from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5 2>/dev/null )
-         t12mni=$(ls -f  ${anatdir[sub]}/*from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5 2>/dev/null )
+         struct1=$(find ${anatdir[sub]}/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" 2>/dev/null )
+         seg1=$(find ${anatdir[sub]}/ -type f -name "*dseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" -not -path "*space*"  2>/dev/null )
+         structmask=$(find ${anatdir[sub]}/ -type f -name "*desc-brain_mask.nii.gz" -not -path  "*MNI*"  -not -path "*space*" 2>/dev/null )
+         wm_fmp=$(find ${anatdir[sub]}/ -type f -name "*WM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" -not -path "*space*"  2>/dev/null )
+         csf_fmp=$(find ${anatdir[sub]}/ -type f -name "*CSF_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" -not -path "*space*"  2>/dev/null )
+         gm_fmp=$(find ${anatdir[sub]}/ -type f -name "*GM_probseg.nii.gz" -not -path  "*MNI*" -not -path "*aseg*" -not -path "*space*"  2>/dev/null )
+
+         template_label1=${standard%'%'*}
+         temptot1w1=$(find ${anatdir[sub]}/ -type f -name "*${template_label1}*to-T1w_mode-image_xfm.h5")
+         t1wtotemp1=$(find ${anatdir[sub]}/ -type f -name "*from-T1w_to*${template_label1}*_mode-image_xfm.h5")
+
+         temptot1w=$(echo $temptot1w1 | cut --delimiter " " --fields 1) 
+         t1wtotemp=$(echo $t1wtotemp1 | cut --delimiter " " --fields 1) 
 
          subroutine      @1.2  Reorient  structural  images to ${template_orientation}
          exec_afni 3dresample -orient ${template_orientation} \
@@ -680,12 +685,13 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
 
+
                 mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
                            $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
                 pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                        
-                       mnitopnc=$( echo ${mnitopnc})
+                       mnitopnc=$(echo ${mnitopnc})
                        pnc2mni=$(echo ${pnc2mni})
                        mnitopnc=${mnitopnc// /,}
                        pnc2mni=${pnc2mni// /,}
@@ -703,9 +709,10 @@ while (( ${#rem} > 0 ))
                          -o ${spaces[sub]}                         \
                          -f ${standard}:${template}                \
                          -m ${structural[sub]}:${struct[cxt]}${hd} \
-                         -x ${t12mni}                                \
-                         -i ${mni2t1}                               \
+                         -i ${temptot1w}                                \
+                         -x ${t1wtotemp}                               \
                          -s ${spaces[sub]} 2>/dev/null
+
 
       elif [[ -d ${antsct[sub]} ]]; then
            
