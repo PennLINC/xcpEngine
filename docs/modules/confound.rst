@@ -307,6 +307,6 @@ the ANTs Cortical Thickness pipeline when provided appropriate priors.::
   confound2_custom[2]=
   confound2_censor[2]=0
   confound2_censor_contig[2]=0
-  confound2_framewise[2]=rmss:0.083,fds:0.167,dv:2
+  confound2_framewise[2]=fds:0.167,dv:2
   confound2_rerun[2]=0
   confound2_cleanup[2]=1
