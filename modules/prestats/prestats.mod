@@ -229,7 +229,10 @@ while (( ${#rem} > 0 ))
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
          strucn="${img1[sub]%/*/*}";
-         if [[ -d  ${strucn}/anat/ ]]; then  
+         strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
+         strucfile1=$(echo $strucfile | cut --delimiter " " --fields 1) 
+
+         if [[ -f ${strucfile1}  ]]; then  
                   strucn=${strucn}
          else
 
