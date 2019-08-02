@@ -15,12 +15,6 @@ sub-1/confound2/mc/sub-1_relMaxRMS.txt
 sub-1/confound2/mc/sub-1_relMeanRMS.txt
 sub-1/confound2/mc/sub-1_relRMS.1D
 sub-1/confound2/mc/sub-1_spatial_sd.1D
-sub-1/confound2/mc/sub-1_spikesDVct.txt
-sub-1/confound2/mc/sub-1_spikesDVpct.txt
-sub-1/confound2/mc/sub-1_spikesFDct.txt
-sub-1/confound2/mc/sub-1_spikesFDpct.txt
-sub-1/confound2/mc/sub-1_spikesRMSct.txt
-sub-1/confound2/mc/sub-1_spikesRMSpct.txt
 sub-1/confound2/mc/sub-1_tmask.1D
 sub-1/confound2/mc/sub-1_ts_outliers.1D
 sub-1/confound2/mc/sub-1_ts_quality_index.1D
