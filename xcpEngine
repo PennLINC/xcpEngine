@@ -251,7 +251,7 @@ printx         ${XCPEDIR}/core/ENVCHECK >> ${versions}
 printx         ${XCPEDIR}/core/CONSOLE_HEADER
 
 
-
+prestats_rerun[1]=1
 
 
 ###################################################################
