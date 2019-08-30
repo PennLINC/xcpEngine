@@ -147,6 +147,7 @@ sub-1/regress
 sub-1/regress/sub-1_confcor.txt
 sub-1/regress/sub-1_confmat.1D
 sub-1/regress/sub-1_img_sm6.nii.gz
+sub-1/regress/sub-1_nVolumesCensored.txt
 sub-1/regress/sub-1_residualised.nii.gz
 sub-1/reho
 sub-1/reho/sub-1_referenceVolume.nii.gz
