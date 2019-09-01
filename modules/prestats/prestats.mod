@@ -394,9 +394,11 @@ while (( ${#rem} > 0 ))
 
                   subroutine        @  generate mask and referenceVolumeBrain 
                   exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                          -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
-                  exec_fsl fslmaths ${mask1} -mul ${prefix}_structmask.nii.gz \
+                          -inset ${structmask}  -prefix ${out}/prestats/${prefix}_structmask.nii.gz -overwrite
+
+                  exec_fsl fslmaths ${mask1} -mul ${out}/prestats/${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
+                  
                   output mask  ${out}/prestats/${prefix}_mask.nii.gz
                   exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                       -inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
