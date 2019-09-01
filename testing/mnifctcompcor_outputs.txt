@@ -68,6 +68,7 @@ sub-1/prestats/sub-1_referenceVolumeBrain.nii.gz
 sub-1/prestats/sub-1_referenceVolume.nii.gz
 sub-1/prestats/sub-1_segmentation.nii.gz
 sub-1/prestats/sub-1_structbrain.nii.gz
+sub-1/prestats/sub-1_structmask.nii.gz
 sub-1/prestats/sub-1_struct.nii.gz
 sub-1/qcfc
 sub-1/qcfc/sub-1_depthMap.nii.gz
