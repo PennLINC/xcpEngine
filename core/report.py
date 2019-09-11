@@ -271,7 +271,8 @@ for i in modules1:
          dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
          dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
          tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
-         if tmask.ndim>0:
+         tt=tmask.sum()
+         if tt > 1:
             fda=fd[tmask>0]  
          else:
             fda=fd
