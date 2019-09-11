@@ -272,9 +272,9 @@ for i in modules1:
          dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
          tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
          if tmask.shape:
-            fda=fd
+            fda=fd[tmask>0]  
          else:
-            fda=fd[tmask>0]
+            fda=fd
          
          fig= plt.gcf()
          grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,
