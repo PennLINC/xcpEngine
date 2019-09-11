@@ -42,6 +42,8 @@ sub-1/figures
 sub-1/figures/sub-1_alff.svg
 sub-1/figures/sub-1_corrplot.svg
 sub-1/figures/sub-1_normalization.svg
+sub-1/figures/sub-1_prestats.svg
+sub-1/figures/sub-1_qcfc.svg
 sub-1/figures/sub-1_registration.svg
 sub-1/figures/sub-1_reho.svg
 sub-1/figures/sub-1_voxts.png

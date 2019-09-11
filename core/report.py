@@ -12,6 +12,8 @@ from niworkflows.viz.plots import *
 import json
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def get_parser():
@@ -260,12 +262,50 @@ for i in modules1:
     elif i == 'qcfc' :
          os.system('cp '+ outdir+'/qcfc/'+prefix+'_voxts.png ' +outdir+'/figures/'+prefix+'_voxts.png')
          qcplot='figures/'+prefix+'_voxts.png'
-         html_report=html_report + '<h1> qcfc module </h1>  <h3> <p>  The spike plot consists of dvars (DV), relative motion (RMS) and framewise displacement (FD),  \
-         The middle carpet plot is the raw BOLD data and bottom carpet plot is residualized BOLD data </p>  <p> Check motionDVCorrInit (correlation of DV and RMS before regression) and motionDVCorrFinal \
-         (correlation of DV and RMS after regression) in the QC table above  </p> </h3>  <object type="image/svg+xml" data="'+ qcplot + '" alt="Segmentation" width="2000"height="1500"></object>'
+         img1=load_img(outdir+'/prestats/'+prefix+'_preprocessed.nii.gz')
+         img2=load_img(outdir+'/regress/'+prefix+'_residualised.nii.gz')
+         seg=load_img(outdir+'/prestats/'+prefix+'_segmentation.nii.gz').get_fdata()
+         tr=img2.header.get_zooms()[-1]
+         #read confound and tr
+         fd=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_fd.1D')
+         dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
+         dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
+         tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
+         fda=fd[tmask>0]
+         
+         fig= plt.gcf()
+         grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,
+                            height_ratios=[1] * (3 - 1) + [5])
+
+         confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
+         confoundplot(dvar, grid[1], tr=tr, color='r',name='DVARS')
+         plot_carpet(img1,seg, subplot=grid[-1],tr=tr)
+         fig.savefig(outdir+'/figures/'+prefix+'_prestats.svg',bbox_inches="tight",pad_inches=None)
+         prestatsfig='figures/'+prefix+'_prestats.svg'
+         
+         # after 
+         fig= plt.gcf()
+         grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,
+                            height_ratios=[1] * (3 - 1) + [5])
+         
+         confoundplot(fda, grid[0], tr=tr, color='b',name='FD')
+         confoundplot(dvar2, grid[1], tr=tr, color='r',name='DVARS')
+         plot_carpet(img2,seg, subplot=grid[-1],tr=tr)
+         fig.savefig(outdir+'/figures/'+prefix+'_qcfc.svg',bbox_inches="tight",pad_inches=None)
+         qcfcfig='figures/'+prefix+'_qcfc.svg'
+   
+
+         #html_report=html_report + '<h1> qcfc module </h1>  <h3> <p>  The spike plot consists of dvars (DV), relative motion (RMS) and framewise displacement (FD),  \
+         #The middle carpet plot is the raw BOLD data and bottom carpet plot is residualized BOLD data </p>  <p> Check motionDVCorrInit (correlation of DV and RMS before regression) and motionDVCorrFinal \
+         #(correlation of DV and RMS after regression) in the QC table above  </p> </h3>  <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object>'
+         
+         html_report=html_report + '<h1> qcfc module </h1>  <p> FD, DVARS and BOLD Times series before regression <p> <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object> \
+           <p> DVARS and BOLD Times series after regression </p> </h3> <p> <p> <object type="image/svg+xml" data="'+  qcfcfig+ '" alt="Segmentation" width="2000"height="1500"></object>'
+
+
     else :
         html_report=html_report + '</body>  </html>'
 
-filereport= open(outdir+'/'+prefix+'_report.html','w')
+filereport=open(outdir+'/'+prefix+'_report.html','w')
 filereport.write(html_report)
 filereport.close()
