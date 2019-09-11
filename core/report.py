@@ -271,7 +271,10 @@ for i in modules1:
          dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
          dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
          tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
-         fda=fd[tmask>0]
+         if len(tmask) == 1:
+            fda=fd
+         else:
+            fda=fd[tmask>0]
          
          fig= plt.gcf()
          grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,
@@ -299,8 +302,8 @@ for i in modules1:
          #The middle carpet plot is the raw BOLD data and bottom carpet plot is residualized BOLD data </p>  <p> Check motionDVCorrInit (correlation of DV and RMS before regression) and motionDVCorrFinal \
          #(correlation of DV and RMS after regression) in the QC table above  </p> </h3>  <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object>'
          
-         html_report=html_report + '<h1> qcfc module </h1>  <p> FD, DVARS and BOLD Times series before regression <p> <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object> \
-           <p> DVARS and BOLD Times series after regression </p> </h3> <p> <p> <object type="image/svg+xml" data="'+  qcfcfig+ '" alt="Segmentation" width="2000"height="1500"></object>'
+         html_report=html_report + '<h1> qcfc module </h1>  <p> <h3> FD, DVARS and BOLD Times series before regression </h3>  <p> <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object> \
+           <p> <h3>  DVARS and BOLD Times series after regression </h3>  </p> </h3> <p> <p> <object type="image/svg+xml" data="'+  qcfcfig+ '" alt="Segmentation" width="2000"height="1500"></object>'
 
 
     else :
