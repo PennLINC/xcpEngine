@@ -196,7 +196,7 @@ for i in modules1:
            f2=plot_registration(load_img(template),'moving-image',cuts=cuts,label='Template')
            compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_normalization.svg')
            normreg='figures/'+prefix+'_normalization.svg'
-           html_report=html_report + '<h1> norm module </h1>  <p> Functional normalization to the Template <p> <object type="image/svg+xml" data="'+ normreg + '" alt="Segmentation" width="2000"height="800"></object>'
+           html_report=html_report + '<h1> norm module </h1>  <p> <h3> Functional normalization to the Template </h3> <p> <object type="image/svg+xml" data="'+ normreg + '" alt="Segmentation" width="2000"height="800"></object>'
     elif i == 'coreg':
            moving=load_img(outdir+'/coreg/'+prefix+'_seq2struct.nii.gz')
            fixedim=load_img(outdir+'/coreg/'+prefix+'_target.nii.gz')
@@ -206,7 +206,7 @@ for i in modules1:
            f2=plot_registration(fixedim,'moving-image',cuts=cuts,label='struct')
            compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_registration.svg')
            natreg='figures/'+prefix+'_registration.svg'
-           html_report=html_report + '<h1> coreg module </h1>  <p> Coregistration of T1w and Fucntional image <p> <object type="image/svg+xml" data="'+ natreg + '" alt="Segmentation" width="2000"height="800"></object>'
+           html_report=html_report + '<h1> coreg module </h1>  <p> <h3> Coregistration of T1w and Fucntional image </h3> <p> <object type="image/svg+xml" data="'+ natreg + '" alt="Segmentation" width="2000"height="800"></object>'
     elif i == 'cbf' :
          statmapcbf=load_img(outdir+'/cbf/'+prefix+'_meanPerfusion.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolume.nii.gz')
@@ -271,7 +271,7 @@ for i in modules1:
          dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
          dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
          tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
-         if tmask.shape:
+         if tmask.ndim>0:
             fda=fd[tmask>0]  
          else:
             fda=fd
