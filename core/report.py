@@ -272,7 +272,7 @@ for i in modules1:
          dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
          tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
          tt=tmask.sum()
-         if tt > 1:
+         if tmask.size>1:
             fda=fd[tmask>0]  
          else:
             fda=fd
