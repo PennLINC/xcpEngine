@@ -268,7 +268,7 @@ for i in modules1:
          tr=img2.header.get_zooms()[-1]
          #read confound and tr
          fd=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_fd.1D')
-         dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
+         #dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
          dvar2=np.loadtxt(outdir+'/qcfc/'+prefix+'_dvars-vox.1D')
          tmask=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_tmask.1D')
      
@@ -280,6 +280,7 @@ for i in modules1:
          if checkfile:
             fig= plt.gcf()
             grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,height_ratios=[1] * (3 - 1) + [5])
+            dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
             confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
             confoundplot(dvar, grid[1], tr=tr, color='r',name='DVARS')
             plot_carpet(img1,seg, subplot=grid[-1],tr=tr)
