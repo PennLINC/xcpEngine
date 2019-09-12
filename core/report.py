@@ -276,7 +276,7 @@ for i in modules1:
             fda=fd[tmask>0]  
          else:
             fda=fd
-         checkfile = os.path.isfile(dvar)
+         checkfile = os.path.isfile(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
          if checkfile:
             fig= plt.gcf()
             grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,height_ratios=[1] * (3 - 1) + [5])
