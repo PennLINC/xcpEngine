@@ -111,7 +111,7 @@ for i in modules1:
             f2=plot_registration(fixedim,'moving-image',cuts=cuts,label='structural')
             compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_registration.svg')
             fmreg='figures/'+prefix+'_registration.svg'
-            html_report=html_report + '<h1> prestats module </h1> <h3> Registration </h3> <p> Functional registration to Structural .</p> <object type="image/svg+xml" data="'+ fmreg+ '" alt="Segmentation" width="2000"height="800"></object>'
+            html_report=html_report + '<h1> prestats module </h1> <h3> Co-registration </h3> <p> Functional registration to Structural .</p> <object type="image/svg+xml" data="'+ fmreg+ '" alt="Segmentation" width="2000"height="800"></object>'
     elif i == 'regress':
          segm=outdir+'/prestats/'+prefix+'_segmentation.nii.gz'
          seg_data=load_img(segm).get_data()
@@ -277,15 +277,22 @@ for i in modules1:
          else:
             fda=fd
          
-         fig= plt.gcf()
-         grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,
-                            height_ratios=[1] * (3 - 1) + [5])
+         if dvar:
+            fig= plt.gcf()
+            grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,height_ratios=[1] * (3 - 1) + [5])
+            confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
+            confoundplot(dvar, grid[1], tr=tr, color='r',name='DVARS')
+            plot_carpet(img1,seg, subplot=grid[-1],tr=tr)
+            fig.savefig(outdir+'/figures/'+prefix+'_prestats.svg',bbox_inches="tight",pad_inches=None)
+            prestatsfig='figures/'+prefix+'_prestats.svg'
+         else:
+            fig= plt.gcf()
+            grid = mgs.GridSpec(2, 1, wspace=0.0, hspace=0.05,height_ratios=[1] * (2 - 1) + [5])
+            confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
+            plot_carpet(img1,seg, subplot=grid[-1],tr=tr)
+            fig.savefig(outdir+'/figures/'+prefix+'_prestats.svg',bbox_inches="tight",pad_inches=None)
+            prestatsfig='figures/'+prefix+'_prestats.svg'
 
-         confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
-         confoundplot(dvar, grid[1], tr=tr, color='r',name='DVARS')
-         plot_carpet(img1,seg, subplot=grid[-1],tr=tr)
-         fig.savefig(outdir+'/figures/'+prefix+'_prestats.svg',bbox_inches="tight",pad_inches=None)
-         prestatsfig='figures/'+prefix+'_prestats.svg'
          
          # after 
          fig= plt.gcf()
