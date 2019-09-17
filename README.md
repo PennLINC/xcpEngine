@@ -17,9 +17,7 @@ colleagues](https://www.biorxiv.org/content/early/2017/11/05/156380).
 
 Detailed documentation is accessible at the [pipeline's documentation
 hub](http://xcpengine.readthedocs.io)
-
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8475.svg
-   :target: https://doi.org/10.5281/zenodo.8475
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8475.svg)](https://doi.org/10.5281/zenodo.8475)
 
 If you experience any difficulties, we suggest that you search or post to the
 issues forum of the pipeline's GitHub repository.
