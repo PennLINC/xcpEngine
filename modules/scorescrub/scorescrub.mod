@@ -67,7 +67,7 @@ process              cbfscorets        ${prefix}_cbfscore_ts
     subroutine  @1.2 computing cbf score
   # obtain the score 
         exec_xcp score.R                 \
-             -i     ${perfusion[sub]}       \
+             -i     ${cbf_ts[sub]}       \
              -y     ${gm2seq[sub]}          \
              -w     ${wm2seq[sub]}           \
              -c     ${csf2seq[sub]}          \
