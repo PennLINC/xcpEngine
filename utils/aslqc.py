@@ -95,7 +95,7 @@ if len(img1.shape)==4:
                                                 header=img1.header)
     out3=out+'R.nii.gz'                                            
     nib.save(img_rel,out3)
-    np.savetxt(out+'R.txt',[np.mean(cbf1)],delimiter='\t',fmt="%5.4f") 
+    
 else:
     cbf=img1.get_fdata()
     cbf1=cbf[logmask]/np.mean(cbf[logmask])
@@ -106,7 +106,7 @@ else:
                                                 header=img1.header)
     out3=out+'R.nii.gz'                                            
     nib.save(img_rel,out3)
-    np.savetxt(out+'R.txt',[np.mean(cbf1)],delimiter='\t',fmt="%5.4f") 
+    
 
 if gm and wm and csf:
    img_3        =   nib.Nifti1Image(dataobj=cbf,
@@ -121,7 +121,10 @@ if gm and wm and csf:
       gmm=gm0[...,-1]
       wm0=nib.load(wm).get_fdata(); wmm=wm0[...,-1]
       cm0=nib.load(csf).get_fdata(); ccf=cm0[...,-1]
+   else:
+      gmm=gm0; wmm=nib.load(wm).get_fdata(); ccf=nib.load(csf).get_fdata()
   
+
    pbcf=2.5*gmm+wmm
    msk=np.array((cbf!= 0)&(cbf != np.nan )&(pbcf != np.nan )).astype(int)
 

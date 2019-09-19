@@ -104,9 +104,7 @@ process              cbfscorets        ${prefix}_cbfscore_ts
 
    zscore_image ${cbfscrub[cxt]} ${zscorecbfscrub[cxt]} ${mask[sub]} 
    zscore_image ${cbfscore[cxt]} ${zscorecbfscore[cxt]} ${mask[sub]} 
- 
-   qc meanrelcbfscore  meanrelcbfscore ${prefix}_cbfscoreR.txt 
-   qc meanrelcbfscrub  meanrelcbfscrub ${prefix}_cbfscrubR.txt 
+
 
    qc meanZcbfscore  meanZcbfscore ${prefix}_cbfscoreZ.txt 
    meanzcbfscore=$(fslstats ${zscorecbfscore[cxt]} -k  ${gm2seq[sub]} -M)

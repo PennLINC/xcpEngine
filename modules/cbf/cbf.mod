@@ -242,7 +242,7 @@ if ! is_image ${meanPerfusion[cxt]} \
    output  cbf_tsnr ${prefix}_cbf_tsnr.nii.gz
    qc cbf_tsnr  cbf_tsnr  ${prefix}_cbf_meantsnr.txt
    qc cbf_qei   cbf_qei   ${prefix}_cbf_QEI.txt
-   qc meanrelcbf meanrelcbf ${prefix}_cbfR.txt 
+  
    #compute relative CBF 
   
    
