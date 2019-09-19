@@ -415,6 +415,7 @@ if (( ${flag} == 1 ))
    # based on the `decide` configuration if coregistration is
    # repeated due to quality control failure.
    ################################################################
+   
    decision=$(arithmetic ${registration_quality_alt[${coreg_decide[cxt]}]}'>'\
                              ${registration_quality[${coreg_decide[cxt]}]})
    if (( ${decision} == 1 ))
@@ -605,7 +606,7 @@ if  [[ -d ${anatdir[sub]} ]]; then
    exec_fsl immv  ${out}/prestats/${prefix}_segmentation ${out}/coreg/${prefix}_segmentation
    output segmentation ${out}/coreg/${prefix}_segmentation.nii.gz
    
-elif  [[ -d ${antsct[sub]} ]];  then
+elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
 
     subroutine @1.2 register the asl and m0 to struct space
     gm_seq=${out}/coreg/${prefix}_gm2seq.nii.gz 
@@ -644,23 +645,17 @@ elif  [[ -d ${antsct[sub]} ]];  then
    
    output mask ${out}/coreg/${prefix}_mask.nii.gz
    
-   
    #exec_fsl imcp ${struct[sub]}  $out/coreg/${prefix}_target
-   exec_sys rm   ${out}/prestats/${prefix}_csf* 
-   exec_sys rm -rf ${out}/prestats/${prefix}_wm*  ${out}/prestats/${prefix}_gm* 
+   exec_sys rm   ${out}/prestats/${prefix}_csf* 2>/dev/null
+   exec_sys rm -rf ${out}/prestats/${prefix}_wm*  ${out}/prestats/${prefix}_gm* 2>/dev/null
    exec_fsl imcp  ${segmentation[sub]} ${out}/coreg/${prefix}_segmentation
    output segmentation ${out}/coreg/${prefix}_segmentation.nii.gz
+
 else 
 
     echo " No Structural image "
 
 fi  
-      
-     
-
-
-
-
 
 subroutine                    @0.1
 completion

@@ -35,7 +35,7 @@ option_list = list(
               help="the wave fun. see the code for other types"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The root output path for all voxelwise perfusion maps."),
-   make_option(c("-t", "--thresh"), action="store", default=0.9, type='numeric',
+   make_option(c("-t", "--thresh"), action="store", default=0.7, type='numeric',
               help="threshold the segmentation tissues")
 )
 opt = parse_args(OptionParser(option_list=option_list))

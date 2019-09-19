@@ -35,6 +35,13 @@ completion() {
 derivative            cbfbasil                 ${prefix}_cbf_basil.nii.gz
 derivative            cbfbasilspatial          ${prefix}_cbf_basil_spatial.nii.gz
 derivative            cbfbasilpv               ${prefix}_cbf_basil_pv.nii.gz
+derivative            relativeBcbf             ${prefix}_cbfbasilR.nii.gz 
+derivative            relativeScbf             ${prefix}_cbfspatialR.nii.gz 
+derivative            relativepvcbf            ${prefix}_cbfpvR.nii.gz
+derivative            zcbfb                    ${prefix}_cbfbasilZ.nii.gz 
+derivative            zcbfs                    ${prefix}_cbfspatialZ.nii.gz 
+derivative            zcbfpv                   ${prefix}_cbfpvZ.nii.gz
+
 
 output           logfile              ${prefix}_logfile
 output           basil_option         ${prefix}_basil_option.txt
@@ -51,6 +58,12 @@ output           cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
 derivative_set       cbfbasil            Statistic         mean
 derivative_set       cbfbasilspatial     Statistic         mean
 derivative_set       cbfbasilpv          Statistic         mean
+derivative_set       relativeBcbf        Statistic         mean
+derivative_set       relativeScbf        Statistic         mean
+derivative_set       relativepvcbf       Statistic         mean
+derivative_set       zcbfb               Statistic         mean
+derivative_set       zcbfs               Statistic         mean
+derivative_set       zcbfpv              Statistic         mean
 
 
 
@@ -259,7 +272,57 @@ routine @3 Orgainizing the output
               -V) )
    echo ${neg[0]}   >> ${negative_voxels_basil[cxt]}
 
-  
+ #aslqc 
+ if [[ -f ${cbfbasil[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfbasil[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfbasil
+   
+   qc cbfbasil_qei   cbfbasil_qei   ${prefix}_cbfbasil_QEI.txt
+
+   qc meanrelcbfb  meanrelcbfb  ${prefix}_cbfbasilR.txt 
+   
+   zscore_image ${cbfbasil[cxt]} ${zcbfb[cxt]} ${mask[sub]}
+   qc meanzcbfb meanzcbfb ${prefix}_cbfbasilZ.txt 
+   meanZcbfb=$(fslstats ${zcbfb[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfb} >> ${meanzcbfb[cxt]}
+
+ fi
+
+
+ if [[ -f ${cbfbasilspatial[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfbasilspatial[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfspatial
+   
+   qc cbfspatial_qei   cbfspatial_qei   ${prefix}_cbfspatial_QEI.txt
+
+   qc meanrelcbfs  meanrelcbfs  ${prefix}_cbfspatialR.txt 
+   meanrcbfs=$(fslstats ${relativeScbf[cxt]} -k  ${gm2seq[sub]} -M)
+   echo ${meanrcbfs} >> ${meanrelcbfs[cxt]}
+   
+   zscore_image ${cbfbasilspatial[cxt]} ${zcbfs[cxt]} ${mask[sub]}
+   qc meanzcbfs meanzcbfs ${prefix}_cbfspatialZ.txt 
+   meanZcbfs=$(fslstats ${zcbfs[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfs} >> ${meanzcbfs[cxt]}
+
+ fi
+
+  if [[ -f ${cbfbasilpv[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfbasilpv[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfpv
+   
+   qc cbfpv_qei   cbfpv_qei   ${prefix}_cbfpv_QEI.txt
+
+   qc meanrelcbfpv  meanrelcbfpv  ${prefix}_cbfpvR.txt 
+   meanrcbfpv=$(fslstats ${relativepvcbf[cxt]} -k  ${gm2seq[sub]} -M)
+   echo ${meanrcbfpv} >> ${meanrelcbfpv[cxt]}
+   
+   zscore_image ${cbfbasilpv[cxt]} ${zcbfpv[cxt]} ${mask[sub]}
+   qc meanzcbfpv meanzcbfpv ${prefix}_cbfbasilpvZ.txt 
+   meanZcbfpv=$(fslstats ${zcbfpv[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfpv} >> ${meanzcbfpv[cxt]}
+
+ fi
+
   
 routine_end
 

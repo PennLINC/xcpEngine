@@ -35,9 +35,13 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative            meanPerfusion            ${prefix}_meanPerfusion
-derivative            perfusion                ${prefix}_perfusion
+derivative            meanPerfusion            ${prefix}_cbf
+derivative            perfusion                ${prefix}_cbf_ts
 derivative            referenceVolumeBrain     ${prefix}_referenceVolumeBrain
+derivative            relativecbf               ${prefix}_cbfR 
+derivative            cbf_tsnr                 ${prefix}_cbf_tsnr
+derivative            zcbf                     ${prefix}_cbfZ
+
 #derivative            mask                     ${prefix}_mask
 
 output                tag_mask         ${prefix}_tag_mask.txt
@@ -47,10 +51,14 @@ qc negative_voxels    negativeVoxels   ${prefix}_negativeVoxels.txt
 qc negative_voxels_ts negativeVoxelsTS ${prefix}_negativeVoxelsTS.txt
 
 derivative_set        meanPerfusion    Statistic         mean
+derivative_set        relativecbf      Statistic         mean
+derivative_set        cbf_tsnr         Statistic         mean
+derivative_set        zcbf             Statistic         mean
+
 
 input 1dim            rps_proc or rps  as rps
 
-process               perfusion        ${prefix}_perfusion
+process               perfusion        ${prefix}_cbf_ts
 
 <<DICTIONARY
 
@@ -121,7 +129,7 @@ if ! is_image ${m0[sub]}
    output m0  ${out}/cbf/${prefix}_m0.nii.gz
 else
    m0=${out}/cbf/${prefix}_m0.nii.gz
-   exec_fsl fslmaths ${m0[sub]} -Tmean ${m0}
+   exec_fsl fslmaths ${m0[sub]} -Tmean  ${m0}
    output m0  ${out}/cbf/${prefix}_m0.nii.gz
 fi
 
@@ -149,6 +157,7 @@ if ! is_image ${meanPerfusion[cxt]} \
       subroutine              @2.1h Label duration: ${cbf_tau[cxt]}
       subroutine              @2.1i Blood T1: ${cbf_t1blood[cxt]}
       subroutine              @2.1j Labelling efficiency: ${cbf_alpha[cxt]}
+      
       exec_sys rm -f ${intermediate}_perfusion*
       exec_xcp perfusion.R                   \
          -i    ${intermediate}.nii.gz        \
@@ -225,6 +234,22 @@ if ! is_image ${meanPerfusion[cxt]} \
               -u    0                                       \
               -V) )
    echo ${neg[0]}   >> ${negative_voxels_ts[cxt]}
+   
+   #aslqc 
+   exec_xcp  aslqc.py -i ${perfusion[cxt]} -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbf
+   
+   output  cbf_tsnr ${prefix}_cbf_tsnr.nii.gz
+   qc cbf_tsnr  cbf_tsnr  ${prefix}_cbf_meantsnr.txt
+   qc cbf_qei   cbf_qei   ${prefix}_cbf_QEI.txt
+   qc meanrelcbf meanrelcbf ${prefix}_cbfR.txt 
+   #compute relative CBF 
+  
+   
+   zscore_image ${meanPerfusion[cxt]} ${zcbf[cxt]} ${mask[sub]}
+   qc meanzcbf meanzcbf ${prefix}_cbfZ.txt 
+   meanZcbf=$(fslstats ${zcbf[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbf} >> ${meanzcbf[cxt]}
    routine_end
 fi
    

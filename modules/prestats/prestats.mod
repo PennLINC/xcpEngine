@@ -658,6 +658,16 @@ while (( ${#rem} > 0 ))
               -inset ${gm_fmp} \
               -prefix ${out}/prestats/${prefix}_greymatter.nii.gz
          output gm  ${out}/prestats/${prefix}_greymatter.nii.gz
+          
+         if ! is_image ${referenceVolume[cxt]}
+           then 
+            output referenceVolume ${prefix}_referenceVolume.nii.gz 
+
+             exec_fsl \
+                  fslroi ${intermediate}.nii.gz \
+                  ${referenceVolume[cxt]} \
+                  ${midpt} 1
+         fi
 
         exec_fsl \
                bet ${referenceVolume[cxt]} \
@@ -772,6 +782,16 @@ while (( ${#rem} > 0 ))
                  -prefix ${out}/prestats/${prefix}_m0.nii.gz
                output m0  ${out}/prestats/${prefix}_m0.nii.gz
                fi
+               if ! is_image ${referenceVolume[cxt]}
+               then 
+                output referenceVolume ${prefix}_referenceVolume.nii.gz 
+
+                exec_fsl \
+                  fslroi ${intermediate}.nii.gz \
+                  ${referenceVolume[cxt]} \
+                  ${midpt} 1
+                fi
+
                exec_fsl \
                bet ${referenceVolume[cxt]} \
               ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  \
@@ -835,10 +855,144 @@ while (( ${#rem} > 0 ))
                     -x ${subj2temp}                               \
                     -i ${temp2subj}                               \
                     -s ${spaces[sub]} 2>/dev/null
-      else 
-          echo " no structural image "
-          
-       fi
+
+   elif [[ -f ${t1w[sub]} ]]; then
+       echo " no anstct and anatdir \n"
+       echo " Running ministructural modules"
+       strucdir=$outdir/struc 
+       if ! is_image $outdir/struc/${prefix}_BrainNormalizedToTemplate.nii.gz 
+        then 
+       exec_sys mkdir -p $outdir/struc 
+       strucdir=$outdir/struc 
+       
+       exec_ants N4BiasFieldCorrection -d 3 -i ${t1w[sub]} \
+       -o $strucdir/${prefix}_T1w_preproc.nii.gz 
+      
+       exec_fsl bet $strucdir/${prefix}_T1w_preproc.nii.gz  \
+                $strucdir/${prefix}_T1w_brain.nii.gz -f 0.5
+      
+       exec_fsl fslmaths $strucdir/${prefix}_T1w_brain.nii.gz -bin \
+                $strucdir/${prefix}_T1w_brainmask.nii.gz
+
+       output struct_head $strucdir/${prefix}_T1w_brain.nii.gz
+
+       exec_fsl fast -n 3 $strucdir/${prefix}_T1w_brain.nii.gz 
+       
+       exec_fsl immv $strucdir/${prefix}_T1w_brain_seg $strucdir/${prefix}_segmentation
+       exec_fsl immv $strucdir/${prefix}_T1w_brain_pve_0  $strucdir/${prefix}_CSF
+       exec_fsl immv $strucdir/${prefix}_T1w_brain_pve_1  $strucdir/${prefix}_GM 
+       exec_fsl immv $strucdir/${prefix}_T1w_brain_pve_2  $strucdir/${prefix}_WM 
+       exec_sys rm -rf $strucdir/${prefix}_T1w_brain_pveseg.nii.gz  \
+                $strucdir/${prefix}_T1w_brain_mixeltype.nii.gz
+       template_label1=${standard%'%'*}
+
+       template1=$(ls -f $XCPEDIR/space/*${template_label1}*/*${template_label1}*-1x1x1BrainPrior.nii.gz)
+       echo $template1
+       exec_ants antsRegistrationSyN.sh -d 3 -f ${template1} \
+       -m $strucdir/${prefix}_T1w_brain.nii.gz -o $strucdir/${prefix}_
+
+       exec_sys mv $strucdir/${prefix}_0GenericAffine.mat  $strucdir/${prefix}_SubjectToTemplate0GenericAffine.mat
+       exec_fsl immv  $strucdir/${prefix}_1Warp.nii.gz  $strucdir/${prefix}_SubjectToTemplate1Warp.nii.gz
+       exec_fsl  immv  $strucdir/${prefix}_1InverseWarp.nii.gz $strucdir/${prefix}_TemplateToSubject0Warp.nii.gz
+       exec_fsl immv  $strucdir/${prefix}_Warped.nii.gz  $strucdir/${prefix}_BrainNormalizedToTemplate.nii.gz
+       subroutine           @6.7  Inverting affine transform
+       exec_ants   antsApplyTransforms           \
+            -d       3                             \
+            -o       Linear[${strucdir}/${prefix}_TemplateToSubject1GenericAffine.mat,1] \
+            -t       ${strucdir}/${prefix}_SubjectToTemplate0GenericAffine.mat
+      fi   
+
+       # no process the cbf
+      output gm  $outdir/struc/${prefix}_GM.nii.gz
+      output wm  $outdir/struc/${prefix}_WM.nii.gz 
+      output csf $outdir/struc/${prefix}_CSF.nii.gz 
+      output struct $outdir/struc/${prefix}_T1w_preproc.nii.gz
+      output segmentation $outdir/struc/${prefix}_segmentation.nii.gz 
+      output struct_head $outdir/struc/${prefix}_T1w_brain.nii.gz
+
+      if  is_image ${m0[sub]}
+          then
+         exec_afni 3dresample -orient ${template_orientation} -inset {m0[sub]} \
+            -prefix ${out}/prestats/${prefix}_m0.nii.gz
+         output m0  ${out}/prestats/${prefix}_m0.nii.gz
+      fi
+
+      if ! is_image ${referenceVolume[cxt]}
+           then 
+            output referenceVolume ${prefix}_referenceVolume.nii.gz 
+
+             exec_fsl \
+                  fslroi ${intermediate}.nii.gz \
+                  ${referenceVolume[cxt]} \
+                  ${midpt} 1
+      fi
+
+      exec_fsl bet ${referenceVolume[cxt]} \
+         ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  -f 0.5 -n -R
+      
+      output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz 
+      
+      subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+
+               rm -f ${spaces[sub]}
+               echo '{}'  >> ${spaces[sub]}
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+                       
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
+                       
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+               mnitopnc=$( echo ${mnitopnc})
+               pnc2mni=$(echo ${pnc2mni})
+               mnitopnc=${mnitopnc// /,}
+               pnc2mni=${pnc2mni// /,}
+
+               ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}                 \
+                    -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                    -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
+                    -x ${pnc2mni}                               \
+                    -i ${mnitopnc}                               \
+                    -s ${spaces[sub]} 2>/dev/null
+
+
+              hd=',MapHead='${struct_head[cxt]}
+              subj2temp="   $strucdir/${prefix}_SubjectToTemplate0GenericAffine.mat
+                           $strucdir/${prefix}SubjectToTemplate1Warp.nii.gz"
+              temp2subj="   $strucdir/${prefix}_TemplateToSubject0Warp.nii.gz 
+                          $strucdir/${prefix}_TemplateToSubject1GenericAffine.mat"
+              subj2temp=$( echo ${subj2temp})
+              temp2subj=$(echo ${temp2subj})
+              subj2temp=${subj2temp// /,}
+              temp2subj=${temp2subj// /,}
+
+              ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}                 \
+                    -f ${standard}:${template}        \
+                    -m ${structural[sub]}:${struct[cxt]}${hd} \
+                    -x ${subj2temp}                               \
+                    -i ${temp2subj}                               \
+                    -s ${spaces[sub]} 2>/dev/null
+    else
+     echo "no structural image"   
+    
+    fi
+
        exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
         intermediate=${intermediate}_${cur} 
        ;;
