@@ -35,12 +35,12 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-derivative            meanPerfusion            ${prefix}_cbf
-derivative            perfusion                ${prefix}_cbf_ts
+derivative            cbf                      ${prefix}_cbf
+derivative            cbf_ts                   ${prefix}_cbf_ts
 derivative            referenceVolumeBrain     ${prefix}_referenceVolumeBrain
-derivative            relativecbf               ${prefix}_cbfR 
+derivative            cbfR                     ${prefix}_cbfR 
 derivative            cbf_tsnr                 ${prefix}_cbf_tsnr
-derivative            zcbf                     ${prefix}_cbfZ
+derivative            cbfZ                     ${prefix}_cbfZ
 
 #derivative            mask                     ${prefix}_mask
 
@@ -50,15 +50,15 @@ output                rps_proc         ${prefix}_realignment_transform.1D
 qc negative_voxels    negativeVoxels   ${prefix}_negativeVoxels.txt
 qc negative_voxels_ts negativeVoxelsTS ${prefix}_negativeVoxelsTS.txt
 
-derivative_set        meanPerfusion    Statistic         mean
-derivative_set        relativecbf      Statistic         mean
+derivative_set        cbf              Statistic         mean
+derivative_set        cbfR             Statistic         mean
 derivative_set        cbf_tsnr         Statistic         mean
-derivative_set        zcbf             Statistic         mean
+derivative_set        cbfZ             Statistic         mean
 
 
 input 1dim            rps_proc or rps  as rps
 
-process               perfusion        ${prefix}_cbf_ts
+process               cbf_ts        ${prefix}_cbf_ts
 
 <<DICTIONARY
 
@@ -158,12 +158,12 @@ if ! is_image ${meanPerfusion[cxt]} \
       subroutine              @2.1i Blood T1: ${cbf_t1blood[cxt]}
       subroutine              @2.1j Labelling efficiency: ${cbf_alpha[cxt]}
       
-      exec_sys rm -f ${intermediate}_perfusion*
+      exec_sys rm -f ${intermediate}_cbf_ts*
       exec_xcp perfusion.R                   \
          -i    ${intermediate}.nii.gz        \
          -m    ${m0[cxt]}  \
          -v    ${tag_mask[cxt]}              \
-         -o    ${intermediate}_perfusion     \
+         -o    ${intermediate}_cbf_ts     \
          -s    ${cbf_m0_scale[cxt]}          \
          -l    ${cbf_lambda[cxt]}            \
          -d    ${cbf_pld[cxt]}               \
@@ -183,12 +183,12 @@ if ! is_image ${meanPerfusion[cxt]} \
       subroutine              @2.1h bolus duration: ${cbf_ti1[cxt]}
       subroutine              @2.1i Blood T1: ${cbf_t1blood[cxt]}
       subroutine              @2.1j Labelling efficiency: ${cbf_alpha[cxt]}
-      exec_sys rm -f ${intermediate}_perfusion*
+      exec_sys rm -f ${intermediate}_cbf_ts*
       exec_xcp perfusion_pasl.R                   \
          -i    ${intermediate}.nii.gz        \
          -m    ${m0[cxt]}  \
          -v    ${tag_mask[cxt]}              \
-         -o    ${intermediate}_perfusion     \
+         -o    ${intermediate}_cbf_ts     \
          -s    ${cbf_m0_scale[cxt]}          \
          -l    ${cbf_lambda[cxt]}            \
          -b    ${cbf_ti1[cxt]}               \
@@ -209,10 +209,10 @@ if ! is_image ${meanPerfusion[cxt]} \
    ################################################################
    routine                    @3    Quality and cleanup
    subroutine                 @3.1  Reorganising output
-   exec_fsl fslmaths  ${intermediate}_perfusion_mean.nii.gz -mul \
-               ${mask[sub]} ${meanPerfusion[cxt]}
-   exec_fsl fslmaths ${intermediate}_perfusion_ts.nii.gz -mul \
-               ${mask[sub]} ${perfusion[cxt]}
+   exec_fsl fslmaths  ${intermediate}_cbf_ts_mean.nii.gz -mul \
+               ${mask[sub]} ${cbf[cxt]}
+   exec_fsl fslmaths ${intermediate}_cbf_ts.nii.gz -mul \
+               ${mask[sub]} ${cbf_ts[cxt]}
    subroutine                 @3.2  Computing grey matter boundary
    exec_xcp    val2mask.R           \
       -i       ${segmentation[sub]} \
@@ -224,19 +224,19 @@ if ! is_image ${meanPerfusion[cxt]} \
       ${structural[sub]}:${space[sub]} \
       NearestNeighbor
    subroutine                 @3.3  Counting negative voxels
-   neg=( $(exec_fsl fslstats ${meanPerfusion[cxt]}          \
+   neg=( $(exec_fsl fslstats ${cbf[cxt]}          \
               -k    ${intermediate}_gm_${space[sub]}.nii.gz \
               -u    0                                       \
               -V) )
    echo ${neg[0]}   >> ${negative_voxels[cxt]}
-   neg=( $(exec_fsl fslstats ${perfusion[cxt]}              \
+   neg=( $(exec_fsl fslstats ${cbf[cxt]}              \
               -k    ${intermediate}_gm_${space[sub]}.nii.gz \
               -u    0                                       \
               -V) )
    echo ${neg[0]}   >> ${negative_voxels_ts[cxt]}
    
    #aslqc 
-   exec_xcp  aslqc.py -i ${perfusion[cxt]} -m ${mask[sub]} -g ${gm2seq[sub]} \
+   exec_xcp  aslqc.py -i ${cbf[cxt]} -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbf
    
    output  cbf_tsnr ${prefix}_cbf_tsnr.nii.gz
@@ -246,10 +246,10 @@ if ! is_image ${meanPerfusion[cxt]} \
    #compute relative CBF 
   
    
-   zscore_image ${meanPerfusion[cxt]} ${zcbf[cxt]} ${mask[sub]}
-   qc meanzcbf meanzcbf ${prefix}_cbfZ.txt 
-   meanZcbf=$(fslstats ${zcbf[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbf} >> ${meanzcbf[cxt]}
+   zscore_image ${cbf[cxt]} ${cbfZ[cxt]} ${mask[sub]}
+   qc meancbfZ meancbfZ ${prefix}_cbfZ.txt 
+   meanZcbf=$(fslstats ${cbfZ[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbf} >> ${meancbfZ[cxt]}
    routine_end
 fi
    

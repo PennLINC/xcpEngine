@@ -32,24 +32,24 @@ completion() {
 # OUTPUTS
 ###################################################################
 
-derivative            cbfbasil                 ${prefix}_cbf_basil.nii.gz
-derivative            cbfbasilspatial          ${prefix}_cbf_basil_spatial.nii.gz
-derivative            cbfbasilpv               ${prefix}_cbf_basil_pv.nii.gz
-derivative            relativeBcbf             ${prefix}_cbfbasilR.nii.gz 
-derivative            relativeScbf             ${prefix}_cbfspatialR.nii.gz 
-derivative            relativepvcbf            ${prefix}_cbfpvR.nii.gz
-derivative            zcbfb                    ${prefix}_cbfbasilZ.nii.gz 
-derivative            zcbfs                    ${prefix}_cbfspatialZ.nii.gz 
-derivative            zcbfpv                   ${prefix}_cbfpvZ.nii.gz
+derivative            cbfbasil                 ${prefix}_cbfbasil.nii.gz
+derivative            cbfspatial               ${prefix}_cbfspatial.nii.gz
+derivative            cbfpv                    ${prefix}_cbfpv.nii.gz
+derivative            cbfbasilR                ${prefix}_cbfbasilR.nii.gz 
+derivative            cbfspatialR              ${prefix}_cbfspatialR.nii.gz 
+derivative            cbfpvR                   ${prefix}_cbfpvR.nii.gz
+derivative            cbfbasilZ                ${prefix}_cbfbasilZ.nii.gz 
+derivative            cbfspatialZ              ${prefix}_cbfspatialZ.nii.gz 
+derivative            cbfpvZ                   ${prefix}_cbfpvZ.nii.gz
 
 
 output           logfile              ${prefix}_logfile
 output           basil_option         ${prefix}_basil_option.txt
 output           logfile2             ${prefix}_logfile_spatial
 
-output           cbfbasil            ${prefix}_cbf_basil.nii.gz
-output           cbfbasilspatial     ${prefix}_cbf_basil_spatial.nii.gz
-output           cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
+output           cbfbasil            ${prefix}_cbfbasil.nii.gz
+output           cbfpatial           ${prefix}_cbfspatial.nii.gz
+output           cbfpv               ${prefix}_cbfpv.nii.gz
 
 
 
@@ -58,12 +58,12 @@ output           cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
 derivative_set       cbfbasil            Statistic         mean
 derivative_set       cbfbasilspatial     Statistic         mean
 derivative_set       cbfbasilpv          Statistic         mean
-derivative_set       relativeBcbf        Statistic         mean
-derivative_set       relativeScbf        Statistic         mean
-derivative_set       relativepvcbf       Statistic         mean
-derivative_set       zcbfb               Statistic         mean
-derivative_set       zcbfs               Statistic         mean
-derivative_set       zcbfpv              Statistic         mean
+derivative_set       cbfbasilR           Statistic         mean
+derivative_set       cbfspatialR         Statistic         mean
+derivative_set       cbfpvR              Statistic         mean
+derivative_set       cbfbasilZ           Statistic         mean
+derivative_set       cbfspatialZ         Statistic         mean
+derivative_set       cbfpvZ              Statistic         mean
 
 
 
@@ -221,14 +221,14 @@ routine @3 Orgainizing the output
 
   if [ ${basil_pvc[cxt]} == 1 ]; then 
     
-    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_basil
+    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbfbasil
     exec_fsl immv  $out/basil/cbf   $out/basil/${prefix}_cbf
-    exec_fsl immv  $out/basil/cbf_pv_gm_calib   $out/basil/${prefix}_cbf_basil_pv
+    exec_fsl immv  $out/basil/cbf_pv_gm_calib   $out/basil/${prefix}_cbfpv
     exec_fsl immv  $out/basil/cbf_pv_wm_calib   $out/basil/${prefix}_cbf_pv_wm_calib
     exec_fsl immv  $out/basil/cbf_pv   $out/basil/${prefix}_cbf_pv
     exec_fsl immv  $out/basil/cbf_pv_gm   $out/basil/${prefix}_cbf_pv_gm
     exec_fsl immv  $out/basil/cbf_pv_wm   $out/basil/${prefix}_cbf_pv_wm
-    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_basil_spatial
+    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbfspatial
     exec_fsl immv  $out/basil/cbf_spatial  $out/basil/${prefix}_cbf_spatial
     exec_fsl immv  $out/basil/M0   $out/basil/${prefix}_M0
     exec_fsl immv  $out/basil/mask   $out/basil/${prefix}_mask
@@ -246,8 +246,8 @@ routine @3 Orgainizing the output
     exec_fsl immv  $out/basil/acbv   $out/basil/${prefix}_acbv
     exec_fsl immv  $out/basil/acbv_spatial   $out/basil/${prefix}_acbv_spatial
     exec_fsl immv  $out/basil/cbf   $out/basil/${prefix}_cbf
-    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_basil
-    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_basil_spatial
+    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbfbasil
+    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbfspatial
     exec_fsl immv  $out/basil/cbf_spatial  $out/basil/${prefix}_cbf_spatial
     exec_fsl immv  $out/basil/M0   $out/basil/${prefix}_M0
     exec_fsl immv  $out/basil/mask   $out/basil/${prefix}_mask
@@ -266,7 +266,7 @@ routine @3 Orgainizing the output
   exec_sys rm -rf $out/basil/${prefix}_M0.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_m0.nii.gz
  
-   neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbf_basil.nii.gz          \
+   neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbfbasil.nii.gz          \
               -k    $out/basil/${prefix}_mask.nii.gz  \
               -u    0                                       \
               -V) )
@@ -279,37 +279,37 @@ routine @3 Orgainizing the output
    
    qc cbfbasil_qei   cbfbasil_qei   ${prefix}_cbfbasil_QEI.txt
 
-   zscore_image ${cbfbasil[cxt]} ${zcbfb[cxt]} ${mask[sub]}
-   qc meanzcbfb meanzcbfb ${prefix}_cbfbasilZ.txt 
-   meanZcbfb=$(fslstats ${zcbfb[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfb} >> ${meanzcbfb[cxt]}
+   zscore_image ${cbfbasil[cxt]} ${cbfbasilZ[cxt]} ${mask[sub]}
+   qc meancbfbasilZ meancbfbasilZ ${prefix}_cbfbasilZ.txt 
+   meanZcbfb=$(fslstats ${cbfbasilZ[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfb} >> ${meancbfbasilZ[cxt]}
 
  fi
 
 
- if [[ -f ${cbfbasilspatial[cxt]} ]]; then 
-   exec_xcp  aslqc.py -i ${cbfbasilspatial[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+ if [[ -f ${cbfspatial[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfspatial[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfspatial
    
    qc cbfspatial_qei   cbfspatial_qei   ${prefix}_cbfspatial_QEI.txt
 
-   zscore_image ${cbfbasilspatial[cxt]} ${zcbfs[cxt]} ${mask[sub]}
-   qc meanzcbfs meanzcbfs ${prefix}_cbfspatialZ.txt 
-   meanZcbfs=$(fslstats ${zcbfs[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfs} >> ${meanzcbfs[cxt]}
+   zscore_image ${cbfspatial[cxt]} ${cbfspatialZ[cxt]} ${mask[sub]}
+   qc meancbfspatialZ meancbfspatialZ  ${prefix}_cbfspatialZ.txt 
+   meanZcbfs=$(fslstats ${cbfspatialZ[cxt]} -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfs} >> ${meancbfspatialZ[cxt]}
 
  fi
 
-  if [[ -f ${cbfbasilpv[cxt]} ]]; then 
-   exec_xcp  aslqc.py -i ${cbfbasilpv[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+  if [[ -f ${cbfpv[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfpv[cxt]}   -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfpv
    
    qc cbfpv_qei   cbfpv_qei   ${prefix}_cbfpv_QEI.txt
    
-   zscore_image ${cbfbasilpv[cxt]} ${zcbfpv[cxt]} ${mask[sub]}
-   qc meanzcbfpv meanzcbfpv ${prefix}_cbfbasilpvZ.txt 
-   meanZcbfpv=$(fslstats ${zcbfpv[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfpv} >> ${meanzcbfpv[cxt]}
+   zscore_image ${cbfpv[cxt]}  ${zcbfpv[cxt]} ${mask[sub]}
+   qc meancbfbasilpvZ meancbfbasilpvZ ${prefix}_cbfbasilpvZ.txt 
+   meanZcbfpv=$(fslstats ${cbfbasilpv[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfpv} >> ${meancbfbasilpvZ[cxt]}
 
  fi
 

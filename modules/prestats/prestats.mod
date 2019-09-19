@@ -973,7 +973,7 @@ while (( ${#rem} > 0 ))
 
               hd=',MapHead='${struct_head[cxt]}
               subj2temp="   $strucdir/${prefix}_SubjectToTemplate0GenericAffine.mat
-                           $strucdir/${prefix}SubjectToTemplate1Warp.nii.gz"
+                           $strucdir/${prefix}_SubjectToTemplate1Warp.nii.gz"
               temp2subj="   $strucdir/${prefix}_TemplateToSubject0Warp.nii.gz 
                           $strucdir/${prefix}_TemplateToSubject1GenericAffine.mat"
               subj2temp=$( echo ${subj2temp})

@@ -31,22 +31,21 @@ completion() {
 ##################################################################
 # OUTPUTS
 ###################################################################
-derivative            cbfscrub                 ${prefix}_cbfscrub.nii.gz
-derivative            cbfscorets               ${prefix}_cbfscore_ts.nii.gz   
-derivative            cbfscore                 ${prefix}_cbfscore.nii.gz
-derivative            relativecbfscore          ${prefix}_cbfscoreR.nii.gz 
-derivative            relativecbfscrub          ${prefix}_cbfscrubR.nii.gz
-derivative            zscorecbfscrub           ${prefix}_cbfscrubZ.nii.gz
-derivative            zscorecbfscore           ${prefix}_cbfscoreZ.nii.gz
-derivative            cbfscore_tsnr            ${prefix}_cbfscore_tsnr.nii.gz 
+derivative            cbfscrub                  ${prefix}_cbfscrub.nii.gz
+derivative            cbfscorets                ${prefix}_cbfscore_ts.nii.gz   
+derivative            cbfscore                  ${prefix}_cbfscore.nii.gz
+derivative            cbfscoreR                 ${prefix}_cbfscoreR.nii.gz 
+derivative            cbfscrubR                 ${prefix}_cbfscrubR.nii.gz
+derivative            cbfscrubZ                 ${prefix}_cbfscrubZ.nii.gz
+derivative            cbfscoreZ                 ${prefix}_cbfscoreZ.nii.gz
+derivative            cbfscore_tsnr             ${prefix}_cbfscore_tsnr.nii.gz 
 
-output                cbfscorets      ${prefix}_cbfscore_ts.nii.gz   
-output                cbfscore        ${prefix}_cbfscore.nii.gz
-output                cbfscrub        ${prefix}_cbfscrub.nii.gz
-output                relativecbfscore         ${prefix}_cbfscoreR.nii.gz
-output                relativecbfscrub         ${prefix}_cbfscrubR.nii.gz
-output                zscorecbfscrub           ${prefix}_cbfscrubZ.nii.gz
-output                zscorecbfscore           ${prefix}_cbfscoreZ.nii.gz
+output                cbfscorets              ${prefix}_cbfscore_ts.nii.gz   
+output                cbfscore                 ${prefix}_cbfscrub.nii.gz
+output                cbfscoreR               ${prefix}_cbfscoreR.nii.gz
+output                cbfscrubR                ${prefix}_cbfscrubR.nii.gz
+output                cbfscrubZ                ${prefix}_cbfscrubZ.nii.gz
+output                cbfscoreZ                ${prefix}_cbfscoreZ.nii.gz
 output                cbfscore_tsnr            ${prefix}_cbfscore_tsnr.nii.gz 
 
 qc nvoldel  nvoldel  ${prefix}_nvoldel.txt 
@@ -54,11 +53,11 @@ qc nvoldel  nvoldel  ${prefix}_nvoldel.txt
 
 derivative_set       cbfscrub            Statistic         mean
 derivative_set       cbfscore            Statistic         mean
-derivative_set       relativecbfscore    Statistic         mean
-derivative_set       relativecbfscrub    Statistic         mean
+derivative_set       cbfscoreR    Statistic         mean
+derivative_set       cbfscrubR    Statistic         mean
 derivative_set       cbfscore_tsnr       Statistic         mean
-derivative_set       zscorecbfscore      Statistic         mean 
-derivative_set       zscorecbfscrub      Statistic         mean 
+derivative_set       cbfscoreZ      Statistic         mean 
+derivative_set       cbfscrubZ     Statistic         mean 
 
 process              cbfscorets        ${prefix}_cbfscore_ts
 
@@ -102,17 +101,17 @@ process              cbfscorets        ${prefix}_cbfscore_ts
    qc cbfscrub_qei   cbfscrub_qei   ${prefix}_cbfscrub_QEI.txt
    #compute relative CBF 
 
-   zscore_image ${cbfscrub[cxt]} ${zscorecbfscrub[cxt]} ${mask[sub]} 
-   zscore_image ${cbfscore[cxt]} ${zscorecbfscore[cxt]} ${mask[sub]} 
+   zscore_image ${cbfscrub[cxt]} ${cbfscrubZ[cxt]} ${mask[sub]} 
+   zscore_image ${cbfscore[cxt]} ${cbfscoreZ[cxt]} ${mask[sub]} 
 
 
-   qc meanZcbfscore  meanZcbfscore ${prefix}_cbfscoreZ.txt 
-   meanzcbfscore=$(fslstats ${zscorecbfscore[cxt]} -k  ${gm2seq[sub]} -M)
-   echo ${meanzcbfscore} >> ${meanZcbfscore[cxt]}
+   qc meancbfscoreZ  meancbfcoreZ ${prefix}_cbfscoreZ.txt 
+   meanzcbfscore=$(fslstats ${cbfscoreZ[cxt]} -k  ${gm2seq[sub]} -M)
+   echo ${meanzcbfscore} >> ${meancbfcoreZ[cxt]}
 
-   qc meanZcbfscrub  meanZcbfscrub ${prefix}_cbfscrubZ.txt 
-   meanzcbfscrub=$(fslstats ${zscorecbfscrub[cxt]} -k  ${gm2seq[sub]} -M)
-   echo ${meanzcbfscrub} >> ${meanZcbfscrub[cxt]}
+   qc meancbfscrubZ  meancbfscrubZ ${prefix}_cbfscrubZ.txt 
+   meanzcbfscrub=$(fslstats ${cbfscrubZ[cxt]} -k  ${gm2seq[sub]} -M)
+   echo ${meanzcbfscrub} >> ${meancbfscrubZ[cxt]}
 
   
 routine_end  
