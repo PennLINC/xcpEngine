@@ -189,7 +189,7 @@ for i in modules1:
          sns.distplot(dat1,kde=False,ax=ax2,color='b')
          ax1.title.set_text('alffZ  maps'); ax2.title.set_text(' alffZ distribution')
          ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('zscore', fontsize = 20)
-         fig.savefig(outdir+'figures/'+prefix+'_alff.svg',bbox_inches="tight",pad_inches=None)
+         fig.savefig(outdir+'/figures/'+prefix+'_alff.svg',bbox_inches="tight",pad_inches=None)
          alffplot='figures/'+prefix+'_alff.svg'
 
          html_report=html_report + '<h1> alff module </h1> <object type="image/svg+xml" data="'+ alffplot +'" alt="Segmentation" width="2000"height="400"></object>'
@@ -211,7 +211,7 @@ for i in modules1:
          sns.distplot(dat1,kde=False,ax=ax2,color='b')
          ax1.title.set_text('rehoZ  maps'); ax2.title.set_text(' rehoZ distribution')
          ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('zscore', fontsize = 20)
-         fig.savefig(outdir+'figures/'+prefix+'_reho.svg',bbox_inches="tight",pad_inches=None)
+         fig.savefig(outdir+'/figures/'+prefix+'_reho.svg',bbox_inches="tight",pad_inches=None)
          rehoplot='figures/'+prefix+'_reho.svg'
          html_report=html_report + '<h1> reho module </h1> <object type="image/svg+xml" data="'+ rehoplot +'" alt="Segmentation" width="2000"height="400"></object>'
     elif i == 'norm' :
@@ -256,7 +256,7 @@ for i in modules1:
          sns.distplot(dat1,kde=False,ax=ax2,color='b')
          ax1.title.set_text('CBF maps'); ax2.title.set_text('CBF distribution')
          ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
-         fig.savefig(outdir+'figures/'+prefix+'_cbf.svg',bbox_inches="tight",pad_inches=None)
+         fig.savefig(outdir+'/figures/'+prefix+'_cbf.svg',bbox_inches="tight",pad_inches=None)
          cbfplot='figures/'+prefix+'_cbf.svg'
          html_report=html_report + '<h1> cbf module <h1> <object type="image/svg+xml" data="'+ cbfplot + '" alt="Segmentation" width="2000"height="400"></object>'
 
@@ -278,7 +278,7 @@ for i in modules1:
          sns.distplot(dat1,kde=False,ax=ax2,color='b')
          ax1.title.set_text('basil CBF maps'); ax2.title.set_text('basil CBF distribution')
          ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
-         fig.savefig(outdir+'figures/'+prefix+'_basil.svg',bbox_inches="tight",pad_inches=None)
+         fig.savefig(outdir+'/figures/'+prefix+'_basil.svg',bbox_inches="tight",pad_inches=None)
          basilplot='figures/'+prefix+'_basil.svg'
          html_report=html_report + '<h1> basil module </h1>  <object type="image/svg+xml" data="'+ basilplot + '" alt="Segmentation" width="2000"height="400"></object>'
 
@@ -300,7 +300,7 @@ for i in modules1:
          sns.distplot(dat1,kde=False,ax=ax2,color='b')
          ax1.title.set_text('score CBF maps'); ax2.title.set_text('score CBF distribution')
          ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
-         fig.savefig(outdir+'figures/'+prefix+'_score.svg',bbox_inches="tight",pad_inches=None)
+         fig.savefig(outdir+'/figures/'+prefix+'_score.svg',bbox_inches="tight",pad_inches=None)
          scoreplot='figures/'+prefix+'_score.svg'
         
          statmapscrub=load_img(outdir+'/scorescrub/'+prefix+'_cbfscrub.nii.gz')
@@ -316,7 +316,7 @@ for i in modules1:
          sns.distplot(dat2,kde=False,ax=ax2,color='b')
          ax1.title.set_text('scrub CBF maps'); ax2.title.set_text('scrub CBF distribution')
          ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
-         fig.savefig(outdir+'figures/'+prefix+'_scrub.svg',bbox_inches="tight",pad_inches=None)
+         fig.savefig(outdir+'/figures/'+prefix+'_scrub.svg',bbox_inches="tight",pad_inches=None)
          scrubplot='figures/'+prefix+'_scrub.svg'
         
 
