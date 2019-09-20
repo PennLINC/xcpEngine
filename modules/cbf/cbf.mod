@@ -160,12 +160,12 @@ if ! is_image ${cbf[cxt]} \
       subroutine              @2.1i Blood T1: ${cbf_t1blood[cxt]}
       subroutine              @2.1j Labelling efficiency: ${cbf_alpha[cxt]}
       
-      exec_sys rm -f ${intermediate}_cbf_ts*
+      exec_sys rm -f ${intermediate}_cbf*
       exec_xcp perfusion.R                   \
          -i    ${intermediate}.nii.gz        \
          -m    ${m0[cxt]}  \
          -v    ${tag_mask[cxt]}              \
-         -o    ${intermediate}_cbf_ts     \
+         -o    ${intermediate}_cbf     \
          -s    ${cbf_m0_scale[cxt]}          \
          -l    ${cbf_lambda[cxt]}            \
          -d    ${cbf_pld[cxt]}               \

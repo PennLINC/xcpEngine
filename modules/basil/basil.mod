@@ -263,7 +263,7 @@ routine @3 Orgainizing the output
    fi 
    
    
-fi
+
   exec_sys rm -rf $out/basil/${prefix}_mask_asl.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_M0.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_m0.nii.gz
@@ -315,7 +315,7 @@ fi
 
  fi
 
-  
+fi 
 routine_end
 
 completion
