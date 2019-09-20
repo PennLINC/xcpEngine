@@ -174,7 +174,7 @@ for i in modules1:
     elif i == 'alff' :
          statmapalff=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
-         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         mask=load_img(outdir+'/prestats/'+prefix+'_mask.nii.gz').get_fdata()
          imgdata=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz').get_fdata()
          logmask=np.isclose(mask, 1)
          dat1=imgdata[logmask]
@@ -196,7 +196,7 @@ for i in modules1:
     elif i == 'reho' :
          statmapreho=load_img(outdir+'/reho/'+prefix+'_rehoZ.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
-         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         mask=load_img(outdir+'/prestats'+prefix+'_mask.nii.gz').get_fdata()
          imgdata=load_img(outdir+'/reho/'+prefix+'_rehoZ.nii.gz').get_fdata()
          logmask=np.isclose(mask, 1)
          dat1=imgdata[logmask]
