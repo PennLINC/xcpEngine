@@ -83,8 +83,8 @@ new cohort file::
 
 Processing ASL data for computation of CBF  can be done using
 `design files <https://github.com/PennBBL/xcpEngine/blob/master/designs/cbf.dsn>`_
-This will take the ASL,M0 (if available) and anatomical directory. 
-ASL processing steps is the same like  both anatomical anf functional connectivity pipelines, 
+This will take the ASL, M0 (if available) and anatomical directory. 
+ASL processing steps is the same as  both anatomical and functional connectivity pipelines, 
 the only different is cohort file and design files. 
 
 
