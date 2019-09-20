@@ -96,7 +96,7 @@ Modules that map or analyse brain networks.
 
  * :ref:`fcon`: Computes the functional connectivity between each pair of regions in each provided
    brain atlas or parcellation to produce an adjacency matrix for the functional connectome.
-   Computes dynamic FC using the MTD.
+   Computes static FC using a Pearson correlation.
 
 Quality assessment
 --------------------
