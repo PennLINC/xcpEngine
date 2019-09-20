@@ -103,7 +103,7 @@ fi
 ###################################################################
    
 if ! is_image ${cbfbasil[cxt]}
-
+ then 
    case ${basil_perfusion[cxt]} in
    
    casl)

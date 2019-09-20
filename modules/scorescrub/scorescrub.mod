@@ -64,7 +64,7 @@ process              cbfscorets        ${prefix}_cbfscore_ts
 
 
 if ! is_image ${cbfscrub[cxt]}
-
+ then 
     subroutine  @1.2 computing cbf score
   # obtain the score 
         exec_xcp score.R                 \
