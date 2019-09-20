@@ -173,16 +173,45 @@ for i in modules1:
 
     elif i == 'alff' :
          statmapalff=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz')
-         bgimg=load_img(outdir+'/alff/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapalff,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,cmap='jet',
-                           symmetric_cbar=True,vmax=2,output_file=outdir+'/figures/'+prefix+'_alff.svg',colorbar=True,title='alffZ')
+         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
+         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         imgdata=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz').get_fdata()
+         logmask=np.isclose(mask, 1)
+         dat1=imgdata[logmask]
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         fig= plt.gcf()
+         fig = plt.figure(constrained_layout=False,figsize=(80,25))
+         gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
+         ax1 = fig.add_subplot(gs1[-1, :-1])
+         ax2 = fig.add_subplot(gs1[-1, -1])
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         plot_stat_map(stat_map_img=statmapalff,bg_img=bgimg,cut_coords=(0,0,0),draw_cross=False,vmax=120,symmetric_cbar=True,colorbar=True,axes=ax1,black_bg=False)
+         sns.distplot(dat1,kde=False,ax=ax2,color='b')
+         ax1.title.set_text('alffZ  maps'); ax2.title.set_text(' alffZ distribution')
+         ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('zscore', fontsize = 20)
+         fig.savefig(outdir+'figures/'+prefix+'_alff.svg',bbox_inches="tight",pad_inches=None)
          alffplot='figures/'+prefix+'_alff.svg'
+
          html_report=html_report + '<h1> alff module </h1> <object type="image/svg+xml" data="'+ alffplot +'" alt="Segmentation" width="2000"height="400"></object>'
     elif i == 'reho' :
          statmapreho=load_img(outdir+'/reho/'+prefix+'_rehoZ.nii.gz')
-         bgimg=load_img(outdir+'/reho/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapreho,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,cmap='jet',
-                           symmetric_cbar=True,vmax=2,output_file=outdir+'/figures/'+prefix+'_reho.svg',colorbar=True,title='rehoZ')
+         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
+         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         imgdata=load_img(outdir+'/reho/'+prefix+'_rehoZ.nii.gz').get_fdata()
+         logmask=np.isclose(mask, 1)
+         dat1=imgdata[logmask]
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         fig= plt.gcf()
+         fig = plt.figure(constrained_layout=False,figsize=(80,25))
+         gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
+         ax1 = fig.add_subplot(gs1[-1, :-1])
+         ax2 = fig.add_subplot(gs1[-1, -1])
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         plot_stat_map(stat_map_img=statmapreho,bg_img=bgimg,cut_coords=(0,0,0),draw_cross=False,vmax=120,symmetric_cbar=True,colorbar=True,axes=ax1,black_bg=False)
+         sns.distplot(dat1,kde=False,ax=ax2,color='b')
+         ax1.title.set_text('rehoZ  maps'); ax2.title.set_text(' rehoZ distribution')
+         ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('zscore', fontsize = 20)
+         fig.savefig(outdir+'figures/'+prefix+'_reho.svg',bbox_inches="tight",pad_inches=None)
          rehoplot='figures/'+prefix+'_reho.svg'
          html_report=html_report + '<h1> reho module </h1> <object type="image/svg+xml" data="'+ rehoplot +'" alt="Segmentation" width="2000"height="400"></object>'
     elif i == 'norm' :
@@ -216,43 +245,83 @@ for i in modules1:
          imgdata=load_img(outdir+'/cbf/'+prefix+'_cbf.nii.gz').get_fdata()
          logmask=np.isclose(mask, 1)
          dat1=imgdata[logmask]
-         
-         f, axes = plt.subplots(1,2,figsize=(500,100), sharex=True)
-
-         fig1=plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
-                           symmetric_cbar=True,colorbar=True,title='CBF')
-         axes[0]=fig1.add_subplot(111)
-
-         sns.distplot(dat1,kde=False,ax=axes[1],color='b')
-         axes[1].set(xlabel='cbf(mm/100g)',ylabel='No of voxels')
-         
-         f.savefig(outdir+'figures/'+prefix+'_cbf.svg',bbox_inches="tight",pad_inches=None)
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         fig= plt.gcf()
+         fig = plt.figure(constrained_layout=False,figsize=(80,25))
+         gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
+         ax1 = fig.add_subplot(gs1[-1, :-1])
+         ax2 = fig.add_subplot(gs1[-1, -1])
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,cut_coords=(0,0,0),draw_cross=False,vmax=120,symmetric_cbar=True,colorbar=True,axes=ax1,black_bg=False)
+         sns.distplot(dat1,kde=False,ax=ax2,color='b')
+         ax1.title.set_text('CBF maps'); ax2.title.set_text('CBF distribution')
+         ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
+         fig.savefig(outdir+'figures/'+prefix+'_cbf.svg',bbox_inches="tight",pad_inches=None)
          cbfplot='figures/'+prefix+'_cbf.svg'
-          
-
-
          html_report=html_report + '<h1> cbf module <h1> <object type="image/svg+xml" data="'+ cbfplot + '" alt="Segmentation" width="2000"height="400"></object>'
+
     elif i == 'basil' :
-         statmapbasil=load_img(outdir+'/basil/'+prefix+'_cbf_basil.nii.gz')
-         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapbasil,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
-                           symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_basil.svg',colorbar=True,title='basil CBF')
+         statmapbasil=load_img(outdir+'/basil/'+prefix+'_cbfbasil.nii.gz')
+         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
+         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         imgdata=load_img(outdir+'/basil/'+prefix+'_cbfbasil.nii.gz').get_fdata()
+         logmask=np.isclose(mask, 1)
+         dat1=imgdata[logmask]
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         fig= plt.gcf()
+         fig = plt.figure(constrained_layout=False,figsize=(80,25))
+         gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
+         ax1 = fig.add_subplot(gs1[-1, :-1])
+         ax2 = fig.add_subplot(gs1[-1, -1])
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         plot_stat_map(stat_map_img=statmapbasil,bg_img=bgimg,cut_coords=(0,0,0),draw_cross=False,vmax=120,symmetric_cbar=True,colorbar=True,axes=ax1,black_bg=False)
+         sns.distplot(dat1,kde=False,ax=ax2,color='b')
+         ax1.title.set_text('basil CBF maps'); ax2.title.set_text('basil CBF distribution')
+         ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
+         fig.savefig(outdir+'figures/'+prefix+'_basil.svg',bbox_inches="tight",pad_inches=None)
          basilplot='figures/'+prefix+'_basil.svg'
          html_report=html_report + '<h1> basil module </h1>  <object type="image/svg+xml" data="'+ basilplot + '" alt="Segmentation" width="2000"height="400"></object>'
+
     elif i == 'scorescrub' :
-         statmapscore=load_img(outdir+'/score/'+prefix+'_cbfscore.nii.gz')
+         statmapscore=load_img(outdir+'/scorescrub/'+prefix+'_cbfscore.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
-
-         plot_stat_map(stat_map_img=statmapscore,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
-                           symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_score.svg',colorbar=True,title='score CBF')
+         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         imgdata=load_img(outdir+'/scorescrub/'+prefix+'_cbfscore.nii.gz').get_fdata()
+         logmask=np.isclose(mask, 1)
+         dat1=imgdata[logmask]
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         fig= plt.gcf()
+         fig = plt.figure(constrained_layout=False,figsize=(80,25))
+         gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
+         ax1 = fig.add_subplot(gs1[-1, :-1])
+         ax2 = fig.add_subplot(gs1[-1, -1])
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         plot_stat_map(stat_map_img=statmapscore,bg_img=bgimg,cut_coords=(0,0,0),draw_cross=False,vmax=120,symmetric_cbar=True,colorbar=True,axes=ax1,black_bg=False)
+         sns.distplot(dat1,kde=False,ax=ax2,color='b')
+         ax1.title.set_text('score CBF maps'); ax2.title.set_text('score CBF distribution')
+         ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
+         fig.savefig(outdir+'figures/'+prefix+'_score.svg',bbox_inches="tight",pad_inches=None)
          scoreplot='figures/'+prefix+'_score.svg'
-          
-         statmapscrub=load_img(outdir+'/score/'+prefix+'_cbfscrub.nii.gz')
-         plot_stat_map(stat_map_img=statmapscrub,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
-                           symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_scrub.svg',colorbar=True,title='scrub CBF')
-         scurbplot='figures/'+prefix+'_scrub.svg'
+        
+         statmapscrub=load_img(outdir+'/scorescrub/'+prefix+'_cbfscrub.nii.gz')
+         imgdata1=load_img(outdir+'/scorescrub/'+prefix+'_cbfscore.nii.gz').get_fdata()
+         dat2=imgdata1[logmask]
+         fig= plt.gcf()
+         fig = plt.figure(constrained_layout=False,figsize=(80,25))
+         gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
+         ax1 = fig.add_subplot(gs1[-1, :-1])
+         ax2 = fig.add_subplot(gs1[-1, -1])
+         sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
+         plot_stat_map(stat_map_img=statmapscrub,bg_img=bgimg,cut_coords=(0,0,0),draw_cross=False,vmax=120,symmetric_cbar=True,colorbar=True,axes=ax1,black_bg=False)
+         sns.distplot(dat2,kde=False,ax=ax2,color='b')
+         ax1.title.set_text('scrub CBF maps'); ax2.title.set_text('scrub CBF distribution')
+         ax2.set_ylabel('No of Voxel', fontsize = 20.0); ax2.set_xlabel('CBF ml/min/100g', fontsize = 20)
+         fig.savefig(outdir+'figures/'+prefix+'_scrub.svg',bbox_inches="tight",pad_inches=None)
+         scrubplot='figures/'+prefix+'_scrub.svg'
+        
 
-         html_report=html_report + '<h1> score module <h1> <object type="image/svg+xml" data="'+ scoreplot + '" alt="Segmentation" width="2000"height="400"></object>'
+         html_report=html_report + '<h1> scorescrub module <h1> <object type="image/svg+xml" data="'+ scoreplot + '" alt="Segmentation" width="2000"height="400"></object> \
+             <h3> </h3> <p> </p> </h3>  <p> <p>   <object type="image/svg+xml" data="'+ scrubplot + '" alt="Segmentation" width="2000"height="400"></object>'
 
     elif i == 'roiquant' :
          filejson=outdir+'/'+prefix+'_atlas/'+prefix+'_atlas.json'
@@ -331,7 +400,7 @@ for i in modules1:
          #(correlation of DV and RMS after regression) in the QC table above  </p> </h3>  <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object>'
          
          html_report=html_report + '<h1> qcfc module </h1>  <p> <h3> FD, DVARS and BOLD Times series before regression </h3>  <p> <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object> \
-           <p> <h3>  DVARS and BOLD Times series after regression </h3>  </p> </h3> <p> <p> <object type="image/svg+xml" data="'+  qcfcfig+ '" alt="Segmentation" width="2000"height="1500"></object>'
+           <p> <h3>  DVARS and BOLD Times series after regression </h3>  </p> </h3> <p> <p> <object type="image/svg+xml" data="'+ qcfcfig+ '" alt="Segmentation" width="2000"height="1500"></object>'
 
 
     else :
