@@ -41,7 +41,8 @@ derivative            cbfscoreZ                 ${prefix}_cbfscoreZ.nii.gz
 derivative            cbfscore_tsnr             ${prefix}_cbfscore_tsnr.nii.gz 
 
 output                cbfscorets              ${prefix}_cbfscore_ts.nii.gz   
-output                cbfscore                 ${prefix}_cbfscrub.nii.gz
+output                cbfsrub                ${prefix}_cbfscrub.nii.gz
+output                cbfsore               ${prefix}_cbfsore.nii.gz
 output                cbfscoreR               ${prefix}_cbfscoreR.nii.gz
 output                cbfscrubR                ${prefix}_cbfscrubR.nii.gz
 output                cbfscrubZ                ${prefix}_cbfscrubZ.nii.gz
@@ -62,7 +63,7 @@ derivative_set       cbfscrubZ     Statistic         mean
 process              cbfscorets        ${prefix}_cbfscore_ts
 
 
-    
+if ! is_image ${cbfscrub[cxt]}
 
     subroutine  @1.2 computing cbf score
   # obtain the score 
@@ -86,7 +87,7 @@ process              cbfscorets        ${prefix}_cbfscore_ts
             -m     ${mask[sub]} \
             -t     ${scorescrub_thresh[cxt]} \
             -o     ${outdir}/${prefix}
-
+fi 
    #aslqc 
    exec_xcp  aslqc.py -i ${cbfscorets[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfscore

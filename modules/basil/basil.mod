@@ -102,7 +102,7 @@ fi
 # Compute cerebral blood flow with basil.
 ###################################################################
    
-
+if ! is_image ${cbfbasil[cxt]}
 
    case ${basil_perfusion[cxt]} in
    
@@ -260,8 +260,10 @@ routine @3 Orgainizing the output
     exec_sys rm -rf $out/basil/${prefix}_cbf_pv_wm.nii.gz $out/basil/${prefix}_cbf.nii.gz
     
  
- fi 
- 
+   fi 
+   
+   
+fi
   exec_sys rm -rf $out/basil/${prefix}_mask_asl.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_M0.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_m0.nii.gz
