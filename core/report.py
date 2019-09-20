@@ -11,9 +11,11 @@ from niworkflows.viz.utils import *
 from niworkflows.viz.plots import *
 import json
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def get_parser():
@@ -52,9 +54,9 @@ def ulify(elements):
 
 modulelist=ulify(modules)
 
-modulewant=['coreg','prestats','task','struc','norm','qcfc','jlf','fcon','alff','reho','cbf','basil','score','scrub']
+modulewant=['coreg','prestats','task','struc','norm','qcfc','jlf','fcon','alff','reho','cbf','basil','scorescrub']
 modules1=[]
-for j in modulewant:
+for j in modulewant: 
      if j in modules:
           modules1.append(j)
 
@@ -208,33 +210,50 @@ for i in modules1:
            natreg='figures/'+prefix+'_registration.svg'
            html_report=html_report + '<h1> coreg module </h1>  <p> <h3> Coregistration of T1w and Fucntional image </h3> <p> <object type="image/svg+xml" data="'+ natreg + '" alt="Segmentation" width="2000"height="800"></object>'
     elif i == 'cbf' :
-         statmapcbf=load_img(outdir+'/cbf/'+prefix+'_meanPerfusion.nii.gz')
-         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=120,
-                           symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_cbf.svg',colorbar=True,title='mean CBF')
+         statmapcbf=load_img(outdir+'/cbf/'+prefix+'_cbf.nii.gz')
+         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
+         mask=load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
+         imgdata=load_img(outdir+'/cbf/'+prefix+'_cbf.nii.gz').get_fdata()
+         logmask=np.isclose(mask, 1)
+         dat1=imgdata[logmask]
+         
+         f, axes = plt.subplots(1,2,figsize=(500,100), sharex=True)
+
+         fig1=plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
+                           symmetric_cbar=True,colorbar=True,title='CBF')
+         axes[0]=fig1.add_subplot(111)
+
+         sns.distplot(dat1,kde=False,ax=axes[1],color='b')
+         axes[1].set(xlabel='cbf(mm/100g)',ylabel='No of voxels')
+         
+         f.savefig(outdir+'figures/'+prefix+'_cbf.svg',bbox_inches="tight",pad_inches=None)
          cbfplot='figures/'+prefix+'_cbf.svg'
+          
+
+
          html_report=html_report + '<h1> cbf module <h1> <object type="image/svg+xml" data="'+ cbfplot + '" alt="Segmentation" width="2000"height="400"></object>'
     elif i == 'basil' :
          statmapbasil=load_img(outdir+'/basil/'+prefix+'_cbf_basil.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapbasil,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=120,
+         plot_stat_map(stat_map_img=statmapbasil,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
                            symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_basil.svg',colorbar=True,title='basil CBF')
          basilplot='figures/'+prefix+'_basil.svg'
          html_report=html_report + '<h1> basil module </h1>  <object type="image/svg+xml" data="'+ basilplot + '" alt="Segmentation" width="2000"height="400"></object>'
-    elif i == 'score' :
+    elif i == 'scorescrub' :
          statmapscore=load_img(outdir+'/score/'+prefix+'_cbfscore.nii.gz')
-         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapscore,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=120,
+         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
+
+         plot_stat_map(stat_map_img=statmapscore,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
                            symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_score.svg',colorbar=True,title='score CBF')
          scoreplot='figures/'+prefix+'_score.svg'
-         html_report=html_report + '<h1> score module <h1> <object type="image/svg+xml" data="'+ scoreplot + '" alt="Segmentation" width="2000"height="400"></object>'
-    elif i == 'scrub' :
-         statmapscrub=load_img(outdir+'/scrub/'+prefix+'_cbfscrub.nii.gz')
-         bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolume.nii.gz')
-         plot_stat_map(stat_map_img=statmapscrub,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=120,
+          
+         statmapscrub=load_img(outdir+'/score/'+prefix+'_cbfscrub.nii.gz')
+         plot_stat_map(stat_map_img=statmapscrub,bg_img=bgimg,display_mode='z',cut_coords=(0,0,0),draw_cross=False,vmax=120,
                            symmetric_cbar=True,output_file=outdir+'/figures/'+prefix+'_scrub.svg',colorbar=True,title='scrub CBF')
-         scrubplot='figures/'+prefix+'_scrub.svg'
-         html_report=html_report + '<h1> scrub module </h1> <object type="image/svg+xml" data="'+ scrubplot + '" alt="Segmentation" width="2000"height="400"></object>'
+         scurbplot='figures/'+prefix+'_scrub.svg'
+
+         html_report=html_report + '<h1> score module <h1> <object type="image/svg+xml" data="'+ scoreplot + '" alt="Segmentation" width="2000"height="400"></object>'
+
     elif i == 'roiquant' :
          filejson=outdir+'/'+prefix+'_atlas/'+prefix+'_atlas.json'
          with open(filejson, 'r') as atlasfile:

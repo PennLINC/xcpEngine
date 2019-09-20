@@ -87,7 +87,7 @@ if ! is_image ${cbfscrub[cxt]}
             -m     ${mask[sub]} \
             -t     ${scorescrub_thresh[cxt]} \
             -o     ${outdir}/${prefix}
-fi 
+
    #aslqc 
    exec_xcp  aslqc.py -i ${cbfscorets[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfscore
@@ -108,13 +108,13 @@ fi
 
    qc meancbfscoreZ  meancbfcoreZ ${prefix}_cbfscoreZ.txt 
    meanzcbfscore=$(fslstats ${cbfscoreZ[cxt]} -k  ${gm2seq[sub]} -M)
-   echo ${meanzcbfscore} >> ${meancbfcoreZ[cxt]}
+   echo ${meanzcbfscore} >> ${meancbfscoreZ[cxt]}
 
    qc meancbfscrubZ  meancbfscrubZ ${prefix}_cbfscrubZ.txt 
    meanzcbfscrub=$(fslstats ${cbfscrubZ[cxt]} -k  ${gm2seq[sub]} -M)
    echo ${meanzcbfscrub} >> ${meancbfscrubZ[cxt]}
 
-  
+fi  
 routine_end  
 
 completion
