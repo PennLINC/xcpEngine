@@ -68,8 +68,8 @@ ASL derivatives
 -----------------------
 
 Modules that generate derivative maps from ASL data:
- * :ref:`score`: detects and discards the cbf volumes that might contribute to artifact.
- * :ref:`scrub`: compute average cbf from cbf timeseries by using Bayesian inference method with the aim of removing the white noise.
+ * :ref:`scorescrub`: detects and discards the cbf volumes that might contribute to artifact and 
+ compute average cbf from cbf timeseries by using Bayesian inference method with the aim of removing the white noise.
 
 
 Registration
@@ -129,5 +129,5 @@ Quick Lookup
   qcfc
   cbf
   basil
-  score
-  scrub
+  scorescrub
+

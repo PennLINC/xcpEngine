@@ -104,7 +104,10 @@ The default is 3.2s but it also read from the MO scan image.
 ``Expected output``
 ^^^^^^^^^^^^^^^^^^^^^^
 The main outputs are:: 
-   - prefix_cbf_basil.nii.gz  # mean basil cbf 
-   - prefix_cbf_basil_pv.nii.gz  # partial volume corrected cbf 
-   - prefix_cbf_basil_spatial.nii.gz  # spatial regularized cbf 
+   - prefix_cbfbasil.nii.gz  # mean basil cbf 
+   - prefix_cbfpv.nii.gz  # partial volume corrected cbf 
+   - prefix_cbfspatial.nii.gz  # spatial regularized cbf 
+
+   
+All thier respective relative (R) and zscore (Z).
  
