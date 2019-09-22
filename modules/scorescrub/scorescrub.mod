@@ -40,10 +40,10 @@ derivative            cbfscrubZ                 ${prefix}_cbfscrubZ.nii.gz
 derivative            cbfscoreZ                 ${prefix}_cbfscoreZ.nii.gz
 derivative            cbfscore_tsnr             ${prefix}_cbfscore_tsnr.nii.gz 
 
-output                cbfscorets              ${prefix}_cbfscore_ts.nii.gz   
-output                cbfsrub                ${prefix}_cbfscrub.nii.gz
-output                cbfsore               ${prefix}_cbfsore.nii.gz
-output                cbfscoreR               ${prefix}_cbfscoreR.nii.gz
+output                cbfscorets               ${prefix}_cbfscore_ts.nii.gz   
+output                cbfscrub                 ${prefix}_cbfscrub.nii.gz
+output                cbfsore                  ${prefix}_cbfsore.nii.gz
+output                cbfscoreR                ${prefix}_cbfscoreR.nii.gz
 output                cbfscrubR                ${prefix}_cbfscrubR.nii.gz
 output                cbfscrubZ                ${prefix}_cbfscrubZ.nii.gz
 output                cbfscoreZ                ${prefix}_cbfscoreZ.nii.gz
