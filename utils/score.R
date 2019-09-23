@@ -53,7 +53,7 @@ gm       <-         opt$grey
 csf      <-         opt$csf
 outpath  <-         opt$out
 thresh   <-         opt$thresh
-
+thresh=0.7
 #read the maps and cbf time series  
 wm       <-         readNifti(wm)
 gm       <-         readNifti(gm)

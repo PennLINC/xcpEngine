@@ -594,8 +594,11 @@ if  [[ -d ${anatdir[sub]} ]]; then
         -i ${structmask[sub]} -t ${struct2seq[cxt]} \
         -o ${mask1} -n NearestNeighbor
   
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
-         -bin ${mask} 
+   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1}  -bin \
+              ${out}/coreg/${prefix}_mask.nii.gz 
+
+   output mask ${out}/coreg/${prefix}_mask.nii.gz 
+   
    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
          ${referenceVolumeBrain[sub]}
    output mask ${out}/coreg/${prefix}_mask.nii.gz 

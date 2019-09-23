@@ -128,9 +128,9 @@ if gm and wm and csf:
    pbcf=2.5*gmm+wmm
    msk=np.array((cbf!= 0)&(cbf != np.nan )&(pbcf != np.nan )).astype(int)
 
-   gm1=np.array(gmm>0.9)
-   wm1=np.array(wmm>0.9)
-   cc1=np.array(ccf>0.9)
+   gm1=np.array(gmm>0.7)
+   wm1=np.array(wmm>0.7)
+   cc1=np.array(ccf>0.7)
    r1=np.array([0,np.corrcoef(cbf[msk==1],pbcf[msk==1])[1,0]]).max()
    
    V=((np.sum(gm1)-1)*np.var(cbf[gm1>0])+(np.sum(wm1)-1)*np.var(cbf[wm1>0])+(np.sum(cc1)-1)*np.var(cbf[cc1>0])) \

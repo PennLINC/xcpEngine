@@ -875,7 +875,7 @@ while (( ${#rem} > 0 ))
                 $strucdir/${prefix}_T1w_brainmask.nii.gz
 
        output struct_head $strucdir/${prefix}_T1w_brain.nii.gz
-
+       output structmask $strucdir/${prefix}_T1w_brainmask.nii.gz
        exec_fsl fast -n 3 $strucdir/${prefix}_T1w_brain.nii.gz 
        
        exec_fsl immv $strucdir/${prefix}_T1w_brain_seg $strucdir/${prefix}_segmentation
