@@ -231,7 +231,7 @@ if ! is_image ${cbf[cxt]} \
               -u    0                                       \
               -V) )
    echo ${neg[0]}   >> ${negative_voxels[cxt]}
-   neg=( $(exec_fsl fslstats ${cbf[cxt]}              \
+   neg=( $(exec_fsl fslstats ${cbf_ts[cxt]}              \
               -k    ${intermediate}_gm_${space[sub]}.nii.gz \
               -u    0                                       \
               -V) )
