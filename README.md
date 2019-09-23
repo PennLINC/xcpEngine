@@ -20,3 +20,4 @@ hub](http://xcpengine.readthedocs.io)
 
 If you experience any difficulties, we suggest that you search or post to the
 issues forum of the pipeline's GitHub repository.
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/PennBBL/xcpEngine/master)
