@@ -676,6 +676,7 @@ while (( ${#rem} > 0 ))
               -n \
                -R
        output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
+       exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
       if  is_image ${m0[sub]}
       then
       exec_afni 3dresample -orient ${template_orientation} \
@@ -755,6 +756,9 @@ while (( ${#rem} > 0 ))
                            -prefix ${out}/prestats/${prefix}_gm.nii.gz
                   output gm  ${out}/prestats/${prefix}_gm.nii.gz
                   
+                   exec_fsl fslmaths ${struct[sub]} -bin ${outdir}/${prefix}_structmask
+                   output structmask    ${outdir}/${prefix}_structmask.nii.gz 
+                  
                   exec_sys rm -rf ${out}/prestats/fast*
               else 
                   exec_afni 3dresample -orient ${template_orientation} \
@@ -772,8 +776,12 @@ while (( ${#rem} > 0 ))
                            -inset $(ls ${antsct[sub]}/../gmd/*probabilityCSF.nii.gz) \
                            -prefix ${out}/prestats/${prefix}_csf.nii.gz
                    output csf  ${out}/prestats/${prefix}_csf.nii.gz
-             
+
+                   exec_fsl fslmaths ${struct[sub]} -bin ${outdir}/${prefix}_structmask
+                   output structmask    ${outdir}/${prefix}_structmask.nii.gz 
                fi
+
+               
 
               if  is_image ${m0[sub]}
               then
@@ -798,6 +806,8 @@ while (( ${#rem} > 0 ))
                -f 0.5 \
               -n \
                -R
+               exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
+
               output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -928,8 +938,10 @@ while (( ${#rem} > 0 ))
       fi
 
       exec_fsl bet ${referenceVolume[cxt]} \
-         ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  -f 0.5 -n -R
-      
+         ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  -f 0.5 -n -R 
+
+      exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
+
       output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz 
       
       subroutine        @  generate new ${spaces[sub]} with spaceMetadata

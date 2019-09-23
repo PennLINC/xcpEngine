@@ -238,16 +238,24 @@ if ! is_image ${cbf[cxt]} \
    echo ${neg[0]}   >> ${negative_voxels_ts[cxt]}
    
    #aslqc 
-   exec_xcp  aslqc.py -i ${cbf_ts[cxt]} -m ${mask[sub]} -g ${gm2seq[sub]} \
+   exec_xcp  aslqc.py -i ${cbf[cxt]} -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbf
    
-   output  cbf_tsnr ${prefix}_cbf_tsnr.nii.gz
-   qc cbf_tsnr  cbf_tsnr  ${prefix}_cbf_meantsnr.txt
+  
    qc cbf_qei   cbf_qei   ${prefix}_cbf_QEI.txt
   
    #compute relative CBF 
-  
-   
+    
+   output  cbf_tsnr ${prefix}_cbf_tsnr.nii.gz
+   exec_fsl fslmaths ${cbf_ts[cxt]} -Tmean ${intermediate}_cbfmean  
+   exec_fsl fslmaths ${cbf_ts[cxt]} -Tstd  ${intermediate}_cbfstd
+   exec_fsl fslmaths ${intermediate}_cbfmean -div ${intermediate}_cbfstd \
+   -mul ${mask[sub]}  ${cbf_tsnr[cxt]}
+   qc meancbftsnr  meancbftsnr  ${prefix}_cbf_meantsnr.txt
+
+   meanTcbf=$(fslstats ${cbf_tsnr[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanTcbf} >> ${meancbftsnr[cxt]}
+
    zscore_image ${cbf[cxt]} ${cbfZ[cxt]} ${mask[sub]}
    qc meancbfZ meancbfZ ${prefix}_cbfZ.txt 
    meanZcbf=$(fslstats ${cbfZ[cxt]}  -k  ${gm2seq[sub]} -M)

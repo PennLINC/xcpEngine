@@ -89,12 +89,27 @@ if ! is_image ${cbfscrub[cxt]}
             -o     ${outdir}/${prefix}
 
    #aslqc 
-   exec_xcp  aslqc.py -i ${cbfscorets[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+   exec_xcp  aslqc.py -i ${cbfscore[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfscore
    
-   output  cbfscore_tsnr ${prefix}_cbfscore_tsnr.nii.gz
-   qc cbf_tsnr  cbf_tsnr  ${prefix}_cbfscore_meantsnr.txt
+
    qc cbfscore_qei   cbfscore_qei   ${prefix}_cbfscore_QEI.txt
+
+   output  cbfscore_tsnr ${prefix}_cbfscore_tsnr.nii.gz
+
+   exec_fsl fslmaths ${cbfscorets[cxt]} -Tmean ${intermediate}_cbfmean  
+   exec_fsl fslmaths ${cbfscorets[cxt]}  -Tstd  ${intermediate}_cbfstd
+   exec_fsl fslmaths ${intermediate}_cbfmean -div ${intermediate}_cbfstd \
+   -mul ${mask[sub]}  ${cbfscore_tsnr[cxt]}
+
+   qc meancbfscoretsnr  meancbfscoretsnr  ${prefix}_cbfscore_meantsnr.txt
+
+   meanT1cbf=$(fslstats ${cbfscore_tsnr[cxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanT1cbf} >> ${meancbfscoretsnr[cxt]}
+
+
+
+
 
    exec_xcp  aslqc.py -i ${cbfscrub[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
           -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfscrub

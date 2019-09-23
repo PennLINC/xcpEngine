@@ -70,42 +70,19 @@ logmask         =   np.isclose(mas, 1)
 imgts=img_data[logmask]
 #check if the image is 3D or 4D 
 
-if len(img1.shape)==4 :
-   #estimate tSNR
-   out1=opts.out+'_tsnr.nii.gz'
-   out2=out+'_meantsnr.txt'
 
-   tsnr=np.mean(imgts,axis=1)/np.std(imgts,axis=1)
-   img_tsnr=   np.zeros(shape=[img1.shape[0],img1.shape[1],img1.shape[2]])
-   img_tsnr[logmask]   =  tsnr
-   img_TSNR        =   nib.Nifti1Image(dataobj=img_tsnr,
-                                                affine=img1.affine,
-                                                header=img1.header)
-   nib.save(img_TSNR,out1)
-   np.savetxt(out2,[np.mean(tsnr)],delimiter='\t',fmt="%5.5f")
 
 # compute relative cbf 
-if len(img1.shape)==4:
-    cbf=np.mean(img1.get_fdata(),axis=3)
-    cbf1=cbf[logmask]/np.mean(cbf[logmask])
-    img2=np.zeros(shape=[img1.shape[0],img1.shape[1],img1.shape[2]])
-    img2[logmask]=cbf1
-    img_rel        =   nib.Nifti1Image(dataobj=img2,
+
+cbf=img1.get_fdata()
+cbf1=cbf[logmask]/np.mean(cbf[logmask])
+img2=np.zeros(shape=[img1.shape[0],img1.shape[1],img1.shape[2]])
+img2[logmask]=cbf1
+img_rel        =   nib.Nifti1Image(dataobj=img2,
                                                 affine=img1.affine,
                                                 header=img1.header)
-    out3=out+'R.nii.gz'                                            
-    nib.save(img_rel,out3)
-    
-else:
-    cbf=img1.get_fdata()
-    cbf1=cbf[logmask]/np.mean(cbf[logmask])
-    img2=np.zeros(shape=[img1.shape[0],img1.shape[1],img1.shape[2]])
-    img2[logmask]=cbf1
-    img_rel        =   nib.Nifti1Image(dataobj=img2,
-                                                affine=img1.affine,
-                                                header=img1.header)
-    out3=out+'R.nii.gz'                                            
-    nib.save(img_rel,out3)
+out3=out+'R.nii.gz'                                            
+nib.save(img_rel,out3)
     
 
 if gm and wm and csf:
@@ -128,9 +105,9 @@ if gm and wm and csf:
    pbcf=2.5*gmm+wmm
    msk=np.array((cbf!= 0)&(cbf != np.nan )&(pbcf != np.nan )).astype(int)
 
-   gm1=np.array(gmm>0.7)
-   wm1=np.array(wmm>0.7)
-   cc1=np.array(ccf>0.7)
+   gm1=np.array(gmm>0.8)
+   wm1=np.array(wmm>0.8)
+   cc1=np.array(ccf>0.8)
    r1=np.array([0,np.corrcoef(cbf[msk==1],pbcf[msk==1])[1,0]]).max()
    
    V=((np.sum(gm1)-1)*np.var(cbf[gm1>0])+(np.sum(wm1)-1)*np.var(cbf[wm1>0])+(np.sum(cc1)-1)*np.var(cbf[cc1>0])) \

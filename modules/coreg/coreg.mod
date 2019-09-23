@@ -525,7 +525,7 @@ if ! is_image ${struct2seq_img[cxt]} \
       -e 3 -d 3                     \
       -r ${sourceReference[cxt]}    \
       -o ${struct2seq_img[cxt]}     \
-      -i ${struct[sub]}             \
+      -i ${struct_head[sub]}             \
       -t ${struct2seq[cxt]}
 fi
 routine_end
@@ -588,20 +588,23 @@ if  [[ -d ${anatdir[sub]} ]]; then
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${csf[sub]} -t ${struct2seq[cxt]} \
         -o ${csf_seq} -n NearestNeighbor
+
    output csf2seq ${out}/coreg/${prefix}_csf2seq.nii.gz 
-   
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+
+
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
         -i ${structmask[sub]} -t ${struct2seq[cxt]} \
         -o ${mask1} -n NearestNeighbor
-  
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1}  -bin \
-              ${out}/coreg/${prefix}_mask.nii.gz 
-
-   output mask ${out}/coreg/${prefix}_mask.nii.gz 
    
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
+    exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
+
+   output  mask ${out}/coreg/${prefix}_mask.nii.gz
+   
+   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask[cxt]} \
          ${referenceVolumeBrain[sub]}
-   output mask ${out}/coreg/${prefix}_mask.nii.gz 
+
+   
+
    
    exec_fsl immv $out/prestats/${prefix}_struct_brain  $out/coreg/${prefix}_target
    exec_sys rm  -rf ${out}/prestats/${prefix}_struct* ${out}/prestats/${prefix}_csf* 
@@ -617,7 +620,7 @@ elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
     csf_seq=${out}/coreg/${prefix}_csf2seq.nii.gz 
     mask1=${intermediate}_mask_seq.nii.gz 
     mask=${out}/coreg/${prefix}_mask.nii.gz
-    structmask=${intermediate}_mask_struct.nii.gz 
+   
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${gm[sub]} -t ${struct2seq[cxt]} \
@@ -634,19 +637,20 @@ elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
         -i ${csf[sub]} -t ${struct2seq[cxt]} \
         -o ${csf_seq} -n NearestNeighbor
    output csf2seq ${out}/coreg/${prefix}_csf2seq.nii.gz
-    
-   exec_fsl fslmaths ${struct_head[sub]} -bin ${structmask} 
 
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
-        -i ${structmask}  -t ${struct2seq[cxt]} \
+
+    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
+        -i ${structmask[sub]} -t ${struct2seq[cxt]} \
         -o ${mask1} -n NearestNeighbor
-  
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
-         -bin ${mask} 
-    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
-         ${referenceVolumeBrain[sub]}
    
-   output mask ${out}/coreg/${prefix}_mask.nii.gz
+   exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
+   output  mask ${out}/coreg/${prefix}_mask.nii.gz
+
+
+    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask[cxt]} \
+         ${referenceVolumeBrain[sub]}
+     
+
    
    #exec_fsl imcp ${struct[sub]}  $out/coreg/${prefix}_target
    exec_sys rm   ${out}/prestats/${prefix}_csf* 2>/dev/null
