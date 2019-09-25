@@ -572,7 +572,7 @@ if  [[ -d ${anatdir[sub]} ]]; then
     gm_seq=${out}/coreg/${prefix}_gm2seq.nii.gz 
     wm_seq=${out}/coreg/${prefix}_wm2seq.nii.gz 
     csf_seq=${out}/coreg/${prefix}_csf2seq.nii.gz 
-    mask1=${intermediate}_mask_seq.nii.gz 
+    mask1=${out}/coreg/temporay_mask_seq.nii.gz 
     mask=${out}/coreg/${prefix}_mask.nii.gz
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
@@ -599,7 +599,7 @@ if  [[ -d ${anatdir[sub]} ]]; then
     exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
 
    output  mask ${out}/coreg/${prefix}_mask.nii.gz
-   
+   rm -rf $mask1
    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask[cxt]} \
          ${referenceVolumeBrain[sub]}
 
@@ -618,7 +618,7 @@ elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
     gm_seq=${out}/coreg/${prefix}_gm2seq.nii.gz 
     wm_seq=${out}/coreg/${prefix}_wm2seq.nii.gz 
     csf_seq=${out}/coreg/${prefix}_csf2seq.nii.gz 
-    mask1=${intermediate}_mask_seq.nii.gz 
+    mask1=${out}/coreg/temporay_mask_seq.nii.gz 
     mask=${out}/coreg/${prefix}_mask.nii.gz
    
 
@@ -651,7 +651,7 @@ elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
          ${referenceVolumeBrain[sub]}
      
 
-   
+   rm -rf $mask1
    #exec_fsl imcp ${struct[sub]}  $out/coreg/${prefix}_target
    exec_sys rm   ${out}/prestats/${prefix}_csf* 2>/dev/null
    exec_sys rm -rf ${out}/prestats/${prefix}_wm*  ${out}/prestats/${prefix}_gm* 2>/dev/null

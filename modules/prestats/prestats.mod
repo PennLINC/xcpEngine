@@ -677,6 +677,7 @@ while (( ${#rem} > 0 ))
                -R
        output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
        exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
+       
       if  is_image ${m0[sub]}
       then
       exec_afni 3dresample -orient ${template_orientation} \

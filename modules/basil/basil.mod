@@ -285,7 +285,7 @@ routine @3 Orgainizing the output
    qc meancbfbasilZ meancbfbasilZ ${prefix}_cbfbasilZ.txt 
    meanZcbfb=$(fslstats ${cbfbasilZ[cxt]}  -k  ${gm2seq[sub]} -M)
    echo ${meanZcbfb} >> ${meancbfbasilZ[cxt]}
-
+   
  fi
 
 
@@ -308,10 +308,11 @@ routine @3 Orgainizing the output
    
    qc cbfpv_qei   cbfpv_qei   ${prefix}_cbfpv_QEI.txt
    
-   zscore_image ${cbfpv[cxt]}  ${zcbfpv[cxt]} ${mask[sub]}
-   qc meancbfbasilpvZ meancbfbasilpvZ ${prefix}_cbfbasilpvZ.txt 
-   meanZcbfpv=$(fslstats ${cbfbasilpv[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfpv} >> ${meancbfbasilpvZ[cxt]}
+   zscore_image ${cbfpv[cxt]}  ${cbfpvZcxt]} ${mask[sub]}
+
+   qc meancbfpvZ meancbfpvZ ${prefix}_cbfpvZ.txt 
+   meanZcbfpv=$(fslstats ${cbfpvZcxt]}  -k  ${gm2seq[sub]} -M)
+   echo ${meanZcbfpv} >> ${meancbfpvZ[cxt]}
 
  fi
 
