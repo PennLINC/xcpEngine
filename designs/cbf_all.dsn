@@ -33,16 +33,16 @@
 # ANALYSIS VARIABLES
 ###################################################################
 
-analysis=score_$(whoami)
+analysis=cbfall_$(whoami)
 design=
-sequence=score
+sequence=cbfall
 standard=MNI%2x2x2
 
 ###################################################################
 # PIPELINE
 ###################################################################
 
-pipeline=prestats,coreg,cbf,score,roiquant,norm
+pipeline=prestats,coreg,cbf,basil,scorescrub,roiquant,norm
 ###################################################################
 # 1 PRESTATS
 ###################################################################
@@ -72,6 +72,7 @@ coreg_cleanup[2]=1
 ###################################################################
 # 3 cbf
 ###################################################################
+
 cbf_first_tagged[3]=1
 cbf_perfusion[3]=casl
 cbf_m0_scale[3]=1
@@ -85,26 +86,44 @@ cbf_rerun[3]=0
 cbf_cleanup[3]=1
 
 ###################################################################
-# 4 score
+# 4 basil
 ###################################################################
 
-score_thresh[4]=0.9
-score_rerun[4]=0
-score_cleanup[4]=1
+basil_perfusion[4]=casl
+basil_inputformat[4]=tc 
+basil_m0_scale[4]=1
+basil_lambda[4]=0.9
+basil_alpha[4]=0.72
+basil_spatial[4]=1
+basil_pld[4]=1.8
+basil_pvc[4]=1
+basil_MOTR[4]=4
+basil_tis[4]=1
+basil_rerun[4]=0
+basil_cleanup[4]=1
 
 ###################################################################
-# 5 ROIQUANT
+# 5 score
 ###################################################################
 
-roiquant_atlas[5]=all
-roiquantt_globals[5]=1
-roiquant_vol[5]=0
-roiquant_rerun[5]=0
-roiquant_cleanup[5]=1
+scorescrub_thresh[5]=0.9
+scorescrub_rerun[5]=0
+scorescrub_cleanup[5]=1
 
 ###################################################################
-# 6 NORM
+# 6 ROIQUANT
 ###################################################################
-norm_primary[6]=1
-norm_rerun[6]=1
-norm_cleanup[6]=1
+
+roiquant_atlas[6]=all
+roiquant_globals[6]=1
+roiquant_vol[6]=0
+roiquant_rerun[6]=0
+roiquant_cleanup[6]=1
+
+###################################################################
+# 7 NORM
+###################################################################
+
+norm_primary[7]=1
+norm_rerun[7]=1
+norm_cleanup[7]=1
