@@ -397,7 +397,7 @@ for module in ${modules[@]}
 done
 
 echo "generating report"
-
+echo $standard >> ${out[sub]}/template.txt
 for sub  in  ${!cohort[@]}
          do
           mkdir -p ${out[sub]}/figures
@@ -414,7 +414,7 @@ for sub  in  ${!cohort[@]}
          ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz  -p ${prefix[sub]} \
             -o ${out[sub]} -m  ${out[sub]}/module.csv 
          
-         rm -rf  ${out[sub]}/module.csv
+         rm -rf  ${out[sub]}/module.csv ${out[sub]}/template.txt
 done
  
 
