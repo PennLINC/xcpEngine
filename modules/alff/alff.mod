@@ -87,11 +87,21 @@ fi
 # Start a list of kernels and smoothed images.
 ###################################################################
 routine                       @1    Spatially filtering image
+if is_image ${uncensored[sub]} ; then 
+
 smooth_spatial                --SIGNPOST=${signpost}              \
                               --FILTER=alff_sptf[cxt]             \
-                              --INPUT=${img}                      \
+                              --INPUT=${uncensored[sub]}           \
                               --USAN=${alff_usan[cxt]}            \
                               --USPACE=${alff_usan_space[cxt]}
+else
+smooth_spatial                --SIGNPOST=${signpost}              \
+                              --FILTER=alff_sptf[cxt]             \
+                              --INPUT=${denoised[sub]}           \
+                              --USAN=${alff_usan[cxt]}            \
+                              --USPACE=${alff_usan_space[cxt]}
+fi
+
 routine_end
 
 
