@@ -85,7 +85,7 @@ if 'regress' in modules1:
     Dim=str(himg.get_data_shape()[0]) +'x'+ str(himg.get_data_shape()[1])+'x'+str(himg.get_data_shape()[2])
     voxelsize=str(himg.get_zooms()[0])+'mm x'+str(himg.get_zooms()[1])+'mm x'+str(himg.get_zooms()[2])+'mm'
     tr=str(himg.get_zooms()[-1])
-    if findspace != -1:
+    if findspace == -1:
         structrun=str('FMRIPREP')
     else:
         structrun=str('xcpEngine')
@@ -177,7 +177,7 @@ for i in modules1:
         segplot='figures/'+prefix+'_struct_report.svg'
         moving=load_img(outdir+'/struc/'+prefix+'_BrainNormalizedToTemplate.nii.gz')
         mask=threshold_img(moving,1e-3)
-        cuts=cuts_from_bbox(mask_nii=mask,cuts=7)
+        cuts=cuts_from_bbox(mask_nii=mask,cuts=5)
         f1=plot_registration(moving,'fixed-image',cuts=cuts,label='Extracted Brain')
         f2=plot_registration(load_img(template),'moving-image',cuts=cuts,label='Template')
         compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_registration.svg')
@@ -291,9 +291,10 @@ for i in modules1:
               #html_report=html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="'+ corrplot +'" alt="Segmentation" width="4000"height="500"></object>'
 
     elif i == 'alff' :
+         fig = plt.figure(constrained_layout=False,figsize=(30,15))
          statmapalff=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
-         plot_stat_map(stat_map_img=statmapalff,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=2,
+         plot_stat_map(stat_map_img=statmapalff,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=2,
               symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_alff.svg')
          alffplot='figures/'+prefix+'_alff.svg'
          
@@ -305,9 +306,10 @@ for i in modules1:
 
          #html_report=html_report + '<h1> alff module </h1> <object type="image/svg+xml" data="'+ alffplot +'" alt="Segmentation" width="2000"height="400"></object>'
     elif i == 'reho' :
+         fig = plt.figure(constrained_layout=False,figsize=(30,10))
          statmapreho=load_img(outdir+'/reho/'+prefix+'_rehoZ.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
-         plot_stat_map(stat_map_img=statmapreho,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=2,
+         plot_stat_map(stat_map_img=statmapreho,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=2,
               symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_reho.svg')
          rehoplot='figures/'+prefix+'_reho.svg'
          html_report=html_report+'<div id="reho">  </div>  </ul><h2 class="elem-title"> regional homogeneity </h2><p class="elem-desc"> \
@@ -322,7 +324,7 @@ for i in modules1:
                moving=load_img(outdir+'/norm/'+prefix+'_referenceVolumeBrainStd.nii.gz')
            else :
                moving=load_img(outdir+'/norm/'+prefix+'_intensityStd.nii.gz')
-           
+           fig = plt.figure(constrained_layout=False,figsize=(30,15))
            mask=threshold_img(moving,1e-3)
            cuts=cuts_from_bbox(mask_nii=mask,cuts=7)
            f1=plot_registration(moving,'fixed-image',cuts=cuts,label='moving')
@@ -338,7 +340,7 @@ for i in modules1:
 
            #html_report=html_report + '<h1> norm module </h1>  <p> <h3> Functional normalization to the Template </h3> <p> <object type="image/svg+xml" data="'+ normreg + '" alt="Segmentation" width="2000"height="800"></object>'
     elif i == 'coreg':
-           #fig = plt.figure(constrained_layout=False,figsize=(20,10))
+           fig = plt.figure(constrained_layout=False,figsize=(30,15))
            moving=load_img(outdir+'/coreg/'+prefix+'_seq2struct.nii.gz')
            fixedim=load_img(outdir+'/coreg/'+prefix+'_target.nii.gz')
            mask=threshold_img(moving,1e-3)
@@ -374,7 +376,7 @@ for i in modules1:
           plt.clf()#ii=atlaslist[0]
           plt.cla()
           fig= plt.gcf()
-          fig = plt.figure(constrained_layout=False,figsize=(20,10))
+          fig = plt.figure(constrained_layout=False,figsize=(30,15))
           #fig.clear()
           grid = mgs.GridSpec(5, 1, wspace=0.0, hspace=0.05,height_ratios=[1.5] * (5 - 1) + [5])
           confoundplot(combinerel, grid[0], tr=tr/2, color='b',name='FD')
@@ -391,7 +393,7 @@ for i in modules1:
           cbf2=outdir+'/figures/'+prefix+'_cbf2.svg'
           data=statmapcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
           fig= plt.gcf()
-          fig = plt.figure(constrained_layout=False,figsize=(20,10))
+          fig = plt.figure(constrained_layout=False,figsize=(30,10))
           gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
           ax1 = fig.add_subplot(gs1[-1, :-1])
           ax2 = fig.add_subplot(gs1[-1, -1])
@@ -434,7 +436,7 @@ for i in modules1:
           data=statmapcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
           fig= plt.gcf()
-          fig = plt.figure(constrained_layout=False,figsize=(20,10))
+          fig = plt.figure(constrained_layout=False,figsize=(30,15))
           gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
           ax1 = fig.add_subplot(gs1[-1, :-1])
           ax2 = fig.add_subplot(gs1[-1, -1])
@@ -480,6 +482,7 @@ for i in modules1:
           plt.clf()#ii=atlaslist[0]
           plt.cla()
           fig1= plt.gcf()
+          fig = plt.figure(constrained_layout=False,figsize=(30,15))
           grid = mgs.GridSpec(5, 1, wspace=0.0, hspace=0.05,height_ratios=[1.5] * (5 - 1) + [5])
           confoundplot(combinerel, grid[0], tr=tr/2, color='b',name='FD')
           confoundplot(gb, grid[1], tr=tr/2, color='r',name='GM_CBF')
@@ -497,7 +500,7 @@ for i in modules1:
           data=statmapcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=1.5)
           fig= plt.gcf()
-          fig = plt.figure(constrained_layout=False,figsize=(20,10))
+          fig = plt.figure(constrained_layout=False,figsize=(30,15))
           gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
           ax1 = fig.add_subplot(gs1[-1, :-1])
           ax2 = fig.add_subplot(gs1[-1, -1])
@@ -518,7 +521,7 @@ for i in modules1:
           data=scrubcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=1.5)
           fig= plt.gcf()
-          fig = plt.figure(constrained_layout=False,figsize=(20,10))
+          fig = plt.figure(constrained_layout=False,figsize=(30,15))
           gs1 = fig.add_gridspec(nrows=3, ncols=3, left=0.05, right=0.48, wspace=0.5)
           ax1 = fig.add_subplot(gs1[-1, :-1])
           ax2 = fig.add_subplot(gs1[-1, -1])
@@ -609,6 +612,7 @@ for i in modules1:
             fda=fd
          checkfile =os.path.isfile(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
          if checkfile:
+            fig = plt.figure(constrained_layout=False,figsize=(30,15))
             grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,height_ratios=[1] * (3 - 1) + [5])
             dvar=np.loadtxt(outdir+'/confound2/mc/'+prefix+'_dvars-vox.1D')
             confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
@@ -617,6 +621,7 @@ for i in modules1:
             fig.savefig(outdir+'/figures/'+prefix+'_prestats.svg',bbox_inches="tight",pad_inches=None)
             prestatsfig='figures/'+prefix+'_prestats.svg'
          else:
+            fig = plt.figure(constrained_layout=False,figsize=(30,15))
             grid = mgs.GridSpec(2, 1, wspace=0.0, hspace=0.05,height_ratios=[1] * (2 - 1) + [5])
             confoundplot(fd, grid[0], tr=tr, color='b',name='FD')
             plot_carpet(img1,seg, subplot=grid[-1],tr=tr)
@@ -628,7 +633,7 @@ for i in modules1:
          #fig= plt.gcf()
          grid = mgs.GridSpec(3, 1, wspace=0.0, hspace=0.05,
                             height_ratios=[1] * (3 - 1) + [5])
-         
+         fig = plt.figure(constrained_layout=False,figsize=(30,15))
          confoundplot(fda, grid[0], tr=tr, color='b',name='FD')
          confoundplot(dvar2, grid[1], tr=tr, color='r',name='DVARS')
          plot_carpet(img2,seg, subplot=grid[-1],tr=tr)
