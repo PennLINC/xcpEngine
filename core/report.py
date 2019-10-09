@@ -136,12 +136,26 @@ qc=pd.read_csv(qcfile)
 removec=qc.columns[ qc.columns.str.startswith('id')]
 qc=qc.drop(removec,axis='columns')
 
+motion_qc=['relMeanRMSMotion','relMaxRMSMotion','meanDV','pctSpikesDV','nSpikesFD','pctSpikesFD']
+functreg_qc=['coregCrossCorr','coregJaccard','coregDice','coregCoverage']
+struct_qc=['regCoverage','regCrossCorr','regDice','regJaccard','meanGMD']
+reg_qc=['nNuisanceParameters','nVolCensored','estimatedLostTemporalDOF','motionDVCorrInit','motionDVCorrFinal']
+cbf_qc=['cbf_qei','negativeVoxelsTS','negativeVoxels','cbfscore_qei','nvoldel','cbfscrub_qei','cbfspatial_qei','cbfbasil_qei','negativeVoxels_basil	','cbfpv_qei']
+regstotemp_qc=['normJaccard','normDice','normCrossCorr','normCoverage']
 
 
-qc_required=['regCoverage','regCrossCorr','regDice','regJaccard','coregCrossCorr','coregJaccard','coregDice','coregCoverage',
-        'relMeanRMSMotion','relMaxRMSMotion','nNuisanceParameters','nVolCensored','normDice','normCoverage','normJaccard','normCrossCorr',
-        'negativeVoxels']
-df = pd.DataFrame(qc,columns=qc_required).dropna(axis='columns')
+
+
+#df = pd.DataFrame(qc,columns=qc_required).dropna(axis='columns')
+motionqc=pd.DataFrame(qc,columns=motion_qc).dropna(axis='columns'); motionhtml=motionqc.to_html(index=False)
+functqc=pd.DataFrame(qc,columns=functreg_qc).dropna(axis='columns'); funcreghtml=functqc.to_html(index=False)
+strucqc=pd.DataFrame(qc,columns=struct_qc).dropna(axis='columns'); struchtml=strucqc.to_html(index=False)
+regqc=pd.DataFrame(qc,columns=reg_qc).dropna(axis='columns'); reghtml=regqc.to_html(index=False)
+cbfqc=pd.DataFrame(qc,columns=cbf_qc).dropna(axis='columns'); cbfhtml=cbfqc.to_html(index=False)
+normqc=pd.DataFrame(qc,columns=regstotemp_qc).dropna(axis='columns'); normhtml=normqc.to_html(index=False)
+
+
+
 
 
 
@@ -159,7 +173,16 @@ html_report=' \
     div#boilerplate pre {margin: 20px 25px;padding: 10px;mbackground-color: #F8F9FA;} </style> </head>'
 
 #html_report='<html> <head> <h1> xcpEngine report </h1>  </head> <body> <h2> Modules: ' + modulelist + '</h2> <h2> QC </h2> ' + html_table + '' 
-html_report='<body> <div id="Summary">   <h1 class="sub-report-title">Summary</h1> ' + subjectsummary + '</div> <div id="Quality control">   <h2 class="sub-report-title">Quality control</h2> ' + html_table + '</div>'
+html_report= '<body> <div id="Summary">   <h1 class="sub-report-title">Summary</h1> ' + subjectsummary + '</div> ' 
+
+if 'regress' in modules1: 
+    html_report=html_report+'<div id="Quality control">   <h2 class="sub-report-title">Quality control</h2> ' + funcreghtml +'<br>'+ motionhtml+'<br>'+reghtml+'<br>'+ normhtml+ '</div> '
+elif 'cbf' in modules1:
+    html_report=html_report+'<div id="Quality control">   <h2 class="sub-report-title">Quality control</h2> ' + funcreghtml +'<br>'+ motionhtml +'<br>'+ cbfhtml +'<br>'+ normhtml +'</div> '
+elif 'struc' in modules1:
+    html_report=html_report+'<div id="Quality control">   <h2 class="sub-report-title">Quality control</h2> ' + struchtml +'<br>'+cbfhtml+'<br>'+ normhtml +'</div> ' 
+
+
 #modules=modules.drop(['qcanat'],axis=1)
 for i in modules1:
     if i == 'struc':
@@ -379,7 +402,7 @@ for i in modules1:
           fig = plt.figure(constrained_layout=False,figsize=(30,15))
           #fig.clear()
           grid = mgs.GridSpec(5, 1, wspace=0.0, hspace=0.05,height_ratios=[1.5] * (5 - 1) + [5])
-          confoundplot(combinerel, grid[0], tr=tr/2, color='b',name='FD')
+          confoundplot(combinerel, grid[0], tr=tr/2, color='b',name='FD',units='mm')
           confoundplot(gb, grid[1], tr=tr/2, color='r',name='GM_CBF')
           confoundplot(wb, grid[2], tr=tr/2, color='g',name='WM_CBF')
           confoundplot(cb, grid[3], tr=tr/2, color='b',name='CSF_CBF')
@@ -388,8 +411,8 @@ for i in modules1:
           cbf1=outdir+'/figures/'+prefix+'_cbf1.svg'
           #prestatsfig='figures/'+prefix+'_prestats.svg'
           fig= plt.gcf()
-          plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=120,
-              symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_cbf2.svg')
+          plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=99,
+              symmetric_cbar=True,colorbar=True,black_bg=True,output_file=outdir+'/figures/'+prefix+'_cbf2.svg')
           cbf2=outdir+'/figures/'+prefix+'_cbf2.svg'
           data=statmapcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
           fig= plt.gcf()
@@ -399,9 +422,9 @@ for i in modules1:
           ax2 = fig.add_subplot(gs1[-1, -1])
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=1.)
           sns.distplot(dat1,kde=False,ax=ax1,color='b'); ax1.title.set_text('CBF distribution')
-          ax2.violinplot(dat); labels={'WM','GM'}; ax2.set_xticks([1,2])
-          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 10.0); 
-          ax1.set_xlabel('CBF ml/min/100g', fontsize = 10); ax2.set_ylabel('CBF ml/min/100g', fontsize = 10)
+          ax2.violinplot(dat); labels={'GM','WM'}; ax2.set_xticks([1,2])
+          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 20.0); 
+          ax1.set_xlabel('CBF ml/min/100g', fontsize = 20); ax2.set_ylabel('CBF ml/min/100g', fontsize = 20)
           fig.savefig(outdir+'/figures/'+prefix+'_cbf3.svg',bbox_inches="tight",pad_inches=None)
           cbf3=outdir+'/figures/'+prefix+'_cbf3.svg'
 
@@ -429,8 +452,8 @@ for i in modules1:
           csf=load_img(outdir+'/coreg/'+prefix+'_csf2seq.nii.gz');csf=threshold_img(csf,0.8)
           cm = math_img('img > 0.8', img=csf); cmask=np.isclose(cm.get_fdata(), 1); cmask=cmask[:,:,:,-1]
           fig= plt.gcf()
-          plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=120,
-              symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_basil1.svg')
+          plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=99,
+              symmetric_cbar=True,colorbar=True,black_bg=True,output_file=outdir+'/figures/'+prefix+'_basil1.svg')
           basil1=outdir+'/figures/'+prefix+'_basil1.svg'
 
           data=statmapcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
@@ -442,9 +465,9 @@ for i in modules1:
           ax2 = fig.add_subplot(gs1[-1, -1])
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=1.5)
           sns.distplot(dat1,kde=False,ax=ax1,color='b'); ax1.title.set_text('CBF basil distribution')
-          ax2.violinplot(dat); labels={'WM','GM'}; ax2.set_xticks([1,2])
-          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 10.0); 
-          ax1.set_xlabel('CBF ml/min/100g', fontsize = 10); ax2.set_ylabel('CBF  ml/min/100g', fontsize = 10)
+          ax2.violinplot(dat); labels={'GM','WM'}; ax2.set_xticks([1,2])
+          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 20.0); 
+          ax1.set_xlabel('CBF ml/min/100g', fontsize = 20); ax2.set_ylabel('CBF  ml/min/100g', fontsize = 20)
           fig.savefig(outdir+'/figures/'+prefix+'_basil2.svg',bbox_inches="tight",pad_inches=None)
           basil2=outdir+'/figures/'+prefix+'_basil2.svg'
           fig.clear()
@@ -481,20 +504,20 @@ for i in modules1:
           tr=cbfts.header.get_zooms()[-1]; seg=gmask+wmask*2+cmask*3
           plt.clf()#ii=atlaslist[0]
           plt.cla()
-          fig1= plt.gcf()
+          fig= plt.gcf()
           fig = plt.figure(constrained_layout=False,figsize=(30,15))
           grid = mgs.GridSpec(5, 1, wspace=0.0, hspace=0.05,height_ratios=[1.5] * (5 - 1) + [5])
-          confoundplot(combinerel, grid[0], tr=tr/2, color='b',name='FD')
+          confoundplot(combinerel, grid[0], tr=tr/2, color='b',name='FD',units='mm')
           confoundplot(gb, grid[1], tr=tr/2, color='r',name='GM_CBF')
           confoundplot(wb, grid[2], tr=tr/2, color='g',name='WM_CBF')
           confoundplot(cb, grid[3], tr=tr/2, color='b',name='CSF_CBF')
           plot_carpet(cbfts,seg, subplot=grid[-1],tr=tr/2)
-          fig1.savefig(outdir+'/figures/'+prefix+'_score1.svg',bbox_inches="tight",pad_inches=None)
+          fig.savefig(outdir+'/figures/'+prefix+'_score1.svg',bbox_inches="tight",pad_inches=None)
           score1=outdir+'/figures/'+prefix+'_score1.svg'
           #prestatsfig='figures/'+prefix+'_prestats.svg'
           fig= plt.gcf()
-          plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=120,
-              symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_score2.svg')
+          plot_stat_map(stat_map_img=statmapcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=99,
+              symmetric_cbar=True,colorbar=True,black_bg=True,output_file=outdir+'/figures/'+prefix+'_score2.svg')
           score2=outdir+'/figures/'+prefix+'_score2.svg'
            
           data=statmapcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
@@ -506,16 +529,16 @@ for i in modules1:
           ax2 = fig.add_subplot(gs1[-1, -1])
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
           sns.distplot(dat1,kde=False,ax=ax1,color='b'); ax1.title.set_text('CBF score distribution')
-          ax2.violinplot(dat); labels={'WM','GM'}; ax2.set_xticks([1,2])
-          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 10.0); 
-          ax1.set_xlabel('CBF ml/min/100g', fontsize = 10); ax2.set_ylabel('CBF  ml/min/100g', fontsize = 10)
+          ax2.violinplot(dat); labels={'GM','WM'}; ax2.set_xticks([1,2])
+          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 20.0); 
+          ax1.set_xlabel('CBF ml/min/100g', fontsize = 20); ax2.set_ylabel('CBF  ml/min/100g', fontsize = 20)
           fig.savefig(outdir+'/figures/'+prefix+'_score3.svg',bbox_inches="tight",pad_inches=None)
           score3=outdir+'/figures/'+prefix+'_score3.svg'
           scrubcbf=load_img(outdir+'/scorescrub/'+prefix+'_cbfscrub.nii.gz')
         
           fig= plt.gcf()
-          plot_stat_map(stat_map_img=scrubcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=120,
-              symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_scrub1.svg')
+          plot_stat_map(stat_map_img=scrubcbf,bg_img=bgimg,display_mode='z',cut_coords=5,draw_cross=False,vmax=99,
+              symmetric_cbar=True,colorbar=True,black_bg=True,output_file=outdir+'/figures/'+prefix+'_scrub1.svg')
           scrub1=outdir+'/figures/'+prefix+'_scrub1.svg'
            
           data=scrubcbf.get_fdata(); dat=[data[wmask==1],data[gmask==1]]; 
@@ -527,9 +550,9 @@ for i in modules1:
           ax2 = fig.add_subplot(gs1[-1, -1])
           #sns.set(style="white", palette="bright", color_codes=True,font_scale=2)
           sns.distplot(dat1,kde=False,ax=ax1,color='b'); ax1.title.set_text('CBF scrub distribution')
-          ax2.violinplot(dat); labels={'WM','GM'}; ax2.set_xticks([1,2])
-          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 10.0); 
-          ax1.set_xlabel('CBF ml/min/100g', fontsize = 10); ax2.set_ylabel('CBF  ml/min/100g', fontsize = 10)
+          ax2.violinplot(dat); labels={'GM','WM'}; ax2.set_xticks([1,2])
+          ax2.set_xticklabels(labels); ax1.set_ylabel('No of Voxel', fontsize = 20.0); 
+          ax1.set_xlabel('CBF ml/min/100g', fontsize = 20); ax2.set_ylabel('CBF  ml/min/100g', fontsize = 20)
           fig.savefig(outdir+'/figures/'+prefix+'_scrub2.svg',bbox_inches="tight",pad_inches=None)
           scrub2=outdir+'/figures/'+prefix+'_scrub2.svg'
         
