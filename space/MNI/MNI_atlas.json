@@ -170,13 +170,5 @@
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
-  },
-  "sharma": {
-    "Map": "${BRAINATLAS}/sharma/sharmaMNI.nii.gz",
-    "NodeIndex": "${BRAINATLAS}/sharma/sharmaNodeIndex.1D",
-    "NodeNames": "${BRAINATLAS}/sharma/sharmaNodeNames.txt",
-    "Space": "MNI",
-    "SpaceNative": "MNI",
-    "Type": "Map"
   }
 }
