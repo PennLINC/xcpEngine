@@ -318,7 +318,7 @@ for i in modules1:
          statmapalff=load_img(outdir+'/alff/'+prefix+'_alffZ.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
          plot_stat_map(stat_map_img=statmapalff,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=2,
-              symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_alff.svg')
+              symmetric_cbar=True,colorbar=True,output_file=outdir+'/figures/'+prefix+'_alff.svg')
          alffplot='figures/'+prefix+'_alff.svg'
          
          html_report=html_report+'<div id="alff">   </div>  </ul><h2 class="elem-title"> Amplitude of low-frequency fluctuations</h2><p class="elem-desc"> \
@@ -333,7 +333,7 @@ for i in modules1:
          statmapreho=load_img(outdir+'/reho/'+prefix+'_rehoZ.nii.gz')
          bgimg=load_img(outdir+'/prestats/'+prefix+'_referenceVolumeBrain.nii.gz')
          plot_stat_map(stat_map_img=statmapreho,bg_img=bgimg,display_mode='z',cut_coords=7,draw_cross=False,vmax=2,
-              symmetric_cbar=True,colorbar=True,black_bg=False,output_file=outdir+'/figures/'+prefix+'_reho.svg')
+              symmetric_cbar=True,colorbar=True,output_file=outdir+'/figures/'+prefix+'_reho.svg')
          rehoplot='figures/'+prefix+'_reho.svg'
          html_report=html_report+'<div id="reho">  </div>  </ul><h2 class="elem-title"> regional homogeneity </h2><p class="elem-desc"> \
                       regional homogeneity maps using Kendall coefficient of concordance over voxel neighbourhoods.<p><br />  \
