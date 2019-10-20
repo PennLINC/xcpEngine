@@ -22,8 +22,8 @@ Normalization of T1w/Functional to Template:
          - normCoverage - Coverage index  
 
 Motion/spikes summary.::
-         - relMeansRMSMotion - mean RMS of motion 
-         - relMaxRMSMotion - maximum RMS of motion 
+         - relMeansRMSMotion - mean value of RMS motion 
+         - relMaxRMSMotion - maximum  vaue of RMS motion 
          - nSpikesFD - number of spikes per FD 
          - nspikesDV - number of spikes per DV 
          - pctSpikesDV - percentage of spikes per DV 
