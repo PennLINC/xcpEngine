@@ -251,15 +251,15 @@ if ! is_image ${cbf[cxt]} \
    exec_fsl fslmaths ${cbf_ts[cxt]} -Tstd  ${intermediate}_cbfstd
    exec_fsl fslmaths ${intermediate}_cbfmean -div ${intermediate}_cbfstd \
    -mul ${mask[sub]}  ${cbf_tsnr[cxt]}
-   qc meancbftsnr  meancbftsnr  ${prefix}_cbf_meantsnr.txt
+
+   qccbftsnr cbftsnr  ${prefix}_cbf_meantsnr.txt
 
    meanTcbf=$(fslstats ${cbf_tsnr[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanTcbf} >> ${meancbftsnr[cxt]}
+   echo ${meanTcbf} >> ${cbftsnr[cxt]}
 
    zscore_image ${cbf[cxt]} ${cbfZ[cxt]} ${mask[sub]}
    qc meancbfZ meancbfZ ${prefix}_cbfZ.txt 
-   meanZcbf=$(fslstats ${cbfZ[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbf} >> ${meancbfZ[cxt]}
+   
    routine_end
 fi
    
@@ -268,9 +268,5 @@ subroutine                    @4.1  Averaging over tagged/untagged pairs
 exec_xcp realignment.R -m ${rps[cxt]} -t mean -o ${outdir}/${prefix}
  
 routine_end
-
-
-
-
 
 completion

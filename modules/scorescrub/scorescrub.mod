@@ -102,10 +102,10 @@ if ! is_image ${cbfscrub[cxt]}
    exec_fsl fslmaths ${intermediate}_cbfmean -div ${intermediate}_cbfstd \
    -mul ${mask[sub]}  ${cbfscore_tsnr[cxt]}
 
-   qc meancbfscoretsnr  meancbfscoretsnr  ${prefix}_cbfscore_meantsnr.txt
+   qc cbfscoretsnr  cbfscoretsnr  ${prefix}_cbfscore_meantsnr.txt
 
    meanT1cbf=$(fslstats ${cbfscore_tsnr[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanT1cbf} >> ${meancbfscoretsnr[cxt]}
+   echo ${meanT1cbf} >> ${cbfscoretsnr[cxt]}
 
 
 
@@ -119,15 +119,6 @@ if ! is_image ${cbfscrub[cxt]}
 
    zscore_image ${cbfscrub[cxt]} ${cbfscrubZ[cxt]} ${mask[sub]} 
    zscore_image ${cbfscore[cxt]} ${cbfscoreZ[cxt]} ${mask[sub]} 
-
-
-   qc meancbfscoreZ  meancbfcoreZ ${prefix}_cbfscoreZ.txt 
-   meanzcbfscore=$(fslstats ${cbfscoreZ[cxt]} -k  ${gm2seq[sub]} -M)
-   echo ${meanzcbfscore} >> ${meancbfscoreZ[cxt]}
-
-   qc meancbfscrubZ  meancbfscrubZ ${prefix}_cbfscrubZ.txt 
-   meanzcbfscrub=$(fslstats ${cbfscrubZ[cxt]} -k  ${gm2seq[sub]} -M)
-   echo ${meanzcbfscrub} >> ${meancbfscrubZ[cxt]}
 
 fi  
 routine_end  

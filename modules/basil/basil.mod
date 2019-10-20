@@ -282,9 +282,7 @@ routine @3 Orgainizing the output
    qc cbfbasil_qei   cbfbasil_qei   ${prefix}_cbfbasil_QEI.txt
 
    zscore_image ${cbfbasil[cxt]} ${cbfbasilZ[cxt]} ${mask[sub]}
-   qc meancbfbasilZ meancbfbasilZ ${prefix}_cbfbasilZ.txt 
-   meanZcbfb=$(fslstats ${cbfbasilZ[cxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfb} >> ${meancbfbasilZ[cxt]}
+   
    
  fi
 
@@ -296,10 +294,7 @@ routine @3 Orgainizing the output
    qc cbfspatial_qei   cbfspatial_qei   ${prefix}_cbfspatial_QEI.txt
 
    zscore_image ${cbfspatial[cxt]} ${cbfspatialZ[cxt]} ${mask[sub]}
-   qc meancbfspatialZ meancbfspatialZ  ${prefix}_cbfspatialZ.txt 
-   meanZcbfs=$(fslstats ${cbfspatialZ[cxt]} -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfs} >> ${meancbfspatialZ[cxt]}
-
+   
  fi
 
   if [[ -f ${cbfpv[cxt]} ]]; then 
@@ -309,10 +304,6 @@ routine @3 Orgainizing the output
    qc cbfpv_qei   cbfpv_qei   ${prefix}_cbfpv_QEI.txt
    
    zscore_image ${cbfpv[cxt]}  ${cbfpvZcxt]} ${mask[sub]}
-
-   qc meancbfpvZ meancbfpvZ ${prefix}_cbfpvZ.txt 
-   meanZcbfpv=$(fslstats ${cbfpvZcxt]}  -k  ${gm2seq[sub]} -M)
-   echo ${meanZcbfpv} >> ${meancbfpvZ[cxt]}
 
  fi
 

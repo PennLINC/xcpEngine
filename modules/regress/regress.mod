@@ -391,6 +391,10 @@ if (( ${censor[cxt]} != 0 ))
    nvol_censored=$(( ${nvol_pre}   -   ${nvol_post} ))
    subroutine                 @5.6  [${nvol_censored} volumes censored]
    echo ${nvol_censored}            >> ${n_volumes_censored[cxt]}
+
+           if (( ${censor[cxt]} == 1 )); then 
+               exec_fsl imcp ${uncensored[cxt]} ${intermediate}.nii.gz
+           fi
    routine_end
    else 
    
