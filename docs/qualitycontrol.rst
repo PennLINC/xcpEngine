@@ -35,7 +35,7 @@ regression summary.::
          - motionDVCorrFinal - correlation of  mean RMS and DVARS after  regresion 
          - nNuisanceParameters - total number of nuisance nNuisanceParameters
          - nVolCensored - total number of volume censored 
-         - stimatedLostTemporalDOF - total degree of freedom lost 
+         - estimatedLostTemporalDOF - total degree of freedom lost 
 
 CBF quality evaluation index.::
          - cbf_qei - cbf quality evalution index 
