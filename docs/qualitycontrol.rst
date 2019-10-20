@@ -4,10 +4,10 @@ Quality Control  Dictionary
 The meaning of the quality control measures (prefix_quality.csv) of xcpEngine are as follows:
 
 Coregsitration of Functional and T1w:: 
-         *-coregCrossCorr - cross correlation 
-         *-CoregJaccard - Jaccard index 
-         *-CoregDice - Dice index
-         *-CoregCoverage - Coverage index 
+         -coregCrossCorr - cross correlation  \
+         -CoregJaccard - Jaccard index \
+         -CoregDice - Dice index \
+         -CoregCoverage - Coverage index \
 
 Registration of T1w to Template: 
          -regCrossCorr - cross correlation 
