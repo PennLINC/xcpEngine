@@ -1,7 +1,7 @@
 
 Quality Control  Dictionary 
 ===================================
-The meaning of the quality control measures (prefix_quality.csv) of xcpEngine are as follows:
+ The quality control measures (prefix_quality.csv) 
 
 Coregsitration of Functional and T1w:: 
          - coregCrossCorr - cross correlation  
