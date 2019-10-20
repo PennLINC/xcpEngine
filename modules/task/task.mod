@@ -12,7 +12,8 @@ mod_name_short=task
 mod_name='TASK-CONSTRAINED ACTIVATION MODULE'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
-###################################################################
+#######################
+############################################
 # GENERAL MODULE HEADER
 ###################################################################
 source ${XCPEDIR}/core/constants
@@ -211,9 +212,11 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
          
 
-
          strucn="${img1[sub]%/*/*}";
-         if [[ -d  ${strucn}/anat/ ]]; then  
+         strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
+         strucfile1=$(echo $strucfile | cut --delimiter " " --fields 1) 
+
+         if [[ -f ${strucfile1}  ]]; then  
                   strucn=${strucn}
          else
 
