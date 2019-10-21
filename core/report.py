@@ -594,7 +594,7 @@ for i in modules1:
          html_report=html_report + '<h1> roiquant module </h1> <h3> The atlas used: ' + atlasused +' </h3> ' 
     elif i == 'task' :
          os.system('cp  '+ outdir+'/task/fsl/'+prefix+'.feat/design.png '  +outdir+'/figures/'+prefix+'_taskdesign.png')
-         taskdeign=outdir+'/figures/'+prefix+'_taskdesign.png'
+         taskdeign='figures/'+prefix+'_taskdesign.png'
          moving=load_img(outdir+'/task/'+prefix+'_referenceVolumeBrain.nii.gz')
          fixedim=load_img(outdir+'/task/'+prefix+'_struct.nii.gz')
          mask=threshold_img(moving,1e-3)
