@@ -111,6 +111,18 @@ elif 'struc' in modules1:
     voxelsize=str(himg.get_zooms()[0])+'mm x'+str(himg.get_zooms()[1])+'mm x'+str(himg.get_zooms()[2])+'mm'
     tr=str(himg.get_zooms()[-1])
     structrun=str('xcpEngine')
+elif 'task' in modules1:
+    funct='BOLD'
+    imagetype='Functional'
+    himg=load_img(outdir+'/task/'+prefix+'_processed.nii.gz').header
+    nvols=str(himg.get_data_shape()[-1])
+    Dim=str(himg.get_data_shape()[0]) +'x'+ str(himg.get_data_shape()[1])+'x'+str(himg.get_data_shape()[2])
+    voxelsize=str(himg.get_zooms()[0])+'mm x'+str(himg.get_zooms()[1])+'mm x'+str(himg.get_zooms()[2])+'mm'
+    tr=str(himg.get_zooms()[-1])
+    if findspace != -1:
+        structrun=str('FMRIPREP')
+    else:
+        structrun=str('xcpEngine')
 
 
 templatelabel = open(outdir+'/template.txt', 'r').read()
