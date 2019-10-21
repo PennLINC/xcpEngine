@@ -243,8 +243,8 @@ for i in modules1:
             compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_registration.svg')
             fmreg='figures/'+prefix+'_registration.svg'
             
-            html_report=html_report+'<div id="prestats"> </ul><h3 class="elem-title"> Functional data registration/transformation from EPI-space to T1w-space</h3> \
-                <p class="elem-desc"> Overlap of the functional data and T1w in T1w space.<p><br />  \
+            html_report=html_report+'<div id="prestats"> </ul><h3 class="elem-title"> Functional data coregistration with  from  T1w </h3> \
+                <p class="elem-desc"> Overlap of the functional data and T1w in native space.<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+fmreg+ '">filename:'+fmreg+ '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href=".'+fmreg+ '" target="_blank">' +fmreg+ '</a> </div> ' 
            
@@ -355,7 +355,7 @@ for i in modules1:
            compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_normalization.svg')
            normreg='figures/'+prefix+'_normalization.svg'
             
-           html_report=html_report+'<div id="norm">  </div>  </ul><h3 class="elem-title"> Functional normalization to Template </h3><p class="elem-desc"> \
+           html_report=html_report+'<div id="norm">  </div>  </ul><h2 class="elem-title"> Functional data normalization to Template </h2><p class="elem-desc"> \
                       Normalization of Functional data through T1w space to Template space .<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+ normreg + '">filename:'+normreg+ '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+ normreg+ '" target="_blank">' +normreg + '</a> </div> '
@@ -373,7 +373,8 @@ for i in modules1:
            compose_view(f1,f2,out_file=outdir+'/figures/'+prefix+'_registration.svg')
            natreg='figures/'+prefix+'_registration.svg'
 
-           html_report=html_report+'<div id="coreg"> </div>  </ul><h2 class="elem-title">Functional registration T1w space </h2><p class="elem-desc"> Functional data registration/transformation from EPI-space to T1w-space.<p><br />  \
+           html_report=html_report+'<div id="coreg"> </div>  </ul><h2 class="elem-title">Coregistration of functional data and  T1w  </h2><p class="elem-desc">  \
+               Overlap of functional data on T1w in native space.<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+ natreg+ '">filename:'+natreg+ '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+ natreg + '" target="_blank">' +natreg + '</a> </div>'
            #html_report=html_report + '<h1> coreg module </h1>  <p> <h3> Coregistration of T1w and Fucntional image </h3> <p> <object type="image/svg+xml" data="'+ natreg + '" alt="Segmentation" width="2000"height="800"></object>'
