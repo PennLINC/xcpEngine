@@ -412,9 +412,8 @@ for i in modules1:
            compose_view(f1, f2, out_file=outdir+'/figures/' +
                         prefix+'_normalization.svg')
            normreg = 'figures/'+prefix+'_normalization.svg'
-
-           html_report = html_report+'<div id="norm">  </div>  </ul><h2 class="elem-title"> Functional data normalization to Template </h2><p class="elem-desc"> \
-                      Normalization of Functional data through T1w space to Template space .<p><br />  \
+           html_report = html_report+'<div id="norm">  </div>  </ul><h2 class="elem-title"> Functional data normalization to template </h2><p class="elem-desc"> \
+                      Normalization of functional data through T1w space to template space .<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="' + normreg + '">filename:'+normreg + '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="' + normreg + '" target="_blank">' + normreg + '</a> </div> '
 
@@ -482,9 +481,9 @@ for i in modules1:
                               height_ratios=[1.5] * (5 - 1) + [5])
           confoundplot(combinerel, grid[0], tr=tr/2,
                        color='b', name='FD', units='mm')
-          confoundplot(gb, grid[1], tr=tr/2, color='r', name='GM_CBF')
-          confoundplot(wb, grid[2], tr=tr/2, color='g', name='WM_CBF')
-          confoundplot(cb, grid[3], tr=tr/2, color='b', name='CSF_CBF')
+          confoundplot(wb, grid[1], tr=tr/2, color='r', name='WM_CBF')
+          confoundplot(gb, grid[2], tr=tr/2, color='b', name='GM_CBF')
+          confoundplot(cb, grid[3], tr=tr/2, color='g', name='CSF_CBF')
           plot_carpet(cbfts, seg, subplot=grid[-1], tr=tr/2)
           fig.savefig(outdir+'/figures/'+prefix+'_cbf1.svg',
                       bbox_inches="tight", pad_inches=None)
@@ -591,7 +590,11 @@ for i in modules1:
     elif i == 'scorescrub':
           statmapcbf = load_img(outdir+'/scorescrub/' +
                                 prefix+'_cbfscore.nii.gz')
-          cbfts = load_img(outdir+'/scorescrub/'+prefix+'_cbfscore_ts.nii.gz')
+          cbfts = load_img(outdir+'/cbf/'+prefix+'_cbf_ts.nii.gz').get_fdata()
+          volindex = np.loadtxt(outdir+'/scorescrub/'+prefix+'_volindex.txt')
+          cbfts[..., (volindex != 0)] = np.nan
+          cbfts1 = load_img(outdir+'/scorescrub/'+prefix+'_cbfscore_ts.nii.gz')
+          img_in = nb.Nifti1Image(dataobj=cbfts, affine=cbfts1.affine, header=cbfts1.header)
           bgimg = load_img(outdir+'/prestats/'+prefix +
                            '_referenceVolumeBrain.nii.gz')
           mask = load_img(outdir+'/coreg/'+prefix+'_mask.nii.gz').get_fdata()
@@ -603,7 +606,7 @@ for i in modules1:
           relrms = np.loadtxt(outdir+'/prestats/mc/'+prefix+'_relRMS.1D')
           combinerel = np.mean(
               np.array([relrms[tagmask == 1], relrms[tagmask == 0]]), axis=0)
-          #volindex=np.loadtxt(outdir+'/scorescrub/'+prefix+'_nvoldel.txt')
+          
           #newcombinerel=combinerel[]
           gm = load_img(outdir+'/coreg/'+prefix+'_gm2seq.nii.gz')
           gm = threshold_img(gm, 0.8)
@@ -620,11 +623,11 @@ for i in modules1:
           cm = math_img('img > 0.8', img=csf)
           cmask = np.isclose(cm.get_fdata(), 1)
           cmask = cmask[:, :, :, -1]
-          cbf_ts = cbfts.get_fdata()
+          cbf_ts = cbfts
           gb = np.mean(cbf_ts[gmask], axis=0)
           wb = np.mean(cbf_ts[wmask], axis=0)
           cb = np.mean(cbf_ts[cmask], axis=0)
-          tr = cbfts.header.get_zooms()[-1]
+          tr = cbfts1.header.get_zooms()[-1]
           seg = gmask+wmask*2+cmask*3
           plt.clf()  # ii=atlaslist[0]
           plt.cla()
@@ -634,10 +637,10 @@ for i in modules1:
                               height_ratios=[1.5] * (5 - 1) + [5])
           confoundplot(combinerel, grid[0], tr=tr/2,
                        color='b', name='FD', units='mm')
-          confoundplot(gb, grid[1], tr=tr/2, color='r', name='GM_CBF')
-          confoundplot(wb, grid[2], tr=tr/2, color='g', name='WM_CBF')
-          confoundplot(cb, grid[3], tr=tr/2, color='b', name='CSF_CBF')
-          plot_carpet(cbfts, seg, subplot=grid[-1], tr=tr/2)
+          confoundplot(wb, grid[1], tr=tr/2, color='r', name='WM_CBF')
+          confoundplot(gb, grid[2], tr=tr/2, color='b', name='GM_CBF')
+          confoundplot(cb, grid[3], tr=tr/2, color='g', name='CSF_CBF')
+          plot_carpet(img_in, seg, subplot=grid[-1], tr=tr/2)
           fig.savefig(outdir+'/figures/'+prefix+'_score1.svg',
                       bbox_inches="tight", pad_inches=None)
           score1 = outdir+'/figures/'+prefix+'_score1.svg'
