@@ -101,7 +101,8 @@ class fMRIPlot(object):
                 name=name, **kwargs)
             grid_id += 1
 
-        plot_carpet(self.func_file, self.seg_data, subplot=grid[-1], tr=self.tr)
+        plot_carpet(self.func_file, self.seg_data,
+                    subplot=grid[-1], tr=self.tr)
         # spikesplot_cb([0.7, 0.78, 0.2, 0.008])
         return figure
 
@@ -165,15 +166,16 @@ def plot_carpet(img, atlaslabels, detrend=True, nskip=0, size=(950, 800),
         lut[1:11] = 1
         lut[255] = 2
         lut[30:99] = 3
-        #lut[100:201] = 4
+        lut[100:201] = 4
 
     # Apply lookup table
-    newsegm = lut[seg.astype(int)]
+    #newsegm = lut[seg.astype(int)]
+   
 
     p_dec = 1 + data.shape[0] // size[0]
     if p_dec:
         data = data[::p_dec, :]
-        newsegm = newsegm[::p_dec]
+        seg = seg[::p_dec]
 
     t_dec = 1 + data.shape[1] // size[1]
     if t_dec:
@@ -186,7 +188,7 @@ def plot_carpet(img, atlaslabels, detrend=True, nskip=0, size=(950, 800),
         v = (-2, 2)
 
     # Order following segmentation labels
-    order = np.argsort(newsegm)[::-1]
+    order = np.argsort(seg)[::-1]
 
     # If subplot is not defined
     if subplot is None:
@@ -198,14 +200,14 @@ def plot_carpet(img, atlaslabels, detrend=True, nskip=0, size=(950, 800),
                                      width_ratios=wratios[:2 + int(legend)],
                                      wspace=0.0)
 
-    mycolors = ListedColormap(cm.get_cmap('tab10').colors[:4][::-1])
+    mycolors = ListedColormap(cm.get_cmap('Set1').colors[:3][::-1])
 
     # Segmentation colorbar
     ax0 = plt.subplot(gs[0])
     ax0.set_yticks([])
     ax0.set_xticks([])
-    ax0.imshow(newsegm[order, np.newaxis], interpolation='none', aspect='auto',
-               cmap=mycolors, vmin=1, vmax=4)
+    ax0.imshow(seg[order, np.newaxis], interpolation='none', aspect='auto',
+               cmap=mycolors, vmin=1, vmax=3)
     ax0.grid(False)
     ax0.spines["left"].set_visible(False)
     ax0.spines["bottom"].set_color('none')
@@ -221,7 +223,8 @@ def plot_carpet(img, atlaslabels, detrend=True, nskip=0, size=(950, 800),
     ax1.set_yticklabels([])
 
     # Set 10 frame markers in X axis
-    interval = max((int(data.shape[-1] + 1) // 10, int(data.shape[-1] + 1) // 5, 1))
+    interval = max((int(data.shape[-1] + 1) //
+                    10, int(data.shape[-1] + 1) // 5, 1))
     xticks = list(range(0, data.shape[-1])[::interval])
     ax1.set_xticks(xticks)
     if notr:
@@ -250,11 +253,13 @@ def plot_carpet(img, atlaslabels, detrend=True, nskip=0, size=(950, 800),
             5, 1, subplot_spec=gs[2], wspace=0.0, hspace=0.0)
         epiavg = func_data.mean(3)
         epinii = nb.Nifti1Image(epiavg, img_nii.affine, img_nii.header)
-        segnii = nb.Nifti1Image(lut[atlaslabels.astype(int)], epinii.affine, epinii.header)
+        segnii = nb.Nifti1Image(
+            lut[atlaslabels.astype(int)], epinii.affine, epinii.header)
         segnii.set_data_dtype('uint8')
 
         nslices = epiavg.shape[-1]
-        coords = np.linspace(int(0.10 * nslices), int(0.95 * nslices), 5).astype(np.uint8)
+        coords = np.linspace(int(0.10 * nslices),
+                             int(0.95 * nslices), 5).astype(np.uint8)
         for i, c in enumerate(coords.tolist()):
             ax2 = plt.subplot(gslegend[i])
             plot_img(segnii, bg_img=epinii, axes=ax2, display_mode='z',
@@ -353,7 +358,8 @@ def spikesplot(ts_z, outer_gs=None, tr=None, zscored=True, spike_thresh=6., titl
         yticks = [ts_z[:, nskip:].min(),
                   np.median(ts_z[:, nskip:]),
                   ts_z[:, nskip:].max()]
-        ax.set_ylim(0, max(yticks[-1] * 1.05, (yticks[-1] - yticks[0]) * 2.0 + yticks[-1]))
+        ax.set_ylim(0, max(yticks[-1] * 1.05,
+                           (yticks[-1] - yticks[0]) * 2.0 + yticks[-1]))
         # ax.set_ylim(ts_z[:, nskip:].min() * 0.95,
         #             ts_z[:, nskip:].max() * 1.05)
 
@@ -480,7 +486,8 @@ def confoundplot(tseries, gs_ts, gs_dist=None, name=None,
     if nonnan.size > 0:
         # Calculate Y limits
         valrange = (nonnan.max() - nonnan.min())
-        def_ylims = [nonnan.min() - 0.1 * valrange, nonnan.max() + 0.1 * valrange]
+        def_ylims = [nonnan.min() - 0.1 * valrange,
+                     nonnan.max() + 0.1 * valrange]
         if ylims is not None:
             if ylims[0] is not None:
                 def_ylims[0] = min([def_ylims[0], ylims[0]])
@@ -641,11 +648,11 @@ def compcor_variance_plot(metadata_files, metadata_sources=None,
                        fontsize='x-small', bbox=bbox_txt)
             ax[m].text(varexp[thr][0], 25,
                        '{} components explain\n{:.0f}% of variance'.format(
-                            varexp[thr][0], 100*thr),
-                       rotation=90,
-                       horizontalalignment='center',
-                       fontsize='xx-small',
-                       bbox=bbox_txt)
+                varexp[thr][0], 100*thr),
+                rotation=90,
+                horizontalalignment='center',
+                fontsize='xx-small',
+                bbox=bbox_txt)
 
         ax[m].set_yticks([])
         ax[m].set_yticklabels([])
