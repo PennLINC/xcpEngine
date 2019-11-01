@@ -256,8 +256,11 @@ while (( ${#rem} > 0 ))
                exec_afni 3dresample -orient ${template_orientation} \
                   -inset ${mask1} -prefix ${prefix}_imgmask.nii.gz -overwrite
 
-               exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
-                  -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
+               #exec_afni 3dresample -master ${out}/prestats/${prefix}_referenceVolume.nii.gz \
+                  #-inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
+
+               exec_ants antsApplyTransforms -i ${structmask} -r ${out}/prestats/${prefix}_referenceVolume.nii.gz \
+                  -o ${prefix}_structmask.nii.gz -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
@@ -266,9 +269,12 @@ while (( ${#rem} > 0 ))
                 
                 rm ${prefix}_imgmask.nii.gz
 
-               exec_afni 3dresample -master ${mask[cxt]} \
-                   -inset ${segmentation[sub]}  \
-                  -prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+               #exec_afni 3dresample -master ${mask[cxt]} \
+                  # -inset ${segmentation[sub]}  \
+                 # -prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+
+               exec_ants antsApplyTransforms -i  ${segmentation[sub]}  -r ${mask[cxt]} \
+                  -o ${out}/prestats/${prefix}_segmentation.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
@@ -279,8 +285,11 @@ while (( ${#rem} > 0 ))
                output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz
    
              
-               exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                   -inset ${struct[sub]}   -prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+               #exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                  # -inset ${struct[sub]}   -prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+
+               exec_ants antsApplyTransforms -i  ${struct[sub]}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
  
                output struct  ${out}/prestats/${prefix}_struct.nii.gz
                exec_fsl  fslmaths ${mask[cxt]} -mul ${out}/prestats/${prefix}_struct.nii.gz \
@@ -377,31 +386,46 @@ while (( ${#rem} > 0 ))
 
                   output referenceVolume  ${out}/prestats/${prefix}_referenceVolume.nii.gz
    
-                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${struct1} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+                  #exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           #-inset ${struct1} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+
+                  exec_ants antsApplyTransforms -i  ${struct1}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                       #output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct  ${out}/prestats/${prefix}_struct.nii.gz
                   output struct_head  ${out}/prestats/${prefix}_struct.nii.gz
 
-                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${struct[cxt]} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+                  #exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           #-inset ${struct[cxt]} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+
+                  exec_ants antsApplyTransforms -i  ${struct[cxt]}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
                        
-                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                           -inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+                  #exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                           #-inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+                  exec_ants antsApplyTransforms -i  ${segmentation1}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_segmentation.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                   output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
                   subroutine        @  generate mask and referenceVolumeBrain 
-                  exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                          -inset ${structmask}  -prefix ${out}/prestats/${prefix}_structmask.nii.gz -overwrite
+                  #exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                          #-inset ${structmask}  -prefix ${out}/prestats/${prefix}_structmask.nii.gz -overwrite
+
+                  exec_ants antsApplyTransforms -i  ${structmask}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_structmask.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt        
 
                   exec_fsl fslmaths ${mask1} -mul ${out}/prestats/${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
                   
                   output mask  ${out}/prestats/${prefix}_mask.nii.gz
-                  exec_afni 3dresample -master  ${referenceVolume[cxt]} \
-                      -inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
+                  #exec_afni 3dresample -master  ${referenceVolume[cxt]} \
+                      #-inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
+
+                  exec_ants antsApplyTransforms -i  ${mask[cxt]}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_mask.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt 
+
                   exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz       
                   output referenceVolumeBrain ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz 
@@ -487,21 +511,31 @@ while (( ${#rem} > 0 ))
                     -inset ${mask1} -prefix  ${prefix}_imgmask.nii.gz -overwrite
                    
 
-                   exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                     -inset ${structmask} -prefix $out/prestats/${prefix}_structmask.nii.gz -overwrite
+                  # exec_afni 3dresample -master ${referenceVolume[cxt]} \
+                    # -inset ${structmask} -prefix $out/prestats/${prefix}_structmask.nii.gz -overwrite
+                  exec_ants antsApplyTransforms -i  ${structmask}   -r ${referenceVolume[cxt]} \
+                  -o $out/prestats/${prefix}_structmask.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt 
+                   
+ 
 
                    exec_fsl fslmaths  ${prefix}_imgmask.nii.gz -mul $out/prestats/${prefix}_structmask.nii.gz  ${out}/prestats/${prefix}_mask.nii.gz
                    output mask  ${out}/prestats/${prefix}_mask.nii.gz
                     rm  ${prefix}_imgmask.nii.gz
 
-                  exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${segmentation1}   \
-                         -prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+                  #exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${segmentation1}   \
+                         #-prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
+
+                  exec_ants antsApplyTransforms -i  ${segmentation1}   -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_segmentation.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt 
               
                   output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
-                  exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${struct1}   \
-                                -prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
+                  #exec_afni 3dresample -master ${referenceVolume[cxt]} -inset ${struct1}   \
+                                #-prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
 
+                  exec_ants antsApplyTransforms -i ${struct1}  -r ${referenceVolume[cxt]} \
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt              
+ 
                   output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct ${out}/prestats/${prefix}_struct.nii.gz
                 
