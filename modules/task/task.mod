@@ -211,6 +211,15 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         mask1=${imgprt2}${mskpart}; maskpart2=${mask1#*_*_*_*}
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
          
+       output fmriprepconf  ${out}/task/${prefix}_fmriconf.tsv 
+       output    rps       ${out}/task/${prefix}_motion.1D
+        exec_xcp generate_confmat.R \
+         -i ${fmriprepconf[cxt]} \
+         -j rps \
+         -o ${rps[cxt]}
+
+
+
 
          strucn="${img1[sub]%/*/*}";
          strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
@@ -667,16 +676,21 @@ for l in "${!fsf_design[@]}"
              && fsf_design[l]='set fmri(featwatcher_yn) 0' \
              && continue
 done
+
+
+
+
+
 if (( ${conf_include} == 1 ))
    then
    subroutine                 @1.2  Importing confounds
    if is+numeric ${conf}
       then
       subroutine              @1.2.1
-      fsf_design[conf]='set confoundev_files(1) '${rps[sub]}'\n'
+      fsf_design[conf]='set confoundev_files(1) '${rps[cxt]}'\n'
    else
       subroutine              @1.2.2
-      fsf_design[coni]='set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${rps[sub]}'\n'
+      fsf_design[coni]='set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${rps[cxt]}'\n'
    fi
 fi
 exec_sys    rm -f ${fsf[cxt]}
