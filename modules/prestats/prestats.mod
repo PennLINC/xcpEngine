@@ -260,7 +260,7 @@ while (( ${#rem} > 0 ))
                   #-inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
 
                exec_ants antsApplyTransforms -i ${structmask} -r ${out}/prestats/${prefix}_referenceVolume.nii.gz \
-                  -o ${prefix}_structmask.nii.gz -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
+                  -o ${prefix}_structmask.nii.gz -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
@@ -274,7 +274,7 @@ while (( ${#rem} > 0 ))
                  # -prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
 
                exec_ants antsApplyTransforms -i  ${segmentation[sub]}  -r ${mask[cxt]} \
-                  -o ${out}/prestats/${prefix}_segmentation.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
+                  -o ${out}/prestats/${prefix}_segmentation.nii.gz  -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
@@ -289,7 +289,7 @@ while (( ${#rem} > 0 ))
                   # -inset ${struct[sub]}   -prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
 
                exec_ants antsApplyTransforms -i  ${struct[sub]}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt
  
                output struct  ${out}/prestats/${prefix}_struct.nii.gz
                exec_fsl  fslmaths ${mask[cxt]} -mul ${out}/prestats/${prefix}_struct.nii.gz \
@@ -390,7 +390,7 @@ while (( ${#rem} > 0 ))
                            #-inset ${struct1} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i  ${struct1}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                       #output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct  ${out}/prestats/${prefix}_struct.nii.gz
@@ -400,12 +400,12 @@ while (( ${#rem} > 0 ))
                            #-inset ${struct[cxt]} -prefix  ${out}/prestats/${prefix}_struct.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i  ${struct[cxt]}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt
                        
                   #exec_afni 3dresample -master  ${referenceVolume[cxt]} \
                            #-inset ${segmentation1} -prefix  ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
                   exec_ants antsApplyTransforms -i  ${segmentation1}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_segmentation.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt
+                  -o ${out}/prestats/${prefix}_segmentation.nii.gz  -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt
 
                   output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
@@ -414,7 +414,7 @@ while (( ${#rem} > 0 ))
                           #-inset ${structmask}  -prefix ${out}/prestats/${prefix}_structmask.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i  ${structmask}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_structmask.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt        
+                  -o ${out}/prestats/${prefix}_structmask.nii.gz   -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt        
 
                   exec_fsl fslmaths ${mask1} -mul ${out}/prestats/${prefix}_structmask.nii.gz \
                       ${out}/prestats/${prefix}_mask.nii.gz
@@ -424,7 +424,7 @@ while (( ${#rem} > 0 ))
                       #-inset ${mask[cxt]} -prefix  ${out}/prestats/${prefix}_mask.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i  ${mask[cxt]}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_mask.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt 
+                  -o ${out}/prestats/${prefix}_mask.nii.gz   -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt 
 
                   exec_fsl fslmaths  ${mask[cxt]} -mul ${referenceVolume[cxt]} \
                           ${out}/prestats/${prefix}_referenceVolumeBrain.nii.gz       
@@ -514,7 +514,7 @@ while (( ${#rem} > 0 ))
                   # exec_afni 3dresample -master ${referenceVolume[cxt]} \
                     # -inset ${structmask} -prefix $out/prestats/${prefix}_structmask.nii.gz -overwrite
                   exec_ants antsApplyTransforms -i  ${structmask}   -r ${referenceVolume[cxt]} \
-                  -o $out/prestats/${prefix}_structmask.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt 
+                  -o $out/prestats/${prefix}_structmask.nii.gz   -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt 
                    
  
 
@@ -526,7 +526,7 @@ while (( ${#rem} > 0 ))
                          #-prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i  ${segmentation1}   -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_segmentation.nii.gz   -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt 
+                     -o ${out}/prestats/${prefix}_segmentation.nii.gz   -n NearestNeighbor-t ${XCPEDIR}/utils/oneratiotransform.txt 
               
                   output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
@@ -534,7 +534,7 @@ while (( ${#rem} > 0 ))
                                 #-prefix ${out}/prestats/${prefix}_struct.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i ${struct1}  -r ${referenceVolume[cxt]} \
-                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n Linear -t ${XCPEDIR}/utils/oneratiotransform.txt              
+                  -o ${out}/prestats/${prefix}_struct.nii.gz  -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt              
  
                   output struct_head ${out}/prestats/${prefix}_struct.nii.gz
                   output struct ${out}/prestats/${prefix}_struct.nii.gz
