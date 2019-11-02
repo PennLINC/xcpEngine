@@ -526,7 +526,7 @@ while (( ${#rem} > 0 ))
                          #-prefix ${out}/prestats/${prefix}_segmentation.nii.gz -overwrite
 
                   exec_ants antsApplyTransforms -i  ${segmentation1}   -r ${referenceVolume[cxt]} \
-                     -o ${out}/prestats/${prefix}_segmentation.nii.gz   -n NearestNeighbor-t ${XCPEDIR}/utils/oneratiotransform.txt 
+                     -o ${out}/prestats/${prefix}_segmentation.nii.gz   -n NearestNeighbor -t ${XCPEDIR}/utils/oneratiotransform.txt 
               
                   output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
 
