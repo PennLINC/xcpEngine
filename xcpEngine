@@ -401,7 +401,7 @@ echo $standard >> ${out[sub]}/template.txt
 for sub  in  ${!cohort[@]}
          do
           mkdir -p ${out[sub]}/figures
-         
+          echo $standard >> ${out[sub]}/template.txt
          ##########################################################
          # remvoe previous html 
          ##########################################################
