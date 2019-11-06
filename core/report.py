@@ -487,12 +487,12 @@ for i in modules1:
           plot_carpet(cbfts, seg, subplot=grid[-1], tr=tr/2)
           fig.savefig(outdir+'/figures/'+prefix+'_cbf1.svg',
                       bbox_inches="tight", pad_inches=None)
-          cbf1 = outdir+'/figures/'+prefix+'_cbf1.svg'
+          cbf1 = 'figures/'+prefix+'_cbf1.svg'
           #prestatsfig='figures/'+prefix+'_prestats.svg'
           fig = plt.gcf()
           plot_stat_map(stat_map_img=statmapcbf, bg_img=bgimg, display_mode='z', cut_coords=5, draw_cross=False, vmax=99,
                         symmetric_cbar=True, colorbar=True, black_bg=True, output_file=outdir+'/figures/'+prefix+'_cbf2.svg')
-          cbf2 = outdir+'/figures/'+prefix+'_cbf2.svg'
+          cbf2 = 'figures/'+prefix+'_cbf2.svg'
           data = statmapcbf.get_fdata()
           dat = [data[wmask == 1], data[gmask == 1]]
           fig = plt.gcf()
@@ -513,7 +513,7 @@ for i in modules1:
           ax2.set_ylabel('CBF ml/min/100g', fontsize=20)
           fig.savefig(outdir+'/figures/'+prefix+'_cbf3.svg',
                       bbox_inches="tight", pad_inches=None)
-          cbf3 = outdir+'/figures/'+prefix+'_cbf3.svg'
+          cbf3 = 'figures/'+prefix+'_cbf3.svg'
 
           html_report = html_report+'<div id="cbf">  </div>  </ul><h2 class="elem-title"> Arterial Spin Labeling/Perfusion</h2><p class="elem-desc"> The first panel plotted the summary statistics that may reveal \
               trends or artifacts in the ASL data. FD shows the avereage of framewise displacement of label and control. Others are the CBF computed within grey matter (GM), white matter (WM) and cerebrospinal fluid (CSF). \
@@ -551,7 +551,7 @@ for i in modules1:
           fig = plt.gcf()
           plot_stat_map(stat_map_img=statmapcbf, bg_img=bgimg, display_mode='z', cut_coords=5, draw_cross=False, vmax=99,
                         symmetric_cbar=True, colorbar=True, black_bg=True, output_file=outdir+'/figures/'+prefix+'_basil1.svg')
-          basil1 = outdir+'/figures/'+prefix+'_basil1.svg'
+          basil1 = 'figures/'+prefix+'_basil1.svg'
 
           data = statmapcbf.get_fdata()
           dat = [data[wmask == 1], data[gmask == 1]]
@@ -574,7 +574,7 @@ for i in modules1:
           ax2.set_ylabel('CBF  ml/min/100g', fontsize=20)
           fig.savefig(outdir+'/figures/'+prefix+'_basil2.svg',
                       bbox_inches="tight", pad_inches=None)
-          basil2 = outdir+'/figures/'+prefix+'_basil2.svg'
+          basil2 = 'figures/'+prefix+'_basil2.svg'
           fig.clear()
           html_report = html_report+'<div id="basil">  </div>  </ul><h2 class="elem-title"> Bayesian Inference for Arterial Spin Labelling MRI </h2><p class="elem-desc"> BASIL provides various advantages including spatial  \
                 regularization of the estimated perfusion image and correction of partial volume effects. The  first panel shows the CBF plot  and last pabel shows the distribution  \
@@ -643,12 +643,12 @@ for i in modules1:
           plot_carpet(img_in, seg, subplot=grid[-1], tr=tr/2)
           fig.savefig(outdir+'/figures/'+prefix+'_score1.svg',
                       bbox_inches="tight", pad_inches=None)
-          score1 = outdir+'/figures/'+prefix+'_score1.svg'
+          score1 = 'figures/'+prefix+'_score1.svg'
           #prestatsfig='figures/'+prefix+'_prestats.svg'
           fig = plt.gcf()
           plot_stat_map(stat_map_img=statmapcbf, bg_img=bgimg, display_mode='z', cut_coords=5, draw_cross=False, vmax=99,
                         symmetric_cbar=True, colorbar=True, black_bg=True, output_file=outdir+'/figures/'+prefix+'_score2.svg')
-          score2 = outdir+'/figures/'+prefix+'_score2.svg'
+          score2 = 'figures/'+prefix+'_score2.svg'
 
           data = statmapcbf.get_fdata()
           dat = [data[wmask == 1], data[gmask == 1]]
@@ -671,13 +671,13 @@ for i in modules1:
           ax2.set_ylabel('CBF  ml/min/100g', fontsize=20)
           fig.savefig(outdir+'/figures/'+prefix+'_score3.svg',
                       bbox_inches="tight", pad_inches=None)
-          score3 = outdir+'/figures/'+prefix+'_score3.svg'
+          score3 = 'figures/'+prefix+'_score3.svg'
           scrubcbf = load_img(outdir+'/scorescrub/'+prefix+'_cbfscrub.nii.gz')
 
           fig = plt.gcf()
           plot_stat_map(stat_map_img=scrubcbf, bg_img=bgimg, display_mode='z', cut_coords=5, draw_cross=False, vmax=99,
                         symmetric_cbar=True, colorbar=True, black_bg=True, output_file=outdir+'/figures/'+prefix+'_scrub1.svg')
-          scrub1 = outdir+'/figures/'+prefix+'_scrub1.svg'
+          scrub1 = 'figures/'+prefix+'_scrub1.svg'
 
           data = scrubcbf.get_fdata()
           dat = [data[wmask == 1], data[gmask == 1]]
@@ -700,7 +700,7 @@ for i in modules1:
           ax2.set_ylabel('CBF  ml/min/100g', fontsize=20)
           fig.savefig(outdir+'/figures/'+prefix+'_scrub2.svg',
                       bbox_inches="tight", pad_inches=None)
-          scrub2 = outdir+'/figures/'+prefix+'_scrub2.svg'
+          scrub2 = 'figures/'+prefix+'_scrub2.svg'
 
           html_report = html_report+'<div id="scorescrub">  </div>  </ul><h2 class="elem-title"> CBF  Structural Correlation with RobUst Bayesian and Outlier Rejection (scorescrub)\
                     </h2><p class="elem-desc"> \
