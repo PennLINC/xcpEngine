@@ -396,25 +396,31 @@ for module in ${modules[@]}
    (( cxt++ ))
 done
 
+################################################################
+# Generate report for each subject
+################################################################
 echo "generating report"
 echo $standard >> ${out[sub]}/template.txt
-for sub  in  ${!cohort[@]}
-         do
-          mkdir -p ${out[sub]}/figures
-          echo $standard >> ${out[sub]}/template.txt
-         ##########################################################
-         # remvoe previous html 
-         ##########################################################
-         rm ${out[sub]}/${prefix[sub]}_report.html  2>/dev/null
-         ##########################################################
-         # Execute the current module.
-         ##########################################################
-         echo $pipeline > ${out[sub]}/module.csv
-         
-         ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz  -p ${prefix[sub]} \
-            -o ${out[sub]} -m  ${out[sub]}/module.csv 
-         
-         rm -rf  ${out[sub]}/module.csv ${out[sub]}/template.txt
+for sub in ${!cohort[@]}
+   do
+   mkdir -p ${out[sub]}/figures
+   echo $standard >> ${out[sub]}/template.txt
+   ##########################################################
+   # remove previous html 
+   ##########################################################
+   rm ${out[sub]}/${prefix[sub]}_report.html 2>/dev/null
+   ##########################################################
+   # Execute the current module.
+   ##########################################################
+   echo $pipeline > ${out[sub]}/module.csv
+   
+   ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz -p ${prefix[sub]} \
+      -o ${out[sub]} -m ${out[sub]}/module.csv 
+   
+   ##########################################################
+   # remove temporary files
+   ##########################################################
+   rm -rf ${out[sub]}/module.csv ${out[sub]}/template.txt
 done
  
 
