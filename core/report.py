@@ -250,7 +250,7 @@ for i in modules1:
                       </div> <div class="elem-filename"> Get figure file: <a href="'+segplot + '" target="_blank">' + segplot + '</a> </div> '
         html_report = html_report+'<p <p>'
         html_report = html_report+'<div id="struc1">  </div>  </ul><h2 class="elem-title">T1w to Template registration</h2><p class="elem-desc">Nonlinear mapping of the T1w image into Template space.\
-                             Hover on the panel with the mouse to transition between both spaces.<p><br />  \
+                             Hover over the panel to transition between both spaces.<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+structreg + '">filename:'+structreg + '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+structreg + '" target="_blank">' + structreg + '</a> </div> '
         html_report = html_report+'<p <p>'
@@ -515,9 +515,9 @@ for i in modules1:
                       bbox_inches="tight", pad_inches=None)
           cbf3 = 'figures/'+prefix+'_cbf3.svg'
 
-          html_report = html_report+'<div id="cbf">  </div>  </ul><h2 class="elem-title"> Arterial Spin Labeling/Perfusion</h2><p class="elem-desc"> The first panel plotted the summary statistics that may reveal \
-              trends or artifacts in the ASL data. FD shows the avereage of framewise displacement of label and control. Others are the CBF computed within grey matter (GM), white matter (WM) and cerebrospinal fluid (CSF). \
-                The carpet plot shows the CBF times series. The second panel shows the plot of CBF and the last pabel shows the distribution of CBF within the whole brain mask and  boxplot of CBF in GM and WM voxels   .<p><br />  \
+          html_report = html_report+'<div id="cbf">  </div>  </ul><h2 class="elem-title"> Arterial Spin Labeling/Perfusion</h2><p class="elem-desc"> The first panel plots summary statistics that may reveal \
+              trends or artifacts in ASL data. FD shows the average framewise displacement of labels and controls. Additionally, the plot shows CBF computed within grey matter (GM), white matter (WM) and cerebrospinal fluid (CSF). \
+                The carpet plot shows the CBF time series. The second panel plots CBF. The last panel plots the distribution of CBF within the whole brain mask, with a boxplot of CBF in GM and WM voxels   .<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+cbf1 + '">filename:'+cbf1 + '</object> \
                      </div> <div class="elem-filename"> Get figure file: <a href="' + cbf1 + '" target="_blank">' + cbf1 + '</a> </div>'
 
@@ -576,9 +576,9 @@ for i in modules1:
                       bbox_inches="tight", pad_inches=None)
           basil2 = 'figures/'+prefix+'_basil2.svg'
           fig.clear()
-          html_report = html_report+'<div id="basil">  </div>  </ul><h2 class="elem-title"> Bayesian Inference for Arterial Spin Labelling MRI </h2><p class="elem-desc"> BASIL provides various advantages including spatial  \
-                regularization of the estimated perfusion image and correction of partial volume effects. The  first panel shows the CBF plot  and last pabel shows the distribution  \
-                     of CBF within the whole brain mask and  boxplot of CBF in GM and WM voxels  <p><br />   \
+          html_report = html_report+'<div id="basil">  </div>  </ul><h2 class="elem-title"> Bayesian Inference for Arterial Spin Labelling MRI </h2><p class="elem-desc"> BASIL provides spatial  \
+                regularization of the estimated perfusion image and correction of partial volume effects. The  first panel plots CBF and last panel plots the distribution  \
+                     of CBF within the whole brain mask, with a boxplot of CBF in GM and WM voxels  <p><br />   \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+basil1 + '">filename:'+basil1 + '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href=" ' + basil1 + '" target="_blank">' + basil1 + '</a> </div>'
 
@@ -702,13 +702,12 @@ for i in modules1:
                       bbox_inches="tight", pad_inches=None)
           scrub2 = 'figures/'+prefix+'_scrub2.svg'
 
-          html_report = html_report+'<div id="scorescrub">  </div>  </ul><h2 class="elem-title"> CBF  Structural Correlation with RobUst Bayesian and Outlier Rejection (scorescrub)\
+          html_report = html_report+'<div id="scorescrub">  </div>  </ul><h2 class="elem-title"> CBF  Structural Correlation with Robust Bayesian and Outlier Rejection (scorescrub)\
                     </h2><p class="elem-desc"> \
-                 The first panel plotted the summary statistics that may reveal trends or artifacts in the ASL data after the oullier voulmes has beed removed.  \
-                  FD shows the avereage of framewise displacement of label and control. Others are the CBF computed within grey matter (GM), white matter (WM) and cerebrospinal fluid (CSF). \
-                 The carpet plot shows the CBF times series without outlier volumes. The second panel shows the plot of CBF and the third  pabel shows the distribution of CBF within the whole  \
-                 brain mask and  boxplot of CBF in GM and WM voxels. The fourth panel shows the CBF estimated with  robust Bayesian method and last panel  \
-                     shows the distribution of CBF within the whole  brain mask and  boxplot of CBF in GM and WM voxels. .<p><br />    \
+                 The first panel plots summary statistics that may reveal trends or artifacts in the ASL data after the outlier voulmes have beed removed.  \
+                 FD shows the average framewise displacement of labels and controls. Additionally, the plot shows CBF computed within grey matter (GM), white matter (WM) and cerebrospinal fluid (CSF). \
+                 The carpet plot shows the CBF time series. The second panel plots CBF. The last panel plots the distribution of CBF within the whole brain mask, with a boxplot of CBF in GM and WM voxels. The fourth panel shows the CBF estimated with a robust Bayesian method, and the last panel  \
+                     shows the distribution of CBF within the whole  brain mask, with a boxplot of CBF in GM and WM voxels. .<p><br />    \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+score1 + '">filename:'+score1 + '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+score1 + '" target="_blank">' + score1 + '</a> </div> '
 
@@ -758,7 +757,7 @@ for i in modules1:
 
          html_report = html_report+'<div id="task">  </div>  </ul><h2 class="elem-title">FSL FEAT processing of task data. \
                     </h2><p class="elem-desc"> \
-                 The first  panel shows task registration to T1w space. The second panel shows the task deisgns .<p><br />  \
+                 The first  panel shows task registration to T1w space. The second panel shows the task designs .<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+taskreg + '">filename:'+taskreg + '</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+taskreg + '" target="_blank">' + taskreg + '</a> </div> '
 
@@ -825,10 +824,10 @@ for i in modules1:
          fig.savefig(outdir+'/figures/'+prefix+'_qcfc.svg',bbox_inches="tight", pad_inches=None)
          qcfcfig = 'figures/'+prefix+'_qcfc.svg'
 
-         html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assesment of  quality of functional connectivity data. \
+         html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of functional connectivity data. \
                 </h2><p class="elem-desc"> \
-                  The first panel shows the spike plot consists of dvars (DV), relative motion (RMS) and framewise displacement (FD), \
-                     The middle carpet plot is the raw BOLD data and bottom carpet plot is residualized BOLD data\
+                  The first panel shows the spike plot consisting of dvars (DV), relative motion (RMS), and framewise displacement (FD). \
+                     The mid carpet plot is raw BOLD data, while the bottom carpet plot is residualized BOLD data\
                      Check motionDVCorrInit (correlation of DV and RMS before regression) and motionDVCorrFinal (correlation of DV and RMS after regression) in the QC table above. \
                 A carpet plot shows the time series for all voxels within the brain mask. Voxels are grouped into white matter (red), gray matter (blue), and CSF (green), indicated by the color map on the left-hand side<p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+prestatsfig + '">filename:'+prestatsfig + '" alt="Segmentation" width="1000"height="800" </object> \
