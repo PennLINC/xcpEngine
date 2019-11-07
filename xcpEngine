@@ -400,7 +400,6 @@ done
 # Generate report for each subject
 ################################################################
 echo "generating report"
-echo $standard >> ${out[sub]}/template.txt
 for sub in ${!cohort[@]}
    do
    mkdir -p ${out[sub]}/figures
