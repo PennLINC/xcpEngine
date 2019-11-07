@@ -19,7 +19,7 @@ To process your data from scanner to analysis, the steps are generally
 Steps 1 and 2 are well-documented and have active developers who can help you through these steps;
 this documentation will help you get started with step 3 (``xcpEngine``).
 
-Getting started
+Installation
 -------------------
 
 The easiest way to use xcpEngine on your laptop or personal computer is to install Docker_ and
