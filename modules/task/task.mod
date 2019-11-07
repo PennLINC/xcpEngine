@@ -617,7 +617,9 @@ for l in "${!fsf_design[@]}"
    chk_TDX=( "${line}"        'set fmri\(deriv_yn'          )
    chk_CPE=( "${line}"        'set fmri\(conname_real'      )
    chk_FTW=( "${line}"        'set fmri\(featwatcher_yn'    )
+
    
+ 
    contains  "${chk_PAR[@]}" \
              && line=${line//set fmri\(evtitle/} \
              && indx=${line/%\)*/}  \
@@ -684,6 +686,11 @@ done
 if (( ${conf_include} == 1 ))
    then
    subroutine                 @1.2  Importing confounds
+   if (( ${task_rpsd[cxt]} > 0)); then 
+   subroutine                 @1.2.1a  remvoing the first ${task_rpsd[cxt]} confound
+   exec_xcp removetaskpnts.R -n  ${task_rpsd[cxt]} -t ${rps[cxt]} -p ${rps[cxt]}
+   fi
+
    if is+numeric ${conf}
       then
       subroutine              @1.2.1
