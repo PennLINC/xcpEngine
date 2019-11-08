@@ -1,7 +1,7 @@
 abort_stream() {
    local errdir=${out_group}/error
    [[ ! -d  ${errdir} ]] && mkdir -p ${errdir}
-   ERR_ROOT=${errdir}/${analysis}-${xcp_date}
+   ERR_ROOT=${errdir}/${analysis}-${xcp_date}-${xcp_uuid}
    local error="
 · [A major error has occurred.]
 · [The processing stream will now abort.]
