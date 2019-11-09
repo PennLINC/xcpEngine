@@ -212,14 +212,16 @@ echo \
 
 
 ###################################################################
-# Obtain a timestamp for the current deployment of the engine.
+# Obtain a timestamp and uuid for the current deployment of the engine.
 ###################################################################
 export xcp_date=$(date +%Y%m%d%H%M)
+export xcp_uuid=$(uuidgen)
+echo "Date: $xcp_date"
+echo "UUID: $xcp_uuid"
 ###################################################################
 # Prepare to analyse the entire pipeline.
 ###################################################################
 modules=( ${pipeline//,/ } )
-
 
 
 
