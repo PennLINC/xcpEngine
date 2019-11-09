@@ -4,15 +4,6 @@
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
 ###################################################################
 source $FSLDIR/etc/fslconf/fsl.sh
-IN_CONTAINER=0
-
-if [[ -d /xcpEngine ]]
-then
-  IN_CONTAINER=1
-  source activate neuro
-  echo "[Detected that xcp is in a container]"
-fi
-export IN_CONTAINER
 
 echo "Received options:" $@
 args=`echo $@`
