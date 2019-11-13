@@ -218,7 +218,26 @@ if (( ${task_fmriprep[cxt]} == 1 ))
          -j rps \
          -o ${rps[cxt]}
 
+       exec_xcp generate_confmat.R \
+         -i ${fmriprepconf[sub]} \
+         -j fd \
+         -o ${rel_rms[cxt]}
+      
 
+      ###################################################################
+        # compute relative maximum and mean motion  
+     ###################################################################
+      subroutine        @1.2  relative maximum motion
+      exec_xcp 1dTool.R \
+         -i    ${rel_rms[cxt]} \
+         -o    max \
+         -f    ${rel_max_rms[cxt]}
+
+     subroutine        @1.3  relative mean motion
+      exec_xcp 1dTool.R \
+         -i    ${rel_rms[cxt]} \
+         -o    mean \
+         -f    ${rel_mean_rms[cxt]}
 
 
          strucn="${img1[sub]%/*/*}";
