@@ -43,7 +43,7 @@ nvd <- opt$nvd
 tab1 <- opt$tab
 out2 <- opt$put
 
-rr=read.table(tab1, sep='\t',header=TRUE)
+rr=read.table(tab1, sep='\t',header=FALSE)
 mat1 = rr[-c(1:nvd),] 
 write.table(mat1,file=out2, sep='\t',col.names = F, row.names=F,quote=F)
 

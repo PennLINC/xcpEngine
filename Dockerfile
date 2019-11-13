@@ -222,4 +222,7 @@ ENV XCPEDIR="/xcpEngine" \
 
 RUN mkdir /data /out /work /design /cohort
 
+RUN mkdir /run/uuidd
+RUN apt-get install -y -q --no-install-recommends uuid-runtime
+
 ENTRYPOINT ["/xcpEngine/xcpEngine"]
