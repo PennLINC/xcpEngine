@@ -677,7 +677,7 @@ if [ ! -z $pvcorr ]; then
     fslmaths $tempdir/pvcorr/step2/mean_ftiss -div  $tempdir/sens -mas $tempdir/mask  $outdir/cbf_pv_gm
     fslmaths $tempdir/pvcorr/step2/mean_fwm -div  $tempdir/sens -mas $tempdir/mask   $outdir/cbf_pv_wm
     #fslmaths $tempdir/pvcorr/step2/noise_means -mul $tempdir/mask   $outdir/noise_pv
-    fslmaths $outdir/cbf_pv_gm -add $outdir/cbf_pv_wm $outdir/cbf_pv
+    imcp  $outdir/cbf_pv_gm  $outdir/cbf_pv
     
 fi
 

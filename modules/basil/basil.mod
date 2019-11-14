@@ -303,7 +303,7 @@ routine @3 Orgainizing the output
    
    qc cbfpv_qei   cbfpv_qei   ${prefix}_cbfpv_QEI.txt
    
-   zscore_image ${cbfpv[cxt]}  ${cbfpvZcxt]} ${mask[sub]}
+   zscore_image ${cbfpv[cxt]}  ${cbfpvZ[cxt]} ${mask[sub]}
 
  fi
 
