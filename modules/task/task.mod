@@ -219,7 +219,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
          -o ${rps[cxt]}
 
        exec_xcp generate_confmat.R \
-         -i ${fmriprepconf[sub]} \
+         -i ${fmriprepconf[cxt]} \
          -j fd \
          -o ${rel_rms[cxt]}
       
