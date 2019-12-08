@@ -213,6 +213,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
          
        output fmriprepconf  ${out}/task/${prefix}_fmriconf.tsv 
        output    rps       ${out}/task/${prefix}_motion.1D
+       exec_sys mkdir ${out}/task/mc 
         exec_xcp generate_confmat.R \
          -i ${fmriprepconf[cxt]} \
          -j rps \
