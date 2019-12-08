@@ -14,13 +14,14 @@ as shown below.
 -----------------------------------------
 
 The cohort file will be created base on the FMRIPREP output and/or  img.  The `img` is input  directory for asl and structural image. The processing of ASL requires  
-processed anatomical image from FRMIPREP (fmriprepdir) or structural processing output (antsct). The  `m0` is the M0 directory for CBF calibration if present. 
+processed anatomical image from FRMIPREP (fmriprepdir) or structural processing output (antsct). The  `m0` is the M0 directory for CBF calibration if present. In the case 
+of task-activation analysis, `task_name` is required to be specified in the config of xcpengine gear.
 
    Task-activation analysis
 -----------------------------
 
-Running task-activation (FSL FEAT) analysis on flywheel with xcpEngine requires event files like FSL. The evnets an be in any format accpetable by the 
-FSL FEAT. The contrasts and corresponding weights are organized as shown in `task.json` shown below.::   
+Running task-activation (FSL FEAT) analysis on flywheel with xcpEngine requires event files like FSL. The event file (in .txt) can be in any format accpetable by the 
+FSL FEAT. The contrasts and corresponding weights are organized as shown in `task.json` below.::   
 
            {
               "eventname":["0back","1back","2back","inst"], 
@@ -39,6 +40,6 @@ The `task.json` is zipped  with all the event files::
    inst.txt 
    task.json 
 
-The zipped file is attach to `taskfile` in the inout directory of xcpengine gear in flywheel (check figure above) 
+The zipped file is attach to `taskfile` in the input directory of xcpengine gear on flywheel (check the figure above) 
 
 The length of the  weight must be equal to the number of events as shown above.
