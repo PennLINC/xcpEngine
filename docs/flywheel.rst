@@ -26,7 +26,7 @@ FSL FEAT. The contrasts and corresponding weights are organized as shown in `tas
               "eventname":["0back","1back","2back","inst"], 
               "contrast" :{ "0back":          [1,0,0,0], 
                             "1back":          [0,1,0,0],
-                            "1backvs0back":   [1,-1,0,0], 
+                            "2back":          [0,0,1,0], 
                             "2backvs0back":   [-1,0,1,0],
                             "1backvs0back":   [-1,1,0,0] }
             }
