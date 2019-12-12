@@ -706,11 +706,6 @@ done
 if (( ${conf_include} == 1 ))
    then
    subroutine                 @1.2  Importing confounds
-   if (( ${task_rpsd[cxt]} > 0)); then 
-   subroutine                 @1.2.1a  remvoing the first ${task_rpsd[cxt]} confound
-   exec_xcp removetaskpnts.R -n  ${task_rpsd[cxt]} -t ${rps[cxt]} -p ${rps[cxt]}
-   fi
-
    if is+numeric ${conf}
       then
       subroutine              @1.2.1
