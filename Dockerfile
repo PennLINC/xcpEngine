@@ -225,4 +225,6 @@ RUN mkdir /data /out /work /design /cohort
 RUN mkdir /run/uuidd
 RUN apt-get install -y -q --no-install-recommends uuid-runtime
 
+RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy
+
 ENTRYPOINT ["/xcpEngine/xcpEngine"]
