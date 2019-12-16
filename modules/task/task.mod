@@ -701,9 +701,6 @@ for l in "${!fsf_design[@]}"
    contains  "${chk_FTW[@]}" \
              && fsf_design[l]='set fmri(featwatcher_yn) 0' \
              && continue
-   contains  "${chk_NVD[@]}" \
-             && fsf_design[l]='set fmri(ndelete) '${task_vol2del[cxt]}' \n' \
-             && continue
 done
 
 
