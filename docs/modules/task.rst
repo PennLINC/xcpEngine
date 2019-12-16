@@ -8,12 +8,29 @@
 with  event files and full model setup.  The ``task`` module run like FEAT-FMRI analysis and the ouputs is
 compatible with other ``xcpEngine`` modules such as ``roiquant``, ``fcon`` and ``norm``.
 
+The  six motion parameters are to be included in the FEAT design (by default) 
+but  can be changed as required by the user. The following motion nuissance regressors can be added : 
+'36p','24p','acompocor','aroma', and 'tcompcor',see Ciric et al. 2017 for detail. 
+This can be specify in the design file as::
+
+      task_fmriprep[1]=1
+      task_vol2del[1]=1
+      task_confound[1]='36p' # removing 36 motion parameters
+      task_rerun[1]=N
+      task_cleanup[1]=Y
+
 The :ref:`cohortfile` for the task can include a task design if the subjects' event files are different::
 
    id0,img,task_design
    sub-01,/path/to/bold1.nii.gz,/path/to/design1.fsf
    sub-02,/path/to/bold2.nii.gz,/path/to/design2.fsf
    sub-04,/path/to/bold4.nii.gz,/path/to/design4.fsf
+
+if there are other nuissance regressors like physiological data that want to be included in the design, it can be added to the :ref:`cohortfile` as ::
+    
+   id0,img,task_design,task_custom
+   sub-01,/path/to/bold1.nii.gz,/path/to/design1.fsf,/path/to/custom.txt
+   
 
 Users can create a  design file for each subject (or group)   by running one subject in FSL GUI. This is 
 a sample of  a template design : https://github.com/PennBBL/xcpEngine/blob/master/utils/template.fsf  for simple 

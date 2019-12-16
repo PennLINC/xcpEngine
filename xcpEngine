@@ -215,7 +215,7 @@ echo "UUID: $xcp_uuid"
 modules=( ${pipeline//,/ } )
 
 
-
+python -c "import sentry_sdk; sentry_sdk.init('https://34b713b3ba2240329b2b671685006e94@sentry.io/1854243') "
 
 ###################################################################
 # Verify that all dependencies are installed.

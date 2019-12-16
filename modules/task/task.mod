@@ -689,7 +689,7 @@ for l in "${!fsf_design[@]}"
              && fsf_design[l]='set highres_files(1) '${struct[sub]}'\n' \
              && continue
    contains  "${chk_NVD[@]}" \
-             && fsf_design[l]='set fmri(ndelete) '${vol2del}' \n' \
+             && fsf_design[l]='set fmri(ndelete) '${task_vol2del[cxt]}' \n' \
              && continue
    contains  "${chk_CON[@]}" \
              && coni=${l}    \

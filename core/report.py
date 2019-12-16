@@ -17,6 +17,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sentry_sdk
+sentry_sdk.init('https://34b713b3ba2240329b2b671685006e94@sentry.io/1854243') 
 font = {
     'weight': 'normal',
     'size': 20}
