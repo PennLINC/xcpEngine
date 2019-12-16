@@ -158,7 +158,7 @@ varcope
 
 DICTIONARY
 
-
+confmat_path=${outdir}/${prefix}_confmat.1D
 # check if the design is subject specific or group 
 if [[ -f ${task_design[sub]} ]]; then 
      task_design[cxt]=${task_design[sub]}
@@ -637,6 +637,7 @@ for l in "${!fsf_design[@]}"
    chk_TDX=( "${line}"        'set fmri\(deriv_yn'          )
    chk_CPE=( "${line}"        'set fmri\(conname_real'      )
    chk_FTW=( "${line}"        'set fmri\(featwatcher_yn'    )
+   chk_NVD=( "${line}"        'set fmri\(ndelete'           )
 
    
  
@@ -687,6 +688,9 @@ for l in "${!fsf_design[@]}"
    contains  "${chk_HRS[@]}" \
              && fsf_design[l]='set highres_files(1) '${struct[sub]}'\n' \
              && continue
+   contains  "${chk_NVD[@]}" \
+             && fsf_design[l]='set fmri(ndelete) '${vol2del}' \n' \
+             && continue
    contains  "${chk_CON[@]}" \
              && coni=${l}    \
              && conf_include=${line//set fmri(confoundevs) /} \
@@ -697,7 +701,79 @@ for l in "${!fsf_design[@]}"
    contains  "${chk_FTW[@]}" \
              && fsf_design[l]='set fmri(featwatcher_yn) 0' \
              && continue
+   contains  "${chk_NVD[@]}" \
+             && fsf_design[l]='set fmri(ndelete) '${task_vol2del[cxt]}' \n' \
+             && continue
 done
+
+
+
+ subroutine                 @1.1 generate confound
+
+ if [[ ${task_confound[cxt]} == 36p ]] ; then 
+    dx=1; sq=2
+   exec_xcp mbind.R  -y ${rps[cxt]} -o ${confmat_path}
+    output confmat             ${prefix}_confmat.1D
+   csf_path=${outdir}/${prefix}_csf.1D
+    exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j csf -o ${csf_path}
+   output csf  ${prefix}_csf.1D
+   exec_xcp mbind.R   -x ${confmat[cxt]} -y ${csf[cxt]} -o ${confmat_path}
+   output confmat             ${prefix}_confmat.1D
+   gsr_path=${outdir}/${prefix}_gsr.1D
+   exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j gsr  -o ${gsr_path}
+   output gsr  ${prefix}_gsr.1D
+   exec_xcp mbind.R  -x ${confmat[cxt]} -y ${gsr[cxt]} -o ${confmat_path} 
+   output confmat             ${prefix}_confmat.1D
+   wm_path=${outdir}/${prefix}_wm.1D
+   exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j wm  -o ${wm_path}
+   output wm  ${prefix}_wm.1D
+   exec_xcp mbind.R -x ${confmat[cxt]} -y ${wm[cxt]}  -o ${confmat_path}
+   output confmat             ${prefix}_confmat.1D
+   exec_xcp mbind.R -x    ${confmat[cxt]}  -y    OPdx${dx} -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
+   exec_xcp mbind.R  -x    ${confmat[cxt]} -y    OPpower${sq} -o    ${confmat_path}
+   output   confmat           ${prefix}_confmat.1D
+
+  elif [[ ${task_confound[cxt]} == 24p ]] ; then 
+    dx=1; sq=2
+    exec_xcp mbind.R   -y ${rps[cxt]} -o ${confmat_path}
+    output confmat             ${prefix}_confmat.1D
+    exec_xcp mbind.R -x    ${confmat[cxt]}  -y    OPdx${dx} -o    ${confmat_path}
+    output   confmat           ${prefix}_confmat.1D
+    exec_xcp mbind.R  -x    ${confmat[cxt]} -y    OPpower${sq} -o    ${confmat_path}
+    output   confmat           ${prefix}_confmat.1D
+
+  elif  [[ ${task_confound[cxt]} == acompcor ]] ; then 
+    dx=1; 
+    exec_xcp mbind.R   -y ${rps[cxt]} -o ${confmat_path}
+    exec_xcp mbind.R -x    ${confmat[cxt]}  -y    OPdx${dx} -o    ${confmat_path}
+    output   confmat           ${prefix}_confmat.1D
+    ac_path=${outdir}/${prefix}_acompcor.1D
+    exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j aCompCor  -o ${ac_path}
+    output acp  ${prefix}_acompcor.1D
+    exec_xcp mbind.R  -x ${confmat[cxt]} -y ${acp[cxt]} -o ${confmat_path} 
+    output confmat             ${prefix}_confmat.1D
+  elif [[ ${task_confound[cxt]} == aroma  ]]; then
+    ar_path=${outdir}/${prefix}_aroma.1D
+    exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j aroma -o ${ar_path}
+    output aroma  ${prefix}_aroma.1D
+    exec_xcp mbind.R  -x ${confmat[cxt]} -y ${aroma[cxt]} -o ${confmat_path} 
+    output confmat             ${prefix}_confmat.1D
+   elif [[ ${task_confound[cxt]} == tcompcor  ]]; then
+    tc_path=${outdir}/${prefix}_tcompcor.1D
+    exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j tCompCor -o ${tc_path}
+    output tcp  ${prefix}_tcompcor.1D
+    exec_xcp mbind.R  -x ${confmat[cxt]} -y ${tcp[cxt]} -o ${confmat_path} 
+    output confmat             ${prefix}_confmat.1D
+   else
+   ${confmat[cxt]}=${rps[cxt]}
+fi
+
+
+if (( ${task_custom[sub]} )); then 
+   exec_xcp mbind.R  -x ${confmat[cxt]} -y ${task_custom[sub]} -o ${confmat_path} 
+    output confmat             ${prefix}_confmat.1D
+fi
 
 
 
@@ -706,13 +782,17 @@ done
 if (( ${conf_include} == 1 ))
    then
    subroutine                 @1.2  Importing confounds
+   if (( ${task_vol2del[cxt]} > 0)); then 	
+   subroutine                 @1.2.1a  remvoing the first ${task_vol2del[cxt]} confound	
+   exec_xcp removetaskpnts.R -n  ${task_vol2del[cxt]}  -t ${confmat[cxt]}   -p ${confmat[cxt]} 
+   fi
    if is+numeric ${conf}
       then
       subroutine              @1.2.1
-      fsf_design[conf]='set confoundev_files(1) '${rps[cxt]}'\n'
+      fsf_design[conf]='set confoundev_files(1) '${confmat[cxt]}'\n'
    else
       subroutine              @1.2.2
-      fsf_design[coni]='set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${rps[cxt]}'\n'
+      fsf_design[coni]='set fmri(confoundevs) 1\n\n# Confound EVs text file for analysis 1\nset confoundev_files(1) '${confmat[cxt]}'\n'
    fi
 fi
 exec_sys    rm -f ${fsf[cxt]}
