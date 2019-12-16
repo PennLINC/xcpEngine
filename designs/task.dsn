@@ -47,8 +47,9 @@ pipeline=task,roiquant,norm
 # 1 TASK
 ###################################################################
 
-task_design[1]=task.fsf
 task_fmriprep[1]=1
+task_vol2del[1]=0  
+task_confound[1]='rps' 
 task_rerun[1]=N
 task_cleanup[1]=Y
 
