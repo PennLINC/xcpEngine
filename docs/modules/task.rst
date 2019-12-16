@@ -15,7 +15,7 @@ This can be specify in the design file as::
 
       task_fmriprep[1]=1
       task_vol2del[1]=1
-      task_confound[1]='36p' # removing 36 motion parameters
+      task_confound[1]='36p' # including 36 motion parameters
       task_rerun[1]=N
       task_cleanup[1]=Y
 
