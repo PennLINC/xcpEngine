@@ -391,6 +391,13 @@ if (( ${censor[cxt]} != 0 ))
    nvol_censored=$(( ${nvol_pre}   -   ${nvol_post} ))
    subroutine                 @5.6  [${nvol_censored} volumes censored]
    echo ${nvol_censored}            >> ${n_volumes_censored[cxt]}
+
+   routine_end
+   else 
+   
+   nvol_censored=0
+   echo ${nvol_censored}         >> ${n_volumes_censored[cxt]}
+
    routine_end
 fi
 

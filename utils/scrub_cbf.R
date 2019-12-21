@@ -35,7 +35,7 @@ option_list = list(
               help="the wave fun. see the code for other types"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The root output path for all voxelwise perfusion maps."),
-   make_option(c("-t", "--thresh"), action="store", default=0.9, type='numeric',
+   make_option(c("-t", "--thresh"), action="store", default=0.7, type='numeric',
               help="threshold the segmentation tissues")
 )
 opt = parse_args(OptionParser(option_list=option_list))
@@ -57,7 +57,7 @@ wfun     <-         opt$wfun
 outpath  <-         opt$out
 thresh   <-         opt$thresh
 
-
+thresh=0.7
 
 
 ## set the default values
@@ -79,7 +79,7 @@ mask     <-         readNifti(mask)
 if ( length(dim(gm)) == 4 ) { gm=gm[,,,1]; wm=wm[,,,1]; csf=csf[,,,1] }
 if ( length(dim(mask)) == 4 ) { mask=mask[,,,1] }
 
-# threhdoling the prb. maps and obtain the idx
+# thresholding the probability maps and obtain the idx
 gm1 <- gm*mask; gmidx <- gm1[mask==1]; 
 gmidx[gmidx<thresh] <- 0;   gmidx[gmidx>0] <- 1
 wm1 <- wm*mask;  wmidx <- wm1[mask==1]; 

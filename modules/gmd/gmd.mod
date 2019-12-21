@@ -125,8 +125,10 @@ if ! is_image ${segmentation3class[cxt]} \
                   ${segmentation3class[cxt]}
    exec_fsl immv  ${intermediate}-atropos2-priorImage001.nii.gz \
                   ${probabilityCSF[cxt]}
-   exec_fsl immv  ${intermediate}-atropos2-priorImage002.nii.gz \
-                  ${probabilityGM[cxt]}
+   #exec_fsl immv  ${intermediate}-atropos2-priorImage002.nii.gz \
+                  #${probabilityGM[cxt]}
+   exec_ants ImageMath 3  ${probabilityGM[cxt]}  Normalize \
+          ${intermediate}-atropos2-priorImage002.nii.gz               
    exec_fsl immv  ${intermediate}-atropos2-priorImage003.nii.gz \
                   ${probabilityWM[cxt]}
 else

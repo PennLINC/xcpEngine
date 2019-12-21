@@ -31,7 +31,7 @@ option_list = list(
               help="cerebrospinal fluid"),
    make_option(c("-o", "--out"), action="store", default=NA, type='character',
               help="The root output path for all voxelwise perfusion maps."),
-   make_option(c("-t", "--thresh"), action="store", default=0.9, type='numeric',
+   make_option(c("-t", "--thresh"), action="store", default=0.7, type='numeric',
               help="threshold the segmentation tissues")
 )
 opt = parse_args(OptionParser(option_list=option_list))
@@ -53,7 +53,7 @@ gm       <-         opt$grey
 csf      <-         opt$csf
 outpath  <-         opt$out
 thresh   <-         opt$thresh
-
+thresh=0.7
 #read the maps and cbf time series  
 wm       <-         readNifti(wm)
 gm       <-         readNifti(gm)
@@ -113,10 +113,12 @@ meancbf       <-    apply(cbfts_recon,c(1,2,3),mean)
 b             <-    updateNifti(meancbf,template = cbfts,datatype = 'auto')
 bb            <-    updateNifti(cbfts_recon,template = cbfts,datatype = 'auto')
 outpath_mean  <-    paste(outpath,'_cbfscore.nii.gz',sep='')
-outpath_tts   <-    paste(outpath,'_cbfscorets.nii.gz',sep='')
+outpath_tts   <-    paste(outpath,'_cbfscore_ts.nii.gz',sep='')
 ng            <- dim(cbfts_recon) 
 df=cbfdim[4]-ng[4]
 deletvol <-    paste(outpath,'_nvoldel.txt',sep='')
- write.table(df,deletvol,quote=FALSE, row.names=FALSE,col.names=FALSE)
+volindex <-    paste(outpath,'_volindex.txt',sep='')
+write.table(df,deletvol,quote=FALSE, row.names=FALSE,col.names=FALSE)
+write.table(indx,volindex,quote=FALSE, row.names=FALSE,col.names=FALSE)
 writeNifti(b,outpath_mean)
 writeNifti(bb,outpath_tts)

@@ -81,7 +81,9 @@ different for PASL and CASL/PCASL. The standard value is 0.85 for CASL/PCASL and
 ``Expected output``
 ^^^^^^^^^^^^^^^^^^^^^^
 The main outputs are:: 
-   - prefix_meanPerfusion.nii.gz  # mean perfusion
-   - prefix_perfusion.nii.gz  # perfusion timeseries
-   - prefix_negativeVoxels.txt  # number of negative voxels, part of QC
+   - prefix_cbf.nii.gz  # mean cbf 
+   - prefix_cbf_ts.nii.gz  # cbf time series 
+   - prefix_cbfR.nii.gz  # relative mean  cbf 
+   - prefix_cbfZ.nii.gz  # zscore mean cbf 
+   - prefix_sub-1_cbf_tsnr.nii.gz # temporal signal to noise ratio of cbf 
  

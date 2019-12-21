@@ -79,6 +79,28 @@
     "SpaceNative": "MNI",
     "Type": "Map"
   },
+  "schaefer100x17": {
+    "Citation": "${BRAINATLAS}/schaefer100x17/schaefer100x17Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/schaefer100x17/schaefer100x17CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/schaefer100x17/schaefer100x17CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer100x17/schaefer100x17MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer100x17/schaefer100x17NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer100x17/schaefer100x17NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "schaefer100x7": {
+    "Citation": "${BRAINATLAS}/schaefer100x7/schaefer100x7Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/schaefer100x7/schaefer100x7CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/schaefer100x7/schaefer100x7CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer100x7/schaefer100x7MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer100x7/schaefer100x7NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer100x7/schaefer100x7NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
   "schaefer200": {
     "Citation": "${BRAINATLAS}/schaefer200/schaefer200Reference.bib",
     "CommunityNamesAPriori17": "${BRAINATLAS}/schaefer200/schaefer200x17CommunityNames.txt",
@@ -88,6 +110,28 @@
     "Map": "${BRAINATLAS}/schaefer200/schaefer200MNI.nii.gz",
     "NodeIndex": "${BRAINATLAS}/schaefer200/schaefer200NodeIndex.1D",
     "NodeNames": "${BRAINATLAS}/schaefer200/schaefer200NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "schaefer200x17": {
+    "Citation": "${BRAINATLAS}/schaefer200x17/schaefer200x17Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/schaefer200x17/schaefer200x17CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/schaefer200x17/schaefer200x17CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer200x17/schaefer200x17MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer200x17/schaefer200x17NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer200x17/schaefer200x17NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "schaefer200x7": {
+    "Citation": "${BRAINATLAS}/schaefer200x7/schaefer200x7Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/schaefer200x7/schaefer200x7CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/schaefer200x7/schaefer200x7CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer200x7/schaefer200x7MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer200x7/schaefer200x7NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer200x7/schaefer200x7NodeNames.txt",
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
@@ -105,10 +149,24 @@
     "SpaceNative": "MNI",
     "Type": "Map"
   },
-  "sharma": {
-    "Map": "${BRAINATLAS}/sharma/sharmaMNI.nii.gz",
-    "NodeIndex": "${BRAINATLAS}/sharma/sharmaNodeIndex.1D",
-    "NodeNames": "${BRAINATLAS}/sharma/sharmaNodeNames.txt",
+  "schaefer400x17": {
+    "Citation": "${BRAINATLAS}/schaefer400x17/schaefer400x17Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/schaefer400x17/schaefer400x17CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/schaefer400x17/schaefer400x17CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer400x17/schaefer400x17MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer400x17/schaefer400x17NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer400x17/schaefer400x17NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "schaefer400x7": {
+    "Citation": "${BRAINATLAS}/schaefer400x7/schaefer400x7Reference.bib",
+    "CommunityNamesAPriori": "${BRAINATLAS}/schaefer400x7/schaefer400x7CommunityNames.txt",
+    "CommunityPartitionAPriori": "${BRAINATLAS}/schaefer400x7/schaefer400x7CommunityAffiliation.1D",
+    "Map": "${BRAINATLAS}/schaefer400x7/schaefer400x7MNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/schaefer400x7/schaefer400x7NodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/schaefer400x7/schaefer400x7NodeNames.txt",
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"

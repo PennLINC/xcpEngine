@@ -81,9 +81,9 @@ nvol                =   img_data.shape[1]
 
 tmask  = np.loadtxt(opts.tmask) 
 indices = tmask.shape[-1]
-t_obs=np.array(np.where(tmask==0))
+t_obs=np.array(np.where(tmask != 0))
 
-tmask2=np.where(tmask==0)
+tmask2=np.where(tmask != 0)
     ##########################################################################
     # Total timespan of seen observations, in seconds
     ##########################################################################

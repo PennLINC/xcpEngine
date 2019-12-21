@@ -741,22 +741,23 @@ if [ ! -z $pvexist ]; then
     cp $tempdir/wmmask.nii.gz $outdir/native_space/wm_mask.nii.gz
     cp $tempdir/gmmask_pure.nii.gz $outdir/native_space/gm_roi.nii.gz
     cp $tempdir/wmmask_pure.nii.gz $outdir/native_space/wm_roi.nii.gz
+
         if [ ! -z  $struct_space ]; then
         fslmaths $tempdir/pvcorr2/step2/mean_ftiss -mul $tempdir/mask2struct.nii.gz $outdir/struct_space/pvcorr/cbf_gm
 	fslmaths $tempdir/pvcorr2/step2/mean_fwm -mul $tempdir/mask2struct.nii.gz $outdir/struct_space/pvcorr/cbf_wm
         fslmaths $tempdir/pvcorr2/step2/noise_means -mul $tempdir/mask2struct.nii.gz  $outdir/struct_space/pvcorr/noise
-	fslmaths $outdir/struct_space/pvcorr/cbf_gm -add $outdir/struct_space/pvcorr/cbf_wm $outdir/struct_space/pvcorr/cbf
+	imcp  $outdir/struct_space/pvcorr/cbf_gm  $outdir/struct_space/pvcorr/cbf
 	
         fslmaths $tempdir/pvcorr/step2/mean_ftiss -mul $mask $outdir/native_space/pvcorr/cbf_gm
 	fslmaths $tempdir/pvcorr/step2/mean_fwm -mul $mask $outdir/native_space/pvcorr/cbf_wm
         fslmaths $tempdir/pvcorr/step2/noise_means -mul $mask  $outdir/native_space/pvcorr/noise
-	fslmaths $outdir/native_space/pvcorr/cbf_gm -add $outdir/native_space/pvcorr/cbf_wm $outdir/native_space/pvcorr/cbf
+	imcp  $outdir/native_space/pvcorr/cbf_gm  $outdir/native_space/pvcorr/cbf
 	
 	else
         fslmaths $tempdir/pvcorr/step2/mean_ftiss -mul $mask $outdir/native_space/pvcorr/cbf_gm
 	fslmaths $tempdir/pvcorr/step2/mean_fwm -mul $mask $outdir/native_space/pvcorr/cbf_wm
         fslmaths $tempdir/pvcorr/step2/noise_means -mul $mask  $outdir/native_space/pvcorr/noise
-	fslmaths $outdir/native_space/pvcorr/cbf_gm -add $outdir/native_space/pvcorr/cbf_wm $outdir/native_space/pvcorr/cbf
+	imcp  $outdir/native_space/pvcorr/cbf_gm  $outdir/native_space/pvcorr/cbf
 	fi
   
 fi

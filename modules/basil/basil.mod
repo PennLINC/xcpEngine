@@ -32,17 +32,24 @@ completion() {
 # OUTPUTS
 ###################################################################
 
-derivative            cbfbasil                 ${prefix}_cbf_basil.nii.gz
-derivative            cbfbasilspatial          ${prefix}_cbf_basil_spatial.nii.gz
-derivative            cbfbasilpv               ${prefix}_cbf_basil_pv.nii.gz
+derivative            cbfbasil                 ${prefix}_cbfbasil.nii.gz
+derivative            cbfspatial               ${prefix}_cbfspatial.nii.gz
+derivative            cbfpv                    ${prefix}_cbfpv.nii.gz
+derivative            cbfbasilR                ${prefix}_cbfbasilR.nii.gz 
+derivative            cbfspatialR              ${prefix}_cbfspatialR.nii.gz 
+derivative            cbfpvR                   ${prefix}_cbfpvR.nii.gz
+derivative            cbfbasilZ                ${prefix}_cbfbasilZ.nii.gz 
+derivative            cbfspatialZ              ${prefix}_cbfspatialZ.nii.gz 
+derivative            cbfpvZ                   ${prefix}_cbfpvZ.nii.gz
+
 
 output           logfile              ${prefix}_logfile
 output           basil_option         ${prefix}_basil_option.txt
 output           logfile2             ${prefix}_logfile_spatial
 
-output           cbfbasil            ${prefix}_cbf_basil.nii.gz
-output           cbfbasilspatial     ${prefix}_cbf_basil_spatial.nii.gz
-output           cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
+output           cbfbasil            ${prefix}_cbfbasil.nii.gz
+output           cbfpatial           ${prefix}_cbfspatial.nii.gz
+output           cbfpv               ${prefix}_cbfpv.nii.gz
 
 
 
@@ -51,6 +58,12 @@ output           cbfbasilpv          ${prefix}_cbf_basil_pv.nii.gz
 derivative_set       cbfbasil            Statistic         mean
 derivative_set       cbfbasilspatial     Statistic         mean
 derivative_set       cbfbasilpv          Statistic         mean
+derivative_set       cbfbasilR           Statistic         mean
+derivative_set       cbfspatialR         Statistic         mean
+derivative_set       cbfpvR              Statistic         mean
+derivative_set       cbfbasilZ           Statistic         mean
+derivative_set       cbfspatialZ         Statistic         mean
+derivative_set       cbfpvZ              Statistic         mean
 
 
 
@@ -89,8 +102,8 @@ fi
 # Compute cerebral blood flow with basil.
 ###################################################################
    
-
-
+if ! is_image ${cbfbasil[cxt]}
+ then 
    case ${basil_perfusion[cxt]} in
    
    casl)
@@ -208,14 +221,14 @@ routine @3 Orgainizing the output
 
   if [ ${basil_pvc[cxt]} == 1 ]; then 
     
-    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_basil
+    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbfbasil
     exec_fsl immv  $out/basil/cbf   $out/basil/${prefix}_cbf
-    exec_fsl immv  $out/basil/cbf_pv_gm_calib   $out/basil/${prefix}_cbf_basil_pv
+    exec_fsl immv  $out/basil/cbf_pv_gm_calib   $out/basil/${prefix}_cbfpv
     exec_fsl immv  $out/basil/cbf_pv_wm_calib   $out/basil/${prefix}_cbf_pv_wm_calib
     exec_fsl immv  $out/basil/cbf_pv   $out/basil/${prefix}_cbf_pv
     exec_fsl immv  $out/basil/cbf_pv_gm   $out/basil/${prefix}_cbf_pv_gm
     exec_fsl immv  $out/basil/cbf_pv_wm   $out/basil/${prefix}_cbf_pv_wm
-    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_basil_spatial
+    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbfspatial
     exec_fsl immv  $out/basil/cbf_spatial  $out/basil/${prefix}_cbf_spatial
     exec_fsl immv  $out/basil/M0   $out/basil/${prefix}_M0
     exec_fsl immv  $out/basil/mask   $out/basil/${prefix}_mask
@@ -233,8 +246,8 @@ routine @3 Orgainizing the output
     exec_fsl immv  $out/basil/acbv   $out/basil/${prefix}_acbv
     exec_fsl immv  $out/basil/acbv_spatial   $out/basil/${prefix}_acbv_spatial
     exec_fsl immv  $out/basil/cbf   $out/basil/${prefix}_cbf
-    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbf_basil
-    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbf_basil_spatial
+    exec_fsl immv  $out/basil/cbf_calib   $out/basil/${prefix}_cbfbasil
+    exec_fsl immv  $out/basil/cbf_spatial_calib   $out/basil/${prefix}_cbfspatial
     exec_fsl immv  $out/basil/cbf_spatial  $out/basil/${prefix}_cbf_spatial
     exec_fsl immv  $out/basil/M0   $out/basil/${prefix}_M0
     exec_fsl immv  $out/basil/mask   $out/basil/${prefix}_mask
@@ -247,20 +260,54 @@ routine @3 Orgainizing the output
     exec_sys rm -rf $out/basil/${prefix}_cbf_pv_wm.nii.gz $out/basil/${prefix}_cbf.nii.gz
     
  
- fi 
- 
+   fi 
+   
+   
+
   exec_sys rm -rf $out/basil/${prefix}_mask_asl.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_M0.nii.gz
   exec_sys rm -rf $out/basil/${prefix}_m0.nii.gz
  
-   neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbf_basil.nii.gz          \
+   neg=( $(exec_fsl fslstats $out/basil/${prefix}_cbfbasil.nii.gz          \
               -k    $out/basil/${prefix}_mask.nii.gz  \
               -u    0                                       \
               -V) )
    echo ${neg[0]}   >> ${negative_voxels_basil[cxt]}
 
-  
-  
+ #aslqc 
+ if [[ -f ${cbfbasil[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfbasil[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfbasil
+   
+   qc cbfbasil_qei   cbfbasil_qei   ${prefix}_cbfbasil_QEI.txt
+
+   zscore_image ${cbfbasil[cxt]} ${cbfbasilZ[cxt]} ${mask[sub]}
+   
+   
+ fi
+
+
+ if [[ -f ${cbfspatial[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfspatial[cxt]}  -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfspatial
+   
+   qc cbfspatial_qei   cbfspatial_qei   ${prefix}_cbfspatial_QEI.txt
+
+   zscore_image ${cbfspatial[cxt]} ${cbfspatialZ[cxt]} ${mask[sub]}
+   
+ fi
+
+  if [[ -f ${cbfpv[cxt]} ]]; then 
+   exec_xcp  aslqc.py -i ${cbfpv[cxt]}   -m ${mask[sub]} -g ${gm2seq[sub]} \
+          -w ${wm2seq[sub]} -c ${csf2seq[sub]} -o ${outdir}/${prefix}_cbfpv
+   
+   qc cbfpv_qei   cbfpv_qei   ${prefix}_cbfpv_QEI.txt
+   
+   zscore_image ${cbfpv[cxt]}  ${cbfpvZ[cxt]} ${mask[sub]}
+
+ fi
+
+fi 
 routine_end
 
 completion

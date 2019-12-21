@@ -235,7 +235,7 @@ for net in ${atlas_names[@]}
       subroutine              @1.3  Computing network timeseries
       exec_sys rm -f ${ts[cxt]}
       exec_xcp roi2ts.R                      \
-         -i    ${img}                        \
+         -i    ${denoised[sub]}                       \
          -r    ${nodemap[cxt]}               \
          -l    ${a[NodeIndex]}               \
          >>    ${ts[cxt]}

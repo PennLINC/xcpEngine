@@ -415,6 +415,7 @@ if (( ${flag} == 1 ))
    # based on the `decide` configuration if coregistration is
    # repeated due to quality control failure.
    ################################################################
+   
    decision=$(arithmetic ${registration_quality_alt[${coreg_decide[cxt]}]}'>'\
                              ${registration_quality[${coreg_decide[cxt]}]})
    if (( ${decision} == 1 ))
@@ -524,7 +525,7 @@ if ! is_image ${struct2seq_img[cxt]} \
       -e 3 -d 3                     \
       -r ${sourceReference[cxt]}    \
       -o ${struct2seq_img[cxt]}     \
-      -i ${struct[sub]}             \
+      -i ${struct_head[sub]}             \
       -t ${struct2seq[cxt]}
 fi
 routine_end
@@ -571,7 +572,7 @@ if  [[ -d ${anatdir[sub]} ]]; then
     gm_seq=${out}/coreg/${prefix}_gm2seq.nii.gz 
     wm_seq=${out}/coreg/${prefix}_wm2seq.nii.gz 
     csf_seq=${out}/coreg/${prefix}_csf2seq.nii.gz 
-    mask1=${intermediate}_mask_seq.nii.gz 
+    mask1=${out}/coreg/temporay_mask_seq.nii.gz 
     mask=${out}/coreg/${prefix}_mask.nii.gz
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
@@ -587,17 +588,23 @@ if  [[ -d ${anatdir[sub]} ]]; then
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${csf[sub]} -t ${struct2seq[cxt]} \
         -o ${csf_seq} -n NearestNeighbor
+
    output csf2seq ${out}/coreg/${prefix}_csf2seq.nii.gz 
-   
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+
+
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
         -i ${structmask[sub]} -t ${struct2seq[cxt]} \
         -o ${mask1} -n NearestNeighbor
-  
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
-         -bin ${mask} 
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
+   
+    exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
+
+   output  mask ${out}/coreg/${prefix}_mask.nii.gz
+   rm -rf $mask1
+   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask[cxt]} \
          ${referenceVolumeBrain[sub]}
-   output mask ${out}/coreg/${prefix}_mask.nii.gz 
+
+   
+
    
    exec_fsl immv $out/prestats/${prefix}_struct_brain  $out/coreg/${prefix}_target
    exec_sys rm  -rf ${out}/prestats/${prefix}_struct* ${out}/prestats/${prefix}_csf* 
@@ -605,15 +612,15 @@ if  [[ -d ${anatdir[sub]} ]]; then
    exec_fsl immv  ${out}/prestats/${prefix}_segmentation ${out}/coreg/${prefix}_segmentation
    output segmentation ${out}/coreg/${prefix}_segmentation.nii.gz
    
-elif  [[ -d ${antsct[sub]} ]];  then
+elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
 
     subroutine @1.2 register the asl and m0 to struct space
     gm_seq=${out}/coreg/${prefix}_gm2seq.nii.gz 
     wm_seq=${out}/coreg/${prefix}_wm2seq.nii.gz 
     csf_seq=${out}/coreg/${prefix}_csf2seq.nii.gz 
-    mask1=${intermediate}_mask_seq.nii.gz 
+    mask1=${out}/coreg/temporay_mask_seq.nii.gz 
     mask=${out}/coreg/${prefix}_mask.nii.gz
-    structmask=${intermediate}_mask_struct.nii.gz 
+   
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${gm[sub]} -t ${struct2seq[cxt]} \
@@ -630,37 +637,32 @@ elif  [[ -d ${antsct[sub]} ]];  then
         -i ${csf[sub]} -t ${struct2seq[cxt]} \
         -o ${csf_seq} -n NearestNeighbor
    output csf2seq ${out}/coreg/${prefix}_csf2seq.nii.gz
-    
-   exec_fsl fslmaths ${struct_head[sub]} -bin ${structmask} 
 
-   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
-        -i ${structmask}  -t ${struct2seq[cxt]} \
+
+    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
+        -i ${structmask[sub]} -t ${struct2seq[cxt]} \
         -o ${mask1} -n NearestNeighbor
-  
-   exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
-         -bin ${mask} 
-    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask1} \
+   
+   exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
+   output  mask ${out}/coreg/${prefix}_mask.nii.gz
+
+
+    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask[cxt]} \
          ${referenceVolumeBrain[sub]}
-   
-   output mask ${out}/coreg/${prefix}_mask.nii.gz
-   
-   
+     
+
+   rm -rf $mask1
    #exec_fsl imcp ${struct[sub]}  $out/coreg/${prefix}_target
-   exec_sys rm   ${out}/prestats/${prefix}_csf* 
-   exec_sys rm -rf ${out}/prestats/${prefix}_wm*  ${out}/prestats/${prefix}_gm* 
+   exec_sys rm   ${out}/prestats/${prefix}_csf* 2>/dev/null
+   exec_sys rm -rf ${out}/prestats/${prefix}_wm*  ${out}/prestats/${prefix}_gm* 2>/dev/null
    exec_fsl imcp  ${segmentation[sub]} ${out}/coreg/${prefix}_segmentation
    output segmentation ${out}/coreg/${prefix}_segmentation.nii.gz
+
 else 
 
     echo " No Structural image "
 
 fi  
-      
-     
-
-
-
-
 
 subroutine                    @0.1
 completion

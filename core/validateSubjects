@@ -13,7 +13,7 @@ failure_chk() {
    local ERR_ROOT failures f fids errdir
    errdir=${out_group}/error
    [[ ! -d ${errdir}  ]] && mkdir -p ${errdir}
-   ERR_ROOT=${errdir}/${analysis}-${xcp_date}
+   ERR_ROOT=${errdir}/${analysis}-${xcp_date}-${xcp_uuid}
    failures=$(ls ${ERR_ROOT}-* 2>/dev/null)
    for f in ${failures}
       do

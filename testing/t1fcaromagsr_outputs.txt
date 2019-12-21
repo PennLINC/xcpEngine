@@ -35,6 +35,8 @@ sub-1/figures
 sub-1/figures/sub-1_alff.svg
 sub-1/figures/sub-1_corrplot.svg
 sub-1/figures/sub-1_normalization.svg
+sub-1/figures/sub-1_prestats.svg
+sub-1/figures/sub-1_qcfc.svg
 sub-1/figures/sub-1_registration.svg
 sub-1/figures/sub-1_reho.svg
 sub-1/figures/sub-1_voxts.png
@@ -84,6 +86,7 @@ sub-1/regress
 sub-1/regress/sub-1_confcor.txt
 sub-1/regress/sub-1_confmat.1D
 sub-1/regress/sub-1_img_sm6.nii.gz
+sub-1/regress/sub-1_nVolumesCensored.txt
 sub-1/regress/sub-1_residualised.nii.gz
 sub-1/reho
 sub-1/reho/sub-1_referenceVolume.nii.gz

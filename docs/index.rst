@@ -12,4 +12,5 @@ Contents
    modules/index
    utils/index
    development
+   qualitycontrol
    flywheel

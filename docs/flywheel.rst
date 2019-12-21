@@ -13,39 +13,33 @@ as shown below.
     xcpEngine input layout  on Flywheel
 -----------------------------------------
 
+The cohort file will be created base on the FMRIPREP output and/or  img.  The `img` is input  directory for asl and structural image. The processing of ASL requires  
+processed anatomical image from FRMIPREP (fmriprepdir) or structural processing output (antsct). The  `m0` is the M0 directory for CBF calibration if present. In the case 
+of task-activation analysis, `task_name` is required to be specified in the config of xcpengine gear.
 
-The cohort file will be created base on the FMRIPREP output and/or  img.  The `img` is input  directory for asl and structural image. The processing of ASL requires the 
-anatomical preprocessing from FRMIPREP (fmriprepdir) or structural processing output (antsct). The  `m0` is the M0 directory for CBF calibration if present. 
+   Task-activation analysis
+-----------------------------
 
-   Task-activation and task-regression 
------------------------------------------
+Running task-activation (FSL FEAT) analysis on flywheel with xcpEngine requires event files like FSL. The event file (in .txt) can be in any format accpetable by the 
+FSL FEAT. The contrasts and corresponding weights are organized as shown in `task.json` below.::   
 
-Running task activation on flywheel with xcpEngine requires event file (all events in one file with header, file.txt) and contrast in json file  with corresponding weights. 
-For example, eyes-open and eyes-close experiment events can be combine as follow, `event.txt` ::
-           eyesopen   eyesclose
-              0          1
-              0          1
-              1          0
-              1          0
-              1          0
-              ..         ..
-              1          0
+           {
+              "eventname":["0back","1back","2back","inst"], 
+              "contrast" :{ "0back":          [1,0,0,0], 
+                            "1back":          [0,1,0,0],
+                            "2back":          [0,0,1,0], 
+                            "2backvs0back":   [-1,0,1,0],
+                            "1backvs0back":   [-1,1,0,0] }
+            }
 
+The above shown the event names ( "0back","1back","2back","inst") and  the contrast with corresponding weights. 
+The `task.json` is zipped  with all the event files::
+   0back.txt
+   1back.txt 
+   2back.txt
+   inst.txt 
+   task.json 
 
-The task contrast (file.json).::
+The zipped file is attach to `taskfile` in the input directory of xcpengine gear on flywheel (check the figure above) 
 
-
-           { 
-              "eyesopen":[1,0],
-              "eyesclose":[0,1],
-              "openandclose":[1,1],
-              "eyesopen-eyesclose":[1,-1],
-              "eyesclose-eyesopen":[-1,1]
-              }
-
-The name of task (from fmriprep output)  to be processed is required in the configuration panel. 
-
-The length of the  weight must be equal to the number of events.
-
-Running task-regression functional connectivity only requires event file. The event file will be convolved  with the  Hemodynamic Response Function (HRF) before 
-regression. 
+The length of the  weight must be equal to the number of events as shown above.

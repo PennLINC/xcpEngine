@@ -4,15 +4,6 @@
 #  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  ⊗  #
 ###################################################################
 source $FSLDIR/etc/fslconf/fsl.sh
-IN_CONTAINER=0
-
-if [[ -d /xcpEngine ]]
-then
-  IN_CONTAINER=1
-  source activate neuro
-  echo "[Detected that xcp is in a container]"
-fi
-export IN_CONTAINER
 
 echo "Received options:" $@
 args=`echo $@`
@@ -212,17 +203,19 @@ echo \
 
 
 ###################################################################
-# Obtain a timestamp for the current deployment of the engine.
+# Obtain a timestamp and uuid for the current deployment of the engine.
 ###################################################################
 export xcp_date=$(date +%Y%m%d%H%M)
+export xcp_uuid=$(uuidgen)
+echo "Date: $xcp_date"
+echo "UUID: $xcp_uuid"
 ###################################################################
 # Prepare to analyse the entire pipeline.
 ###################################################################
 modules=( ${pipeline//,/ } )
 
 
-
-
+python -c "import sentry_sdk; sentry_sdk.init('https://34b713b3ba2240329b2b671685006e94@sentry.io/1854243')"
 
 ###################################################################
 # Verify that all dependencies are installed.
@@ -251,7 +244,7 @@ printx         ${XCPEDIR}/core/ENVCHECK >> ${versions}
 printx         ${XCPEDIR}/core/CONSOLE_HEADER
 
 
-
+prestats_rerun[1]=1
 
 
 ###################################################################
@@ -396,25 +389,30 @@ for module in ${modules[@]}
    (( cxt++ ))
 done
 
+################################################################
+# Generate report for each subject
+################################################################
 echo "generating report"
-
-for sub  in  ${!cohort[@]}
-         do
-          mkdir -p ${out[sub]}/figures
-         
-         ##########################################################
-         # remvoe previous html 
-         ##########################################################
-         rm ${out[sub]}/${prefix[sub]}_report.html  2>/dev/null
-         ##########################################################
-         # Execute the current module.
-         ##########################################################
-         echo $pipeline > ${out[sub]}/module.csv
-         
-         ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz  -p ${prefix[sub]} \
-            -o ${out[sub]} -m  ${out[sub]}/module.csv 2>/dev/null
-         
-         rm -rf  ${out[sub]}/module.csv
+for sub in ${!cohort[@]}
+   do
+   mkdir -p ${out[sub]}/figures
+   echo $standard >> ${out[sub]}/template.txt
+   ##########################################################
+   # remove previous html 
+   ##########################################################
+   rm ${out[sub]}/${prefix[sub]}_report.html 2>/dev/null
+   ##########################################################
+   # Execute the current module.
+   ##########################################################
+   echo $pipeline > ${out[sub]}/module.csv
+   
+   ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz -p ${prefix[sub]} \
+      -o ${out[sub]} -m ${out[sub]}/module.csv 
+   
+   ##########################################################
+   # remove temporary files
+   ##########################################################
+   rm -rf ${out[sub]}/module.csv ${out[sub]}/template.txt
 done
  
 

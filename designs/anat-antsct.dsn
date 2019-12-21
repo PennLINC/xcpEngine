@@ -42,7 +42,7 @@ standard=MNI%1x1x1
 # PIPELINE
 ###################################################################
 
-pipeline=struc,roiquant,qcanat
+pipeline=struc,gmd,jlf,roiquant,norm,qcanat
 
 ###################################################################
 # 1 STRUC
@@ -63,25 +63,51 @@ struc_cleanup[1]=1
 struc_process[1]=ACT
 
 ###################################################################
-# 2 ROIQUANT
+# 2 GMD
 ###################################################################
 
-roiquant_atlas[2]=all
-roiquant_vol[2]=1
-roiquant_rerun[2]=0
-roiquant_cleanup[2]=1
+gmd_rerun[2]=0
+gmd_cleanup[2]=1
 
 ###################################################################
-# 3 QCANAT
+# 3 JLF
 ###################################################################
 
-qcanat_gm[3]=Y
-qcanat_gm_val[3]=2,4
-qcanat_wm[3]=Y
-qcanat_wm_val[3]=3
-qcanat_csf[3]=Y
-qcanat_csf_val[3]=1
-qcanat_cort[3]=Y
-qcanat_cort_val[3]=4
-qcanat_rerun[3]=0
-qcanat_cleanup[3]=1
+jlf_extract[3]=1 
+jlf_keep_warps[3]=0
+jlf_quick[3]=0
+jlf_cohort[3]=Younger24
+jlf_parallel[3]=1
+jlf_rerun[3]=0
+jlf_cleanup[3]=1
+
+###################################################################
+# 4 ROIQUANT
+###################################################################
+
+roiquant_atlas[4]=all
+roiquant_vol[4]=1
+roiquant_rerun[4]=0
+roiquant_cleanup[4]=1
+
+###################################################################
+# 5 NORM
+###################################################################
+
+norm_primary[5]=1
+norm_rerun[5]=0
+norm_cleanup[5]=1
+
+###################################################################
+# 6 qcanat
+###################################################################
+
+qcanat_gm[6]=Y
+qcanat_gm_val[6]=2,4
+qcanat_wm[6]=Y
+qcanat_wm_val[6]=3
+qcanat_csf[6]=Y
+qcanat_csf_val[6]=1
+qcanat_cort[6]=Y
+qcanat_cort_val[6]=4
+qcanat_rerun[6]=0
