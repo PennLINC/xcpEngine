@@ -750,6 +750,21 @@ done
     output acp  ${prefix}_acompcor.1D
     exec_xcp mbind.R  -x ${confmat[cxt]} -y ${acp[cxt]} -o ${confmat_path} 
     output confmat             ${prefix}_confmat.1D
+   elif  [[ ${task_confound[cxt]} == acompcor_gsr ]] ; then 
+    dx=1; 
+    exec_xcp mbind.R   -y ${rps[cxt]} -o ${confmat_path}
+    gsr=${outdir}/${prefix}_gsr.1D
+    exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j gsr  -o ${gsr}
+    output gsr  ${prefix}_gsr.1D
+    exec_xcp mbind.R  -x ${confmat[cxt]} -y ${gsr[cxt]} -o ${confmat_path} 
+    output confmat             ${prefix}_confmat.1D
+    exec_xcp mbind.R -x    ${confmat[cxt]}  -y    OPdx${dx} -o    ${confmat_path}
+    output   confmat           ${prefix}_confmat.1D
+    ac_path=${outdir}/${prefix}_acompcor.1D
+    exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j aCompCor  -o ${ac_path}
+    output acp  ${prefix}_acompcor.1D
+    exec_xcp mbind.R  -x ${confmat[cxt]} -y ${acp[cxt]} -o ${confmat_path} 
+    output confmat             ${prefix}_confmat.1D
   elif [[ ${task_confound[cxt]} == aroma  ]]; then
     ar_path=${outdir}/${prefix}_aroma.1D
     exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j aroma -o ${ar_path}

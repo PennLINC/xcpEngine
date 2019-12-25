@@ -10,7 +10,7 @@ compatible with other ``xcpEngine`` modules such as ``roiquant``, ``fcon`` and `
 
 The  six motion parameters are to be included in the FEAT design (by default) 
 but  can be changed as required by the user. The following motion nuissance regressors can be added : 
-'36p','24p','acompocor','aroma', and 'tcompcor',see Ciric et al. 2017 for detail. 
+'36p','24p','acompcor','acompcor_gsr','aroma', and 'tcompcor',see Ciric et al. 2017 for detail. 
 This can be specify in the design file as::
 
       task_fmriprep[1]=1
