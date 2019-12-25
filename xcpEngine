@@ -408,7 +408,7 @@ for sub in ${!cohort[@]}
    
    ${XCPEDIR}/core/report.py -t ${out[sub]}/template.nii.gz -p ${prefix[sub]} \
       -o ${out[sub]} -m ${out[sub]}/module.csv 
-   ${XCPEDIR}/core/sentry_setup.py -p ${prefix[sub]} -o ${out[sub]}  -m ${out[sub]}/module.csv
+   python ${XCPEDIR}/core/sentry_setup.py -p ${prefix[sub]} -o ${out[sub]}  -m ${out[sub]}/module.csv
    ##########################################################
    # remove temporary files
    ##########################################################
