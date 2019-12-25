@@ -5,8 +5,6 @@
 
 import platform
 import os
-from pathlib import Path
-import re
 import sentry_sdk
 import psutil
 from os import cpu_count
@@ -31,7 +29,6 @@ opts = get_parser().parse_args()
 prefix=opts.prefix
 pipeline=opts.modules
 output=opts.out
-
 
 enviomnet=platform.platform() # will get all platform
 systemv=platform.system()
@@ -59,7 +56,6 @@ sentry_sdk.capture_message('xcp complete', ':)')
 modules1 = []
 for j in modules:
     modules1.append(j)
-
 # initiate the setup
 with sentry_sdk.configure_scope() as scope:
         scope.set_tag('exec_env',platform.system())
@@ -141,11 +137,3 @@ if os.path.isfile(output+'_report.html'):
     sentry_sdk.capture_message('Incomplete outputs', 'fatal') 
 else:
     sentry_sdk.capture_message('xcp complete', level='info') 
-
-    
-
-
-
-
-
-
