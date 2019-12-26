@@ -10,7 +10,7 @@ jobs:
     working_directory: /tmp/src/xcpEngine
     steps:
       - run:
-          name: Install parallel gzip and python3
+          name: Install parallel gzip tar untar and python3
           command: |
             apk add --no-cache pigz python3
       - restore_cache:
