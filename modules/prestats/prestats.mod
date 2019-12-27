@@ -679,7 +679,7 @@ while (( ${#rem} > 0 ))
               -prefix ${out}/prestats/${prefix}_structmask.nii.gz
          output  structmask ${out}/prestats/${prefix}_structmask.nii.gz
 
-         exec_fsl fast -t 1 -n 3  -N -I 4 -o ${out}/prestats/fast ${struct[sub]}
+         exec_fsl fast -t 1 -n 3  -N -I 4 -o ${out}/prestats/fast  ${out}/prestats/${prefix}_struct_brain.nii.gz
 
          exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_0.nii.gz \
@@ -697,7 +697,7 @@ while (( ${#rem} > 0 ))
                            -prefix ${out}/prestats/${prefix}_gm.nii.gz
          output gm  ${out}/prestats/${prefix}_gm.nii.gz
                   
-         exec_fsl fslmaths ${struct[sub]} -bin ${outdir}/${prefix}_structmask
+         exec_fsl fslmaths ${struct_head[cxt]} -bin ${outdir}/${prefix}_structmask
          output structmask    ${outdir}/${prefix}_structmask.nii.gz 
                   
          exec_sys rm -rf ${out}/prestats/fast*

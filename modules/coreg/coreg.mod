@@ -538,8 +538,7 @@ routine_end
 # Re-extract the brain using the high-precision structural mask if
 # requested.
 ###################################################################
-if (( ${coreg_mask[cxt]} == 1 ))
-   then
+
    if ! is_image ${remasked[cxt]} \
    || rerun
       then
@@ -560,7 +559,7 @@ if (( ${coreg_mask[cxt]} == 1 ))
             -mul  ${mask[cxt]}      ${meanIntensityBrain[cxt]}
       routine_end
    fi
-fi
+
 
 ###################################################################
 # copy structural image from prestats for ASL
