@@ -1,13 +1,10 @@
 
 from nipype.pipeline import engine as pe
-from nipype.interfaces import afni, ants, utility as niu
+from nipype.interfaces import afni, ants,fsl,utility as niu
 from nipype.interfaces.fsl import Split
 from nipype.interfaces.fsl.preprocess import FUGUE,PRELUDE
 import nibabel as nb 
 import numpy as np 
-
-
-
 
 def meanimage(in_file,out_file):
     'find mean of the 4D data'
@@ -29,39 +26,52 @@ def maskdata(in_file,out_file):
     data=im.get_data()
     data=np.abs(data)
     data[data>0]=1
-    out_img = nb.Nifti1Image(data_mean,im.affine,im.header)
+    out_img = nb.Nifti1Image(data,im.affine,im.header)
     out_img.to_filename(out_file)
     return out_img
 
-
-def n4_correction(in_infile):
+def n4_correction(in_file):
     n4 = ants.N4BiasFieldCorrection()
     n4.inputs.dimension=3
-    n4.inputs.input_image = im_input
+    n4.inputs.input_image = in_file
     n4.inputs.bspline_fitting_distance = 300
     n4.inputs.shrink_factor = 3
     n4.inputs.n_iterations = [50, 50, 30, 20]
-    n4.inputs.output_image = im_input.replace('.nii.gz', '_correcred.nii.gz')
+    n4.inputs.output_image = in_file.replace('.nii.gz', '_correcred.nii.gz')
     n4.run()
-    return n4.output_image
+    return n4.inputs.output_image
 
 def fslbet(in_file,out_file):
     bet=fsl.BET()
-    out=bet.run(in_file=in_file,out_file=out_file,frac=0.5)
+    bet.run(in_file=in_file,out_file=out_file,frac=0.5)
     return out_file
 
 
-def antsregistration(fixed,moving,output_warped_image):
-    reg = ants.Registration()in
+def antsregistration(fixed,moving,output_warped,transform_prefix):
+    reg = ants.Registration()
     reg.inputs.fixed_image =fixed
-    reg.inputs.moving_image =moving
-    reg.inputs.output_transform_prefix = "output_"
+    reg.inputs.moving_image = moving
+    reg.inputs.output_transform_prefix =transform_prefix
     reg.inputs.transforms = ['SyN']
+    reg.inputs.transform_parameters = [(2.0,), (0.25, 3.0, 0.0)]
+    reg.inputs.number_of_iterations = [[1500, 200], [100, 50, 30]]
     reg.inputs.dimension = 3
-    reg.inputs.output_warped_image = output_warped_image
-    reg.inputs.collapse_output_transforms = True
+    reg.inputs.write_composite_transform = True
+    reg.inputs.collapse_output_transforms = False
+    reg.inputs.metric = ['Mattes']*2
+    reg.inputs.sampling_strategy = ['Random', None]
+    reg.inputs.sampling_percentage = [0.05, None]
+    reg.inputs.convergence_threshold = [1.e-8, 1.e-9]
+    reg.inputs.convergence_window_size = [20]*2
+    reg.inputs.smoothing_sigmas = [[1,0], [2,1,0]]
+    reg.inputs.sigma_units = ['vox'] * 2
+    reg.inputs.shrink_factors = [[2,1], [3,2,1]]
+    reg.inputs.use_estimate_learning_rate_once = [True, True]
+    reg.inputs.use_histogram_matching = [True, True] # This is the default
+    reg.inputs.output_warped_image =output_warped
     reg.run()
-    return reg.inputs.output_warped_image, reg.outputs.composite_transform
+    transfromfile=[transform_prefix+'Composite.h5',transform_prefix +'InverseComposite.h5']
+    return reg.inputs.output_warped_image,transfromfile
 
 def applytransform(in_file,reference,out_file,transformfile,interpolation='Linear'):
     at=ants.ApplyTransforms()
@@ -74,30 +84,19 @@ def applytransform(in_file,reference,out_file,transformfile,interpolation='Linea
     at.run()
     return at.inputs.output_image
 
-def afnidQwarp():
+def afni3dQwarp(oppose_pe,matched_pe,source_warp):
     qwarp = afni.QwarpPlusMinus()
-    qwarp.inputs.source_file = 'sub-01_dir-LR_epi.nii.gz'
+    qwarp.inputs.in_file =oppose_pe
     qwarp.inputs.nopadWARP = True
-    qwarp.inputs.base_file = 'sub-01_dir-RL_epi.nii.gz'
+    qwarp.inputs.base_file = matched_pe
+    qwarp.inputs.out_file= source_warp+'.nii.gz'
     qwarp.run()  
+    return source_warp+'_PLUS_WARP.nii.gz'
     
-
-
-
-
-
-    
-
-        
-
-
-
-
-
-
 def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
     from scipy.stats import mode
+    from nipype.utils.filemanip import fname_presuffix
     im = nb.load(in_file)
     data = im.get_fdata(dtype='float32')
     hdr = im.header.copy()
@@ -153,28 +152,28 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
     nii.to_filename(out_file)
     return out_file
 
-    def _torads(in_file, fmap_range=None, newpath=None):
-    """
-    Convert a field map to rad/s units.
-    If fmap_range is None, the range of the fieldmap
-    will be automatically calculated.
-    Use fmap_range=0.5 to convert from Hz to rad/s
-    """
-    from math import pi
-    import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
+def _torads(in_file, fmap_range=None, newpath=None):
+        """
+        Convert a field map to rad/s units.
+        If fmap_range is None, the range of the fieldmap
+        will be automatically calculated.
+        Use fmap_range=0.5 to convert from Hz to rad/s
+        """
+        from math import pi
+        import nibabel as nb
+        from nipype.utils.filemanip import fname_presuffix
 
-    out_file = fname_presuffix(in_file, suffix='_rad', newpath=newpath)
-    fmapnii = nb.load(in_file)
-    fmapdata = fmapnii.get_fdata(dtype='float32')
+        out_file = fname_presuffix(in_file, suffix='_rad', newpath=newpath)
+        fmapnii = nb.load(in_file)
+        fmapdata = fmapnii.get_fdata(dtype='float32')
 
-    if fmap_range is None:
-        fmap_range = max(abs(fmapdata.min()), fmapdata.max())
-    fmapdata = fmapdata * (pi / fmap_range)
-    out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
-    out_img.set_data_dtype('float32')
-    out_img.to_filename(out_file)
-    return out_file, fmap_range
+        if fmap_range is None:
+            fmap_range = max(abs(fmapdata.min()), fmapdata.max())
+        fmapdata = fmapdata * (pi / fmap_range)
+        out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
+        out_img.set_data_dtype('float32')
+        out_img.to_filename(out_file)
+        return out_file, fmap_range
 
 
 def _tohz(in_file, range_hz, newpath=None):
@@ -220,34 +219,27 @@ def _despike2d(data, thres, neigh=None):
                     data[i, j, k] = patch_med
     return data
 
+def _unwrap(fmap_data, mag_file, mask=None):
+        from math import pi
+        from nipype.interfaces.fsl import PRELUDE
+        magnii = nb.load(mag_file)
 
+        if mask is None:
+            mask = np.ones_like(fmap_data, dtype=np.uint8)
 
+        fmapmax = max(abs(fmap_data[mask > 0].min()), fmap_data[mask > 0].max())
+        fmap_data *= pi / fmapmax
 
-
-
-
-
-    def _unwrap(fmap_data, mag_file, mask=None):
-    from math import pi
-    from nipype.interfaces.fsl import PRELUDE
-    magnii = nb.load(mag_file)
-
-    if mask is None:
-        mask = np.ones_like(fmap_data, dtype=np.uint8)
-
-    fmapmax = max(abs(fmap_data[mask > 0].min()), fmap_data[mask > 0].max())
-    fmap_data *= pi / fmapmax
-
-    nb.Nifti1Image(fmap_data, magnii.affine).to_filename('fmap_rad.nii.gz')
-    nb.Nifti1Image(mask, magnii.affine).to_filename('fmap_mask.nii.gz')
-    nb.Nifti1Image(magnii.get_fdata(dtype='float32'),
+        nb.Nifti1Image(fmap_data, magnii.affine).to_filename('fmap_rad.nii.gz')
+        nb.Nifti1Image(mask, magnii.affine).to_filename('fmap_mask.nii.gz')
+        nb.Nifti1Image(magnii.get_fdata(dtype='float32'),
                    magnii.affine).to_filename('fmap_mag.nii.gz')
 
-    # Run prelude
-    res = PRELUDE(phase_file='fmap_rad.nii.gz',
+        # Run prelude
+        res = PRELUDE(phase_file='fmap_rad.nii.gz',
                   magnitude_file='fmap_mag.nii.gz',
                   mask_file='fmap_mask.nii.gz').run()
 
-    unwrapped = nb.load(
-        res.outputs.unwrapped_phase_file).get_fdata(dtype='float32') * (fmapmax / pi)
-    return unwrapped
+        unwrapped = nb.load(
+           res.outputs.unwrapped_phase_file).get_fdata(dtype='float32') * (fmapmax / pi)
+        return unwrapped
