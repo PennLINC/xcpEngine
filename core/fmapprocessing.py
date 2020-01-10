@@ -9,6 +9,92 @@ import numpy as np
 
 
 
+def meanimage(in_file,out_file):
+    'find mean of the 4D data'
+    import nibabel as nb
+    im=nb.load(in_file)
+    data=im.get_data()
+    if len(data.shape)==4: 
+        data_mean=np.mean(data,axis=3)
+    elif len(data.shape)==3:
+        data_mean=data
+    
+    out_img = nb.Nifti1Image(data_mean,im.affine,im.header)
+    out_img.to_filename(out_file)
+    return out_img
+
+def maskdata(in_file,out_file):
+    'masking the data'
+    im=nb.load(in_file)
+    data=im.get_data()
+    data=np.abs(data)
+    data[data>0]=1
+    out_img = nb.Nifti1Image(data_mean,im.affine,im.header)
+    out_img.to_filename(out_file)
+    return out_img
+
+
+def n4_correction(in_infile):
+    n4 = ants.N4BiasFieldCorrection()
+    n4.inputs.dimension=3
+    n4.inputs.input_image = im_input
+    n4.inputs.bspline_fitting_distance = 300
+    n4.inputs.shrink_factor = 3
+    n4.inputs.n_iterations = [50, 50, 30, 20]
+    n4.inputs.output_image = im_input.replace('.nii.gz', '_correcred.nii.gz')
+    n4.run()
+    return n4.output_image
+
+def fslbet(in_file,out_file):
+    bet=fsl.BET()
+    out=bet.run(in_file=in_file,out_file=out_file,frac=0.5)
+    return out_file
+
+
+def antsregistration(fixed,moving,output_warped_image):
+    reg = ants.Registration()in
+    reg.inputs.fixed_image =fixed
+    reg.inputs.moving_image =moving
+    reg.inputs.output_transform_prefix = "output_"
+    reg.inputs.transforms = ['SyN']
+    reg.inputs.dimension = 3
+    reg.inputs.output_warped_image = output_warped_image
+    reg.inputs.collapse_output_transforms = True
+    reg.run()
+    return reg.inputs.output_warped_image, reg.outputs.composite_transform
+
+def applytransform(in_file,reference,out_file,transformfile,interpolation='Linear'):
+    at=ants.ApplyTransforms()
+    at.inputs.dimension = 3
+    at.inputs.input_image = in_file
+    at.inputs.reference_image = reference
+    at.inputs.output_image = out_file
+    at.inputs.interpolation =interpolation
+    at.inputs.transforms = transformfile 
+    at.run()
+    return at.inputs.output_image
+
+def afnidQwarp():
+    qwarp = afni.QwarpPlusMinus()
+    qwarp.inputs.source_file = 'sub-01_dir-LR_epi.nii.gz'
+    qwarp.inputs.nopadWARP = True
+    qwarp.inputs.base_file = 'sub-01_dir-RL_epi.nii.gz'
+    qwarp.run()  
+    
+
+
+
+
+
+    
+
+        
+
+
+
+
+
+
 def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
     from scipy.stats import mode
