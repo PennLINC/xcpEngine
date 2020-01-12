@@ -520,7 +520,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                
                    output struct_head ${out}/task/${prefix}_structbrain.nii.gz 
 
-                   exec_sys rm -rf $out/task/${prefix}_structmask.nii.gz
+                   exec_sys rm -rf $out/task/${prefix}_structmask.nii.gz ${prefix}_imgmask.nii.gz
                 
                    subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                    rm -f ${spaces[sub]}
