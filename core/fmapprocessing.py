@@ -258,115 +258,36 @@ def _fix_hdr(in_file, newpath=None):
     return out_file
 
 
-def vsm2dm(in_file,phaseEncDim,phaseEncSign):
-        phaseEncDim = {'i': 0, 'j': 1, 'k': 2}[self.inputs.pe_dir[0]]
-        phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
+def vsm2dm(in_file,phaseEncDim,phaseEncSign,fieldmapout,field_sdcwarp):
+
+    #phaseEncDim = {'i': 0, 'j': 1, 'k': 2}[self.inputs.pe_dir[0]]
+    #phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
 
         # Create new header
-        nii = nb.load(in_file)
-        hdr = nii.header.copy()
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
         #hdr.set_data_dtype(self._dtype)
 
         # Get data, convert to mm
-        data = nii.get_fdata()
-        aff = np.diag([1.0, 1.0, -1.0])
-        if np.linalg.det(aff) < 0 and phaseEncDim != 0:
-            # Reverse direction since ITK is LPS
-            aff *= -1.0
+    data = nii.get_fdata()
+    aff = np.diag([1.0, 1.0, -1.0])
+    if np.linalg.det(aff) < 0 and phaseEncDim != 0:
+       # Reverse direction since ITK is LPS
+       aff *= -1.0
 
-        aff = aff.dot(nii.affine[:3, :3])
-        data *= phaseEncSign * nii.header.get_zooms()[phaseEncDim]
-        self._results['fieldmap'] = fname_presuffix(
-            self.inputs.in_file, suffix='_units-mm_fieldmap', newpath=runtime.cwd)
-        nb.Nifti1Image(data, nii.affine, hdr).to_filename(self._results['fieldmap'])
+    aff = aff.dot(nii.affine[:3, :3])
+    data *= phaseEncSign * nii.header.get_zooms()[phaseEncDim]
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename(fieldmapout)
 
         # Compose a vector field
-        zeros = np.zeros_like(data, dtype=self._dtype)
-        field = [zeros, zeros]
-        field.insert(phaseEncDim, data)
-        field = np.stack(field, -1)
+    zeros = np.zeros_like(data)
+    field = [zeros, zeros]
+    field.insert(phaseEncDim, data)
+    field = np.stack(field, -1)
 
-        hdr.set_intent('vector', (), '')
-        # Write out
-        self._results['out_file'] = fname_presuffix(
-            self.inputs.in_file, suffix='_desc-field_sdcwarp', newpath=runtime.cwd)
-        nb.Nifti1Image(field[:, :, :, np.newaxis, :], nii.affine, hdr).to_filename(
-            self._results['out_file'])
+    hdr.set_intent('vector', (), '')
+        
+    nb.Nifti1Image(field[:, :, :, np.newaxis, :], nii.affine, hdr).to_filename(
+            field_sdcwarp)
 
-        return runtime
-
-def _run_interface(self, runtime):
-        in_files = self.inputs.in_files
-        if not isinstance(in_files, list):
-            in_files = [self.inputs.in_files]
-
-        if self.inputs.to_ras:
-            in_files = [reorient(inf, newpath=runtime.cwd)
-                        for inf in in_files]
-
-        run_hmc = self.inputs.hmc and len(in_files) > 1
-
-        nii_list = []
-        # Remove one-sized extra dimensions
-        for i, f in enumerate(in_files):
-            filenii = nb.load(f)
-            filenii = nb.squeeze_image(filenii)
-            if len(filenii.shape) == 5:
-                raise RuntimeError('Input image (%s) is 5D.' % f)
-            if filenii.dataobj.ndim == 4:
-                nii_list += nb.four_to_three(filenii)
-            else:
-                nii_list.append(filenii)
-
-        if len(nii_list) > 1:
-            filenii = nb.concat_images(nii_list)
-        else:
-            filenii = nii_list[0]
-
-        merged_fname = fname_presuffix(self.inputs.in_files[0],
-                                       suffix='_merged', newpath=runtime.cwd)
-        filenii.to_filename(merged_fname)
-        self._results['out_file'] = merged_fname
-        self._results['out_avg'] = merged_fname
-
-        if filenii.dataobj.ndim < 4:
-            # TODO: generate identity out_mats and zero-filled out_movpar
-            return runtime
-
-        if run_hmc:
-            mcflirt = fsl.MCFLIRT(cost='normcorr', save_mats=True, save_plots=True,
-                                  ref_vol=0, in_file=merged_fname)
-            mcres = mcflirt.run()
-            filenii = nb.load(mcres.outputs.out_file)
-            self._results['out_file'] = mcres.outputs.out_file
-            self._results['out_mats'] = mcres.outputs.mat_file
-            self._results['out_movpar'] = mcres.outputs.par_file
-
-        hmcdata = filenii.get_fdata(dtype='float32')
-        if self.inputs.grand_mean_scaling:
-            if not isdefined(self.inputs.in_mask):
-                mean = np.median(hmcdata, axis=-1)
-                thres = np.percentile(mean, 25)
-                mask = mean > thres
-            else:
-                mask = nb.load(self.inputs.in_mask).get_fdata(dtype='float32') > 0.5
-
-            nimgs = hmcdata.shape[-1]
-            means = np.median(hmcdata[mask[..., np.newaxis]].reshape((-1, nimgs)).T,
-                              axis=-1)
-            max_mean = means.max()
-            for i in range(nimgs):
-                hmcdata[..., i] *= max_mean / means[i]
-
-        hmcdata = hmcdata.mean(axis=3)
-        if self.inputs.zero_based_avg:
-            hmcdata -= hmcdata.min()
-
-        self._results['out_avg'] = fname_presuffix(self.inputs.in_files[0],
-                                                   suffix='_avg', newpath=runtime.cwd)
-        nb.Nifti1Image(
-            hmcdata, filenii.affine, filenii.header).to_filename(
-            self._results['out_avg'])
-
-        return runtime
-     
+    return field_sdcwarp
