@@ -243,3 +243,51 @@ def _unwrap(fmap_data, mag_file, mask=None):
         unwrapped = nb.load(
            res.outputs.unwrapped_phase_file).get_fdata(dtype='float32') * (fmapmax / pi)
         return unwrapped
+
+def _fix_hdr(in_file, newpath=None):
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
+    hdr.set_data_dtype('<f4')
+    hdr.set_intent('vector', (), '')
+    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
+    nb.Nifti1Image(nii.get_fdata(dtype='float32'), nii.affine, hdr).to_filename(
+        out_file)
+    return out_file
+
+
+def vsm2dm(in_file,phaseEncDim,phaseEncSign,fieldmapout,field_sdcwarp):
+
+    #phaseEncDim = {'i': 0, 'j': 1, 'k': 2}[self.inputs.pe_dir[0]]
+    #phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
+
+        # Create new header
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
+        #hdr.set_data_dtype(self._dtype)
+
+        # Get data, convert to mm
+    data = nii.get_fdata()
+    aff = np.diag([1.0, 1.0, -1.0])
+    if np.linalg.det(aff) < 0 and phaseEncDim != 0:
+       # Reverse direction since ITK is LPS
+       aff *= -1.0
+
+    aff = aff.dot(nii.affine[:3, :3])
+    data *= phaseEncSign * nii.header.get_zooms()[phaseEncDim]
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename(fieldmapout)
+
+        # Compose a vector field
+    zeros = np.zeros_like(data)
+    field = [zeros, zeros]
+    field.insert(phaseEncDim, data)
+    field = np.stack(field, -1)
+
+    hdr.set_intent('vector', (), '')
+        
+    nb.Nifti1Image(field[:, :, :, np.newaxis, :], nii.affine, hdr).to_filename(
+            field_sdcwarp)
+
+    return field_sdcwarp
