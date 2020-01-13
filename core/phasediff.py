@@ -6,10 +6,9 @@ from nipype.interfaces.process import fsl
 #convert phasm to rads
 phase1='pahse1.nii.gz'
 phase2='pahse2.nii.gz'
-phi1='phase1torads'
-phi2='phase2torads'
-ph1=au2rads(phase1,phi1)
-ph2=au2rads(phase2,phi2)
+
+ph1=au2rads(phase1)
+ph2=au2rads(phase2)
 
 # Substract phase1 and phase 2
 phasediff='phasediff'
@@ -31,18 +30,23 @@ prefsl.mask_file=mag_mask
 prefsl.unwrapped_phase_file=unwrapped
 prefsl.run()
 #denoise demean recenter the fieldmap and 
+
+
+#recentre
+recentered=fmapprocessing._recenter(unwrapped)
 # denoise with fsl spatial filter 
+denoised='unwrapped_denoise.nii.gz'
 denoise=fsl.SpatialFilter()
+denoise.inputs.in_file=recentered
 denoise.inputs.kernel_shape='sphere'
 denoise.inputs.kernel_size=3
 denoise.inputs.operation='median'
-denoise.inputs.out_file='unwrapped_denoise.nii.gz'
+denoise.inputs.out_file=denoised
 denoise.cmdline
 denoise.run()
 
+demeamed=fmapprocessing._demean(in_file=denoised)   
 
-
-
-
+outfile=phdiff2fmap(in_file,delta_te)
 
 # convert to fieldmap

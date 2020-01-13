@@ -93,7 +93,7 @@ def afni3dQwarp(oppose_pe,matched_pe,source_warp):
     qwarp.run()  
     return source_warp+'_PLUS_WARP.nii.gz'
     
-def au2rads(in_file,out_file):
+def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
     from scipy.stats import mode
     from nipype.utils.filemanip import fname_presuffix
