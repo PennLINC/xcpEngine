@@ -93,7 +93,7 @@ def afni3dQwarp(oppose_pe,matched_pe,source_warp):
     qwarp.run()  
     return source_warp+'_PLUS_WARP.nii.gz'
     
-def au2rads(in_file, newpath=None):
+def au2rads(in_file,out_file):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
     from scipy.stats import mode
     from nipype.utils.filemanip import fname_presuffix
@@ -152,7 +152,7 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
     nii.to_filename(out_file)
     return out_file
 
-def _torads(in_file, fmap_range=None, newpath=None):
+def _torads(in_file, out_file,fmap_range=None):
         """
         Convert a field map to rad/s units.
         If fmap_range is None, the range of the fieldmap
@@ -161,9 +161,8 @@ def _torads(in_file, fmap_range=None, newpath=None):
         """
         from math import pi
         import nibabel as nb
-        from nipype.utils.filemanip import fname_presuffix
+        #from nipype.utils.filemanip import fname_presuffix
 
-        out_file = fname_presuffix(in_file, suffix='_rad', newpath=newpath)
         fmapnii = nb.load(in_file)
         fmapdata = fmapnii.get_fdata(dtype='float32')
 
@@ -291,3 +290,75 @@ def vsm2dm(in_file,phaseEncDim,phaseEncSign,fieldmapout,field_sdcwarp):
             field_sdcwarp)
 
     return field_sdcwarp
+
+def substractimage(in_file1,in_file2,out_file):
+    file1=nb.load(in_file1)
+    data1=file1.get_data()
+    data2=nb.load(in_file2).get_data()
+    datadiff=data1-data2
+    nb.Nifti1Image(datadiff,file1.affine,file1.header).to_filename(
+        out_file)
+    return out_file
+
+def substractphaseimage(in_file1,in_file2,out_file):
+    file1=nb.load(in_file1)
+    data1=file1.get_data()
+    data2=nb.load(in_file2).get_data()
+    datadiff=data1-data2
+    datadiff[datadiff < 0] += 2 * np.pi
+    datadiff = np.clip(datadiff, 0.0, 2 * np.pi)
+    nb.Nifti1Image(datadiff,file1.affine,file1.header).to_filename(
+        out_file)
+    return out_file
+
+
+def _recenter(in_file):
+    """Recenter the phase-map distribution to the -pi..pi range."""
+    from os import getcwd
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    data = nii.get_fdata(dtype='float32')
+    msk = data != 0
+    msk[data == 0] = False
+    data[msk] -= np.median(data[msk])
+
+    out_file = fname_presuffix(in_file, suffix='_recentered',
+                               newpath=getcwd())
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
+    return out_file
+
+
+def _demean(in_file, in_mask=None, usemode=True):
+    """
+    Subtract the median (since it is robuster than the mean) from a map.
+    Parameters
+    ----------
+    usemode : bool
+        Use the mode instead of the median (should be even more robust
+        against outliers).
+    """
+    from os import getcwd
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    data = nii.get_fdata(dtype='float32')
+
+    msk = np.ones_like(data, dtype=bool)
+    if in_mask is not None:
+        msk[nb.load(in_mask).get_fdata(dtype='float32') < 1e-4] = False
+
+    if usemode:
+        from scipy.stats import mode
+        data[msk] -= mode(data[msk], axis=None)[0][0]
+    else:
+        data[msk] -= np.median(data[msk], axis=None)
+
+    out_file = fname_presuffix(in_file, suffix='_demean',
+                               newpath=getcwd())
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
+    return out_file
