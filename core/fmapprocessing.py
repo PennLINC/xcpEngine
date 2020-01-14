@@ -326,12 +326,12 @@ def _recenter(in_file,newpath):
     data[msk] -= np.median(data[msk])
 
     out_file = fname_presuffix(in_file, suffix='_recentered',
-                               newpath=getcwd())
+                               newpath=newpath)
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
 
 
-def _demean(in_file,newpath,in_mask=None, usemode=True):
+def _demean(in_file,newpath=newpath,in_mask=None, usemode=True):
     """
     Subtract the median (since it is robuster than the mean) from a map.
     Parameters
