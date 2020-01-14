@@ -107,6 +107,6 @@ elif dt1:
 field_sdcwarp=vsm2dm(in_file=out_file,phaseEncDim=phaseEncDim,phaseEncSign=phaseEncSign,
 fieldmapout=outdir+'/fieldmap.nii.gz',field_sdcwarp=outdir+'/sdc_warp.nii.gz')
 
-outfile=_demean(field_sdcwarp,newpath=newpath=outdir+'/')
+outfile=_demean(field_sdcwarp,newpath=outdir+'/')
 
 # convert to fieldmap
