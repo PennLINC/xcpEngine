@@ -172,7 +172,7 @@ def _torads(in_file, out_file,fmap_range=None):
         out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
         out_img.set_data_dtype('float32')
         out_img.to_filename(out_file)
-        return out_file, fmap_range
+        return out_file
 
 
 def _tohz(in_file, range_hz, newpath=None):

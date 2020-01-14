@@ -58,7 +58,7 @@ prefsl.run()
 #recentre
 recentered=_recenter(unwrapped)
 # denoise with fsl spatial filter 
-denoised='unwrapped_denoise.nii.gz'
+denoised=outdir+'/unwrapped_denoise.nii.gz'
 denoise=fsl.SpatialFilter()
 denoise.inputs.in_file=recentered
 denoise.inputs.kernel_shape='sphere'
@@ -87,7 +87,7 @@ elif os.path.isfile(glob.glob(fmapdir+'/*phase1.nii.gz')[0]):
 
 outfile=phdiff2fmap(in_file=demeamed,delta_te=delta_te)
 
-out_file=_torads(in_file=outfile,out_file=fmapdir+'to_rads.nii.gz')
+out_file=_torads(in_file=outfile,out_file=outdir+'/fieldmapto_rads.nii.gz')
 if dpdat: 
     phasedir=dpdat['PhaseEncodingDirection']
     if phasedir == 'j':
@@ -102,7 +102,7 @@ elif dt1:
         phaseEncDim=1; phaseEncSign=1
 
 field_sdcwarp=vsm2dm(in_file=out_file,phaseEncDim=phaseEncDim,phaseEncSign=phaseEncSign,
-fieldmapout=fmapdir+'fieldmap.nii.gz',field_sdcwarp=fmapdir+'sdc_warp.nii.gz')
+fieldmapout=outdir+'/fieldmap.nii.gz',field_sdcwarp=outdir+'/sdc_warp.nii.gz')
 
 outfile=_demean(field_sdcwarp)
 
