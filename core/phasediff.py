@@ -33,11 +33,11 @@ prefsl.run()
 #denoise demean recenter the fieldmap and 
 # denoise with fsl spatial filter 
 denoise=fsl.SpatialFilter()
+deonise.inputs.in_file=unwrapped
 denoise.inputs.kernel_shape='sphere'
 denoise.inputs.kernel_size=3
 denoise.inputs.operation='median'
 denoise.inputs.out_file='unwrapped_denoise.nii.gz'
-denoise.cmdline
 denoise.run()
 
 
