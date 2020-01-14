@@ -3,8 +3,8 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
-from fmapprocessing import phdiff2fmap,au2rads, maskdata,n4_correction, fslbet,_demean
-from fmapprocessing import _despike2d, _unwrap, substractimage,substractphaseimage,_recenter
+from fmapprocessing import phdiff2fmap,au2rads, maskdata,n4_correction, fslbet,_demean,vsm2dm
+from fmapprocessing import _despike2d,_torads, _unwrap, substractimage,substractphaseimage,_recenter
 from nipype.interfaces import fsl
 import os,sys,glob,json
 import numpy as np
