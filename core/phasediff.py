@@ -108,5 +108,5 @@ field_sdcwarp=vsm2dm(in_file=out_file,phaseEncDim=phaseEncDim,phaseEncSign=phase
 fieldmapout=outdir+'/fieldmap.nii.gz',field_sdcwarp=outdir+'/sdc_warp.nii.gz')
 
 outfile=_demean(field_sdcwarp,newpath=outdir+'/')
-
+#final required outpu is sdc_warp_demean.nii.gz 
 # convert to fieldmap

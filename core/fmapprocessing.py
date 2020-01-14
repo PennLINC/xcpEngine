@@ -331,7 +331,7 @@ def _recenter(in_file,newpath):
     return out_file
 
 
-def _demean(in_file,newpath=newpath,in_mask=None, usemode=True):
+def _demean(in_file,newpath,in_mask=None, usemode=True):
     """
     Subtract the median (since it is robuster than the mean) from a map.
     Parameters
@@ -341,6 +341,7 @@ def _demean(in_file,newpath=newpath,in_mask=None, usemode=True):
         against outliers).
     """
     from os import getcwd
+
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -359,6 +360,6 @@ def _demean(in_file,newpath=newpath,in_mask=None, usemode=True):
         data[msk] -= np.median(data[msk], axis=None)
 
     out_file = fname_presuffix(in_file, suffix='_demean',
-                               newpath=getcwd())
+                               newpath=newpath)
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
