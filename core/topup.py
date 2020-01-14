@@ -1,5 +1,5 @@
 from fmapprocessing import _fix_hdr,maskdata,n4_correction,meanimage
-from fmapprocessing import  antsregistration, afni3dQwarp
+from fmapprocessing import  antsregistration, afni3dQwarp,_torads
 from nipype.interfaces import fsl,afni
 import os,sys,glob,json
 import numpy as np
@@ -76,9 +76,10 @@ maskdata(opposed_brain,opposed_mask)
 opposed_warped=outdir+'/opposewd_warped.nii.gz'
 opposed_regis=antsregistration(fixed=matched_brain,moving=opposed_brain,output_warped=opposed_warped,
 transform_prefix=outdir+'/trans_')
-sourcewarp=afni3dQwarp(oppose_pe=opposed_warped,matched_pe=matched_brain,source_warp=outdir+'/sourcewarp.nii.gz')
-
+sourcewarp=afni3dQwarp(oppose_pe=opposed_warped,matched_pe=matched_brain,source_warp=outdir+'/sourcewarp')
 fixhdr=_fix_hdr(in_file=sourcewarp,newpath=outdir+'/')
+out_file=_torads(in_file=fixhdr,out_file=outdir+'/fieldmapto_rads.nii.gz')
+
 
 
 
