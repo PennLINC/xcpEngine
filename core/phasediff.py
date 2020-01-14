@@ -40,7 +40,10 @@ elif os.path.isfile(phase1[0]):
     pha=substractphaseimage(ph1,ph2,phasediff)
  
 mag=glob.glob(fmapdir+'/*magnitude1.nii.gz')[0]
-mag_bias=n4_correction(in_file=mag)
+import shutil
+shutil.copy2(mag,outdir+'/mag.nii.gz')
+mag1=outdir+'/mag.nii.gz'
+mag_bias=n4_correction(in_file=mag1)
 mag_brain=outdir+'/mag1_brain.nii.gz'
 mag_mask=outdir+'/mag1_mask.nii.gz'
 mag_brain=fslbet(in_file=mag_bias,out_file=mag_brain)
@@ -56,7 +59,7 @@ prefsl.inputs.unwrapped_phase_file=unwrapped
 prefsl.run()
 #denoise demean recenter the fieldmap and 
 #recentre
-recentered=_recenter(unwrapped)
+recentered=_recenter(unwrapped,newpath=outdir+'/')
 # denoise with fsl spatial filter 
 denoised=outdir+'/unwrapped_denoise.nii.gz'
 denoise=fsl.SpatialFilter()
@@ -67,7 +70,7 @@ denoise.inputs.operation='median'
 denoise.inputs.out_file=denoised
 denoise.run()
 
-demeamed=_demean(in_file=denoised)
+demeamed=_demean(in_file=denoised,newpath=outdir+'/')
 
 # get delta te 
 if os.path.isfile(phasedifc[0]):
@@ -85,7 +88,7 @@ elif os.path.isfile(glob.glob(fmapdir+'/*phase1.nii.gz')[0]):
     delta_te=np.abs(dt2['EchoTime']-dt1['EchoTime'])
 
 
-outfile=phdiff2fmap(in_file=demeamed,delta_te=delta_te)
+outfile=phdiff2fmap(in_file=demeamed,delta_te=delta_te,newpath=outdir+'/')
 
 out_file=_torads(in_file=outfile,out_file=outdir+'/fieldmapto_rads.nii.gz')
 if dpdat: 
@@ -104,6 +107,6 @@ elif dt1:
 field_sdcwarp=vsm2dm(in_file=out_file,phaseEncDim=phaseEncDim,phaseEncSign=phaseEncSign,
 fieldmapout=outdir+'/fieldmap.nii.gz',field_sdcwarp=outdir+'/sdc_warp.nii.gz')
 
-outfile=_demean(field_sdcwarp)
+outfile=_demean(field_sdcwarp,newpath=newpath=outdir+'/')
 
 # convert to fieldmap

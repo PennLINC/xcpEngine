@@ -312,7 +312,7 @@ def substractphaseimage(in_file1,in_file2,out_file):
     return out_file
 
 
-def _recenter(in_file):
+def _recenter(in_file,newpath):
     """Recenter the phase-map distribution to the -pi..pi range."""
     from os import getcwd
     import numpy as np
@@ -331,7 +331,7 @@ def _recenter(in_file):
     return out_file
 
 
-def _demean(in_file, in_mask=None, usemode=True):
+def _demean(in_file,newpath,in_mask=None, usemode=True):
     """
     Subtract the median (since it is robuster than the mean) from a map.
     Parameters
