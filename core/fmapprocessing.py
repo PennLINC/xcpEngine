@@ -172,7 +172,7 @@ def _torads(in_file, out_file,fmap_range=None):
         out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
         out_img.set_data_dtype('float32')
         out_img.to_filename(out_file)
-        return out_file, fmap_range
+        return out_file
 
 
 def _tohz(in_file, range_hz, newpath=None):
@@ -312,7 +312,7 @@ def substractphaseimage(in_file1,in_file2,out_file):
     return out_file
 
 
-def _recenter(in_file):
+def _recenter(in_file,newpath):
     """Recenter the phase-map distribution to the -pi..pi range."""
     from os import getcwd
     import numpy as np
@@ -326,12 +326,12 @@ def _recenter(in_file):
     data[msk] -= np.median(data[msk])
 
     out_file = fname_presuffix(in_file, suffix='_recentered',
-                               newpath=getcwd())
+                               newpath=newpath)
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
 
 
-def _demean(in_file, in_mask=None, usemode=True):
+def _demean(in_file,newpath,in_mask=None, usemode=True):
     """
     Subtract the median (since it is robuster than the mean) from a map.
     Parameters
@@ -341,6 +341,7 @@ def _demean(in_file, in_mask=None, usemode=True):
         against outliers).
     """
     from os import getcwd
+
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -359,6 +360,6 @@ def _demean(in_file, in_mask=None, usemode=True):
         data[msk] -= np.median(data[msk], axis=None)
 
     out_file = fname_presuffix(in_file, suffix='_demean',
-                               newpath=getcwd())
+                               newpath=newpath)
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
