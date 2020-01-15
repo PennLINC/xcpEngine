@@ -3,11 +3,11 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
-from fmapprocessing import phdiff2fmap,au2rads, maskdata,n4_correction, fslbet
-from fmapprocessing import _despike2d, _unwrap, substractimage,substractphaseimage
-from nipype.interfaces.process import fsl
+from fmapprocessing import phdiff2fmap,au2rads, maskdata,n4_correction, fslbet,_demean,vsm2dm
+from fmapprocessing import _despike2d,_torads, _unwrap, substractimage,substractphaseimage,_recenter
+from nipype.interfaces import fsl
 import os,sys,glob,json
-
+import numpy as np
 from argparse import (ArgumentParser, RawTextHelpFormatter)
 
 def get_parser():
@@ -21,40 +21,47 @@ def get_parser():
         '-o', '--out', action='store', required=True,
         help='outdir')
     return parser
-
+opts = get_parser().parse_args()
 fmapdir=opts.fmapdir
 outdir=opts.out
 #check if phasediff or phase1 and phase2 
 phasedifc=glob.glob(fmapdir+'/*phasediff.nii.gz')
-phase1=glog.glob(fmapdir+'/*phase1.nii.gz')
-phase2=glog.glob(fmapdir+'/*phase2.nii.gz')
-if os.path.exists(phasedifc[0]):
-    phasediff=phasedifc[0]
-elif os.path.exists(phase1[0]):
+phase1=glob.glob(fmapdir+'/*phase1.nii.gz')
+phase2=glob.glob(fmapdir+'/*phase2.nii.gz')
+
+if os.path.isfile(phasedifc[0]):
+    phaseon=phasedifc[0]
+    au2rads(phaseon,outdir)
+    phasediff=glob.glob(outdir+'/*rads.nii.gz')[0]
+elif os.path.isfile(phase1[0]):
     phase1=phase1[0]; phase2=phase2[0]
     ph1=au2rads(phase1); ph2=au2rads(phase2)
     phasediff=outdir+'/phasediff.nii.gz'
-    pha=substractphaseimage(phi1,phi2,phasediff)
+    pha=substractphaseimage(ph1,ph2,phasediff)
  
-mag=glog.glob(fmapdir+'/*magnitude1.nii.gz')[0]
-mag_bias=n4_correction(in_file=mag)
+mag=glob.glob(fmapdir+'/*magnitude1.nii.gz')[0]
+import shutil
+shutil.copy2(mag,outdir+'/mag.nii.gz')
+mag1=outdir+'/mag.nii.gz'
+mag_bias=n4_correction(in_file=mag1)
 mag_brain=outdir+'/mag1_brain.nii.gz'
 mag_mask=outdir+'/mag1_mask.nii.gz'
-fslbet(in_file=mag_bias,out_file=mag_brain)
+mag_brain=fslbet(in_file=mag_bias,out_file=mag_brain)
 maskdata(mag_brain,mag_mask)
+
 #unwarp withe predule 
 unwrapped=outdir+'/unwrapped.nii.gz'
-prefsl=fsl.predule()
-prefsl.magnitude_file=mag_brain
-prefsl.phase_file=phasediff
-prefsl.mask_file=mag_mask
-prefsl.unwrapped_phase_file=unwrapped
+prefsl=fsl.PRELUDE()
+prefsl.inputs.magnitude_file=mag_brain
+prefsl.inputs.phase_file=phasediff
+prefsl.inputs.mask_file=mag_mask
+prefsl.inputs.unwrapped_phase_file=unwrapped
 prefsl.run()
 #denoise demean recenter the fieldmap and 
 #recentre
-recentered=fmapprocessing._recenter(unwrapped)
+recentered=_recenter(unwrapped,newpath=outdir+'/')
 # denoise with fsl spatial filter 
-denoised='unwrapped_denoise.nii.gz'
+denoised=outdir+'/unwrapped_denoise.nii.gz'
 denoise=fsl.SpatialFilter()
 denoise.inputs.in_file=recentered
 denoise.inputs.kernel_shape='sphere'
@@ -63,21 +70,43 @@ denoise.inputs.operation='median'
 denoise.inputs.out_file=denoised
 denoise.run()
 
-demeamed=fmapprocessing._demean(in_file=denoised)
+demeamed=_demean(in_file=denoised,newpath=outdir+'/')
 
 # get delta te 
-if os.path.exists(phasedifc[0]):
+if os.path.isfile(phasedifc[0]):
     with open(glob.glob(fmapdir+'/*phasediff.json')[0],'r')  as jsonfile:
         obj=jsonfile.read()
-    delta_te=np.abs(obj['EchoTime2']-obj['EchoTime1'])
-elif os.path.exists(glog.glob(fmapdir+'/*phase1.nii.gz')[0]):
-    with open(glog.glob(fmapdir+'/*phase1.json')[0],'r') as jsonfile1:
+    dpdat=json.loads(obj)
+    delta_te=np.abs(dpdat['EchoTime2']-dpdat['EchoTime1'])
+elif os.path.isfile(glob.glob(fmapdir+'/*phase1.nii.gz')[0]):
+    with open(glob.glob(fmapdir+'/*phase1.json')[0],'r') as jsonfile1:
         obj1=jsonfile1.read()
-    with open(glog.glob(fmapdir+'/*phase2.json')[0],'r') as jsonfile2:
+    dt1=json.loads(obj1)
+    with open(glob.glob(fmapdir+'/*phase2.json')[0],'r') as jsonfile2:
         obj2=jsonfile2.read()
-    delta_te=np.abs(obj2['EchoTime']-obj1['EchoTime'])
+    dt2=json.loads(obj2)
+    delta_te=np.abs(dt2['EchoTime']-dt1['EchoTime'])
 
 
-outfile=phdiff2fmap(in_file=demeamed,delta_te=delta_te)
+outfile=phdiff2fmap(in_file=demeamed,delta_te=delta_te,newpath=outdir+'/')
 
+out_file=_torads(in_file=outfile,out_file=outdir+'/fieldmapto_rads.nii.gz')
+if dpdat: 
+    phasedir=dpdat['PhaseEncodingDirection']
+    if phasedir == 'j':
+        phaseEncDim=1; phaseEncSign=-1
+    else:
+        phaseEncDim=1; phaseEncSign=1
+elif dt1:
+    phasedir=dt1['PhaseEncodingDirection']
+    if phasedir == 'j':
+        phaseEncDim=1; phaseEncSign=-1
+    else:
+        phaseEncDim=1; phaseEncSign=1
+
+field_sdcwarp=vsm2dm(in_file=out_file,phaseEncDim=phaseEncDim,phaseEncSign=phaseEncSign,
+fieldmapout=outdir+'/fieldmap.nii.gz',field_sdcwarp=outdir+'/sdc_warp.nii.gz')
+
+outfile=_demean(field_sdcwarp,newpath=outdir+'/')
+#final required outpu is sdc_warp_demean.nii.gz 
 # convert to fieldmap
