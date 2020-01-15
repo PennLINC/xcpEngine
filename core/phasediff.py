@@ -94,15 +94,15 @@ out_file=_torads(in_file=outfile,out_file=outdir+'/fieldmapto_rads.nii.gz')
 if dpdat: 
     phasedir=dpdat['PhaseEncodingDirection']
     if phasedir == 'j':
-        phaseEncDim=1; phaseEncSign=-1
-    else:
         phaseEncDim=1; phaseEncSign=1
+    else:
+        phaseEncDim=1; phaseEncSign=-1
 elif dt1:
     phasedir=dt1['PhaseEncodingDirection']
     if phasedir == 'j':
-        phaseEncDim=1; phaseEncSign=-1
-    else:
         phaseEncDim=1; phaseEncSign=1
+    else:
+        phaseEncDim=1; phaseEncSign=-1
 
 field_sdcwarp=vsm2dm(in_file=out_file,phaseEncDim=phaseEncDim,phaseEncSign=phaseEncSign,
 fieldmapout=outdir+'/fieldmap.nii.gz',field_sdcwarp=outdir+'/sdc_warp.nii.gz')
