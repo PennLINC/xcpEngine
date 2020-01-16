@@ -12,7 +12,7 @@ def get_parser():
         '-f', '--fmapdir', action='store', required=True,
         help='fmap directory')
     parser.add_argument(
-        '-k', '--pedir', action='store', required=True,
+        '-p', '--pedir', action='store', required=True,
         help='image phase encoding direction')   
     parser.add_argument(
         '-o', '--out', action='store', required=True,
