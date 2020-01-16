@@ -88,6 +88,12 @@ def afni3dQwarp(oppose_pe,matched_pe,source_warp):
     qwarp = afni.QwarpPlusMinus()
     qwarp.inputs.in_file =oppose_pe
     qwarp.inputs.nopadWARP = True
+    qwarp.inputs.noweight=True
+    qwarp.inputs.pblur = [0.05,0.05]
+    qwarp.inputs.blur=[-1,-1]
+    qwarp.inputs.minpatch=9
+    qwarp.inputs.noXdis=True
+    qwarp.inputs.noZdis=True
     qwarp.inputs.base_file = matched_pe
     qwarp.inputs.out_file= source_warp+'.nii.gz'
     qwarp.run()  
