@@ -778,7 +778,7 @@ done
     exec_xcp mbind.R  -x ${confmat[cxt]} -y ${tcp[cxt]} -o ${confmat_path} 
     output confmat             ${prefix}_confmat.1D
    else
-   ${confmat[cxt]}=${rps[cxt]}
+   confmat=${rps[cxt]}
 fi
 
 
