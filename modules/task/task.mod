@@ -779,6 +779,7 @@ done
     output confmat             ${prefix}_confmat.1D
    else
    confmat=${rps[cxt]}
+   output confmat   ${out}/task/${prefix}_motion.1D
 fi
 
 
@@ -794,7 +795,7 @@ fi
 if (( ${conf_include} == 1 ))
    then
    subroutine                 @1.2  Importing confounds
-   if (( ${task_vol2del[cxt]} > 0)); then 	
+   if (( ${task_vol2del[cxt]} > 0 )); then 	
    subroutine                 @1.2.1a  remvoing the first ${task_vol2del[cxt]} confound	
    exec_xcp removetaskpnts.R -n  ${task_vol2del[cxt]}  -t ${confmat[cxt]}   -p ${confmat[cxt]} 
    fi

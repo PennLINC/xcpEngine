@@ -1,5 +1,5 @@
 from fmapprocessing import _fix_hdr,maskdata,n4_correction,meanimage
-from fmapprocessing import  antsregistration, afni3dQwarp,_torads
+from fmapprocessing import  antsregistration, afni3dQwarp,_torads,vsm2dm
 from nipype.interfaces import fsl,afni
 import os,sys,glob,json
 import numpy as np
@@ -10,10 +10,10 @@ def get_parser():
         description=' write the report for xcpEngine ')
     parser.add_argument(
         '-f', '--fmapdir', action='store', required=True,
-        help='fmapdir')
+        help='fmap directory')
     parser.add_argument(
-        '-j', '--pedir', action='store', required=True,
-        help='fmapdir')   
+        '-k', '--pedir', action='store', required=True,
+        help='image phase encoding direction')   
     parser.add_argument(
         '-o', '--out', action='store', required=True,
         help='outdir')
