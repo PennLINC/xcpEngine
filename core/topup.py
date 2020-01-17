@@ -86,5 +86,3 @@ transform_prefix=outdir+'/trans1_')
 sourcewarp=afni3dQwarp(oppose_pe=opposed_warped,matched_pe=matched_warped,source_warp=outdir+'/sourcewarp')
 fixhdr=_fix_hdr(in_file=sourcewarp,newpath=outdir+'/')
 out_file=_torads(in_file=fixhdr,out_file=outdir+'/fieldmapto_rads.nii.gz')
-
-  
