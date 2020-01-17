@@ -702,7 +702,6 @@ while (( ${#rem} > 0 ))
                   ${referenceVolume[cxt]} \
                   ${midpt} 1
          fi
-
         exec_fsl \
                bet ${referenceVolume[cxt]} \
               ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  \
@@ -1039,6 +1038,13 @@ while (( ${#rem} > 0 ))
      echo "no structural image"   
     
     fi
+     
+         if ! is_image ${fieldmap[sub]}
+         then 
+             exec_ants   antsApplyTransforms -e 3 -d 3 -n LanczosWindowedSinc  -i ${intermediate}_${cur}.nii.gz  \ 
+              -r ${referenceVolumeBrain[cxt]} -t ${fieldmap[sub]}   -o ${intermediate}_dico.nii.gz
+             exec_fsl immv ${intermediate}_dico.nii.gz ${intermediate}_${cur}.nii.gz
+         fi 
 
        exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
         intermediate=${intermediate}_${cur} 

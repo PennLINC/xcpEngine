@@ -35,8 +35,8 @@ phase2=glob.glob(fmapdir+'/*phase2.nii.gz')
 
 if os.path.isfile(phasedifc[0]):
     phaseon=phasedifc[0]
-    au2rads(phaseon,outdir)
-    phasediff=glob.glob(outdir+'/*rads.nii.gz')[0]
+    #au2rads(phaseon,outdir)
+    #phasediff=glob.glob(outdir+'/*rads.nii.gz')[0]
 elif os.path.isfile(phase1[0]):
     phase1=phase1[0]; phase2=phase2[0]
     ph1=au2rads(phase1); ph2=au2rads(phase2)
@@ -51,23 +51,24 @@ mag_bias=n4_correction(in_file=mag1)
 mag_brain=outdir+'/mag1_brain.nii.gz'
 mag_mask=outdir+'/mag1_mask.nii.gz'
 mag_brain=fslbet(in_file=mag_bias,out_file=mag_brain)
-maskdata(mag_brain,mag_mask)
+
 
 magbrain_warped=outdir+'/mag_warped.nii.gz'
 phase_warped=outdir+'/phase_warped.nii.gz'
 opposed_regis=antsregistration(fixed=ref,moving=mag_brain,output_warped=magbrain_warped,
 transform_prefix=outdir+'/trans_')
-applytransform(in_file=phasediff,reference=ref,out_file=phase_warped,
+applytransform(in_file=phaseon,reference=ref,out_file=phase_warped,
          transformfile=outdir+'/trans_Composite.h5',interpolation='LanczosWindowedSinc')
 
-
-
+au2rads(phase_warped,outdir)
+phasediff=glob.glob(outdir+'/*rads.nii.gz')
+maskdata(magbrain_warped,mag_mask)
 
 #unwarp withe predule 
 unwrapped=outdir+'/unwrapped.nii.gz'
 prefsl=fsl.PRELUDE()
 prefsl.inputs.magnitude_file=magbrain_warped
-prefsl.inputs.phase_file=phase_warped
+prefsl.inputs.phase_file=phasediff[0]
 prefsl.inputs.mask_file=mag_mask
 prefsl.inputs.unwrapped_phase_file=unwrapped
 prefsl.run()

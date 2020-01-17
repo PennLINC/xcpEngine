@@ -36,7 +36,7 @@ completion() {
 ###################################################################
 # OUTPUTS
 ###################################################################
-output      fieldmmap             ${prefix}_fieldmap.nii.gz
+output      fieldmap              ${prefix}_fieldmap.nii.gz
 output      magnitude             ${prefix}_magnitude.nii.gz 
 output      img                   ${prefix}_img_dico.nii.gz
 output      img1                  ${prefix}_img_dico.nii.gz
@@ -44,6 +44,7 @@ output      img1                  ${prefix}_img_dico.nii.gz
 
 process     img           ${prefix}_img_dico.nii.gz
 
+routine
 exec_sys mkdir -p ${out}/dico 
 outdir=${out}/dico
 #get phasenoding direction from image
@@ -86,38 +87,9 @@ else
    echo " no fieldmap"
 fi 
 
-### get refereence volume from image, 
-#skullsttrip with afni
-
-
-nvol=$(exec_fsl fslnvols ${intermediate}.nii.gz)
-midpt=$(( ${nvol} / 2))
-exec_fsl fslroi ${intermediate}.nii.gz \
-               ${intermediate}-reference.nii.gz ${midpt} 1
- 3dSkullStrip -input ${intermediate}-reference.nii.gz \
-   -prefix   ${intermediate}-referencebrain.nii.gz 
-
-#regsiter fielmap magnitude to refvolume
-exec_ants antsRegistrationSyN.sh -d 3 -f ${intermediate}-referencebrain.nii.gz  \
-      -m $magbrain  -o ${outdir}/dico/fmap2ref_ -j 1
-
-#apply transformation to fieldmap, mask 
-
-exec_ants   antsApplyTransforms -d 3 -i ${magbrain} -r  ${intermediate}-referencebrain.nii.gz \
--t ${outdir}/dico/fmap2ref_0GenericAffine.mat  -t ${outdir}/dico/fmap2ref_1Warp.nii.gz  \
--o $outdir/${prefix}_magnitude.nii.gz 
-
-exec_ants   antsApplyTransforms -d 3 -i ${fmap} -r  ${intermediate}-referencebrain.nii.gz \
--t ${outdir}/dico/fmap2ref_0GenericAffine.mat  -t ${outdir}/dico/fmap2ref_1Warp.nii.gz  \
--o $outdir/${prefix}_fieldmap.nii.gz 
-
-
- ### apply the fieldmap on the image to correct for dist
- exec_ants   antsApplyTransforms  -i ${img[sub]}  -r  ${intermediate}-referencebrain.nii.gz \
--t $outdir/${prefix}_fieldmap.nii.gz  -o $outdir/${prefix}_img_dico.nii.gz 
 
 #clean the file file 
 exec_sys rm -rf ${outdir}/dico/
-intermediate=$outdir/${prefix}_img_dico.nii.gz 
 
+routine_end
 completion
