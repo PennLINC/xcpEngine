@@ -691,7 +691,7 @@ while (( ${#rem} > 0 ))
                            -prefix ${out}/prestats/${prefix}_wm.nii.gz
                   output wm  ${out}/prestats/${prefix}_wm.nii.gz
                   
-                   exec_fsl fslmaths ${struct[sub]} -bin ${outdir}/${prefix}_structmask
+                   exec_fsl fslmaths ${out}/prestats/${prefix}_struct_brain.nii.gz -bin ${outdir}/${prefix}_structmask
                    output structmask    ${outdir}/${prefix}_structmask.nii.gz 
                   
                   exec_sys rm -rf ${out}/prestats/fast*
