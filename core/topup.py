@@ -10,10 +10,10 @@ def get_parser():
         description=' write the report for xcpEngine ')
     parser.add_argument(
         '-f', '--fmapdir', action='store', required=True,
-        help='fmapdir')
+        help='fmap directory')
     parser.add_argument(
-        '-k', '--pedir', action='store', required=True,
-        help='fmapdir')   
+        '-p', '--pedir', action='store', required=True,
+        help='image phase encoding direction')   
     parser.add_argument(
         '-o', '--out', action='store', required=True,
         help='outdir')
