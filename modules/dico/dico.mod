@@ -80,8 +80,8 @@ echo " there is fieldmap directory"
     else 
        exec_sys mkdir -p ${outdir}/dico
        python ${XCPEDIR}/core/topup.py -f ${dico_fmapdir[cxt]} -o ${outdir}/dico/  -p ${dico_pedir}
-       magbrain=${outdir}/dico/matchpe_brain.nii.gz
-       fmap=${outdir}/dico/fieldmapto_rads.nii.gz
+       exec_fsl immv ${outdir}/dico/fieldmapto_rads.nii.gz  ${outdir}/${prefix}_fieldmap.nii.gz
+       exec_fsl immv ${outdir}/dico/matched_warped.nii.gz ${outdir}/${prefix}_magnitude.nii.gz 
     fi
 else 
    echo " no fieldmap"
