@@ -3,8 +3,8 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
-from fmapprocessing import phdiff2fmap,au2rads, maskdata,n4_correction, fslbet,_demean,vsm2dm
-from fmapprocessing import _despike2d,_torads, _unwrap, substractimage,substractphaseimage,_recenter
+from fmapprocessing import phdiff2fmap,au2rads, maskdata,n4_correction, fslbet,_demean,vsm2dm,antsregistration
+from fmapprocessing import _despike2d,_torads, _unwrap, substractimage,substractphaseimage,_recenter,applytransform
 from nipype.interfaces import fsl
 import os,sys,glob,json
 import numpy as np
@@ -18,12 +18,16 @@ def get_parser():
         '-f', '--fmapdir', action='store', required=True,
         help='fmapdir')
     parser.add_argument(
+        '-i', '--reference', action='store', required=True,
+        help='reference')
+    parser.add_argument(
         '-o', '--out', action='store', required=True,
         help='outdir')
     return parser
 opts = get_parser().parse_args()
 fmapdir=opts.fmapdir
 outdir=opts.out
+ref=opts.reference
 #check if phasediff or phase1 and phase2 
 phasedifc=glob.glob(fmapdir+'/*phasediff.nii.gz')
 phase1=glob.glob(fmapdir+'/*phase1.nii.gz')
@@ -49,11 +53,21 @@ mag_mask=outdir+'/mag1_mask.nii.gz'
 mag_brain=fslbet(in_file=mag_bias,out_file=mag_brain)
 maskdata(mag_brain,mag_mask)
 
+magbrain_warped=outdir+'/mag_warped.nii.gz'
+phase_warped=outdir+'/phase_warped.nii.gz'
+opposed_regis=antsregistration(fixed=ref,moving=mag_brain,output_warped=magbrain_warped,
+transform_prefix=outdir+'/trans_')
+applytransform(in_file=phasediff,reference=ref,out_file=phase_warped,
+         transformfile=outdir+'/trans_Composite.h5',interpolation='LanczosWindowedSinc')
+
+
+
+
 #unwarp withe predule 
 unwrapped=outdir+'/unwrapped.nii.gz'
 prefsl=fsl.PRELUDE()
-prefsl.inputs.magnitude_file=mag_brain
-prefsl.inputs.phase_file=phasediff
+prefsl.inputs.magnitude_file=magbrain_warped
+prefsl.inputs.phase_file=phase_warped
 prefsl.inputs.mask_file=mag_mask
 prefsl.inputs.unwrapped_phase_file=unwrapped
 prefsl.run()
