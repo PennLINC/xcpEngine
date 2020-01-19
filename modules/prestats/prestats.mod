@@ -674,27 +674,33 @@ while (( ${#rem} > 0 ))
          output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
          output coreg_seg ${out}/prestats/${prefix}_segmentation.nii.gz
 
-         exec_fsl fast -t 1 -n 3  -N -I 4 -o ${out}/prestats/fast ${out}/prestats/${prefix}_struct_brain.nii.gz
+         exec_afni 3dresample -orient ${template_orientation} \
+              -inset ${structmask} \
+              -prefix ${out}/prestats/${prefix}_structmask.nii.gz
+         output  structmask ${out}/prestats/${prefix}_structmask.nii.gz
 
-                  exec_afni 3dresample -orient ${template_orientation} \
+         exec_fsl fast -t 1 -n 3  -N -I 4 -o ${out}/prestats/fast  ${out}/prestats/${prefix}_struct_brain.nii.gz
+
+         exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_0.nii.gz \
                            -prefix ${out}/prestats/${prefix}_csf.nii.gz
-                  output csf  ${out}/prestats/${prefix}_csf.nii.gz
+               
+         output csf  ${out}/prestats/${prefix}_csf.nii.gz
                    
-                  exec_afni 3dresample -orient ${template_orientation} \
+         exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_1.nii.gz \
                            -prefix ${out}/prestats/${prefix}_gm.nii.gz
-                  output gm  ${out}/prestats/${prefix}_gm.nii.gz
+         output gm  ${out}/prestats/${prefix}_gm.nii.gz
               
-                  exec_afni 3dresample -orient ${template_orientation} \
+         exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_2.nii.gz \
                            -prefix ${out}/prestats/${prefix}_wm.nii.gz
-                  output wm  ${out}/prestats/${prefix}_wm.nii.gz
+         output wm  ${out}/prestats/${prefix}_wm.nii.gz
                   
-                   exec_fsl fslmaths ${out}/prestats/${prefix}_struct_brain.nii.gz -bin ${outdir}/${prefix}_structmask
-                   output structmask    ${outdir}/${prefix}_structmask.nii.gz 
+         exec_fsl fslmaths ${struct_head[cxt]} -bin ${outdir}/${prefix}_structmask
+         output structmask    ${outdir}/${prefix}_structmask.nii.gz 
                   
-                  exec_sys rm -rf ${out}/prestats/fast*
+         exec_sys rm -rf ${out}/prestats/fast*
           
          if ! is_image ${referenceVolume[cxt]}
            then 
@@ -774,6 +780,7 @@ while (( ${#rem} > 0 ))
 
       elif [[ -d ${antsct[sub]} ]]; then
            
+
                  exec_fsl fast -t 1 -n 3  -N -I 4 -o ${out}/prestats/fast ${struct[sub]}
 
                   exec_afni 3dresample -orient ${template_orientation} \
@@ -791,10 +798,17 @@ while (( ${#rem} > 0 ))
                            -prefix ${out}/prestats/${prefix}_wm.nii.gz
                   output wm  ${out}/prestats/${prefix}_wm.nii.gz
                   
+                  exec_afni 3dresample -orient ${template_orientation} \
+                           -inset ${out}/prestats/fast_seg.nii.gz \
+                           -prefix ${out}/prestats/${prefix}_segmentation.nii.gz
+
+                  output segmentation  ${out}/prestats/${prefix}_segmentation.nii.gz
+                  
                    exec_fsl fslmaths ${struct[sub]} -bin ${outdir}/${prefix}_structmask
                    output structmask    ${outdir}/${prefix}_structmask.nii.gz 
                   
                   exec_sys rm -rf ${out}/prestats/fast*
+
                
 
               if  is_image ${m0[sub]}

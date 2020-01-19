@@ -538,8 +538,7 @@ routine_end
 # Re-extract the brain using the high-precision structural mask if
 # requested.
 ###################################################################
-if (( ${coreg_mask[cxt]} == 1 ))
-   then
+
    if ! is_image ${remasked[cxt]} \
    || rerun
       then
@@ -560,7 +559,6 @@ if (( ${coreg_mask[cxt]} == 1 ))
             -mul  ${mask[cxt]}      ${meanIntensityBrain[cxt]}
       routine_end
    fi
-fi
 
 ###################################################################
 # copy structural image from prestats for ASL
@@ -577,24 +575,24 @@ if  [[ -d ${anatdir[sub]} ]]; then
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${gm[sub]} -t ${struct2seq[cxt]} \
-        -o ${gm_seq} -n NearestNeighbor
+        -o ${gm_seq} -n Linear
    output gm2seq   ${out}/coreg/${prefix}_gm2seq.nii.gz
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${wm[sub]} -t ${struct2seq[cxt]} \
-        -o ${wm_seq} -n NearestNeighbor
+        -o ${wm_seq} -n Linear
    output wm2seq ${out}/coreg/${prefix}_wm2seq.nii.gz
    
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${csf[sub]} -t ${struct2seq[cxt]} \
-        -o ${csf_seq} -n NearestNeighbor
+        -o ${csf_seq} -n Linear
 
    output csf2seq ${out}/coreg/${prefix}_csf2seq.nii.gz 
 
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
         -i ${structmask[sub]} -t ${struct2seq[cxt]} \
-        -o ${mask1} -n NearestNeighbor
+        -o ${mask1} -n Linear
    
     exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
 
@@ -603,14 +601,18 @@ if  [[ -d ${anatdir[sub]} ]]; then
    exec_fsl  fslmaths ${referenceVolume[sub]} -mul ${mask[cxt]} \
          ${referenceVolumeBrain[sub]}
 
-   
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
+        -i ${segmentation[sub]} -t ${struct2seq[cxt]} \
+        -o ${out}/coreg/${prefix}_segmentation.nii.gz  -n Linear
 
+   output segmentation ${out}/coreg/${prefix}_segmentation.nii.gz
    
    exec_fsl immv $out/prestats/${prefix}_struct_brain  $out/coreg/${prefix}_target
-   exec_sys rm  -rf ${out}/prestats/${prefix}_struct* ${out}/prestats/${prefix}_csf* 
-   exec_sys rm -rf ${out}/prestats/${prefix}_white*  ${out}/prestats/${prefix}_grey* 
-   exec_fsl immv  ${out}/prestats/${prefix}_segmentation ${out}/coreg/${prefix}_segmentation
-   output segmentation ${out}/coreg/${prefix}_segmentation.nii.gz
+   exec_sys rm  -rf ${out}/prestats/${prefix}_struct* ${out}/prestats/${prefix}_csf.nii.gz
+   exec_sys rm -rf ${out}/prestats/${prefix}_wm.nii.gz  ${out}/prestats/${prefix}_gm.nii.gz 
+   exec_sys rm -rf  ${out}/prestats/${prefix}_segmentation.nii.gz 
+   
+   
    
 elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
 
@@ -620,28 +622,32 @@ elif  [[ -d ${antsct[sub]}  ]] || [[ -f ${t1w[sub]} ]];  then
     csf_seq=${out}/coreg/${prefix}_csf2seq.nii.gz 
     mask1=${out}/coreg/temporay_mask_seq.nii.gz 
     mask=${out}/coreg/${prefix}_mask.nii.gz
-   
+    seg_seq=${out}/coreg/${prefix}_segmentation.nii.gz
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${gm[sub]} -t ${struct2seq[cxt]} \
-        -o ${gm_seq} -n NearestNeighbor
+        -o ${gm_seq} -n Linear
    output gm2seq   ${out}/coreg/${prefix}_gm2seq.nii.gz
 
 
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${wm[sub]} -t ${struct2seq[cxt]} \
-        -o ${wm_seq} -n NearestNeighbor
+        -o ${wm_seq} -n Linear
    output wm2seq ${out}/coreg/${prefix}_wm2seq.nii.gz
    
    exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
         -i ${csf[sub]} -t ${struct2seq[cxt]} \
-        -o ${csf_seq} -n NearestNeighbor
+        -o ${csf_seq} -n Linear
    output csf2seq ${out}/coreg/${prefix}_csf2seq.nii.gz
 
+   exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolume[sub]} \
+        -i ${segmentation[sub]} -t ${struct2seq[cxt]} \
+        -o ${seg_seq} -n Linear
+   output segmentation  ${out}/coreg/${prefix}_segmentation.nii.gz
 
     exec_ants antsApplyTransforms -e 3 -d 3 -r ${referenceVolumeBrain[sub]} \
         -i ${structmask[sub]} -t ${struct2seq[cxt]} \
-        -o ${mask1} -n NearestNeighbor
+        -o ${mask1} -n Linear
    
    exec_fsl fslmaths ${mask1} -mul ${mask[sub]} ${out}/coreg/${prefix}_mask.nii.gz 
    output  mask ${out}/coreg/${prefix}_mask.nii.gz

@@ -52,7 +52,7 @@ with sentry_sdk.configure_scope() as scope:
     scope.set_tag('cpu_count', cpu_count())
 
 modules=pd.read_csv(pipeline)
-sentry_sdk.capture_message('xcp complete', ':)')  
+#sentry_sdk.capture_message('xcp complete', ':)')  
 modules1 = []
 for j in modules:
     modules1.append(j)
@@ -136,4 +136,5 @@ if os.path.isfile(output+'_report.html'):
     sentry_sdk.add_breadcrumb(message='Incomplete outputs', level='fatal')
     sentry_sdk.capture_message('Incomplete outputs', 'fatal') 
 else:
+    sentry_sdk.add_breadcrumb(message='xcp ran successfuly', level='info')
     sentry_sdk.capture_message('xcp complete', level='info') 
