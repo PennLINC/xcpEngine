@@ -689,13 +689,13 @@ while (( ${#rem} > 0 ))
                    
          exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_1.nii.gz \
-                           -prefix ${out}/prestats/${prefix}_wm.nii.gz
-         output wm  ${out}/prestats/${prefix}_wm.nii.gz
+                           -prefix ${out}/prestats/${prefix}_gm.nii.gz
+         output gm  ${out}/prestats/${prefix}_gm.nii.gz
               
          exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_2.nii.gz \
-                           -prefix ${out}/prestats/${prefix}_gm.nii.gz
-         output gm  ${out}/prestats/${prefix}_gm.nii.gz
+                           -prefix ${out}/prestats/${prefix}_wm.nii.gz
+         output wm  ${out}/prestats/${prefix}_wm.nii.gz
                   
          exec_fsl fslmaths ${struct_head[cxt]} -bin ${outdir}/${prefix}_structmask
          output structmask    ${outdir}/${prefix}_structmask.nii.gz 
@@ -711,7 +711,6 @@ while (( ${#rem} > 0 ))
                   ${referenceVolume[cxt]} \
                   ${midpt} 1
          fi
-
         exec_fsl \
                bet ${referenceVolume[cxt]} \
               ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  \
@@ -791,13 +790,13 @@ while (( ${#rem} > 0 ))
                    
                   exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_1.nii.gz \
-                           -prefix ${out}/prestats/${prefix}_wm.nii.gz
-                  output wm  ${out}/prestats/${prefix}_wm.nii.gz
+                           -prefix ${out}/prestats/${prefix}_gm.nii.gz
+                  output gm  ${out}/prestats/${prefix}_gm.nii.gz
               
                   exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_pve_2.nii.gz \
-                           -prefix ${out}/prestats/${prefix}_gm.nii.gz
-                  output gm  ${out}/prestats/${prefix}_gm.nii.gz
+                           -prefix ${out}/prestats/${prefix}_wm.nii.gz
+                  output wm  ${out}/prestats/${prefix}_wm.nii.gz
                   
                   exec_afni 3dresample -orient ${template_orientation} \
                            -inset ${out}/prestats/fast_seg.nii.gz \
@@ -1033,6 +1032,12 @@ while (( ${#rem} > 0 ))
      echo "no structural image"   
     
     fi
+     
+         if is_image ${fieldmap[sub]}
+         then 
+             exec_ants  antsApplyTransforms -e 3 -d 3 -n LanczosWindowedSinc  -i ${intermediate}.nii.gz  -r ${referenceVolumeBrain[cxt]} -t ${fieldmap[sub]}   -o ${intermediate}_dico.nii.gz
+             exec_fsl immv ${intermediate}_dico.nii.gz ${intermediate}.nii.gz
+         fi 
 
        exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
         intermediate=${intermediate}_${cur} 
