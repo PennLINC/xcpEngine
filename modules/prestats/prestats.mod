@@ -1019,11 +1019,10 @@ while (( ${#rem} > 0 ))
     
     fi
      
-         if ! is_image ${fieldmap[sub]}
+         if is_image ${fieldmap[sub]}
          then 
-             exec_ants   antsApplyTransforms -e 3 -d 3 -n LanczosWindowedSinc  -i ${intermediate}_${cur}.nii.gz  \ 
-              -r ${referenceVolumeBrain[cxt]} -t ${fieldmap[sub]}   -o ${intermediate}_dico.nii.gz
-             exec_fsl immv ${intermediate}_dico.nii.gz ${intermediate}_${cur}.nii.gz
+             exec_ants  antsApplyTransforms -e 3 -d 3 -n LanczosWindowedSinc  -i ${intermediate}.nii.gz  -r ${referenceVolumeBrain[cxt]} -t ${fieldmap[sub]}   -o ${intermediate}_dico.nii.gz
+             exec_fsl immv ${intermediate}_dico.nii.gz ${intermediate}.nii.gz
          fi 
 
        exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz

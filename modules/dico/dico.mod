@@ -65,21 +65,25 @@ exec_fsl bet ${intermediate}-reference.nii.gz \
                   ${intermediate}-referencebrain.nii.gz      \
                   -f 0.5
 
+if [[ -d ${dico_fmapdir[sub]} ]]; then 
+      dico_fmapdir=${dico_fmapdir[sub]};
+else
+     dico_fmapdir=${dico_fmapdir[cxt]}
+fi
 
-
-if [[ -d ${dico_fmapdir[cxt]} ]]; then 
+if [[ -d ${dico_fmapdir} ]]; then 
 echo " there is fieldmap directory"
-    phase=$(ls -f ${dico_fmapdir[cxt]}/*phase*nii.gz 2>/dev/null) 
+    phase=$(ls -f ${dico_fmapdir}/*phase*nii.gz 2>/dev/null) 
     if [[ -f ${phase} ]]; then 
        # run the phasediff.pye
        exec_sys mkdir -p ${outdir}/dico
-       python ${XCPEDIR}/core/phasediff.py -f ${dico_fmapdir[cxt]}  -i ${intermediate}-referencebrain.nii.gz   -o ${outdir}/dico/ 
+       python ${XCPEDIR}/core/phasediff.py -f ${dico_fmapdir}  -i ${intermediate}-referencebrain.nii.gz   -o ${outdir}/dico/ 
        exec_fsl immv ${outdir}/dico/sdc_warp.nii.gz  ${outdir}/${prefix}_fieldmap.nii.gz
        exec_fsl immv ${outdir}/dico/mag_warped.nii.gz  ${outdir}/${prefix}_magnitude.nii.gz 
 
     else 
        exec_sys mkdir -p ${outdir}/dico
-       python ${XCPEDIR}/core/topup.py -f ${dico_fmapdir[cxt]} -o ${outdir}/dico/  -p ${dico_pedir}
+       python ${XCPEDIR}/core/topup.py -f ${dico_fmapdir} -o ${outdir}/dico/  -p ${dico_pedir}
        exec_fsl immv ${outdir}/dico/fieldmapto_rads.nii.gz  ${outdir}/${prefix}_fieldmap.nii.gz
        exec_fsl immv ${outdir}/dico/matched_warped.nii.gz ${outdir}/${prefix}_magnitude.nii.gz 
     fi

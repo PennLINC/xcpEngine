@@ -252,7 +252,7 @@ if ! is_image ${cbf[cxt]} \
    exec_fsl fslmaths ${intermediate}_cbfmean -div ${intermediate}_cbfstd \
    -mul ${mask[sub]}  ${cbf_tsnr[cxt]}
 
-   qccbftsnr cbftsnr  ${prefix}_cbf_meantsnr.txt
+   qc cbftsnr cbftsnr  ${prefix}_cbf_meantsnr.txt
 
    meanTcbf=$(fslstats ${cbf_tsnr[cxt]}  -k  ${gm2seq[sub]} -M)
    echo ${meanTcbf} >> ${cbftsnr[cxt]}
