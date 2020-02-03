@@ -1102,11 +1102,29 @@ if [[ -d ${featout} ]]
        exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${t1wtotemp} \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
       fi 
+        
+        exec_sys export  SUBJECTS_DIR=${strucn}/../../freesurfer # freesurfer directory
+        xx=$( basename ${img1})
+        subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
+        
+        surftemdir=${XCPEDIR}/thirdparty/standard_mesh_atlases/
+        #now do the surface 
+        for hem in lh rh
+          do
+           exec_fs mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz --regheader $subjectid  --hemi ${hem} \
+                  --o ${outdir}/${hem}_surface.nii.gz --interp trilinear --reshape 
+           exec_fs mri_surf2surf --srcsubject $subjectid --trgsubject  fsaverage --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz 
+           exec_fs mris_convert -c ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/res4d_surface_${hem}.func.gii
 
+           exec_sys wb_command -metric-resample ${outdir}/res4d_surface_${hem}.func.gii ${surftemdir}/fs_${hem}/fsaverage.${hem}.sphere.164k_fs_${hem}.surf.gii \
+           ${surftemdir}/resample_fsaverage/fs_LR-deformed_to-fsaverage.${hem}.sphere.164k_fs_LR.surf.gii  ADAP_BARY_AREA ${outdir}/${prefix}_res4d_${hem}.func.gii  -area-metrics \
+           ${surftemdir}/resample_fsaverage/fsaverage.${hem}.midthickness_va_avg.164k_fsavg_${hem}.shape.gii ${surftemdir}/resample_fsaverage/fs_LR.${hem}.midthickness_va_avg.164k_fs_LR.shape.gii 
+      done
+      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_res4D.dtseries.nii -volume ${outdir}/boldresampletoT1.nii.gz \
+               -left-metric ${outdir}/${prefix}_res4d_lh.func.gii  -right-metric ${outdir}/${prefix}_res4d_rh.func.gii 
 
-
-
- 
+      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz ${outdir}/res4d_surface_*.func.gii
    fi 
 
         
