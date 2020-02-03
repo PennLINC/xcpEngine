@@ -213,7 +213,7 @@ RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/frees
 
 
     
-RUN apt-get install -y -q --no-install-recommends procps connectome-workbench=1.3.2-2~nd16.04+1
+RUN apt-get install -y -q --no-install-recommends procps connectome-workbench
 
 RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
