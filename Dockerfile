@@ -190,8 +190,30 @@ RUN echo "Downloading Convert3D ..." \
     && mkdir -p /opt/convert3d-nightly \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Nightly/c3d-nightly-Linux-x86_64.tar.gz/download \
     | tar -xz -C /opt/convert3d-nightly --strip-components 1
+
+RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz | tar zxv --no-same-owner -C /opt \
+    --exclude='freesurfer/diffusion' \
+    --exclude='freesurfer/docs' \
+    --exclude='freesurfer/fsfast' \
+    --exclude='freesurfer/lib/cuda' \
+    --exclude='freesurfer/lib/qt' \
+    --exclude='freesurfer/matlab' \
+    --exclude='freesurfer/mni/share/man' \
+    --exclude='freesurfer/subjects/fsaverage_sym' \
+    --exclude='freesurfer/subjects/fsaverage3' \
+    --exclude='freesurfer/subjects/fsaverage4' \
+    --exclude='freesurfer/subjects/cvs_avg35' \
+    --exclude='freesurfer/subjects/cvs_avg35_inMNI152' \
+    --exclude='freesurfer/subjects/bert' \
+    --exclude='freesurfer/subjects/lh.EC_average' \
+    --exclude='freesurfer/subjects/rh.EC_average' \
+    --exclude='freesurfer/subjects/sample-*.mgz' \
+    --exclude='freesurfer/subjects/V1_average' \
+    --exclude='freesurfer/trctrain'
+
+
     
-RUN apt-get install -y -q --no-install-recommends procps
+RUN apt-get install -y -q --no-install-recommends procps connectome-workbench=1.3.2-2~nd16.04+1
 
 RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
@@ -218,10 +240,12 @@ RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
 ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
     C3D_PATH="/opt/convert3d-nightly/bin/" \
-    PATH="$PATH:/xcpEngine"
+    PATH="$PATH:/xcpEngine" \
+    FREESURFER_HOME="/opt/freesurfer"
 
 RUN mkdir /data /out /work /design /cohort
 
+COPY /xcpEngine/utils/license.txt /opt/freesurfer/license.txt     
 RUN mkdir /run/uuidd
 RUN apt-get install -y -q --no-install-recommends uuid-runtime
 
