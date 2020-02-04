@@ -1097,26 +1097,26 @@ if [[ -d ${featout} ]]
       res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
        if [[ ${template_label} == 'T1w' ]]
            then  # reample bold to T1 dimension before freesurfer 
-        exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${XCPEDIR}/utils/oneratiotransform.txt \
+        exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct1} -t ${XCPEDIR}/utils/oneratiotransform.txt \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc
       else # reamsple template to T1 assuming the bold in MNI space
-       exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${temptot1w} \
+       exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct1} -t ${temptot1w} \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
       fi 
         
         exec_sys export  SUBJECTS_DIR=${strucn}/../../freesurfer # freesurfer directory
-        xx=$( basename ${img1})
+        xx=$( basename ${img1[sub]})
         subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
         
         surftemdir=${XCPEDIR}/thirdparty/standard_mesh_atlases/
         #now do the surface 
         for hem in lh rh
           do
-           exec_fs mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz --regheader $subjectid  --hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz --regheader $subjectid  --hemi ${hem} \
                   --o ${outdir}/${hem}_surface.nii.gz --interp trilinear --reshape 
-           exec_fs mri_surf2surf --srcsubject $subjectid --trgsubject  fsaverage --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+           ${FREESURFER_HOME}/bin/mri_surf2surf --srcsubject $subjectid --trgsubject  fsaverage --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
                     --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz 
-           exec_fs mris_convert -c ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/res4d_surface_${hem}.func.gii
+           ${FREESURFER_HOME}/bin/mris_convert -c ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/res4d_surface_${hem}.func.gii
 
            exec_sys wb_command -metric-resample ${outdir}/res4d_surface_${hem}.func.gii ${surftemdir}/fs_${hem}/fsaverage.${hem}.sphere.164k_fs_${hem}.surf.gii \
            ${surftemdir}/resample_fsaverage/fs_LR-deformed_to-fsaverage.${hem}.sphere.164k_fs_LR.surf.gii  ADAP_BARY_AREA ${outdir}/${prefix}_res4d_${hem}.func.gii  -area-metrics \
