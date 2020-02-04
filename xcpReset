@@ -145,6 +145,7 @@ export C3D_PATH=${C3D_PATH}
 export JQ_PATH=${JQ_PATH}
 ###################################################################
 
+export FREESURFER=${FREESURFER_HOME }
 ###################################################################
 # Outputs of modules may be prepended with an integer indicating
 # their context in the pipeline. Set NUMOUT to 1 to enable this.
