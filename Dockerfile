@@ -218,6 +218,7 @@ RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
 RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
+
 RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
 
 ADD . /xcpEngine
@@ -235,6 +236,12 @@ RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xc
 RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
           && echo R_PROFILE_USER\="" >> /usr/lib/R/etc/Renviron \
           && chmod a+rx /xcpEngine/xcpEngine'
+
+ENV workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64" \
+    PATH="/xcpEngine/thirdparty/workbench/bin_rh_linux64:$PATH"
+
+ENV FREESURFER_HOME="/opt/freesurfer" \
+    PATH="/opt/freesurfer:$PATH"
 
 ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
