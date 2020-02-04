@@ -210,9 +210,7 @@ RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/frees
     --exclude='freesurfer/subjects/sample-*.mgz' \
     --exclude='freesurfer/subjects/V1_average' \
     --exclude='freesurfer/trctrain'
-
-
-    
+   
 RUN apt-get install -y -q --no-install-recommends procps 
 
 RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
@@ -245,7 +243,8 @@ ENV XCPEDIR="/xcpEngine" \
 
 RUN mkdir /data /out /work /design /cohort
 
-COPY /xcpEngine/utils/license.txt /opt/freesurfer/license.txt     
+RUN wget https://github.com/a3sha2/xcpEngine/blob/master/utils/license.txt  \
+  && mv license.txt /opt/freesurfer/    
 RUN mkdir /run/uuidd
 RUN apt-get install -y -q --no-install-recommends uuid-runtime \
         connectome-workbench
