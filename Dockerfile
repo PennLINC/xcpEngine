@@ -238,17 +238,16 @@ RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
 
 ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
+    FREESURFER_HOME="/opt/freesurfer" \
+    workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64"  \
     C3D_PATH="/opt/convert3d-nightly/bin/" \
-    PATH="$PATH:/xcpEngine" \
-    FREESURFER_HOME="/opt/freesurfer" 
-
+    PATH="$PATH:/xcpEngine" 
 RUN mkdir /data /out /work /design /cohort
 
 RUN wget https://github.com/a3sha2/xcpEngine/blob/master/utils/license.txt  \
   && mv license.txt /opt/freesurfer/    
 RUN mkdir /run/uuidd
-RUN apt-get install -y -q --no-install-recommends uuid-runtime \
-        connectome-workbench
+RUN apt-get install -y -q --no-install-recommends uuid-runtime 
 
 RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#
+# Point to the actual application executable
+#
+realpath=`readlink -f "$0"`
+directory=`dirname "$realpath"`
+
+#matlab does stupid stuff with LD_LIBRARY_PATH in system() calls, leading to warnings about non-versioned libraries
+#so, if we detect matlab in it, ignore the LD_LIBRARY_PATH to prevent errors/warnings
+if [[ -z "$LD_LIBRARY_PATH" ]] || echo "$LD_LIBRARY_PATH" | grep -iq matlab
+then
+    export LD_LIBRARY_PATH="$directory/../libs_rh_linux64"
+else
+    export LD_LIBRARY_PATH="$directory/../libs_rh_linux64:$LD_LIBRARY_PATH"
+fi
+
+export QT_QPA_PLATFORM_PLUGIN_PATH="$directory/../plugins_rh_linux64"
+
+"$directory"/../exe_rh_linux64/wb_command "$@"
+exit $?
