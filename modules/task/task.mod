@@ -1095,7 +1095,8 @@ if [[ -d ${featout} ]]
    if [[ -f ${surf} ]] # this  check if freesurfer exist 
    then 
       res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
-       if [[ ${template_label} == 'T1w']]; then  # reample bold to T1 dimension before freesurfer 
+       if [[ ${template_label} == 'T1w' ]]
+           then  # reample bold to T1 dimension before freesurfer 
         exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${XCPEDIR}/utils/oneratiotransform.txt \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc
       else # reamsple template to T1 assuming the bold in MNI space
