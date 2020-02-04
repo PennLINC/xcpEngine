@@ -1,0 +1,20 @@
+#!/bin/sh
+#LD_LIBRARY_PATH=$PWD/../libs_linux64 ../exe_linux64/workbench $@
+
+
+#
+# Point to the actual application executable
+#
+realpath=`readlink -f "$0"`
+directory=`dirname "$realpath"`
+
+if [ -z "$LD_LIBRARY_PATH" ]; then
+export LD_LIBRARY_PATH="$directory/../libs_rh_linux64_software_opengl:$directory/../libs_rh_linux64"
+else
+export LD_LIBRARY_PATH="$directory/../libs_rh_linux64_software_opengl:$directory/../libs_rh_linux64:$LD_LIBRARY_PATH"
+fi
+
+export QT_QPA_PLATFORM_PLUGIN_PATH="$directory/../plugins_rh_linux64"
+
+"$directory"/../exe_rh_linux64/wb_view "$@"
+exit $?
