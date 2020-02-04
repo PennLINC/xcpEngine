@@ -211,9 +211,8 @@ RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/frees
     --exclude='freesurfer/subjects/V1_average' \
     --exclude='freesurfer/trctrain'
 
+RUN apt-get install -y -q --no-install-recommends procps 
 
-    
-RUN apt-get install -y -q --no-install-recommends procps connectome-workbench
 
 RUN sed -i '$iexport XCPEDIR=/xcpEngine' $ND_ENTRYPOINT
 
@@ -241,13 +240,15 @@ ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
     C3D_PATH="/opt/convert3d-nightly/bin/" \
     PATH="$PATH:/xcpEngine" \
-    FREESURFER_HOME="/opt/freesurfer"
+    FREESURFER_HOME="/opt/freesurfer" 
 
 RUN mkdir /data /out /work /design /cohort
 
-COPY /xcpEngine/utils/license.txt /opt/freesurfer/license.txt     
+RUN wget https://github.com/a3sha2/xcpEngine/blob/master/utils/license.txt  \
+  && mv license.txt /opt/freesurfer/    
 RUN mkdir /run/uuidd
-RUN apt-get install -y -q --no-install-recommends uuid-runtime
+RUN apt-get install -y -q --no-install-recommends uuid-runtime \
+        connectome-workbench
 
 RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 
