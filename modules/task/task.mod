@@ -1100,7 +1100,7 @@ if [[ -d ${featout} ]]
         exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${XCPEDIR}/utils/oneratiotransform.txt \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc
       else # reamsple template to T1 assuming the bold in MNI space
-       exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${t1wtotemp} \
+       exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct_head} -t ${temptot1w} \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
       fi 
         

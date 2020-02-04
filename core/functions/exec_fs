@@ -1,5 +1,5 @@
 exec_fs() {
    verbose &&  echo_cmd      "${@}"
                echo_cmd      "${@}" 2>> ${log_proc}
-               ${$FREESURFER_HOME}/bin/"${@}"
+               ${FREESURFER_HOME}/bin/"${@}"
 }
