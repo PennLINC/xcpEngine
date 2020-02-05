@@ -1090,17 +1090,22 @@ if [[ -d ${featout} ]]
    fi
    
    # add post surface processing here if  there is fmriprep 
-
+   
    surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
    if [[ -f ${surf} ]] # this  check if freesurfer exist 
    then 
       res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
+      struct2=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" )
+      
+      temptot1w1=$(find $strucn/anat/ -type f -name "*${template_label1}*to-T1w_mode-image_xfm.h5")
+      temptot1w2=$(echo $temptot1w1 | cut --delimiter " " --fields 1) 
+                  
        if [[ ${template_label} == 'T1w' ]]
            then  # reample bold to T1 dimension before freesurfer 
-        exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct1} -t ${XCPEDIR}/utils/oneratiotransform.txt \
+        exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct2} -t ${XCPEDIR}/utils/oneratiotransform.txt \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc
       else # reamsple template to T1 assuming the bold in MNI space
-       exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct1} -t ${temptot1w} \
+       exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct2} -t ${temptot1w2} \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
       fi 
         
