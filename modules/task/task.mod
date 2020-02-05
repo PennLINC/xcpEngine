@@ -1108,7 +1108,7 @@ if [[ -d ${featout} ]]
        exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${struct2} -t ${temptot1w2} \
         -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
       fi 
-        
+        source $FREESURFER_HOME/SetUpFreeSurfer.sh
         exec_sys export  SUBJECTS_DIR=${strucn}/../../freesurfer # freesurfer directory
         xx=$( basename ${img1[sub]})
         subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
@@ -1120,7 +1120,7 @@ if [[ -d ${featout} ]]
         #now do the surface 
         for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --reg ${outdir}/regis.dat --hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --regheader ${subjectid} -hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --interp trilinear 
            ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject $subjectid --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
                     --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
@@ -1132,7 +1132,7 @@ if [[ -d ${featout} ]]
       exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_res4D.dscalar.nii  \
                -left-metric ${outdir}/${prefix}_res4d_lh.func.gii  -right-metric ${outdir}/${prefix}_res4d_rh.func.gii 
 
-      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz
+      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz ${outdir}/reference.nii.gz
    fi 
 
         
