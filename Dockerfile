@@ -258,4 +258,6 @@ RUN apt-get install -y -q --no-install-recommends uuid-runtime
 
 RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 
+RUN bash -c '/xcpEngine/xcpReset'
+
 ENTRYPOINT ["/xcpEngine/xcpEngine"]

@@ -101,7 +101,7 @@ echo \
 ###################################################################
 # Pre-clear any globals to ensure the correct settings are applied.
 ###################################################################
-unset XCPEDIR RPATH FSLDIR ANTSPATH AFNI_PATH C3D_PATH NUMOUT
+unset XCPEDIR RPATH FSLDIR ANTSPATH AFNI_PATH C3D_PATH FREESURFER_HOME NUMOUT
 
 ###################################################################
 # XCPEDIR stores a path to the top-level directory containing all
