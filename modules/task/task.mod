@@ -1125,7 +1125,7 @@ if [[ -d ${featout} ]]
            ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject $subjectid --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
                     --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
 
-           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}res4d_surface_${hem}.func.gii
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_res4d_${hem}.func.gii
 
       done
 
