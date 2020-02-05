@@ -1114,23 +1114,25 @@ if [[ -d ${featout} ]]
         subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
         
         surftemdir=${XCPEDIR}/thirdparty/standard_mesh_atlases/
+        exec_fsl fslmaths ${outdir}/boldresampletoT1.nii.gz -Tmean ${outdir}/reference.nii.gz 
+
+         ${FREESURFER_HOME}/bin/bbregister  --s ${subjectid} --mov ${outdir}/reference.nii.gz  --reg ${outdir}/regis.dat --init-fsl --bold
         #now do the surface 
         for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz --regheader $subjectid  --hemi ${hem} \
-                  --o ${outdir}/${hem}_surface.nii.gz --interp trilinear --reshape 
-           ${FREESURFER_HOME}/bin/mri_surf2surf --srcsubject $subjectid --trgsubject  fsaverage --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
-                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz 
-           ${FREESURFER_HOME}/bin/mris_convert -c ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/res4d_surface_${hem}.func.gii
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --reg ${outdir}/regis.dat --hemi ${hem} \
+               --o ${outdir}/${hem}_surface.nii.gz --interp trilinear 
+           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject $subjectid --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
 
-           exec_sys wb_command -metric-resample ${outdir}/res4d_surface_${hem}.func.gii ${surftemdir}/fs_${hem}/fsaverage.${hem}.sphere.164k_fs_${hem}.surf.gii \
-           ${surftemdir}/resample_fsaverage/fs_LR-deformed_to-fsaverage.${hem}.sphere.164k_fs_LR.surf.gii  ADAP_BARY_AREA ${outdir}/${prefix}_res4d_${hem}.func.gii  -area-metrics \
-           ${surftemdir}/resample_fsaverage/fsaverage.${hem}.midthickness_va_avg.164k_fsavg_${hem}.shape.gii ${surftemdir}/resample_fsaverage/fs_LR.${hem}.midthickness_va_avg.164k_fs_LR.shape.gii 
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}res4d_surface_${hem}.func.gii
+
       done
-      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_res4D.dtseries.nii -volume ${outdir}/boldresampletoT1.nii.gz \
+
+      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_res4D.dscalar.nii  \
                -left-metric ${outdir}/${prefix}_res4d_lh.func.gii  -right-metric ${outdir}/${prefix}_res4d_rh.func.gii 
 
-      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz ${outdir}/res4d_surface_*.func.gii
+      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz
    fi 
 
         
