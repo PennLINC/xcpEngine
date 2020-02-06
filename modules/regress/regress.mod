@@ -444,6 +444,52 @@ smooth_spatial                --SIGNPOST=${signpost}              \
                               --INPUT=${denoised[cxt]//.nii.gz}   \
                               --USAN=${regress_usan[cxt]}         \
                               --USPACE=${regress_usan_space[cxt]}
+
+surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
+   if [[ -f ${surf} ]] # this  check if freesurfer exist 
+   then 
+      res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
+      struct2=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" )
+      
+      temptot1w1=$(find $strucn/anat/ -type f -name "*${template_label1}*to-T1w_mode-image_xfm.h5")
+      temptot1w2=$(echo $temptot1w1 | cut --delimiter " " --fields 1) 
+                  
+       if [[ ${template_label} == 'T1w' ]]
+           then  # reample bold to T1 dimension before freesurfer 
+        exec_ants antsApplyTransforms -d 3 -e 3 -i ${denoised[cxt]} } -r ${struct2} -t ${XCPEDIR}/utils/oneratiotransform.txt \
+        -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc
+
+      else # reamsple template to T1 assuming the bold in MNI space
+       exec_ants antsApplyTransforms -d 3 -e 3 -i ${denoised[cxt]} -r ${struct2} -t ${temptot1w2} \
+        -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
+      fi 
+        source $FREESURFER_HOME/SetUpFreeSurfer.sh
+        exec_sys export  SUBJECTS_DIR=${strucn}/../../freesurfer # freesurfer directory
+        xx=$( basename ${img1[sub]})
+        subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
+        
+        surftemdir=${XCPEDIR}/thirdparty/standard_mesh_atlases/
+        exec_fsl fslmaths ${outdir}/boldresampletoT1.nii.gz -Tmean ${outdir}/reference.nii.gz 
+
+         ${FREESURFER_HOME}/bin/bbregister  --s ${subjectid} --mov ${outdir}/reference.nii.gz  --reg ${outdir}/regis.dat --init-fsl --bold
+        #now do the surface 
+        for hem in lh rh
+          do
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --regheader ${subjectid} --hemi ${hem} \
+               --o ${outdir}/${hem}_surface.nii.gz --interp trilinear 
+           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject $subjectid --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
+
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
+
+      done
+      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_residual.dscalar.nii  \
+               -left-metric ${outdir}/${prefix}_residual_lh.func.gii  -right-metric ${outdir}/${prefix}_residual_rh.func.gii 
+
+      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz ${outdir}/reference.nii.gz
+   fi
+
+
 routine_end
 
 
