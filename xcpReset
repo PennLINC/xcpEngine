@@ -146,6 +146,7 @@ export JQ_PATH=${JQ_PATH}
 ###################################################################
 
 export FREESURFER_HOME=${FREESURFER_HOME}
+source $FREESURFER_HOME/SetUpFreeSurfer.sh
 ###################################################################
 # Outputs of modules may be prepended with an integer indicating
 # their context in the pipeline. Set NUMOUT to 1 to enable this.
