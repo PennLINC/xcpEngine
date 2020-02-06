@@ -1120,7 +1120,7 @@ if [[ -d ${featout} ]]
         #now do the surface 
         for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --regheader ${subjectid} -hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --regheader ${subjectid} --hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --interp trilinear 
            ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject $subjectid --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
                     --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
