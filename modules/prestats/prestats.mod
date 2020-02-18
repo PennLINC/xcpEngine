@@ -26,6 +26,8 @@ source ${XCPEDIR}/core/parseArgsMod
 completion() {
    contains ${prestats_process[cxt]} 'DMT' && configure demeaned 1
    is_1D    ${tmask[cxt]}                  && configure censored 1
+    
+     
    unset  confproc
    source ${XCPEDIR}/core/auditComplete
    source ${XCPEDIR}/core/updateQuality
@@ -1028,6 +1030,8 @@ while (( ${#rem} > 0 ))
                     -x ${subj2temp}                               \
                     -i ${temp2subj}                               \
                     -s ${spaces[sub]} 2>/dev/null
+
+   
     else
      echo "no structural image"   
     
@@ -1127,17 +1131,21 @@ while (( ${#rem} > 0 ))
       t12mnia2=$(ls -f ${cpacdir}/*T1w_to-MNI_affine2.mat )
      
      subroutine           @6.7  Inverting affine transform
+       
+      exec_c3d c3d_affine_tool         \
+      -src  ${referenceVolumeBrain[cxt]}          \
+      -ref  ${struct[cxt]} \
+        ${functot1}        \
+      -fsl2ras            \
+      -oitk ${cpacdir}/func2t1.txt 
+       
+       fun2t1=${cpacdir}/func2t1.txt
+
        exec_ants   antsApplyTransforms           \
             -d       3                             \
-            -o       Linear[${cpacdir}/t12func.mat,1] \
-            -t       ${functot1}
-      t12func=${cpacdir}/t12func.mat
-      
-       exec_ants   antsApplyTransforms           \
-            -d       3                             \
-            -o       Linear[${cpacdir}/mni2t1warp.nii.gz,1] \
-            -t       ${t12mniwarp}
-       mni2t1warp=${cpacdir}/mni2t1warp.nii.gz
+            -o       Linear[${cpacdir}/t12func.txt,1] \
+            -t       ${fun2t1}
+      t12func=${cpacdir}/t12func.txt
 
        exec_ants   antsApplyTransforms           \
             -d       3                             \
@@ -1188,6 +1196,8 @@ while (( ${#rem} > 0 ))
                mnitopnc=${mnitopnc// /,}
                pnc2mni=${pnc2mni// /,}
 
+
+
                ${XCPEDIR}/utils/spaceMetadata          \
                     -o ${spaces[sub]}                 \
                     -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
@@ -1196,10 +1206,11 @@ while (( ${#rem} > 0 ))
                     -i ${mnitopnc}                               \
                     -s ${spaces[sub]} 2>/dev/null
 
-
+             mni2t1warp=${outdir}/cpac/mni2t1warp.nii.gz 
+             exec_fsl fslmaths ${t12mniwarp} -mul -1 ${mni2t1warp}
               hd=',MapHead='${struct_head[cxt]}
               subj2temp="   ${t12mnia0} ${t12mnia1} ${t12mnia2} ${t12mniwarp} "
-              temp2subj="   ${mni2t1warp} ${mni2t1a0} ${mni2t1a1} ${mni2t1a2} "
+              temp2subj="   ${mni2t1warp} ${mni2t1a2} ${mni2t1a1} ${mni2t1a0}   "
               subj2temp=$( echo ${subj2temp})
               temp2subj=$(echo ${temp2subj})
               subj2temp=${subj2temp// /,}
@@ -1211,18 +1222,20 @@ while (( ${#rem} > 0 ))
                     -m ${structural[sub]}:${struct[cxt]}${hd} \
                     -x ${subj2temp}                               \
                     -i ${temp2subj}                               \
-                    -s ${spaces[sub]} 2>/dev/null
+                    -s ${spaces[sub]} 2>/dev/null  
 
-              ${XCPEDIR}/utils/spaceMetadata          \
-                    -o ${spaces[sub]}   
-                    -f ${structural[sub]}:${struct[cxt]}${hd} \ 
-                    -m itk:${referenceVolumeBrain[cxt]} \
-                    -x ${functot1} -i  ${t12func} -s ${spaces[sub]} 2>/dev/null
+     
+                     transform_set     ${spaces[sub]}             \
+                     itk:${fun2t1}     \
+                     ${space[sub]}  ${structural[sub]}
+                     transform_set     ${spaces[sub]}             \
+                     itk:${t12func}     \
+                     ${structural[sub]}  ${space[sub]}
+  
                
 
             #test the registration 
-         exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain[cxt]} -r ${struct_head[cxt]} \ 
-                         -t ${functot1} -o ${cpacdir}/refvol2t1w.nii.gz 
+         exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain[cxt]} -r ${struct_head[cxt]} -t ${fun2t1} -o ${cpacdir}/refvol2t1w.nii.gz 
       
       
       subroutine        @  Quality assessment
