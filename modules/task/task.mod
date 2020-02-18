@@ -1114,9 +1114,9 @@ if [[ -d ${featout} ]]
         subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
         
         surftemdir=${XCPEDIR}/thirdparty/standard_mesh_atlases/
-        exec_fsl fslmaths ${outdir}/boldresampletoT1.nii.gz -Tmean ${outdir}/reference.nii.gz 
+        #exec_fsl fslmaths ${outdir}/boldresampletoT1.nii.gz -Tmean ${outdir}/reference.nii.gz 
 
-         ${FREESURFER_HOME}/bin/bbregister  --s ${subjectid} --mov ${outdir}/reference.nii.gz  --reg ${outdir}/regis.dat --init-fsl --bold
+         #${FREESURFER_HOME}/bin/bbregister  --s ${subjectid} --mov ${outdir}/reference.nii.gz  --reg ${outdir}/regis.dat --init-fsl --bold
         #now do the surface 
         for hem in lh rh
           do
@@ -1132,7 +1132,7 @@ if [[ -d ${featout} ]]
       exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_res4D.dscalar.nii  \
                -left-metric ${outdir}/${prefix}_res4d_lh.func.gii  -right-metric ${outdir}/${prefix}_res4d_rh.func.gii 
 
-      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz ${outdir}/reference.nii.gz
+      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
    fi 
 
         
