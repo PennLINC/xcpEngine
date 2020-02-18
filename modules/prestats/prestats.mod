@@ -1105,7 +1105,140 @@ while (( ${#rem} > 0 ))
          routine_end
          ;;
       
+      CPA)
       
+      
+      exec_sys mkdir -p  $outdir/cpac
+      cpacdir=${outdir}/cpac
+      python $XCPEDIR/utils/cpac_ingress.py  -i ${img1[sub]} -o ${cpacdir}
+     
+      output struct_head $(ls -f ${cpacdir}/*T1wbrain.nii.gz)
+      output struct $(ls -f ${cpacdir}/*T1wbrain.nii.gz)
+      output struct_mask $(ls -f ${cpacdir}/*T1wmask.nii.gz)
+      output segmentation $(ls -f ${cpacdir}/*segmentation.nii.gz)
+      output referenceVolumeBrain $(ls -f ${cpacdir}/*referenceVolume.nii.gz)
+      output brainmask  $(ls -f ${cpacdir}/*_brainmask.nii.gz)
+      output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
+
+      functot1=$(ls -f ${cpacdir}/*_from-func_to-T1w_affine.mat )
+      t12mniwarp=$(ls -f ${cpacdir}/*_warp.nii.gz )
+      t12mnia0=$(ls -f ${cpacdir}/*T1w_to-MNI_initial_affine0.mat )
+      t12mnia1=$(ls -f ${cpacdir}/*T1w_to-MNI_rigid_affine1.mat )
+      t12mnia2=$(ls -f ${cpacdir}/*T1w_to-MNI_affine2.mat )
+     
+     subroutine           @6.7  Inverting affine transform
+       exec_ants   antsApplyTransforms           \
+            -d       3                             \
+            -o       Linear[${cpacdir}/t12func.mat,1] \
+            -t       ${functot1}
+      t12func=${cpacdir}/t12func.mat
+      
+       exec_ants   antsApplyTransforms           \
+            -d       3                             \
+            -o       Linear[${cpacdir}/mni2t1warp.nii.gz,1] \
+            -t       ${t12mniwarp}
+       mni2t1warp=${cpacdir}/mni2t1warp.nii.gz
+
+       exec_ants   antsApplyTransforms           \
+            -d       3                             \
+            -o       Linear[${cpacdir}/mni2t1a0.mat,1] \
+            -t       ${t12mnia0}
+       mni2t1a0=${cpacdir}/mni2t1a0.mat
+
+       exec_ants   antsApplyTransforms           \
+            -d       3                             \
+            -o       Linear[${cpacdir}/mni2t1a1.mat,1] \
+            -t       ${t12mnia1}
+       mni2t1a1=${cpacdir}/mni2t1a1.mat
+
+       exec_ants   antsApplyTransforms           \
+            -d       3                             \
+            -o       Linear[${cpacdir}/mni2t1a2.mat,1] \
+            -t       ${t12mnia2}
+       mni2t1a2=${cpacdir}/mni2t1a2.mat
+
+      
+      subroutine        @  generate new ${spaces[sub]} with spaceMetadata
+
+               rm -f ${spaces[sub]}
+               echo '{}'  >> ${spaces[sub]}
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+                       
+                       mnitoas=$( echo ${mnitoas})
+                       oas2mni=$(echo ${oas2mni})
+                       mnitoas=${mnitoas// /,}
+                       oas2mni=${oas2mni// /,}
+
+                       ${XCPEDIR}/utils/spaceMetadata  \
+                         -o ${spaces[sub]}                 \
+                         -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                         -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
+                         -x ${oas2mni} -i ${mnitoas}     \
+                         -s ${spaces[sub]} 2>/dev/null
+                       
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+               mnitopnc=$( echo ${mnitopnc})
+               pnc2mni=$(echo ${pnc2mni})
+               mnitopnc=${mnitopnc// /,}
+               pnc2mni=${pnc2mni// /,}
+
+               ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}                 \
+                    -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
+                    -m PNC%2x2x2:${XCPEDIR}/space/PNC/PNC-2x2x2.nii.gz \
+                    -x ${pnc2mni}                               \
+                    -i ${mnitopnc}                               \
+                    -s ${spaces[sub]} 2>/dev/null
+
+
+              hd=',MapHead='${struct_head[cxt]}
+              subj2temp="   ${t12mnia0} ${t12mnia1} ${t12mnia2} ${t12mniwarp} "
+              temp2subj="   ${mni2t1warp} ${mni2t1a0} ${mni2t1a1} ${mni2t1a2} "
+              subj2temp=$( echo ${subj2temp})
+              temp2subj=$(echo ${temp2subj})
+              subj2temp=${subj2temp// /,}
+              temp2subj=${temp2subj// /,}
+
+              ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}                 \
+                    -f ${standard}:${template}        \
+                    -m ${structural[sub]}:${struct[cxt]}${hd} \
+                    -x ${subj2temp}                               \
+                    -i ${temp2subj}                               \
+                    -s ${spaces[sub]} 2>/dev/null
+
+              ${XCPEDIR}/utils/spaceMetadata          \
+                    -o ${spaces[sub]}   
+                    -f ${structural[sub]}:${struct[cxt]}${hd} \ 
+                    -m itk:${referenceVolumeBrain[cxt]} \
+                    -x ${functot1} -i  ${t12func} -s ${spaces[sub]} 2>/dev/null
+               
+
+            #test the registration 
+         exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain[cxt]} -r ${struct_head[cxt]} \ 
+                         -t ${functot1} -o ${cpacdir}/refvol2t1w.nii.gz 
+      
+      
+      subroutine        @  Quality assessment
+    registration_quality=( $(exec_xcp \
+      maskOverlap.R           \
+      -m ${segmentation[cxt]}   \
+      -r ${cpacdir}/refvol2t1w.nii.gz ) )
+    echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
+    echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
+    echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
+    echo  ${registration_quality[3]} > ${coreg_dice[cxt]}
+
+      exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+        intermediate=${intermediate}_${cur} 
+    routine_end
+      ;;
       
       
       
