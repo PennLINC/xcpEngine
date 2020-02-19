@@ -54,6 +54,11 @@ outmat=0
 ## read the confoundmatrix
 mat1 <- read.table(in1,sep = '\t', header =TRUE)
 b=colnames(mat1)
+if ( length(b)==1 ) {
+   mat1 <- read.table(in1,sep = ' ', header =TRUE)
+   b=colnames(mat1)
+   }
+
  if ( b[1]=='csf' ) {
 
       if (in2 == 'csf') {
