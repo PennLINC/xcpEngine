@@ -1122,8 +1122,8 @@ while (( ${#rem} > 0 ))
       output segmentation $(ls -f ${cpacdir}/*segmentation.nii.gz)
       output referenceVolumeBrain $(ls -f ${cpacdir}/*referenceVolume.nii.gz)
       output brainmask  $(ls -f ${cpacdir}/*_brainmask.nii.gz)
-      output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
-
+      #output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
+      exec_sys  cp $(ls -f ${cpacdir}/*_regressors.tsv) $outdir/${prefix}_fmriconf.tsv
       functot1=$(ls -f ${cpacdir}/*_from-func_to-T1w_affine.mat )
       t12mniwarp=$(ls -f ${cpacdir}/*_warp.nii.gz )
       t12mnia0=$(ls -f ${cpacdir}/*T1w_to-MNI_initial_affine0.mat )
