@@ -16,8 +16,8 @@
 ###################################################################
 # Load required libraries
 ###################################################################
-suppressMessages(suppressWarnings(library(optparse)))
-suppressMessages(suppressWarnings(library(pracma)))
+library(optparse)
+library(pracma)
 
 ###################################################################
 # Parse arguments to script, and ensure that the required arguments
@@ -54,12 +54,8 @@ outmat=0
 ## read the confoundmatrix
 mat1 <- read.table(in1,sep = '\t', header =TRUE)
 b=colnames(mat1)
-if ( length(b)==1 ) {
-   mat1 <- read.table(in1,sep = ' ', header =TRUE)
-   b=colnames(mat1)
-   }
 
- if ( b[1]=='csf' ) {
+ #if ( b[1]=='csf' ) {
 
       if (in2 == 'csf') {
       outmat=mat1$csf
@@ -110,43 +106,6 @@ if ( length(b)==1 ) {
       } else  {
       sprintf("the input is not available yet") 
    }
-} else {
-       if (in2 == 'csf') {
-       outmat=mat1$CSF
-       } else if (in2 == 'wm' ) {
-       outmat=mat1$WhiteMatter
-       }  else if (in2 == 'gsr' ) {
-       outmat=mat1$GlobalSignal
-       } else if ( in2 == 'tCompCor' ) {
-       outmat <- mat1[ , grepl('tCompCor',names(mat1))]
-       } else if ( in2 == 'aCompCor' ) {
-        outmat <- mat1[ , grepl('aCompCor', names(mat1))]
-       } else if ( in2 == 'Cosine') { 
-       outmat = mat1[ , grepl( 'Cosine', names(mat1))]
-       } else if ( in2 == 'rps' ) {
-       outmat=cbind(mat1$RotX,mat1$RotY,mat1$RotZ,mat1$X,mat1$Y,mat1$Z)
-       } else if (in2 == 'stdVARS') { 
-       outmat=mat1$stdVARS
-        outmat=suppressWarnings(as.numeric(as.character(outmat)))
-        outmat[is.na(outmat)]=0
-        outmat=as.factor(outmat) 
-       } else if (in2 == 'allVARS') {
-       outmat=mat1[ , grepl( 'VARS' , names(mat1) ) ]
-        outmat=suppressWarnings(as.numeric(as.character(outmat)))
-        outmat[is.na(outmat)]=0
-        outmat=as.factor(outmat) 
-       } else if ( in2 == 'rms' ) {
-        mat2=cbind(mat1$X,mat1$Y,mat1$Z)
-        rms=sqrt(mat2^2)
-       outmat=rowMeans(rms)  
-        } else if (in2 == 'fd') {
-        outmat = mat1$FramewiseDisplacement
-        outmat=suppressWarnings(as.numeric(as.character(outmat)))
-        outmat[is.na(outmat)]=0
-        outmat=as.factor(outmat) 
-        } else  {
-        sprintf("the input is not available yet") 
-      }
-}
+#}
 
 write.table(outmat,file=out, col.names = F, row.names=F,quote=F)

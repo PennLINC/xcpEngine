@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+
 import os,glob, pathlib,shutil
 import numpy as np 
 import pandas as pd
@@ -64,6 +69,6 @@ if 'tCompCorDetrendPC0' in regressor.columns:
 # ask for aroma and ICA 
 fd=pd.read_csv(glob.glob(gendir+'/frame_wise_displacement_power/'+scandid+'/*.1D')[0],header=None,names=['framewise_displacement'])
 regressors=pd.concat([regressor, fd], axis=1)
-regressors.to_csv(outputdir+'/'+subjid+'_regressors.tsv',index=False,sep=' ')
+regressors.to_csv(outputdir+'/'+subjid+'_regressors.tsv',index=False,sep='\t',encoding='utf-8')
 
 print('done')
