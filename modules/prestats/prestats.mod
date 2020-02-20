@@ -304,8 +304,8 @@ while (( ${#rem} > 0 ))
 
                rm -f ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]} 2>/dev/null 
-               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
                 oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -321,8 +321,8 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
 
-               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                         $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                mnitopnc=$( echo ${mnitopnc})
@@ -340,8 +340,8 @@ while (( ${#rem} > 0 ))
 
 
               hd=',MapHead='${struct_head[cxt]}
-              subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)
-                           $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)"
+              subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)
+                           $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)"
               temp2subj="   $(ls -d ${antsct[sub]}/*TemplateToSubject0Warp.nii.gz) 
                           $(ls -d ${antsct[sub]}/*TemplateToSubject1GenericAffine.mat)"
               subj2temp=$( echo ${subj2temp})
@@ -439,8 +439,8 @@ while (( ${#rem} > 0 ))
 
                   rm -f ${spaces[sub]}
                        echo '{}'  >> ${spaces[sub]}
-                       mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                       mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
                       oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -456,8 +456,8 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
 
-                       mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+                       mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                        pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                                     $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                        mnitopnc=$( echo ${mnitopnc})
@@ -557,8 +557,8 @@ while (( ${#rem} > 0 ))
                 echo '{}'  >> ${spaces[sub]}
 
 
-                mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat,)"
                 oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -575,8 +575,8 @@ while (( ${#rem} > 0 ))
                          -s ${spaces[sub]} 2>/dev/null
 
 
-                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat,)"
                 pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                        
@@ -734,8 +734,8 @@ while (( ${#rem} > 0 ))
                 rm -f ${spaces[sub]}
                 echo '{}'  >> ${spaces[sub]}
 
-                mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
                 oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -752,8 +752,8 @@ while (( ${#rem} > 0 ))
                          -s ${spaces[sub]} 2>/dev/null
 
 
-                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                 pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                        
@@ -843,8 +843,8 @@ while (( ${#rem} > 0 ))
 
                rm -f ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
-               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
                 oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -860,8 +860,8 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
                        
-               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                         $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                mnitopnc=$( echo ${mnitopnc})
@@ -879,8 +879,8 @@ while (( ${#rem} > 0 ))
 
 
               hd=',MapHead='${struct_head[sub]}
-              subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)
-                           $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)"
+              subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)
+                           $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)"
               temp2subj="   $(ls -d ${antsct[sub]}/*TemplateToSubject0Warp.nii.gz) 
                           $(ls -d ${antsct[sub]}/*TemplateToSubject1GenericAffine.mat)"
               subj2temp=$( echo ${subj2temp})
@@ -978,8 +978,8 @@ while (( ${#rem} > 0 ))
 
                rm -f ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
-               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
                 oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -995,8 +995,8 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
                        
-               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                         $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                mnitopnc=$( echo ${mnitopnc})
@@ -1014,8 +1014,8 @@ while (( ${#rem} > 0 ))
 
 
               hd=',MapHead='${struct_head[cxt]}
-              subj2temp="   $strucdir/${prefix}_SubjectToTemplate0GenericAffine.mat
-                           $strucdir/${prefix}_SubjectToTemplate1Warp.nii.gz"
+              subj2temp="   $strucdir/${prefix}_SubjectToTemplate1Warp.nii.gz
+                           $strucdir/${prefix}_SubjectToTemplate0GenericAffine.mat"
               temp2subj="   $strucdir/${prefix}_TemplateToSubject0Warp.nii.gz 
                           $strucdir/${prefix}_TemplateToSubject1GenericAffine.mat"
               subj2temp=$( echo ${subj2temp})
@@ -1167,11 +1167,10 @@ while (( ${#rem} > 0 ))
 
       
       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
-
-               rm -f ${spaces[sub]}
+               rm -rf ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
-               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
                 oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
@@ -1187,16 +1186,14 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
                        
-               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
-                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                         $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
                mnitopnc=$( echo ${mnitopnc})
                pnc2mni=$(echo ${pnc2mni})
                mnitopnc=${mnitopnc// /,}
                pnc2mni=${pnc2mni// /,}
-
-
 
                ${XCPEDIR}/utils/spaceMetadata          \
                     -o ${spaces[sub]}                 \
@@ -1206,10 +1203,11 @@ while (( ${#rem} > 0 ))
                     -i ${mnitopnc}                               \
                     -s ${spaces[sub]} 2>/dev/null
 
+
              mni2t1warp=${outdir}/cpac/mni2t1warp.nii.gz 
              exec_fsl fslmaths ${t12mniwarp} -mul -1 ${mni2t1warp}
               hd=',MapHead='${struct_head[cxt]}
-              subj2temp="   ${t12mnia0} ${t12mnia1} ${t12mnia2} ${t12mniwarp} "
+              subj2temp="   ${t12mniwarp} ${t12mnia2}  ${t12mnia1} ${t12mnia0}  "
               temp2subj="   ${mni2t1warp} ${mni2t1a2} ${mni2t1a1} ${mni2t1a0}   "
               subj2temp=$( echo ${subj2temp})
               temp2subj=$(echo ${temp2subj})
@@ -1235,7 +1233,10 @@ while (( ${#rem} > 0 ))
                
 
             #test the registration 
-         exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain[cxt]} -r ${struct_head[cxt]} -t ${fun2t1} -o ${cpacdir}/refvol2t1w.nii.gz 
+
+
+         exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain[cxt]} -r ${struct_head[cxt]} \
+         -t ${fun2t1} -o ${cpacdir}/refvol2t1w.nii.gz 
       
       
       subroutine        @  Quality assessment
