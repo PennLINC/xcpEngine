@@ -1115,13 +1115,29 @@ while (( ${#rem} > 0 ))
       exec_sys mkdir -p  $outdir/cpac
       cpacdir=${outdir}/cpac
       python $XCPEDIR/utils/cpac_ingress.py  -i ${img1[sub]} -o ${cpacdir}
-     
-      output struct_head $(ls -f ${cpacdir}/*T1wbrain.nii.gz)
-      output struct $(ls -f ${cpacdir}/*T1wbrain.nii.gz)
-      output struct_mask $(ls -f ${cpacdir}/*T1wmask.nii.gz)
-      output segmentation $(ls -f ${cpacdir}/*segmentation.nii.gz)
-      output referenceVolumeBrain $(ls -f ${cpacdir}/*referenceVolume.nii.gz)
-      output brainmask  $(ls -f ${cpacdir}/*_brainmask.nii.gz)
+       
+      # get the template orientation 
+      struct1=$(ls -f ${cpacdir}/*T1wbrain.nii.gz)
+      d1=$( fslval ${img[sub]} pixdim1)
+      d2=$( fslval ${img[sub]} pixdim2)
+      d3=$( fslval ${img[sub]} pixdim3)
+      exec_afni 3dresample  -dxyz $d1 $d2 $d3 -inset ${struct1}  \
+      -prefix ${outdir}/${prefix}_structbrain.nii.gz   -overwrite 
+      output struct_head ${outdir}/${prefix}_structbrain.nii.gz
+      output struct ${outdir}/${prefix}_structbrain.nii.gz
+
+      exec_afni 3dresample  -master ${struct[cxt]} -inset $(ls -f ${cpacdir}/*T1wmask.nii.gz) \
+        -prefix ${outdir}/${prefix}_structmask.nii.gz -overwrite
+      output struct_mask ${outdir}/${prefix}_structmask.nii.gz
+
+      exec_afni 3dresample  -master ${struct[cxt]} -inset $(ls -f ${cpacdir}/*segmentation.nii.gz) \
+      -prefix ${outdir}/${prefix}_segmentation.nii.gz -overwrite
+      output segmentation ${outdir}/${prefix}_segmentation.nii.gz
+
+      referenceVolumeBrain=$(ls -f ${cpacdir}/*referenceVolume.nii.gz)
+
+      mask=$(ls -f ${cpacdir}/*_brainmask.nii.gz)
+
       #output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
       exec_sys  cp $(ls -f ${cpacdir}/*_regressors.tsv) $outdir/${prefix}_fmriconf.tsv
       functot1=$(ls -f ${cpacdir}/*_from-func_to-T1w_affine.mat )
@@ -1133,13 +1149,19 @@ while (( ${#rem} > 0 ))
      subroutine           @6.7  Inverting affine transform
        
       exec_c3d c3d_affine_tool         \
-      -src  ${referenceVolumeBrain[cxt]}          \
+      -src  ${referenceVolumeBrain}          \
       -ref  ${struct[cxt]} \
         ${functot1}        \
       -fsl2ras            \
       -oitk ${cpacdir}/func2t1.txt 
        
-       fun2t1=${cpacdir}/func2t1.txt
+      fun2t1=${cpacdir}/func2t1.txt
+        
+      exec_ants antsApplyTransforms -d 3 -e 3 -i ${mask} -r ${struct[cxt]} -t ${fun2t1} \
+       -o ${outdir}/${prefix}_mask.nii.gz  -n  NearestNeighbor
+      
+      output mask ${outdir}/${prefix}_mask.nii.gz 
+
 
        exec_ants   antsApplyTransforms           \
             -d       3                             \
@@ -1169,10 +1191,10 @@ while (( ${#rem} > 0 ))
       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
                rm -rf ${spaces[sub]}
                echo '{}'  >> ${spaces[sub]}
-               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)
-                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)"
-                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
-                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
+               mnitoas="    $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_0Affine.mat)
+                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/MNI-OASIS_1Warp.nii.gz)"
+                oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)
+                          $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)"
                        
                        mnitoas=$( echo ${mnitoas})
                        oas2mni=$(echo ${oas2mni})
@@ -1186,10 +1208,10 @@ while (( ${#rem} > 0 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
                        
-               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
-                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
-               pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
-                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+               mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)"
+               pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)
+                        $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)"
                mnitopnc=$( echo ${mnitopnc})
                pnc2mni=$(echo ${pnc2mni})
                mnitopnc=${mnitopnc// /,}
@@ -1207,8 +1229,8 @@ while (( ${#rem} > 0 ))
              mni2t1warp=${outdir}/cpac/mni2t1warp.nii.gz 
              exec_fsl fslmaths ${t12mniwarp} -mul -1 ${mni2t1warp}
               hd=',MapHead='${struct_head[cxt]}
-              subj2temp="   ${t12mniwarp} ${t12mnia2}  ${t12mnia1} ${t12mnia0}  "
-              temp2subj="   ${mni2t1warp} ${mni2t1a2} ${mni2t1a1} ${mni2t1a0}   "
+              subj2temp="  ${t12mnia0} ${t12mnia1}  ${t12mnia2}  ${t12mniwarp}  "
+              temp2subj="  ${mni2t1a0} ${mni2t1a1} ${mni2t1a2}  ${mni2t1warp}  "
               subj2temp=$( echo ${subj2temp})
               temp2subj=$(echo ${temp2subj})
               subj2temp=${subj2temp// /,}
@@ -1222,34 +1244,32 @@ while (( ${#rem} > 0 ))
                     -i ${temp2subj}                               \
                     -s ${spaces[sub]} 2>/dev/null  
 
-     
-                     transform_set     ${spaces[sub]}             \
-                     itk:${fun2t1}     \
-                     ${space[sub]}  ${structural[sub]}
-                     transform_set     ${spaces[sub]}             \
-                     itk:${t12func}     \
-                     ${structural[sub]}  ${space[sub]}
-  
-               
 
-            #test the registration 
+      exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain} \
+         -r ${struct_head[cxt]}  -t ${fun2t1} -o ${cpacdir}/refvol2t1w.nii.gz \
+         -n LanczosWindowedSinc 
 
+       exec_fsl immv  ${cpacdir}/refvol2t1w.nii.gz ${outdir}/${prefix}_referenceVolume.nii.gz 
+       output referenceVolume ${outdir}/${prefix}_referenceVolume.nii.gz
+       exec_fsl imcp ${outdir}/${prefix}_referenceVolume.nii.gz ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
+       output referenceVolumeBrain  ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
 
-         exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain[cxt]} -r ${struct_head[cxt]} \
-         -t ${fun2t1} -o ${cpacdir}/refvol2t1w.nii.gz 
-      
       
       subroutine        @  Quality assessment
     registration_quality=( $(exec_xcp \
       maskOverlap.R           \
-      -m ${segmentation[cxt]}   \
-      -r ${cpacdir}/refvol2t1w.nii.gz ) )
+      -m ${struct[cxt]}   \
+      -r ${referenceVolume[cxt]} ) )
     echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
     echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
     echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
     echo  ${registration_quality[3]} > ${coreg_dice[cxt]}
-
-      exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+     
+   exec_ants antsApplyTransforms -d 3 -e 3 -i ${img[sub]} \
+   -r ${struct[cxt]}  -t ${fun2t1} -o ${intermediate}_${cur}.nii.gz \
+   -n LanczosWindowedSinc
+   
+      #exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
         intermediate=${intermediate}_${cur} 
     routine_end
       ;;
