@@ -1250,7 +1250,7 @@ while (( ${#rem} > 0 ))
          -n LanczosWindowedSinc 
 
        exec_fsl immv  ${cpacdir}/refvol2t1w.nii.gz ${outdir}/${prefix}_referenceVolume.nii.gz 
-       exec_fsl ${outdir}/${prefix}_referenceVolume.nii.gz -mul  ${mask[cxt]} ${outdir}/${prefix}_referenceVolume.nii.gz
+       exec_fsl fslmaths ${outdir}/${prefix}_referenceVolume.nii.gz -mul  ${mask[cxt]} ${outdir}/${prefix}_referenceVolume.nii.gz
        output referenceVolume ${outdir}/${prefix}_referenceVolume.nii.gz
        exec_fsl imcp ${outdir}/${prefix}_referenceVolume.nii.gz ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
        output referenceVolumeBrain  ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
