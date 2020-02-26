@@ -1159,7 +1159,7 @@ while (( ${#rem} > 0 ))
         
       exec_ants antsApplyTransforms -d 3 -e 3 -i ${mask} -r ${struct[cxt]} -t ${fun2t1} \
        -o ${outdir}/${prefix}_mask.nii.gz  -n  NearestNeighbor
-      
+      exec_fsl fslmaths ${outdir}/${prefix}_mask.nii.gz -mul ${struct_mask[cxt]} ${outdir}/${prefix}_mask.nii.gz 
       output mask ${outdir}/${prefix}_mask.nii.gz 
 
 
@@ -1250,6 +1250,7 @@ while (( ${#rem} > 0 ))
          -n LanczosWindowedSinc 
 
        exec_fsl immv  ${cpacdir}/refvol2t1w.nii.gz ${outdir}/${prefix}_referenceVolume.nii.gz 
+       exec_fsl ${outdir}/${prefix}_referenceVolume.nii.gz -mul  ${mask[cxt]} ${outdir}/${prefix}_referenceVolume.nii.gz
        output referenceVolume ${outdir}/${prefix}_referenceVolume.nii.gz
        exec_fsl imcp ${outdir}/${prefix}_referenceVolume.nii.gz ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
        output referenceVolumeBrain  ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
