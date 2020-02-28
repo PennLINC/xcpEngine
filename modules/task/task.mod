@@ -317,7 +317,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                        oas2mni=${oas2mni// /,}
 
                        ${XCPEDIR}/utils/spaceMetadata  \
-                         -o ${spaces[sub]}                 \
+                         -o ${spaces[sub]}                 \ 
                          -f MNI%2x2x2:${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz        \
                          -m OASIS%2x2x2:${XCPEDIR}/space/OASIS/OASIS-2x2x2.nii.gz \
                          -x ${oas2mni} -i ${mnitoas}     \
@@ -545,7 +545,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                          -s ${spaces[sub]} 2>/dev/null
 
                 
-                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz,)
+                mnitopnc="    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
                            $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
                 pnc2mni="  $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
