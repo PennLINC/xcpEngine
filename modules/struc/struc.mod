@@ -138,7 +138,7 @@ struct
    The fully processed (bias-field corrected and skull-stripped)
    brain in native anatomical space.
 struct_std
-   The subject\'s brain following normalisation to a standard or
+   The subject brain following normalisation to a standard or
    template space. This should not be processed as a derivative.
 xfm_affine
    A matrix that defines an affine transformation from anatomical
@@ -625,7 +625,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    exec_sys imcp ${processed} ${struct[cxt]}
    ################################################################
    # Ensure that a mask is available for future modules. If one
-   # hasn't been generated, assume that the input was already
+   # hasnt been generated, assume that the input was already
    # masked.
    ################################################################
    if ! is_image ${mask[cxt]}
