@@ -42,7 +42,7 @@ standard=MNI%1x1x1
 # PIPELINE
 ###################################################################
 
-pipeline=struc,gmd,jlf,roiquant,qcanat
+pipeline=struc,gmd,jlf,roiquant,norm,qcanat
 
 ###################################################################
 # 1 STRUC
@@ -77,7 +77,8 @@ jlf_extract[3]=1
 jlf_keep_warps[3]=1
 jlf_quick[3]=0
 jlf_cohort[3]=Younger24
-jlf_parallel[3]=none
+jlf_ncpu[3]=2
+jlf_parallel[3]=1
 jlf_rerun[3]=0
 jlf_cleanup[3]=1
 

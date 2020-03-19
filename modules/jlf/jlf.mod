@@ -131,7 +131,7 @@ echo ${img[sub]} 2
       -d       3                       \
       -q       ${jlf_quick[cxt]}       \
       -f       0                       \
-      -j       2                       \
+      -j       ${jlf_ncpu[cxt]}                       \
       -k       ${jlf_keep_warps[cxt]}  \
       -t       ${img}             \
       -o       ${outdir}/${prefix}_    \
