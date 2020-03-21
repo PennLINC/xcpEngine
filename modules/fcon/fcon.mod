@@ -234,11 +234,19 @@ for net in ${atlas_names[@]}
       then
       subroutine              @1.3  Computing network timeseries
       exec_sys rm -f ${ts[cxt]}
+      if is_image ${denoised[sub]} ; then 
       exec_xcp roi2ts.R                      \
          -i    ${denoised[sub]}                       \
          -r    ${nodemap[cxt]}               \
          -l    ${a[NodeIndex]}               \
          >>    ${ts[cxt]}
+      elif is_image ${res4d[sub]}  ; then 
+      exec_xcp roi2ts.R                      \
+         -i    ${res4d[sub]}               \
+         -r    ${nodemap[cxt]}               \
+         -l    ${a[NodeIndex]}               \
+         >>    ${ts[cxt]}
+      fi
    fi
 
 
