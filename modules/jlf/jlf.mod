@@ -113,16 +113,16 @@ if ! is_image ${labels[cxt]} \
    done
 
    subroutine                 @1.5  Configuring parallelisation
-   case ${jlf_parallel[cxt]} in
-   sge)
-      define jlf_parallel  1
-      ;;
-   pbs)
-      define jlf_parallel  4
-      ;;
-   *)
-      define jlf_parallel  0
-   esac
+   #case ${jlf_parallel[cxt]} in
+   #sge)
+      #define jlf_parallel  1
+      #;;
+   #pbs)
+     # define jlf_parallel  4
+      #;;
+   #*)
+     # define jlf_parallel  0
+   #esac
 echo ${img[sub]} 2
    subroutine                 @1.6a Executing joint label fusion routine
    subroutine                 @1.6b Delegating control to antsJointLabelFusion

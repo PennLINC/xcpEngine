@@ -94,12 +94,19 @@ smooth_spatial                --SIGNPOST=${signpost}              \
                               --INPUT=${uncensored[sub]}           \
                               --USAN=${alff_usan[cxt]}            \
                               --USPACE=${alff_usan_space[cxt]}
-else
+elif is_image ${denoised[sub]} ; then 
 smooth_spatial                --SIGNPOST=${signpost}              \
                               --FILTER=alff_sptf[cxt]             \
                               --INPUT=${denoised[sub]}           \
                               --USAN=${alff_usan[cxt]}            \
                               --USPACE=${alff_usan_space[cxt]}
+elif is_image ${res4d[sub]} ; then 
+smooth_spatial                --SIGNPOST=${signpost}              \
+                              --FILTER=alff_sptf[cxt]             \
+                              --INPUT=${res4d[sub]}           \
+                              --USAN=${alff_usan[cxt]}            \
+                              --USPACE=${alff_usan_space[cxt]}
+                                 
 fi
 
 routine_end

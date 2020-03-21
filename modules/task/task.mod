@@ -1089,6 +1089,10 @@ if [[ -d ${featout} ]]
       done
    fi
    
+    res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
+    
+    output  res4d ${res4d}
+   
    # add post surface processing here if  there is fmriprep 
    
    surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )

@@ -78,7 +78,7 @@ jlf_keep_warps[3]=0
 jlf_quick[3]=0
 jlf_cohort[3]=Younger24
 jlf_ncpu[3]=2
-jlf_parallel[3]=1
+jlf_parallel[3]=sge
 jlf_rerun[3]=0
 jlf_cleanup[3]=1
 
