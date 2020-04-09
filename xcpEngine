@@ -19,6 +19,9 @@ args=`echo $@`
  Development team:
  Lead:         Rastko Ciric
                rastko@mail.med.upenn.edu
+ Maintainers and contribut:
+           Azeez Adebimpe 
+           adebimpe@upenn.edu
  Multimodal:   Adon FG Rosen
                adrose@mail.med.upenn.edu
  PI:           Ted Satterthwaite
@@ -34,12 +37,10 @@ args=`echo $@`
  As a courtesy, we ask that you include the following citations
  in publications that make use of this program:
 
- Ciric R, Wolf DH, Power JD, Roalf DR, Baum GL, Ruparel K,
-    Shinohara RT, Elliott MA, Eickhoff SB, Davatzikos C, Gur RC,
-    Gur RE, Bassett DS, Satterthwaite TD (in press)
-    Benchmarking participant-level confound regression strategies
-    for the control of motion artifact in studies of functional
-    connectivity. NeuroImage.
+ , Rastko Ciric, Adon F. G. Rosen, Guray Erus, Matthew Cieslak, Azeez Adebimpe, 
+ Philip A. Cook, Danielle S. Bassett, Christos Davatzikos, Daniel H. Wolf, 
+ Theodore D. Satterthwaite Mitigating head motion artifact in functional 
+ connectivity MRI,Nature Protocol 
 
  Dependencies:
   * FSL (available from FMRIB)
