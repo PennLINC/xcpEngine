@@ -71,15 +71,4 @@ fd=pd.read_csv(glob.glob(gendir+'/frame_wise_displacement_power/'+scandid+'/*.1D
 regressors=pd.concat([regressor, fd], axis=1)
 regressors.to_csv(outputdir+'/'+subjid+'_regressors.tsv',index=False,sep='\t',encoding='utf-8')
 
-# print resampling the T1w to bold 
-os.chdir(outputdir)
-from niworkflows.interfaces.utils import GenerateSamplingReference
-gen=GenerateSamplingReference()
-gen.inputs.fixed_image=outputdir+'/'+subjid+'_T1wbrain.nii.gz'
-gen.inputs.moving_image=outputdir+'/'+subjid+scandid+'_referenceVolume.nii.gz'
-gen.inputs.fov_mask=outputdir+'/'+subjid+'_T1wmask.nii.gz'
-gen.inputs.keep_native=True
-gen.inputs.xform_code=None
-gen.run()
-
 print('done')

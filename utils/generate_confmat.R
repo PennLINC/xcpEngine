@@ -94,9 +94,8 @@ b=colnames(mat1)
      outmat[is.na(outmat)]=0
      outmat=as.factor(outmat)
      } else if ( in2 == 'rms' ) {
-     mat2=cbind(mat1$trans_x,mat1$trans_y,mat1$trans_z)
-     rms=sqrt(mat2^2)
-     outmat=rowMeans(rms)
+     mat2=(cbind(mat1$trans_x,mat1$trans_y,mat1$trans_z))^2
+     outmat=sqrt(rowSum(mat2)/3)
      outmat[is.na(outmat)]=0  
     } else if (in2 == 'fd') {
      outmat = mat1$framewise_displacement

@@ -1117,12 +1117,12 @@ while (( ${#rem} > 0 ))
       python $XCPEDIR/utils/cpac_ingress.py  -i ${img1[sub]} -o ${cpacdir}
        
       # get the template orientation 
-      struct1=$(ls -f ${cpacdir}/*T1wbrain_reference.nii.gz)
-      #d1=$( fslval ${img[sub]} pixdim1)
-      #d2=$( fslval ${img[sub]} pixdim2)
-      #d3=$( fslval ${img[sub]} pixdim3)
-      exec_fsl imcp  ${struct1}  ${outdir}/${prefix}_structbrain.nii.gz
-
+      struct1=$(ls -f ${cpacdir}/*T1wbrain.nii.gz)
+      d1=$( fslval ${img[sub]} pixdim1)
+      d2=$( fslval ${img[sub]} pixdim2)
+      d3=$( fslval ${img[sub]} pixdim3)
+      exec_afni 3dresample  -dxyz $d1 $d2 $d3 -inset ${struct1}  \
+      -prefix ${outdir}/${prefix}_structbrain.nii.gz   -overwrite 
       output struct_head ${outdir}/${prefix}_structbrain.nii.gz
       output struct ${outdir}/${prefix}_structbrain.nii.gz
 
@@ -1157,9 +1157,8 @@ while (( ${#rem} > 0 ))
        
       fun2t1=${cpacdir}/func2t1.txt
         
-      exec_ants antsApplyTransforms -d 3 -e 3 -i ${mask} -r ${struct1} -t ${fun2t1} \
+      exec_ants antsApplyTransforms -d 3 -e 3 -i ${mask} -r ${struct[cxt]} -t ${fun2t1} \
        -o ${outdir}/${prefix}_mask.nii.gz  -n  NearestNeighbor
-
       exec_fsl fslmaths ${outdir}/${prefix}_mask.nii.gz -mul ${struct_mask[cxt]} ${outdir}/${prefix}_mask.nii.gz 
       output mask ${outdir}/${prefix}_mask.nii.gz 
 
