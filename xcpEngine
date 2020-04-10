@@ -19,9 +19,13 @@ args=`echo $@`
  Development team:
  Lead:         Rastko Ciric
                rastko@mail.med.upenn.edu
- Maintainers and contribut:
+
+ Maintainers and contributors:
            Azeez Adebimpe 
            adebimpe@upenn.edu
+           Matt Cieslak 
+           mcieslak@upenn.edu
+
  Multimodal:   Adon FG Rosen
                adrose@mail.med.upenn.edu
  PI:           Ted Satterthwaite
