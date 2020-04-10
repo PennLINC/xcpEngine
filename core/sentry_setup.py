@@ -40,12 +40,14 @@ def strip_sensitive_data(event, hints):
     # modify event here
     return event
 sentry_sdk.init("https://34b713b3ba2240329b2b671685006e94@sentry.io/1854243",
+
 release=release,environment=enviomnet,server_name=platform.node())
 
 #sentry_sdk.add_breadcrumb(message='xcpengine started', level='info')
 #sentry_sdk.capture_message('xcpengine started', level='info')
 
 with sentry_sdk.configure_scope() as scope:
+    scope.user = {"email": "azeez.adebimpe@outlook.com"}
     scope.set_tag('exec_env',platform.system())
     free_mem_at_start = round(psutil.virtual_memory().free / 1024**3, 1)
     scope.set_tag('free_mem_at_start', free_mem_at_start)
