@@ -247,3 +247,6 @@ The optional output is the spatially smoothed residualised BOLD signal. This is 
 This tells xcpEngine to smooth the residualised image with gaussian filter and kernel of 6mm. The derived
 output, which is saved in the ``regress`` folder, will be::
   prefix_img_sm6.nii.gz
+
+If the freesurfer is included as part of FMRIPREP outputs, the CIFTI files are produced 
+for filtered  and  regressed bold data (`${prefix}_residualised.nii.gz`) 

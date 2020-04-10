@@ -65,3 +65,6 @@ The  outputs also consist of Quality Assesmment between structrual and BOLD imag
     - ``prefix_coregCrossCorr.txt`` : Cross correlation
     - ``prefix_coregDice.txt`` : Dice index
     - ``prefix_coregJaccard.txt`` : Jaccard index 
+
+If the freesurfer is included as part of FMRIPREP outputs, the CIFTI files are produced 
+for task and confound regressed bold data (`res4d.nii.gz`)  
