@@ -445,23 +445,45 @@ smooth_spatial                --SIGNPOST=${signpost}              \
                               --USAN=${regress_usan[cxt]}         \
                               --USPACE=${regress_usan_space[cxt]}
 
+strucn="${img1[sub]%/*/*}";
+strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
+strucfile1=$(echo $strucfile | cut --delimiter " " --fields 1) 
+
+if [[ -f ${strucfile1}  ]]; then  
+   strucn=${strucn}
+else
+   anatdir=$strucn/../
+   strucn=${anatdir}
+fi
+
+b1=${img1[sub]##*space-}; 
+template_label=${b1%%_*}
+
 surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
    if [[ -f ${surf} ]] # this  check if freesurfer exist 
    then 
-      res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
       struct2=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" )
       
       temptot1w1=$(find $strucn/anat/ -type f -name "*${template_label1}*to-T1w_mode-image_xfm.h5")
+      t1wtotemp1=$(find $strucn/anat/ -type f -name "*from-T1w_to*${template_label1}*_mode-image_xfm.h5")
+
       temptot1w2=$(echo $temptot1w1 | cut --delimiter " " --fields 1) 
+      t1wtotemp2=$(echo $t1wtotemp1 | cut --delimiter " " --fields 1) 
+      
+      ref=${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz
                   
        if [[ ${template_label} == 'T1w' ]]
            then  # reample bold to T1 dimension before freesurfer 
-        exec_ants antsApplyTransforms -d 3 -e 3 -i ${denoised[cxt]} } -r ${struct2} -t ${XCPEDIR}/utils/oneratiotransform.txt \
-        -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc
+
+           exec_ants antsApplyTransforms -d 3 -e 3 -i ${denoised[cxt]} -r ${ref} -t ${1wtotemp2} \
+           -o ${outdir}/boldtoMNI.nii.gz  -n LanczosWindowedSinc
 
       else # reamsple template to T1 assuming the bold in MNI space
-       exec_ants antsApplyTransforms -d 3 -e 3 -i ${denoised[cxt]} -r ${struct2} -t ${temptot1w2} \
-        -o ${outdir}/boldresampletoT1.nii.gz -n LanczosWindowedSinc 
+
+        
+        exec_ants antsApplyTransforms -d 3 -e 3 -i -i ${denoised[cxt]} -r ${ref} -t ${XCPEDIR}/utils/oneratiotransform.txt  \
+        -o ${outdir}/boldtoMNI.nii.gz  -n LanczosWindowedSinc
+
       fi 
         source $FREESURFER_HOME/SetUpFreeSurfer.sh
         exec_sys export  SUBJECTS_DIR=${strucn}/../../freesurfer # freesurfer directory
@@ -475,18 +497,15 @@ surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
         #now do the surface 
         for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldresampletoT1.nii.gz  --regheader ${subjectid} --hemi ${hem} \
-               --o ${outdir}/${hem}_surface.nii.gz --interp trilinear 
-           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject $subjectid --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
-                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
-
-           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage5 --hemi ${hem} \
+               --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
 
       done
       exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_residual.dscalar.nii  \
                -left-metric ${outdir}/${prefix}_residual_lh.func.gii  -right-metric ${outdir}/${prefix}_residual_rh.func.gii 
 
-      exec_sys rm -rf ${outdir}/boldresampletoT1.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
+      exec_sys rm -rf ${outdir}/boldtoMNI.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
    fi
 
 

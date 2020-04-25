@@ -136,10 +136,6 @@ else
 fi
 routine_end
 
-
-
-
-
 ###################################################################
 # Create isolated GM-GMD prior image
 ###################################################################
@@ -165,6 +161,33 @@ fi
 routine_end
 
 
+if [[ -d ${freesuferdir[sub]} ]] 
+   then  
+    if [[  -f ${gmd[cxt]}  ]]
+     then 
+      subroutine @7.8 convert gmd  to surface
+      subjectid=$(basename ${freesuferdir[sub]})
+      SUBJECTS_DIR=${freesuferdir[sub]}/../
+      exec_sys cp -r ${FREESURFER_HOME}/subjects/fsaverage5  ${SUBJECTS_DIR}/
+      for hem in lh rh
+          do
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${gmd[cxt]} --regheader ${subjectid} --hemi ${hem} \
+               --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
+
+           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjectid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
+
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  \
+                   ${outdir}/${prefix}_gmd_${hem}.cort.gii
+
+      done
+
+      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_gmd.dscalar.nii  \
+               -left-metric ${prefix}_gmd_lh.cort.gii  -right-metric ${outdir}/${prefix}_gmd_rh.cort.gii 
+
+      exec_sys rm -rf  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
+    fi
+fi
 
 
 
