@@ -506,13 +506,13 @@ while (( ${#rem} > 0 ))
     if [[  -d ${fmriprepout} ]] 
        then  
        exec_sys cp -r ${fmriprepout} ${freesurferdir}/
-       subjid=$(basename ${freesurferdir}/* )
+       subjectid=$(basename ${freesurferdir}/* )
        fmripo=$fmriprepout/../
-       exec_sys cp -r $fmripo/fsavg*  ${freesurferdir}/
+       exec_sys cp -r $FREESURFER_HOME/subjects/fsavg* $SUBJECTS_DIR/
        source $FREESURFER_HOME/SetUpFreeSurfer.sh
        exec_sys export  SUBJECTS_DIR=${freesurferdir}
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjid}/surf/lh.white
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjid}/surf/rh.white
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.white
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.white
        eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
        exec_sys echo ${eulernumber} > ${euler_number[cxt]}
        exec_sys rm  -rf /tmp/text_*.tsv
@@ -526,16 +526,16 @@ while (( ${#rem} > 0 ))
       source $FREESURFER_HOME/SetUpFreeSurfer.sh
       ${FREESURFER_HOME}/bin/recon-all -subjid ${subjectid} \
       -i ${img[sub]} -all -sd ${SUBJECTS_DIR}
-
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjid}/surf/lh.white
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjid}/surf/rh.white
+      exec_sys cp -r $FREESURFER_HOME/subjects/fsavg* $SUBJECTS_DIR/
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.white
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.white
        eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
        exec_sys echo ${eulernumber} > ${euler_number[cxt]}
        exec_sys rm  -rf /tmp/text_*.tsv
 
    fi 
 
-    output freesuferdir ${SUBJECTS_DIR}/${subjid} 
+    output freesuferdir ${SUBJECTS_DIR}/${subjectid} 
 
     #convert cortical thickness to surface  
     if [[  -f ${corticalThickness[cxt]}  ]]
@@ -543,10 +543,10 @@ while (( ${#rem} > 0 ))
      
       for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${corticalThickness[cxt]} --regheader ${subjid} --hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${corticalThickness[cxt]} --regheader ${subjectid} --hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
 
-           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjectid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
                     --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
 
            ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  \

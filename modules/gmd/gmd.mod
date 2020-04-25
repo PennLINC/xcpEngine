@@ -166,15 +166,15 @@ if [[ -d ${freesuferdir[sub]} ]]
     if [[  -f ${gmd[cxt]}  ]]
      then 
       subroutine @7.8 convert gmd  to surface
-      subjid=$(basename ${freesuferdir[sub]})
+      subjectid=$(basename ${freesuferdir[sub]})
       SUBJECTS_DIR=${freesuferdir[sub]}/../
       exec_sys cp -r ${FREESURFER_HOME}/subjects/fsaverage5  ${SUBJECTS_DIR}/
       for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${gmd[cxt]} --regheader ${subjid} --hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${gmd[cxt]} --regheader ${subjectid} --hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
 
-           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjectid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
                     --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
 
            ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  \
