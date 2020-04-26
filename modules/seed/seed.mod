@@ -136,7 +136,7 @@ fi
 
 if [[ ! ${seed_radius[cxt]}  ]] 
    then
-   {seed_radius[cxt]}=5
+   seed_radius=5
 fi 
 
 
