@@ -510,7 +510,7 @@ while (( ${#rem} > 0 ))
        subjectid=$(basename ${freesurferdir}/* )
        source $FREESURFER_HOME/SetUpFreeSurfer.sh
        exec_sys export  SUBJECTS_DIR=${freesurferdir}
-       exec_sys cp -r $(ls -d $FREESURFER_HOME/subjects/fsaverage5 ) $SUBJECTS_DIR/
+       exec_sys cp -r $FREESURFER_HOME/subjects/fsaverage5  $SUBJECTS_DIR/
        ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.orig.nofix
        ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.orig.nofix
        eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
@@ -536,6 +536,9 @@ while (( ${#rem} > 0 ))
    fi 
 
     output freesuferdir ${SUBJECTS_DIR}/${subjectid} 
+    exec_sys ln -sf ${intermediate}.nii.gz       \
+                      ${intermediate}_${cur}.nii.gz
+      intermediate=${intermediate}_${cur}
 
     #convert cortical thickness to surface  
   ;;
@@ -642,7 +645,7 @@ done
       done
 
       exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_corticalthickness.dscalar.nii  \
-               -left-metric ${prefix}_corticalthickness_lh.cort.gii  -right-metric ${outdir}/${prefix}_corticalthickness_rh.cort.gii 
+               -left-metric ${outdir}/${prefix}_corticalthickness_lh.cort.gii -right-metric ${outdir}/${prefix}_corticalthickness_rh.cort.gii 
 
       exec_sys rm -rf  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
     fi 

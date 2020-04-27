@@ -183,7 +183,7 @@ if [[ -d ${freesuferdir[sub]} ]]
       done
 
       exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_gmd.dscalar.nii  \
-               -left-metric ${prefix}_gmd_lh.cort.gii  -right-metric ${outdir}/${prefix}_gmd_rh.cort.gii 
+               -left-metric ${outdir}/${prefix}_gmd_lh.cort.gii  -right-metric ${outdir}/${prefix}_gmd_rh.cort.gii 
 
       exec_sys rm -rf  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
     fi

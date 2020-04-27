@@ -233,8 +233,8 @@ if ! is_image ${foreground[cxt]} \
          -t       Affine[0.1]                \
          -f       8x4x2x1                    \
          -s       4x2x1x0                    \
-         -r       [${struc[sub]},${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz,1] \
-         -m       MI[${struc[sub]},${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz,1,32,Regular,0.25] \
+         -r       [${struct[sub]},${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz,1] \
+         -m       MI[${struct[sub]},${BRAINSPACE}/MNI/MNI-1x1x1.nii.gz,1,32,Regular,0.25] \
          --float  1 \
          --verbose 1
 
@@ -256,7 +256,7 @@ if ! is_image ${foreground[cxt]} \
          -d       3                          \
          -i       ${mniFGMask[cxt]}          \
          -o       ${intermediate}-fg.nii.gz  \
-         -r       ${struc[sub]}              \
+         -r       ${struct[sub]}              \
          -n       NearestNeighbor            \
          -t       ${affine_mni2sub[${cxt}]}
    else
