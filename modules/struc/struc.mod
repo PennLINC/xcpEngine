@@ -493,6 +493,7 @@ while (( ${#rem} > 0 ))
    exec_sys mkdir -p ${outdir}/freesurfer 
    
    freesurferdir=${outdir}/freesurfer 
+
     if [[  -d ${struc_fmriprepdir[cxt]}/ ]]
      then 
          fmriprepout=${struc_fmriprepdir[cxt]} 
@@ -507,12 +508,11 @@ while (( ${#rem} > 0 ))
        then  
        exec_sys cp -r ${fmriprepout} ${freesurferdir}/
        subjectid=$(basename ${freesurferdir}/* )
-       fmripo=$fmriprepout/../
-       exec_sys cp -r $FREESURFER_HOME/subjects/fsavg* $SUBJECTS_DIR/
        source $FREESURFER_HOME/SetUpFreeSurfer.sh
        exec_sys export  SUBJECTS_DIR=${freesurferdir}
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.white
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.white
+       exec_sys cp -r $FREESURFER_HOME/subjects/fsaverage5  $SUBJECTS_DIR/
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.orig.nofix
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.orig.nofix
        eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
        exec_sys echo ${eulernumber} > ${euler_number[cxt]}
        exec_sys rm  -rf /tmp/text_*.tsv
@@ -526,9 +526,9 @@ while (( ${#rem} > 0 ))
       source $FREESURFER_HOME/SetUpFreeSurfer.sh
       ${FREESURFER_HOME}/bin/recon-all -subjid ${subjectid} \
       -i ${img[sub]} -all -sd ${SUBJECTS_DIR}
-      exec_sys cp -r $FREESURFER_HOME/subjects/fsavg* $SUBJECTS_DIR/
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.white
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.white
+      exec_sys cp -r $FREESURFER_HOME/subjects/fsaverage5 $SUBJECTS_DIR/
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/lh.orig.nofix
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/rh.orig.nofix
        eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
        exec_sys echo ${eulernumber} > ${euler_number[cxt]}
        exec_sys rm  -rf /tmp/text_*.tsv
@@ -536,29 +536,11 @@ while (( ${#rem} > 0 ))
    fi 
 
     output freesuferdir ${SUBJECTS_DIR}/${subjectid} 
+    exec_sys ln -sf ${intermediate}.nii.gz       \
+                      ${intermediate}_${cur}.nii.gz
+      intermediate=${intermediate}_${cur}
 
     #convert cortical thickness to surface  
-    if [[  -f ${corticalThickness[cxt]}  ]]
-         then 
-     
-      for hem in lh rh
-          do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${corticalThickness[cxt]} --regheader ${subjectid} --hemi ${hem} \
-               --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
-
-           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjectid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
-                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
-
-           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  \
-                   ${outdir}/${prefix}_corticalthickness_${hem}.cort.gii
-
-      done
-
-      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_corticalthickness.dscalar.nii  \
-               -left-metric ${prefix}_corticalthickness_lh.cort.gii  -right-metric ${outdir}/${prefix}_corticalthickness_rh.cort.gii 
-
-      exec_sys rm -rf  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
-    fi
   ;;
 
    REG)
@@ -644,6 +626,29 @@ while (( ${#rem} > 0 ))
    esac
 done
 
+
+## convert cortical thickness to freesufer 
+ if [[  -f ${corticalThickness[cxt]}  ]] && [[ -d ${freesuferdir[cxt]} ]]
+         then 
+     
+      for hem in lh rh
+          do
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${corticalThickness[cxt]} --regheader ${subjectid} --hemi ${hem} \
+               --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
+
+           ${FREESURFER_HOME}/bin/mri_surf2surf  --srcsubject ${subjectid} --trgsubject  fsaverage5 --trgsurfval ${outdir}/${hem}_surface2fsav.nii.gz \
+                    --hemi ${hem}   --srcsurfval ${outdir}/${hem}_surface.nii.gz --cortex --reshape
+
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface2fsav.nii.gz   ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  \
+                   ${outdir}/${prefix}_corticalthickness_${hem}.cort.gii
+
+      done
+
+      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_corticalthickness.dscalar.nii  \
+               -left-metric ${outdir}/${prefix}_corticalthickness_lh.cort.gii -right-metric ${outdir}/${prefix}_corticalthickness_rh.cort.gii 
+
+      exec_sys rm -rf  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
+    fi 
 
 
 
