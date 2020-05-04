@@ -703,24 +703,6 @@ while (( ${#rem} > 0 ))
          output structmask    ${outdir}/${prefix}_structmask.nii.gz 
                   
          exec_sys rm -rf ${out}/prestats/fast*
-          
-         if ! is_image ${referenceVolume[cxt]}
-           then 
-            output referenceVolume ${prefix}_referenceVolume.nii.gz 
-
-             exec_fsl \
-                  fslroi ${intermediate}.nii.gz \
-                  ${referenceVolume[cxt]} \
-                  ${midpt} 1
-         fi
-        exec_fsl \
-               bet ${referenceVolume[cxt]} \
-              ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  \
-               -f 0.5 \
-              -n \
-               -R
-       output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
-       exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
        
       if  is_image ${m0[sub]}
       then
@@ -820,25 +802,7 @@ while (( ${#rem} > 0 ))
                  -prefix ${out}/prestats/${prefix}_m0.nii.gz
                output m0  ${out}/prestats/${prefix}_m0.nii.gz
                fi
-               if ! is_image ${referenceVolume[cxt]}
-               then 
-                output referenceVolume ${prefix}_referenceVolume.nii.gz 
-
-                exec_fsl \
-                  fslroi ${intermediate}.nii.gz \
-                  ${referenceVolume[cxt]} \
-                  ${midpt} 1
-                fi
-
-               exec_fsl \
-               bet ${referenceVolume[cxt]} \
-              ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  \
-               -f 0.5 \
-              -n \
-               -R
-               exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
-
-              output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
+         
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
                rm -f ${spaces[sub]}
@@ -957,23 +921,7 @@ while (( ${#rem} > 0 ))
          output m0  ${out}/prestats/${prefix}_m0.nii.gz
       fi
 
-      if ! is_image ${referenceVolume[cxt]}
-           then 
-            output referenceVolume ${prefix}_referenceVolume.nii.gz 
 
-             exec_fsl \
-                  fslroi ${intermediate}.nii.gz \
-                  ${referenceVolume[cxt]} \
-                  ${midpt} 1
-      fi
-
-      exec_fsl bet ${referenceVolume[cxt]} \
-         ${outdir}/${prefix}_referenceVolumeBrain.nii.gz  -f 0.5 -n -R 
-
-      exec_fsl fslmaths ${outdir}/${prefix}_referenceVolumeBrain.nii.gz -bin ${mask[cxt]}
-
-      output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz 
-      
       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
                rm -f ${spaces[sub]}
@@ -1848,7 +1796,7 @@ while (( ${#rem} > 0 ))
          subroutine           @10.2 [Computing mean volume]
          proc_fsl ${meanIntensity[cxt]} \
                   fslmaths ${intermediate}.nii.gz  -Tmean   %OUTPUT
-         if is_image ${mask[sub]}
+         if ! is_image ${mask[cxt]}
             then
             subroutine        @10.3 [Computing mask]
             proc_fsl ${mask[cxt]} \
