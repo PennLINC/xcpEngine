@@ -42,8 +42,16 @@ temporary files will be retained to facilitate error diagnosis.::
 ``Expected outputs``
 ^^^^^^^^^^^^^^^^^^^^^
 The expected outputs from `gmd` include the following::
+
+ - prefix_gmd.nii.gz # grey matter density
  - prefix_probabilityCSF.nii.gz  # CSF probability map
  - prefix_probabilityGM.nii.gz   # grey matter probability map
  - prefix_probabilityWM.nii.gz  # white matter probability map
  - prefix_raw.nii.gz   # raw image 
  - prefix_segmentation3class.nii.gz  # 3-class tissue segmentation
+
+if the freesurfer is included in the struc module, cifti  files are generated for GM:: 
+
+ - prefix_gmd_rh.cort.gii # right gmd surface
+ - prefix_gmd_lh.cort.gii # left gmd surface
+ - prefix_gmd.dscalar.nii # scalar values of right and left hemispheres 

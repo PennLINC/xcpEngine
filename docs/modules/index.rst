@@ -49,7 +49,7 @@ Anatomical derivatives
 
 Modules that generate derivative maps from anatomical data.
 
- * ``jlf``: Uses the ANTs Joint Label Fusion algorithm to produce a
+ * :ref:`jlf`:: Uses the ANTs Joint Label Fusion algorithm to produce a
    high-resolution anatomical segmentation of the subject’s anatomical data. Generates a
    subject-specific atlas of anatomical landmarks that can be used for regional quantification or
    network mapping.
@@ -122,6 +122,7 @@ Quick Lookup
   seed
   task
   struc
+  jlf
   gmd
   norm
   roiquant

@@ -70,7 +70,6 @@ confound2_sq[2]=2
 confound2_custom[2]=
 confound2_censor[2]=0
 confound2_censor_contig[2]=0
-confound2_framewise[2]=fds:0.167,dv:2
 confound2_rerun[2]=0
 confound2_cleanup[2]=1
 
