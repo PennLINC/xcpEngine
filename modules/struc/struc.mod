@@ -84,7 +84,8 @@ qc reg_cross_corr regCrossCorr      ${prefix}_regCrossCorr.txt
 qc reg_coverage   regCoverage       ${prefix}_regCoverage.txt
 qc reg_jaccard    regJaccard        ${prefix}_regJaccard.txt
 qc reg_dice       regDice           ${prefix}_regDice.txt
-qc euler_number   eulernumber       ${prefix}_eulernumber.txt
+qc euler_rh_number   euler_number_rh       ${prefix}_rh_eulernumber.txt
+qc euler_lh_number   euler_number_lh       ${prefix}_lh_eulernumber.txt
 
 input image mask
 input image segmentation
@@ -494,13 +495,13 @@ while (( ${#rem} > 0 ))
    
    freesurferdir=${outdir}/freesurfer 
 
-    if [[  -d ${struc_fmriprepdir[cxt]}/ ]]
+    if [[  -d ${struc_freesurferdir[cxt]}/ ]]
      then 
-         fmriprepout=${struc_fmriprepdir[cxt]} 
+         fmriprepout=${struc_freesurferdir[cxt]} 
          
-    elif [[ -d ${struc_fmriprepdir[sub]}/ ]] 
+    elif [[ -d ${struc_freesurferdir[sub]}/ ]] 
        then
-         fmriprepout=${struc_fmriprepdir[sub]} 
+         fmriprepout=${struc_freesurferdir[sub]} 
     fi 
 
 
@@ -513,8 +514,10 @@ while (( ${#rem} > 0 ))
        exec_sys cp -r $FREESURFER_HOME/subjects/fsaverage5  $SUBJECTS_DIR/
        ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.orig.nofix
        ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.orig.nofix
-       eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
-       exec_sys echo ${eulernumber} > ${euler_number[cxt]}
+       eulerlh=$(cat /tmp/text_lh.tsv)  
+       eulerrh=$(cat /tmp/text_rh.tsv)  
+       exec_sys echo ${eulerrh} > ${euler_rh_number[cxt]}
+       exec_sys echo ${eulerlh} > ${euler_lh_number[cxt]}
        exec_sys rm  -rf /tmp/text_*.tsv
 
     else 
@@ -527,10 +530,12 @@ while (( ${#rem} > 0 ))
       ${FREESURFER_HOME}/bin/recon-all -subjid ${subjectid} \
       -i ${img[sub]} -all -sd ${SUBJECTS_DIR}
       exec_sys cp -r $FREESURFER_HOME/subjects/fsaverage5 $SUBJECTS_DIR/
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/lh.orig.nofix
-       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/rh.orig.nofix
-       eulernumber=$(expr $(cat /tmp/text_lh.tsv)  +  $(cat /tmp/text_rh.tsv))
-       exec_sys echo ${eulernumber} > ${euler_number[cxt]}
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_lh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/lh.orig.nofix
+       ${FREESURFER_HOME}/bin/mris_euler_number -o  /tmp/text_rh.tsv  ${SUBJECTS_DIR}/${subjectid}/surf/rh.orig.nofix
+       eulerlh=$(cat /tmp/text_lh.tsv)  
+       eulerrh=$(cat /tmp/text_rh.tsv)  
+       exec_sys echo ${eulerrh} > ${euler_rh_number[cxt]}
+       exec_sys echo ${eulerlh} > ${euler_lh_number[cxt]}
        exec_sys rm  -rf /tmp/text_*.tsv
 
    fi 

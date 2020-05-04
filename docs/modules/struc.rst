@@ -227,6 +227,20 @@ fractional intensity threshold should be a positive number greater than 0 and le
   # Fractional intensity threshold of 0.3
   struc_fit[cxt]=0.3
 
+Freesufer run.
+
+Routine: ``FSF``
+
+The freesufer can be run with addition of `FSF` to the procsess as ::
+
+  struc_process[cxt]=FSF-ACT
+
+If the freesufer has be ran before, the directory of freesufer can be copied by including::
+
+  struc_freesurferdir[cxt]=/path/to/freesufer/directory
+this can also be included in the cohort file.
+the cifti files for cortical thickness are generated.  
+
 ``struc_quick``
 ~~~~~~~~~~~~~~~~~~
 
@@ -303,3 +317,4 @@ Permitted codes include:
  * ``FBE``: FSL brain extraction
  * ``SEG``: Atropos image segmentation
  * ``REG``: registration to a template
+ * ``FSF``: Freesufer  or copy freesufer outputs from fmriprep if available

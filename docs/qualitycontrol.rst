@@ -19,7 +19,22 @@ Normalization of T1w/Functional to Template:
          - normCrossCorr - cross correlation 
          - normJaccard - Jaccard index 
          - normDice - Dice index
-         - normCoverage - Coverage index  
+         - normCoverage - Coverage index 
+
+QC for anatomical:
+         - euler_number_rh,euler_number_lh -  Eurler number if freesurfer is included 
+         - meanGMD - mean of Grey matter density
+         - SignalToNoiseRatio - grey matter signal to noise ratio 
+         - BackgroundKurtosis - background intensity Kurtosis
+         - GreyMatterKurtosis - grey matter intensity Kurtosis
+         - EntropyFocusCriterion - entropy focus criterion ( for ghost signals)
+         - CorticalContrasts - coritical contrasts between white matter and grey matter signals
+         - FGBGEnergyRatio - Foreground-to-background energy ratio
+         - ContrastToNoiseRatio - contrast to noise ratio
+         - WhiteMatterSkewness - WhiteMatter Skewness
+         - BackgroundSkewness - background intensity Kurtosis
+
+
 
 Motion/spikes summary.::
          - relMeansRMSMotion - mean value of RMS motion 
