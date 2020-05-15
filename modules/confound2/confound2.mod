@@ -350,10 +350,18 @@ if (( ${confound2_acompcor[cxt]} == 1 ))
  
    
    acompcor_path=${outdir}/${prefix}_acompcor.1D
+   
+   if [[ -f ${confjson[sub]} ]]; then 
+   exec_xcp acompcor_select.py -j ${confjson[sub]} -c ${fmriprepconf[sub]} \
+    -o  ${acompcor_path} 
+
+   else 
     exec_xcp generate_confmat.R \
            -i ${fmriprepconf[sub]} \
            -j aCompCor  \
            -o ${acompcor_path}
+
+   fi
    
  output acompcor  ${prefix}_acompcor.1D
 
