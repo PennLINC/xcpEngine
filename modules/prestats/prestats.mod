@@ -230,6 +230,12 @@ while (( ${#rem} > 0 ))
         mask1=${imgprt2}${mskpart}; maskpart2=${mask1#*_*_*_*}
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
+        conf2="_desc-confounds_regressors.json"
+        if [[ -f ${imgprt}${conf2} ]]; then 
+           exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
+           output confjson $out/prestats/${prefix}_fmriconf.json
+        fi
+
          strucn="${img1[sub]%/*/*}";
          strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
          strucfile1=$(echo $strucfile | cut --delimiter " " --fields 1) 
