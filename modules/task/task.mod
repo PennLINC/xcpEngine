@@ -205,10 +205,24 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         
          routine @ getting data from frmiprep directory 
                   
-        imgprt=${img1[sub]%_*_*_*}; conf="_desc-confounds_regressors.tsv"
+        # Check if we have a res- tag
+        # Added by recent versions of fmriprep
+        imgname=$(basename ${img1[sub]})
+        conf="_desc-confounds_regressors.tsv"
+        if [[ "$imgname" == *_res-* ]]; then
+          imgprt=${img1[sub]%_*_*_*_*}
+        else
+          imgprt=${img1[sub]%_*_*_*}
+        fi
         exec_sys cp ${imgprt}${conf} ${out}/task/${prefix}_fmriconf.tsv
+
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
-        mask1=${imgprt2}${mskpart}; maskpart2=${mask1#*_*_*_*}
+        mask1=${imgprt2}${mskpart};
+        if [[ "$imgname" == *_res-* ]]; then
+           maskpart2=${mask1#*_*_*_*_*}
+        else
+           maskpart2=${mask1#*_*_*_*}
+        fi
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
          
        output fmriprepconf  ${out}/task/${prefix}_fmriconf.tsv 
