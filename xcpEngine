@@ -417,7 +417,21 @@ for sub in ${!cohort[@]}
    ##########################################################
    # remove temporary files
    ##########################################################
-   rm -rf ${out[sub]}/module.csv ${out[sub]}/template.txt
+   rm -rf ${out[sub]}/module.csv ${out[sub]}/template.txt 
+
+   # remove some data to clean up 
+   rm -rf ${out[sub]}/*nii.gz  2>/dev/null
+   rm -rf ${out[sub]}/prestats/*nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/fcon/*referenceVolume.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/fcon/*/*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/reho/*referenceVolume.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/alff/*referenceVolume.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/roiquant/*referenceVolume.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/roiquant/*/*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/qcfc/*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/roiquant/*/*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/task/*.nii.gz 2>/dev/null
+
 done
  
 

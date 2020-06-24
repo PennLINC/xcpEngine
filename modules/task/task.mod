@@ -1095,7 +1095,7 @@ if [[ -d ${featout} ]]
    
    # add post surface processing here if  there is fmriprep 
    
-   surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
+   surf=$( ls -f $strucn/anat/*hemi-R_inflated.surf.gii 2>/dev/null )
    if [[ -f ${surf} ]] # this  check if freesurfer exist 
    then 
       res4d=$(ls -f ${featout}/stats/*res4d.nii.gz )
@@ -1134,10 +1134,10 @@ if [[ -d ${featout} ]]
         #now do the surface 
         for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage5 --hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage --hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
          
-           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_res4d_${hem}.func.gii
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/${prefix}_res4d_${hem}.func.gii
 
       done
 

@@ -1,4 +1,3 @@
 {
-    "restructuredtext.confPath": "${workspaceFolder}/docs",
-    "python.pythonPath": "/Users/adebimpe/opt/miniconda3/bin/python"
+    "restructuredtext.confPath": "${workspaceFolder}/docs"
 }
