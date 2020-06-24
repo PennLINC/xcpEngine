@@ -182,12 +182,12 @@ sub-1/roiquant/schaefer200x7
 sub-1/roiquant/schaefer200x7/sub-1_schaefer200x7_mean_alff.csv
 sub-1/roiquant/schaefer200x7/sub-1_schaefer200x7_mean_alffZ.csv
 sub-1/roiquant/schaefer200x7/sub-1_schaefer200x7_mean_reho.csv
-sub-1/roiquant/schaefer200x7/sub-1_schaefer200x7_mean_rehoZ.csv               
+sub-1/roiquant/schaefer200x7/sub-1_schaefer200x7_mean_rehoZ.csv
 sub-1/roiquant/schaefer400x17
 sub-1/roiquant/schaefer400x17/sub-1_schaefer400x17_mean_alff.csv
 sub-1/roiquant/schaefer400x17/sub-1_schaefer400x17_mean_alffZ.csv
 sub-1/roiquant/schaefer400x17/sub-1_schaefer400x17_mean_reho.csv
-sub-1/roiquant/schaefer400x17/sub-1_schaefer400x17_mean_rehoZ.csv                
+sub-1/roiquant/schaefer400x17/sub-1_schaefer400x17_mean_rehoZ.csv
 sub-1/roiquant/schaefer400x7
 sub-1/roiquant/schaefer400x7/sub-1_schaefer400x7_mean_alff.csv
 sub-1/roiquant/schaefer400x7/sub-1_schaefer400x7_mean_alffZ.csv
