@@ -217,7 +217,6 @@ sub-1/sub-1.dsn
 sub-1/sub-1_logs
 sub-1/sub-1_logs/sub-1_audit.csv
 sub-1/sub-1-nFlags.1D
-sub-1/sub-1.nii.gz
 sub-1/sub-1_quality.csv
 sub-1/sub-1_report.html
 /tmp/mnifc24pgsr/xcpOutput
