@@ -500,7 +500,7 @@ surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
         #now do the surface 
         for hem in lh rh
           do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage5 --hemi ${hem} \
+           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage --hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
            ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
 
