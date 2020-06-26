@@ -60,6 +60,7 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
 RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
 RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn matplotlib 
 RUN  rm -rf ~/.cache/pip/* && sync
+RUN  apt-get update && apt-get install multiarch-support
 RUN  apt-get update
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
