@@ -55,7 +55,6 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
   #&& cd /usr/local/bin \
   #&& ln -s /usr/bin/python3 python \
   #&& pip3 install --upgrade pip
-RUN apg-get install libgsl0-dev
 ENV PATH="/usr/local/miniconda/bin:$PATH" \
     CPATH="/usr/local/miniconda/include/:$CPATH" \
     LANG="C.UTF-8" \
