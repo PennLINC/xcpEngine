@@ -12,6 +12,7 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
            apt-utils \
            bzip2 \
            ca-certificates \
+           python3-dev \
            gcc \
            curl \
            locales \
@@ -50,11 +51,7 @@ RUN conda install -y python=3.7.1 \
                      pip=19.1 \
                      mkl=2018.0.3 \
                      mkl-service \
-                     numpy=1.15.4 \
                      scipy \
-                     scikit-learn=0.19.1 \
-                     matplotlib=2.2.2 \
-                     pandas=0.23.4 \
                      libxml2=2.9.8 \
                      libxslt=1.1.32 \
                      zlib; sync && \
@@ -63,6 +60,9 @@ RUN conda install -y python=3.7.1 \
     conda build purge-all; sync && \
     conda clean -tipsy && sync
 
+RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
+RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn matplotlib 
+RUN  rm -rf ~/.cache/pip/* && sync
 RUN  apt-get update
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
