@@ -1,7 +1,5 @@
 FROM neurodebian:stretch
 
-FROM python:3.7
-
 ARG DEBIAN_FRONTEND="noninteractive"
 
 ENV LANG="en_US.UTF-8" \
@@ -57,9 +55,29 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
   #&& cd /usr/local/bin \
   #&& ln -s /usr/bin/python3 python \
   #&& pip3 install --upgrade pip
-RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
-RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn matplotlib 
-RUN  rm -rf ~/.cache/pip/* && sync
+RUN apg-get install libgsl0-dev
+ENV PATH="/usr/local/miniconda/bin:$PATH" \
+    CPATH="/usr/local/miniconda/include/:$CPATH" \
+    LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8" \
+    PYTHONNOUSERSITE=1
+
+RUN conda install -y python=3.7 \
+                     pip=19.1 \
+                     mkl=2018.0.3 \
+                     mkl-service \
+                     numpy=1.15.4 \
+                     scipy=1.4.0 \
+                     scikit-learn=0.19.1 \
+                     matplotlib=2.2.2 \
+                     pandas=0.23.4 \
+                     libxml2=2.9.8 \
+                     libxslt=1.1.32 \
+                     zlib; sync && \
+    chmod -R a+rX /usr/local/miniconda; sync && \
+    chmod +x /usr/local/miniconda/bin/*; sync && \
+    conda build purge-all; sync && \
+    conda clean -tipsy && sync
 RUN  apt-get update && apt-get install multiarch-support
 RUN  apt-get update
 
