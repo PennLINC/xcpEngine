@@ -1,4 +1,4 @@
-FROM neurodebian:stretch
+FROM ubuntu:xenial-20161213
 
 ARG DEBIAN_FRONTEND="noninteractive"
 
@@ -35,38 +35,22 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
     fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 
-#ENV CONDA_DIR="/opt/miniconda-latest" \
-    #PATH="/opt/miniconda-latest/bin:$PATH"
-#RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
-   # && echo "Downloading Miniconda installer ..." \
-    #&& conda_installer="/tmp/miniconda.sh" \
-    #&& curl -fsSL --retry 5 -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    #&& bash "$conda_installer" -b -p /opt/miniconda-latest \
-    #&& rm -f "$conda_installer" \
-    #&& conda update -yq -nbase conda \
-    #&& conda config --system --prepend channels conda-forge \
-    #&& conda config --system --set auto_update_conda false \
-    #&& conda config --system --set show_channel_urls true \
-    #&& sync && conda clean -tipsy && sync \
-    #&& conda create -y -q --name neuro \
-   # && conda install -y -q --name neuro \
-#RUN apt-get update \
-  #&& apt-get install -y python3-pip python3-dev \
-  #&& cd /usr/local/bin \
-  #&& ln -s /usr/bin/python3 python \
-  #&& pip3 install --upgrade pip
+RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh && \
+    bash Miniconda3-4.5.11-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+    rm Miniconda3-4.5.11-Linux-x86_64.sh
+
 ENV PATH="/usr/local/miniconda/bin:$PATH" \
     CPATH="/usr/local/miniconda/include/:$CPATH" \
     LANG="C.UTF-8" \
     LC_ALL="C.UTF-8" \
     PYTHONNOUSERSITE=1
 
-RUN conda install -y python=3.7 \
+RUN conda install -y python=3.7.1 \
                      pip=19.1 \
                      mkl=2018.0.3 \
                      mkl-service \
                      numpy=1.15.4 \
-                     scipy=1.4.0 \
+                     scipy \
                      scikit-learn=0.19.1 \
                      matplotlib=2.2.2 \
                      pandas=0.23.4 \
@@ -77,7 +61,7 @@ RUN conda install -y python=3.7 \
     chmod +x /usr/local/miniconda/bin/*; sync && \
     conda build purge-all; sync && \
     conda clean -tipsy && sync
-RUN  apt-get update && apt-get install multiarch-support
+
 RUN  apt-get update
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
