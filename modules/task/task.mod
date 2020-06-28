@@ -430,10 +430,14 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                         oas2mni="  $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_0Warp.nii.gz)
                           $(ls -d ${XCPEDIR}/space/OASIS/OASIS_transforms/OASIS-MNI_1Affine.mat)"
                        
-                       mnitoas=$( echo ${mnitoas})
-                       oas2mni=$(echo ${oas2mni})
-                       mnitoas=${mnitoas// /,}
-                       oas2mni=${oas2mni// /,}
+                       mnitopnc=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_1Warp.nii.gz)
+                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/MNI-PNC_0Affine.mat)"
+                       pnc2mni=" $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_0Warp.nii.gz)
+                                    $(ls -d ${XCPEDIR}/space/PNC/PNC_transforms/PNC-MNI_1Affine.mat)"
+                       mnitopnc=$( echo ${mnitopnc})
+                       pnc2mni=$(echo ${pnc2mni})
+                       mnitopnc=${mnitopnc// /,}
+                       pnc2mni=${pnc2mni// /,}
 
                        ${XCPEDIR}/utils/spaceMetadata  \
                          -o ${spaces[sub]}                 \
@@ -442,10 +446,6 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                          -x ${oas2mni} -i ${mnitoas}     \
                          -s ${spaces[sub]} 2>/dev/null
 
-                       subj2temp="   $(ls -d ${antsct[sub]}/*SubjectToTemplate1Warp.nii.gz)
-                           $(ls -d ${antsct[sub]}/*SubjectToTemplate0GenericAffine.mat)"
-                     temp2subj="   $(ls -d ${antsct[sub]}/*TemplateToSubject0Warp.nii.gz) 
-                          $(ls -d ${antsct[sub]}/*TemplateToSubject1GenericAffine.mat)"
                        mnitopnc=$( echo ${mnitopnc})
                        pnc2mni=$(echo ${pnc2mni})
                        mnitopnc=${mnitopnc// /,}
