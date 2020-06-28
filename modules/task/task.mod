@@ -210,6 +210,12 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
         mask1=${imgprt2}${mskpart}; maskpart2=${mask1#*_*_*_*}
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
+
+        conf2="_desc-confounds_regressors.json"
+        if [[ -f ${imgprt}${conf2} ]]; then 
+           exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
+           output confjson $out/prestats/${prefix}_fmriconf.json
+        fi
          
        output fmriprepconf  ${out}/task/${prefix}_fmriconf.tsv 
        output    rps       ${out}/task/${prefix}_motion.1D
@@ -746,8 +752,13 @@ done
     exec_xcp mbind.R -x    ${confmat[cxt]}  -y    OPdx${dx} -o    ${confmat_path}
     output   confmat           ${prefix}_confmat.1D
     ac_path=${outdir}/${prefix}_acompcor.1D
+    if [[ -f ${confjson[cxt]} ]]; then 
+     exec_xcp acompcor_select.py -j ${confjson[cxt]} -c ${fmriprepconf[cxt]} \
+    -o  ${ac_path} 
+    else
     exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j aCompCor  -o ${ac_path}
     output acp  ${prefix}_acompcor.1D
+    fi
     exec_xcp mbind.R  -x ${confmat[cxt]} -y ${acp[cxt]} -o ${confmat_path} 
     output confmat             ${prefix}_confmat.1D
    elif  [[ ${task_confound[cxt]} == acompcor_gsr ]] ; then 
