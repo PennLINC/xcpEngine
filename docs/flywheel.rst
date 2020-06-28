@@ -15,7 +15,7 @@ as shown below.
 
 The cohort file will be created base on the FMRIPREP output and/or  img.  The `img` is input  directory for asl and structural image. The processing of ASL requires  
 processed anatomical image from FRMIPREP (fmriprepdir) or structural processing output (antsct). The  `m0` is the M0 directory for CBF calibration if present. In the case 
-of task-activation analysis, `task_name` is required to be specified in the config of xcpengine gear.
+of task-activation analysis, `task_name`  and `seission` are required to be specified in the config of xcpengine gear.
 
    Task-activation analysis
 -----------------------------
