@@ -213,8 +213,8 @@ if (( ${task_fmriprep[cxt]} == 1 ))
 
         conf2="_desc-confounds_regressors.json"
         if [[ -f ${imgprt}${conf2} ]]; then 
-           exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
-           output confjson $out/prestats/${prefix}_fmriconf.json
+           exec_sys cp ${imgprt}${conf2} $out/task/${prefix}_fmriconf.json
+           output confjson $out/task/${prefix}_fmriconf.json
         fi
          
        output fmriprepconf  ${out}/task/${prefix}_fmriconf.tsv 
@@ -366,11 +366,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                     -s ${spaces[sub]} 2>/dev/null
                
              
-                intermediate=${intermediate}_${cur} 
-               
-
-         
-               
+                intermediate=${intermediate}_${cur}            
           else 
                #  find which template is present 
                b1=${img1[sub]##*space-}; 
