@@ -209,6 +209,7 @@ while (( ${#rem} > 0 ))
                            --1DDT=${regress_1ddt[cxt]}      \
                            --CONFIN=${confproc[cxt]}        \
                            --CONFOUT=${intermediate}_${cur}_confmat.1D
+      exec_fsl fslmaths ${mask[sub]} -mul ${intermediate}_${cur} ${intermediate}_${cur}
       intermediate=${intermediate}_${cur}
       configure            confproc  ${intermediate}_confmat.1D
       routine_end
@@ -243,7 +244,9 @@ while (( ${#rem} > 0 ))
       #############################################################
       # Update image pointer
       #############################################################
+      exec_fsl fslmaths ${mask[sub]} -mul ${intermediate}_${cur} ${intermediate}_${cur}
       intermediate=${intermediate}_${cur}
+    
       configure   confproc    ${intermediate}_confmat.1D
       routine_end
       ;;

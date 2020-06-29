@@ -238,13 +238,11 @@ while (( ${#rem} > 0 ))
         exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
 
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
+
         mask1=${imgprt2}${mskpart}; maskpart2=${mask1#*_*_*_*}
+
         mask1=${imgprt2}${mskpart};
-        if [[ "$imgname" == *_res-* ]]; then
-           maskpart2=${mask1#*_*_*_*_*}
-        else
-           maskpart2=${mask1#*_*_*_*}
-        fi
+        
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
         conf2="_desc-confounds_regressors.json"
