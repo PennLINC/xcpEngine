@@ -204,25 +204,22 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         ########################################
         
          routine @ getting data from frmiprep directory 
-                  
+         
+        imgprt=${img1[sub]%_*_*_*}; conf="_desc-confounds_regressors.tsv"
+
         # Check if we have a res- tag
         # Added by recent versions of fmriprep
         imgname=$(basename ${img1[sub]})
         conf="_desc-confounds_regressors.tsv"
         if [[ "$imgname" == *_res-* ]]; then
-          imgprt=${img1[sub]%_*_*_*_*}
+           imgprt=${img1[sub]%_*_*_*_*}
         else
-          imgprt=${img1[sub]%_*_*_*}
+           imgprt=${img1[sub]%_*_*_*}
         fi
-        exec_sys cp ${imgprt}${conf} ${out}/task/${prefix}_fmriconf.tsv
+        exec_sys cp ${imgprt}${conf} $out/task/${prefix}_fmriconf.tsv
 
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
-        mask1=${imgprt2}${mskpart};
-        if [[ "$imgname" == *_res-* ]]; then
-           maskpart2=${mask1#*_*_*_*_*}
-        else
-           maskpart2=${mask1#*_*_*_*}
-        fi
+        mask1=${imgprt2}${mskpart}; 
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
 
         conf2="_desc-confounds_regressors.json"
@@ -763,8 +760,9 @@ done
     output   confmat           ${prefix}_confmat.1D
     ac_path=${outdir}/${prefix}_acompcor.1D
     if [[ -f ${confjson[cxt]} ]]; then 
-     exec_xcp acompcor_select.py -j ${confjson[cxt]} -c ${fmriprepconf[cxt]} \
+    exec_xcp acompcor_select.py -j ${confjson[cxt]} -c ${fmriprepconf[cxt]} \
     -o  ${ac_path} 
+    output acp  ${prefix}_acompcor.1D
     else
     exec_xcp generate_confmat.R -i ${fmriprepconf[cxt]} -j aCompCor  -o ${ac_path}
     output acp  ${prefix}_acompcor.1D
