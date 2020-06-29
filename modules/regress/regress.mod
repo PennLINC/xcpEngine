@@ -502,7 +502,7 @@ surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
           do
            ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage --hemi ${hem} \
                --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
-           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage5/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
+           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
 
       done
       exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_residual.dscalar.nii  \
