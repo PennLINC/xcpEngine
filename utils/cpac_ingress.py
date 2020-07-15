@@ -39,12 +39,11 @@ subjid=pp.parts[-1].split('_')[0] # subject id
 shutil.copyfile(glob.glob(gendir+'/anatomical_brain/'+'*nii.gz')[0],outputdir+'/'+subjid+'_T1wbrain.nii.gz')
 shutil.copyfile(glob.glob(gendir+'/anatomical_brain_mask/'+'*nii.gz')[0],outputdir+'/'+subjid+'_T1wmask.nii.gz')
 shutil.copyfile(glob.glob(gendir+'/seg_partial_volume_map/'+'*nii.gz')[0],outputdir+'/'+subjid+'_segmentation.nii.gz')
-
 shutil.copyfile(glob.glob(gendir+'/anatomical_to_mni_nonlinear_xfm/'+'*nii.gz')[0],outputdir+'/'+subjid+'_from-T1w_to-MNI_warp.nii.gz')
+shutil.copyfile(glob.glob(gendir+'/mni_to_anatomical_nonlinear_xfm/'+'*nii.gz')[0],outputdir+'/'+subjid+'_from-MNI_to-T1w_warp.nii.gz')
 shutil.copyfile(glob.glob(gendir+'/ants_affine_xfm/'+'*.mat')[0],outputdir+'/'+subjid+'_from-T1w_to-MNI_affine2.mat')
 shutil.copyfile(glob.glob(gendir+'/ants_rigid_xfm/'+'*.mat')[0],outputdir+'/'+subjid+'_from-T1w_to-MNI_rigid_affine1.mat')
 shutil.copyfile(glob.glob(gendir+'/ants_initial_xfm/'+'*.mat')[0],outputdir+'/'+subjid+'_from-T1w_to-MNI_initial_affine0.mat')
-
 shutil.copyfile(glob.glob(gendir+'/functional_brain_mask/'+scandid+'/*.nii.gz')[0],outputdir+'/'+subjid+scandid+'_brainmask.nii.gz')
 shutil.copyfile(glob.glob(gendir+'/mean_functional/'+scandid+'/*.nii.gz')[0],outputdir+'/'+subjid+scandid+'_referenceVolume.nii.gz')
 shutil.copyfile(glob.glob(gendir+'/functional_to_anat_linear_xfm/'+scandid+'/*.mat')[0],outputdir+'/'+subjid+scandid+'_from-func_to-T1w_affine.mat')
