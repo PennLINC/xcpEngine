@@ -1110,7 +1110,8 @@ while (( ${#rem} > 0 ))
       #output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
       exec_sys  cp $(ls -f ${cpacdir}/*_regressors.tsv) $outdir/${prefix}_fmriconf.tsv
       functot1=$(ls -f ${cpacdir}/*_from-func_to-T1w_affine.mat )
-      t12mniwarp=$(ls -f ${cpacdir}/*_warp.nii.gz )
+      t12mniwarp=$(ls -f ${cpacdir}/*MNI_warp.nii.gz)
+      mni2t1warp=$(ls -f ${cpacdir}/*T1w_warp.nii.gz)
       t12mnia0=$(ls -f ${cpacdir}/*T1w_to-MNI_initial_affine0.mat )
       t12mnia1=$(ls -f ${cpacdir}/*T1w_to-MNI_rigid_affine1.mat )
       t12mnia2=$(ls -f ${cpacdir}/*T1w_to-MNI_affine2.mat )
@@ -1195,8 +1196,8 @@ while (( ${#rem} > 0 ))
                     -s ${spaces[sub]} 2>/dev/null
 
 
-             mni2t1warp=${outdir}/cpac/mni2t1warp.nii.gz 
-             exec_fsl fslmaths ${t12mniwarp} -mul -1 ${mni2t1warp}
+             #mni2t1warp=${outdir}/cpac/mni2t1warp.nii.gz 
+             #exec_fsl fslmaths ${t12mniwarp} -mul -1 ${mni2t1warp}
               hd=',MapHead='${struct_head[cxt]}
               subj2temp="  ${t12mnia0} ${t12mnia1}  ${t12mnia2}  ${t12mniwarp}  "
               temp2subj="  ${mni2t1a0} ${mni2t1a1} ${mni2t1a2}  ${mni2t1warp}  "
