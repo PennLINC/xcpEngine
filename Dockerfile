@@ -228,9 +228,9 @@ ADD . /xcpEngine
 
 RUN bash -c \
     'cd  /xcpEngine \
-    && wget -nv https://upenn.box.com/shared/static/i30llenk6s37kv8nkqxgulwylaxp928g.xz \
-    && tar xvfJm i30llenk6s37kv8nkqxgulwylaxp928g.xz \
-    && rm i30llenk6s37kv8nkqxgulwylaxp928g.xz'
+    && wget -nv  https://upenn.box.com/shared/static/rrfyffnyzdybokex5tu83iav0k2yak2m.xz \
+    && tar xvfJm rrfyffnyzdybokex5tu83iav0k2yak2m.xz \
+    && rm rrfyffnyzdybokex5tu83iav0k2yak2m.xz'
     
 
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
