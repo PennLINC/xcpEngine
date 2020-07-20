@@ -494,7 +494,7 @@ while (( ${#rem} > 0 ))
                          -i ${mnitopnc}                               \
                          -s ${spaces[sub]} 2>/dev/null
                        hd=',MapHead='${struct_head[cxt]}
-                   
+                   onetran=${XCPEDIR}/utils/oneratiotransform.txt
                        ${XCPEDIR}/utils/spaceMetadata          \
                          -o ${spaces[sub]}                 \
                          -f ${standard}:${template}        \
@@ -1112,7 +1112,7 @@ while (( ${#rem} > 0 ))
       exec_fsl fslmaths  ${referenceVolumeBrain} -mul 1 ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
       output mask ${outdir}/${prefix}_brainmask.nii.gz
       output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
-
+      output referenceVolume ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
       #output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
       exec_sys  cp $(ls -f ${cpacdir}/*_regressors.tsv) $outdir/${prefix}_fmriconf.tsv
       output fmriprepconf $outdir/${prefix}_fmriconf.tsv
@@ -1169,12 +1169,13 @@ while (( ${#rem} > 0 ))
                          -i ${onetran}                               \
                          -s ${spaces[sub]} 2>/dev/null
 
+
       
       subroutine        @  Quality assessment
     registration_quality=( $(exec_xcp \
       maskOverlap.R           \
       -m ${struct[cxt]}   \
-      -r ${referenceVolume[cxt]} ) )
+      -r ${referenceVolumeBrain[cxt]} ) )
     echo  ${registration_quality[0]} > ${coreg_cross_corr[cxt]}
     echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
     echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
