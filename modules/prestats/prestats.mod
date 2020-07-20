@@ -1099,7 +1099,8 @@ while (( ${#rem} > 0 ))
       #register both struct and mask to MNI space of bold image
       referenceVolumeBrain=$(ls -f ${cpacdir}/*referenceVolume.nii.gz)
       exec_ants antsApplyTransforms -d 3 -e 3 -i ${struct1} -r ${referenceVolumeBrain} \
-      -t ${t12mniwarp} -t ${t12mni} -o ${outdir}/${prefix}_structbrain.nii.gz  -n  NearestNeighbor 
+          -t ${t12mniwarp} -t ${t12mni} -o ${outdir}/${prefix}_structbrain.nii.gz  -n  NearestNeighbor 
+
       output struct_head ${outdir}/${prefix}_structbrain.nii.gz
       output struct ${outdir}/${prefix}_structbrain.nii.gz
 
