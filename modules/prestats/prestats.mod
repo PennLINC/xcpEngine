@@ -401,7 +401,7 @@ while (( ${#rem} > 0 ))
                    struct1=$( ls -d $strucn/anat/*${template_label}*desc-preproc_T1w.nii.gz)
                    segmentation1=$(ls -d  $strucn/anat/*${template_label}*dseg.nii.gz)
                    structmask=$(ls -d  $strucn/anat/*${template_label}*desc-brain_mask.nii.gz)
-                   onetran=${XCPEDIR}/utils/oneratiotransform.txt
+                   
 
                    subroutine        @ checking refvolume and structural orientation
                    exec_afni 3dresample -orient  ${template_orientation} \
@@ -1085,77 +1085,38 @@ while (( ${#rem} > 0 ))
       cpacdir=${outdir}/cpac
       python $XCPEDIR/utils/cpac_ingress.py  -i ${img1[sub]} -o ${cpacdir}
        
-      # get the template orientation 
+      # the struct and change it to img space and resolution
       struct1=$(ls -f ${cpacdir}/*T1wbrain.nii.gz)
-      d1=$( fslval ${img[sub]} pixdim1)
-      d2=$( fslval ${img[sub]} pixdim2)
-      d3=$( fslval ${img[sub]} pixdim3)
-      exec_afni 3dresample  -dxyz $d1 $d2 $d3 -inset ${struct1}  \
-      -prefix ${outdir}/${prefix}_structbrain.nii.gz   -overwrite 
+       
+      #get structural mask first 
+      exec_fsl fslmaths ${struct1} -bin ${cpacdir}/t1mask.nii.gz 
+
+      # get necceray transform
+      t12mniwarp=$(ls -f ${cpacdir}/*MNI_warp.nii.gz)
+      mni2t1warp=$(ls -f ${cpacdir}/*T1w_warp.nii.gz)
+      t12mni=$(ls -f ${cpacdir}/*T1w_to-MNI_affine2.mat )
+
+      #register both struct and mask to MNI space of bold image
+      referenceVolumeBrain=$(ls -f ${cpacdir}/*referenceVolume.nii.gz)
+      exec_ants antsApplyTransforms -d 3 -e 3 -i ${struct1} -r ${referenceVolumeBrain} \
+      -t ${t12mniwarp} -t ${t12mni} -o ${outdir}/${prefix}_structbrain.nii.gz  -n  NearestNeighbor 
       output struct_head ${outdir}/${prefix}_structbrain.nii.gz
       output struct ${outdir}/${prefix}_structbrain.nii.gz
 
-      exec_afni 3dresample  -master ${struct[cxt]} -inset $(ls -f ${cpacdir}/*T1wmask.nii.gz) \
-        -prefix ${outdir}/${prefix}_structmask.nii.gz -overwrite
+      exec_ants antsApplyTransforms -d 3 -e 3 -i ${cpacdir}/t1mask.nii.gz -r ${referenceVolumeBrain} \
+      -t ${t12mniwarp} -t ${t12mni} -o ${outdir}/${prefix}_structmask.nii.gz  -n  NearestNeighbor 
       output struct_mask ${outdir}/${prefix}_structmask.nii.gz
-
-      exec_afni 3dresample  -master ${struct[cxt]} -inset $(ls -f ${cpacdir}/*segmentation.nii.gz) \
-      -prefix ${outdir}/${prefix}_segmentation.nii.gz -overwrite
-      output segmentation ${outdir}/${prefix}_segmentation.nii.gz
-
-      referenceVolumeBrain=$(ls -f ${cpacdir}/*referenceVolume.nii.gz)
-
+      
       mask=$(ls -f ${cpacdir}/*_brainmask.nii.gz)
+      exec_fsl fslmaths  ${mask}  -mul 1  ${outdir}/${prefix}_brainmask.nii.gz
+      exec_fsl fslmaths  ${referenceVolumeBrain} -mul 1 ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
+      output mask ${outdir}/${prefix}_brainmask.nii.gz
+      output referenceVolumeBrain ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
 
       #output fmriprepconf $(ls -f ${cpacdir}/*_regressors.tsv)
       exec_sys  cp $(ls -f ${cpacdir}/*_regressors.tsv) $outdir/${prefix}_fmriconf.tsv
-      functot1=$(ls -f ${cpacdir}/*_from-func_to-T1w_affine.mat )
-      t12mniwarp=$(ls -f ${cpacdir}/*MNI_warp.nii.gz)
-      mni2t1warp=$(ls -f ${cpacdir}/*T1w_warp.nii.gz)
-      t12mnia0=$(ls -f ${cpacdir}/*T1w_to-MNI_initial_affine0.mat )
-      t12mnia1=$(ls -f ${cpacdir}/*T1w_to-MNI_rigid_affine1.mat )
-      t12mnia2=$(ls -f ${cpacdir}/*T1w_to-MNI_affine2.mat )
-     
-     subroutine           @6.7  Inverting affine transform
-       
-      exec_c3d c3d_affine_tool         \
-      -src  ${referenceVolumeBrain}          \
-      -ref  ${struct[cxt]} \
-        ${functot1}        \
-      -fsl2ras            \
-      -oitk ${cpacdir}/func2t1.txt 
-       
-      fun2t1=${cpacdir}/func2t1.txt
-        
-      exec_ants antsApplyTransforms -d 3 -e 3 -i ${mask} -r ${struct[cxt]} -t ${fun2t1} \
-       -o ${outdir}/${prefix}_mask.nii.gz  -n  NearestNeighbor
-      exec_fsl fslmaths ${outdir}/${prefix}_mask.nii.gz -mul ${struct_mask[cxt]} ${outdir}/${prefix}_mask.nii.gz 
-      output mask ${outdir}/${prefix}_mask.nii.gz 
-
-
-       exec_ants   antsApplyTransforms           \
-            -d       3                             \
-            -o       Linear[${cpacdir}/t12func.txt,1] \
-            -t       ${fun2t1}
-      t12func=${cpacdir}/t12func.txt
-
-       exec_ants   antsApplyTransforms           \
-            -d       3                             \
-            -o       Linear[${cpacdir}/mni2t1a0.mat,1] \
-            -t       ${t12mnia0}
-       mni2t1a0=${cpacdir}/mni2t1a0.mat
-
-       exec_ants   antsApplyTransforms           \
-            -d       3                             \
-            -o       Linear[${cpacdir}/mni2t1a1.mat,1] \
-            -t       ${t12mnia1}
-       mni2t1a1=${cpacdir}/mni2t1a1.mat
-
-       exec_ants   antsApplyTransforms           \
-            -d       3                             \
-            -o       Linear[${cpacdir}/mni2t1a2.mat,1] \
-            -t       ${t12mnia2}
-       mni2t1a2=${cpacdir}/mni2t1a2.mat
+      output fmriprepconf $outdir/${prefix}_fmriconf.tsv
+      
 
       
       subroutine        @  generate new ${spaces[sub]} with spaceMetadata
@@ -1199,31 +1160,14 @@ while (( ${#rem} > 0 ))
              #mni2t1warp=${outdir}/cpac/mni2t1warp.nii.gz 
              #exec_fsl fslmaths ${t12mniwarp} -mul -1 ${mni2t1warp}
               hd=',MapHead='${struct_head[cxt]}
-              subj2temp="  ${t12mnia0} ${t12mnia1}  ${t12mnia2}  ${t12mniwarp}  "
-              temp2subj="  ${mni2t1a0} ${mni2t1a1} ${mni2t1a2}  ${mni2t1warp}  "
-              subj2temp=$( echo ${subj2temp})
-              temp2subj=$(echo ${temp2subj})
-              subj2temp=${subj2temp// /,}
-              temp2subj=${temp2subj// /,}
-
+              onetran=${XCPEDIR}/utils/oneratiotransform.txt
               ${XCPEDIR}/utils/spaceMetadata          \
-                    -o ${spaces[sub]}                 \
-                    -f ${standard}:${template}        \
-                    -m ${structural[sub]}:${struct[cxt]}${hd} \
-                    -x ${subj2temp}                               \
-                    -i ${temp2subj}                               \
-                    -s ${spaces[sub]} 2>/dev/null  
-
-
-      exec_ants antsApplyTransforms -d 3 -e 3 -i ${referenceVolumeBrain} \
-         -r ${struct_head[cxt]}  -t ${fun2t1} -o ${cpacdir}/refvol2t1w.nii.gz \
-         -n LanczosWindowedSinc 
-
-       exec_fsl immv  ${cpacdir}/refvol2t1w.nii.gz ${outdir}/${prefix}_referenceVolume.nii.gz 
-       exec_fsl fslmaths ${outdir}/${prefix}_referenceVolume.nii.gz -mul  ${mask[cxt]} ${outdir}/${prefix}_referenceVolume.nii.gz
-       output referenceVolume ${outdir}/${prefix}_referenceVolume.nii.gz
-       exec_fsl imcp ${outdir}/${prefix}_referenceVolume.nii.gz ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
-       output referenceVolumeBrain  ${outdir}/${prefix}_referenceVolumeBrain.nii.gz
+                         -o ${spaces[sub]}                 \
+                         -f ${standard}:${template}        \
+                         -m ${structural[sub]}:${struct[cxt]}${hd} \
+                         -x ${onetran}                               \
+                         -i ${onetran}                               \
+                         -s ${spaces[sub]} 2>/dev/null
 
       
       subroutine        @  Quality assessment
@@ -1235,13 +1179,9 @@ while (( ${#rem} > 0 ))
     echo  ${registration_quality[1]} > ${coreg_coverage[cxt]}
     echo  ${registration_quality[2]} > ${coreg_jaccard[cxt]}
     echo  ${registration_quality[3]} > ${coreg_dice[cxt]}
-     
-   exec_ants antsApplyTransforms -d 3 -e 3 -i ${img[sub]} \
-   -r ${struct[cxt]}  -t ${fun2t1} -o ${intermediate}_${cur}.nii.gz \
-   -n LanczosWindowedSinc
    
-      #exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
-        intermediate=${intermediate}_${cur} 
+      exec_sys ln -sf ${intermediate}.nii.gz ${intermediate}_${cur}.nii.gz
+      intermediate=${intermediate}_${cur} 
     routine_end
       ;;
       
@@ -1250,7 +1190,7 @@ while (( ${#rem} > 0 ))
       MPR)
          ##########################################################
          # MPR computes motion-related variables, such as
-         # realignment parameters and framewise displacement.
+         # realignment parameters and fram[ewise displacement.
          #
          # Prime the analytic pipeline for motion censoring, if
          # the user has requested it.
