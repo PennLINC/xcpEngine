@@ -426,13 +426,13 @@ for sub in ${!cohort[@]}
    rm -rf ${out[sub]}/fcon/*/*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/reho/*referenceVolume.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/alff/*referenceVolume.nii.gz 2>/dev/null
-   rm -rf ${out[sub]}/alff/*allf*_sm*.nii.gz 2>/dev/null
-   rm -rf ${out[sub]}/reho/*reho*_sm*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/alff/*sm*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/reho/*sm*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/regress/*img_sm*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/roiquant/*referenceVolume.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/roiquant/*/*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/qcfc/*.nii.gz 2>/dev/null
-   rm -rf ${out[sub]}/qcfc/*.voxts.png 2>/dev/null
+   rm -rf ${out[sub]}/qcfc/*voxts.png 2>/dev/null
    rm -rf ${out[sub]}/roiquant/*/*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/task/*.nii.gz 2>/dev/null
 
