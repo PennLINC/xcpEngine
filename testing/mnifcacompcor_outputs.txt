@@ -37,7 +37,6 @@ sub-1/figures/sub-1_registration.svg
 sub-1/figures/sub-1_reho.svg
 sub-1/figures/sub-1_voxts.png
 sub-1/norm
-sub-1/norm/sub-1_alff_sm6Std.nii.gz
 sub-1/norm/sub-1_alffStd.nii.gz
 sub-1/norm/sub-1_alffZStd.nii.gz
 sub-1/norm/sub-1_maskStd.nii.gz

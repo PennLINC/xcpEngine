@@ -435,9 +435,9 @@ for sub in ${!cohort[@]}
    rm -rf ${out[sub]}/qcfc/*voxts.png 2>/dev/null
    rm -rf ${out[sub]}/roiquant/*/*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/task/*.nii.gz 2>/dev/null
-   rm -rf ${out[sub]}/task/*.nii.gz 2>/dev/null
-   rm -rf ${out[sub]}/norm/*reho*.nii.gz 2>/dev/null
-   m -rf ${out[sub]}/norm/*alff*.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/norm/*alff*_sm*Std.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/norm/*reho*_sm*Std.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/norm/*img_sm*Std.nii.gz 2>/dev/null
 
 done
  
