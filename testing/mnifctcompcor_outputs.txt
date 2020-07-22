@@ -42,7 +42,6 @@ sub-1/norm/sub-1_normCrossCorr.txt
 sub-1/norm/sub-1_normDice.txt
 sub-1/norm/sub-1_normJaccard.txt
 sub-1/norm/sub-1_referenceVolumeBrainStd.nii.gz
-sub-1/norm/sub-1_reho_sm6Std.nii.gz
 sub-1/norm/sub-1_rehoStd.nii.gz
 sub-1/norm/sub-1_rehoZStd.nii.gz
 sub-1/norm/sub-1_seq2std.png
