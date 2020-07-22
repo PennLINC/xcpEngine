@@ -70,7 +70,6 @@ sub-1/qcfc/sub-1_dvars-std.1D
 sub-1/qcfc/sub-1_dvars-vox.1D
 sub-1/qcfc/sub-1_motionDVCorr.txt
 sub-1/qcfc/sub-1_tdof.txt
-sub-1/qcfc/sub-1_voxts.png
 sub-1/regress
 sub-1/regress/sub-1_confcor.txt
 sub-1/regress/sub-1_confmat.1D
