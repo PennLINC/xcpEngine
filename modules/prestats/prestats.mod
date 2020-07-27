@@ -1048,6 +1048,9 @@ while (( ${#rem} > 0 ))
                fslroi ${intermediate}.nii.gz \
                %OUTPUT                       \
                ${vol_begin} ${vol_end}
+
+            ## remove the first n rows in the confmat 
+            exec_xcp removetaskpnts.R -n  ${prestats_dvols[cxt]}  -t ${fmriprepconf[cxt]}  -p ${fmriprepconf[cxt]} 
          fi
          ##########################################################
          # Repeat for any derivatives of the BOLD time series that
