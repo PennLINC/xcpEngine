@@ -284,17 +284,17 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                output referenceVolume  ${out}/task/${prefix}_referenceVolume.nii.gz
                
                exec_afni 3dresample -orient ${template_orientation} \
-                  -inset ${mask1} -prefix ${prefix}_imgmask.nii.gz -overwrite
+                  -inset ${mask1} -prefix ${out}/task/${prefix}_imgmask.nii.gz -overwrite
 
                exec_afni 3dresample -master ${out}/task/${prefix}_referenceVolume.nii.gz \
-                  -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
+                  -inset ${structmask}  -prefix ${out}/task/${prefix}_structmask.nii.gz -overwrite
 
-               exec_fsl fslmaths ${prefix}_imgmask.nii.gz -mul ${prefix}_structmask.nii.gz \
+               exec_fsl fslmaths ${out}/task/${prefix}_imgmask.nii.gz -mul${out}/task/${prefix}_structmask.nii.gz \
                       ${out}/task/${prefix}_mask.nii.gz
 
                 output mask  ${out}/task/${prefix}_mask.nii.gz
                 
-                rm ${prefix}_imgmask.nii.gz
+                rm ${out}/task/${prefix}_imgmask.nii.gz
 
                exec_afni 3dresample -master ${mask[cxt]} \
                    -inset ${segmentation[sub]}  \
@@ -317,7 +317,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
                 ${out}/task/${prefix}_structbrain.nii.gz
                
                output struct_head ${out}/task/${prefix}_structbrain.nii.gz  
-               exec_sys rm -rf ${prefix}_structmask.nii.gz
+               exec_sys rm -rf ${out}/task/${prefix}_structmask.nii.gz
 
                subroutine        @  generate new ${spaces[sub]} with spaceMetadata
 
@@ -420,8 +420,8 @@ if (( ${task_fmriprep[cxt]} == 1 ))
 
                   subroutine        @  generate mask and referenceVolumeBrain 
                   exec_afni 3dresample -master ${referenceVolume[cxt]} \
-                          -inset ${structmask}  -prefix ${prefix}_structmask.nii.gz -overwrite
-                  exec_fsl fslmaths ${mask1} -mul ${prefix}_structmask.nii.gz \
+                          -inset ${structmask}  -prefix ${out}/task/${prefix}_structmask.nii.gz -overwrite
+                  exec_fsl fslmaths ${mask1} -mul ${out}/task/${prefix}_structmask.nii.gz \
                       ${out}/task/${prefix}_mask.nii.gz
                   output mask  ${out}/task/${prefix}_mask.nii.gz
                   exec_afni 3dresample -master  ${referenceVolume[cxt]} \
