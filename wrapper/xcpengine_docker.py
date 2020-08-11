@@ -245,12 +245,12 @@ def main():
 
     cohort_file = opts.c
     if cohort_file:
-        command.extend(['-v', ':'.join((cohort_file, '/cohort/cohort.csv', 'ro'))])
+        command.extend(['-v', ':'.join((cohort_file, '/cohort/cohort.csv', 'rw'))])
         main_args.extend(['-c', '/cohort/cohort.csv'])
 
     output_dir = opts.o
     if output_dir:
-        command.extend(['-v', ':'.join((output_dir, '/xcpOutput'))])
+        command.extend(['-v', ':'.join((output_dir, '/xcpOutput', 'rw'))])
         main_args.extend(['-o', '/xcpOutput'])
 
     # only allow serial:
@@ -258,12 +258,12 @@ def main():
 
     relative_dir = opts.r
     if relative_dir:
-        command.extend(['-v', ':'.join((relative_dir, '/relative'))])
+        command.extend(['-v', ':'.join((relative_dir, '/relative', 'rw'))])
         main_args.extend(['-r', '/relative'])
 
     work_dir = opts.i
     if work_dir:
-        command.extend(['-v', ':'.join((work_dir, '/scratch'))])
+        command.extend(['-v', ':'.join((work_dir, '/scratch', 'rw'))])
         main_args.extend(['-i', '/scratch'])
 
     if opts.shell:
