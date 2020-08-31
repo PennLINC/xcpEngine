@@ -1137,7 +1137,7 @@ if [[ -d ${featout} ]]
        if [[ ${template_label} == 'T1w' ]]
            then  # reample bold to T1 dimension before freesurfer 
 
-           exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${ref} -t ${1wtotemp2} \
+           exec_ants antsApplyTransforms -d 3 -e 3 -i ${res4d} -r ${ref} -t ${t1wtotemp2} \
            -o ${outdir}/boldtoMNI.nii.gz  -n LanczosWindowedSinc
 
       else # reamsple template to T1 assuming the bold in MNI space
