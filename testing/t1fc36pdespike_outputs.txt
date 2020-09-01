@@ -25,7 +25,6 @@ sub-1/confound2/sub-1_modelParameterCount.txt
 sub-1/confound2/sub-1_wm.1D
 sub-1/fcon
 sub-1/fcon/aal116
-sub-1/fcon/aal116/sub-1_aal116_missing.txt
 sub-1/fcon/aal116/sub-1_aal116.net
 sub-1/fcon/aal116/sub-1_aal116_network.txt
 sub-1/fcon/aal116/sub-1_aal116_ts.1D
