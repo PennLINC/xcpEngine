@@ -216,17 +216,29 @@ if (( ${task_fmriprep[cxt]} == 1 ))
         else
            imgprt=${img1[sub]%_*_*_*}
         fi
-        exec_sys cp ${imgprt}${conf} $out/task/${prefix}_fmriconf.tsv
+        conf="_desc-confounds_regressors.tsv"
+        conf2="_desc-confounds_regressors.json"
+        if [[ "$imgname" == *_res-* ]]; then
+           imgprt=${img1[sub]%_*_*_*_*}
+        else
+           imgprt=${img1[sub]%_*_*_*}
+        fi
+
+        if [[  ${imgprt}${conf}  ]]; then 
+            exec_sys cp ${imgprt}${conf} $out/task/${prefix}_fmriconf.tsv
+            exec_sys cp ${imgprt}${conf2} $out/task/${prefix}_fmriconf.json
+            output confjson $out/task/${prefix}_fmriconf.json
+         else 
+         conf="_desc-confounds_timeseries.tsv"   
+         exec_sys cp ${imgprt}${conf} $out/task/${prefix}_fmriconf.tsv
+         conf2="_desc-confounds_timeseries.json"
+         exec_sys cp ${imgprt}${conf2} $out/task/${prefix}_fmriconf.json
+         output confjson $out/task/${prefix}_fmriconf.json
+         fi
 
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
         mask1=${imgprt2}${mskpart}; 
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
-
-        conf2="_desc-confounds_regressors.json"
-        if [[ -f ${imgprt}${conf2} ]]; then 
-           exec_sys cp ${imgprt}${conf2} $out/task/${prefix}_fmriconf.json
-           output confjson $out/task/${prefix}_fmriconf.json
-        fi
          
        output fmriprepconf  ${out}/task/${prefix}_fmriconf.tsv 
        output    rps       ${out}/task/${prefix}_motion.1D

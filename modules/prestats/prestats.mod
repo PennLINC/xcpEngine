@@ -225,17 +225,30 @@ while (( ${#rem} > 0 ))
         routine @ getting data from fmriprep directory 
         exec_fsl immv ${intermediate} ${intermediate}_${cur}   
         imgprt=${img1[sub]%_*_*_*}; conf="_desc-confounds_regressors.tsv"
-
+        
         # Check if we have a res- tag
         # Added by recent versions of fmriprep
         imgname=$(basename ${img1[sub]})
         conf="_desc-confounds_regressors.tsv"
+        conf2="_desc-confounds_regressors.json"
         if [[ "$imgname" == *_res-* ]]; then
            imgprt=${img1[sub]%_*_*_*_*}
         else
            imgprt=${img1[sub]%_*_*_*}
         fi
-        exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
+
+        if [[  ${imgprt}${conf}  ]]; then 
+            exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
+            exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
+            output confjson $out/prestats/${prefix}_fmriconf.json
+         else 
+         conf="_desc-confounds_timeseries.tsv"   
+         exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
+         conf2="_desc-confounds_timeseries.json"
+         exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
+         output confjson $out/prestats/${prefix}_fmriconf.json
+         fi
+         
 
         imgprt2=${img1[sub]%_*_*}; mskpart="_desc-brain_mask.nii.gz"
 
@@ -244,12 +257,6 @@ while (( ${#rem} > 0 ))
         mask1=${imgprt2}${mskpart};
         
         refpart="_boldref.nii.gz"; refvol=${imgprt2}${refpart}
-
-        conf2="_desc-confounds_regressors.json"
-        if [[ -f ${imgprt}${conf2} ]]; then 
-           exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
-           output confjson $out/prestats/${prefix}_fmriconf.json
-        fi
 
          strucn="${img1[sub]%/*/*}";
          strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
