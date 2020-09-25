@@ -237,7 +237,7 @@ while (( ${#rem} > 0 ))
            imgprt=${img1[sub]%_*_*_*}
         fi
 
-        if [[  ${imgprt}${conf}  ]]; then 
+        if [[ -f  ${imgprt}${conf}  ]]; then 
             exec_sys cp ${imgprt}${conf} $out/prestats/${prefix}_fmriconf.tsv
             exec_sys cp ${imgprt}${conf2} $out/prestats/${prefix}_fmriconf.json
             output confjson $out/prestats/${prefix}_fmriconf.json
