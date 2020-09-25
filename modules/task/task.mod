@@ -224,7 +224,7 @@ if (( ${task_fmriprep[cxt]} == 1 ))
            imgprt=${img1[sub]%_*_*_*}
         fi
 
-        if [[  ${imgprt}${conf}  ]]; then 
+        if [[ -f  ${imgprt}${conf}  ]]; then 
             exec_sys cp ${imgprt}${conf} $out/task/${prefix}_fmriconf.tsv
             exec_sys cp ${imgprt}${conf2} $out/task/${prefix}_fmriconf.json
             output confjson $out/task/${prefix}_fmriconf.json
