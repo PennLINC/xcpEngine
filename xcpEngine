@@ -421,7 +421,6 @@ for sub in ${!cohort[@]}
 
    # remove some data to clean up 
    rm -rf ${out[sub]}/*nii.gz  2>/dev/null
-   rm -rf ${out[sub]}/prestats/*nii.gz 2>/dev/null
    rm -rf ${out[sub]}/fcon/*referenceVolume.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/fcon/*/*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/reho/*referenceVolume.nii.gz 2>/dev/null
