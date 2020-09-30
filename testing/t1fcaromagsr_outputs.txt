@@ -56,6 +56,9 @@ sub-1/prestats/sub-1_coregCrossCorr.txt
 sub-1/prestats/sub-1_coregDice.txt
 sub-1/prestats/sub-1_coregJaccard.txt
 sub-1/prestats/sub-1_fmriconf.tsv
+sub-1/prestats/sub-1_mask.nii.gz
+sub-1/prestats/sub-1_referenceVolumeBrain.nii.gz
+sub-1/prestats/sub-1_referenceVolume.nii.gz
 sub-1/qcfc
 sub-1/qcfc/sub-1_dvars-mean.txt
 sub-1/qcfc/sub-1_dvars-raw.1D

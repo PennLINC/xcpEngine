@@ -421,6 +421,11 @@ for sub in ${!cohort[@]}
 
    # remove some data to clean up 
    rm -rf ${out[sub]}/*nii.gz  2>/dev/null
+   rm -rf ${out[sub]}/prestats/*preprocessed.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/prestats/*segmentation.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/prestats/*structbrain.nii.gz 2>/dev/null
+   rm -rf ${out[sub]}/prestats/*structmask.nii.gz 2>/dev/null
+   rm -f  ${out[sub]}/prestats/*struct.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/fcon/*referenceVolume.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/fcon/*/*.nii.gz 2>/dev/null
    rm -rf ${out[sub]}/reho/*referenceVolume.nii.gz 2>/dev/null
