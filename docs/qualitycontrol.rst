@@ -48,7 +48,7 @@ Motion/spikes summary.::
 regression summary.:: 
          - motionDVCorrInit - correlation of  mean RMS and DVARS before regresion 
          - motionDVCorrFinal - correlation of  mean RMS and DVARS after  regresion 
-         - nNuisanceParameters - total number of nuisance nNuisanceParameters
+         - nNuisanceParameters - total number of nuisance nNuisanceParameters in addition with custom regressors
          - nVolCensored - total number of volume censored 
          - estimatedLostTemporalDOF - total degree of freedom lost 
 

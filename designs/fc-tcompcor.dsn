@@ -98,9 +98,6 @@ regress_process[3]=DMT-TMP-REG
 
 fcon_atlas[4]=264
 fcon_metric[4]=corrcoef
-fcon_thr[4]=N
-fcon_window[4]=10
-fcon_pad[4]=FALSE
 fcon_rerun[4]=0
 fcon_cleanup[4]=1
 

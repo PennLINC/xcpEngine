@@ -47,23 +47,6 @@ As of now, you're stuck with the Pearson correlation, so this effectively does n
   # Use the Pearson correlation
   fcon_metric[cxt]=corrcoef
 
-``fcon_thr``
-^^^^^^^^^^^^^
-
-*Threshold connectome.*
-
-Sets any connections/edges with weights less than the specified number equal to 0.::
-
-  # Keep all edges
-  fcon_thr[cxt]=N
-
-  # Remove negative edges
-  fcon_thr[cxt]=0
-
-  # Remove edges weaker than 0.5
-  fcon_thr[cxt]=0.5
-
-
 ``fcon_rerun``
 ^^^^^^^^^^^^^^
 
