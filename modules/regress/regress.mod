@@ -448,7 +448,39 @@ smooth_spatial                --SIGNPOST=${signpost}              \
                               --USAN=${regress_usan[cxt]}         \
                               --USPACE=${regress_usan_space[cxt]}
 
-${img1[sub]%/*/*}
+
+# do the surface processing 
+imgname=$(basename ${img1[sub]})
+                              
+if [[ "$imgname" == *_res-* ]]; then
+   imgprt=${img1[sub]%_*_*_*_*}
+   else
+   imgprt=${img1[sub]%_*_*_*}
+fi
+ 
+ciftifile=$(ls -f ${imgprt}*_bold.dtseries.nii)
+giftifile=$(ls -f ${imgprt}*_fsnative_hemi-L_bold.func.gii)
+
+if [[ -f ${ciftifile} ]]; then 
+  exec_xcp surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/mc/${prefix}_confmat.1D  \
+  -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
+fi 
+
+if [[ -f ${giftifiles} ]]; then
+
+ giftifiles=$(ls -f ${imgprt}*_fsnative_hemi-*_bold.func.gii)
+
+ for i in ${giftifiles}; do 
+ exec_xcp surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/mc/${prefix}_confmat.1D  \
+  -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
+ done 
+
+fi 
+  
+exec_sys mv -r $(ls -f ${out[sub]}/regress/*svg) ${out[sub]}/figures/
+
 
 routine_end
 
