@@ -479,7 +479,7 @@ if [[ -f ${giftifile} ]]; then
 
 fi 
   
-exec_sys mv -r $(ls -f ${out[sub]}/regress/*svg) ${out[sub]}/figures/
+exec_sys mv  $(ls -f ${out[sub]}/regress/*svg) ${out[sub]}/figures/
 
 
 routine_end
