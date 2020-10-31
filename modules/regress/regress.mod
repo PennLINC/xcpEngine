@@ -419,7 +419,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${denoised[cxt]}
+   exec_fsl imcp ${processed} ${denoised[cxt]}
    trep=$(exec_fsl fslval ${img[sub]} pixdim4)
    exec_xcp addTR.py -i ${denoised[cxt]} -o ${denoised[cxt]} -t ${trep} 
 else
