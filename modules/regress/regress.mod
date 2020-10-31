@@ -463,7 +463,7 @@ giftifile=$(ls -f ${imgprt}*fsnative_hemi-L_bold.func.gii)
 
 if [[ -f ${ciftifile} ]]; then 
   python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
-  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/mc/${prefix}_confmat.1D  \
+  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
   -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
 fi 
 
@@ -473,13 +473,13 @@ if [[ -f ${giftifile} ]]; then
 
  for i in ${giftifiles}; do 
  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
-  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/mc/${prefix}_confmat.1D  \
+  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
   -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
  done 
 
 fi 
   
-exec_sys mv  $(ls -f ${out[sub]}/regress/*svg) ${out[sub]}/figures/
+exec_sys mv  $(ls -f ${out[sub]}/regress/*svg) ${out[sub]}/figures/ 2>/dev/null
 
 
 routine_end
