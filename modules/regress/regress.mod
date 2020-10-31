@@ -458,21 +458,21 @@ if [[ "$imgname" == *_res-* ]]; then
    imgprt=${img1[sub]%_*_*_*}
 fi
  
-ciftifile=$(ls -f ${imgprt}*_bold.dtseries.nii)
-giftifile=$(ls -f ${imgprt}*_fsnative_hemi-L_bold.func.gii)
+ciftifile=$(ls -f ${imgprt}*bold.dtseries.nii)
+giftifile=$(ls -f ${imgprt}*fsnative_hemi-L_bold.func.gii)
 
 if [[ -f ${ciftifile} ]]; then 
-  exec_xcp surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/mc/${prefix}_confmat.1D  \
   -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
 fi 
 
-if [[ -f ${giftifiles} ]]; then
+if [[ -f ${giftifile} ]]; then
 
- giftifiles=$(ls -f ${imgprt}*_fsnative_hemi-*_bold.func.gii)
+ giftifiles=$(ls -f ${imgprt}*fsnative_hemi-*_bold.func.gii)
 
  for i in ${giftifiles}; do 
- exec_xcp surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+ python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/mc/${prefix}_confmat.1D  \
   -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
  done 
