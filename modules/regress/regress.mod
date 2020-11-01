@@ -419,7 +419,7 @@ if is_image ${intermediate_root}${buffer}.nii.gz
    then
    subroutine                 @0.2
    processed=$(readlink -f    ${intermediate}.nii.gz)
-   exec_fsl immv ${processed} ${denoised[cxt]}
+   exec_fsl imcp ${processed} ${denoised[cxt]}
    trep=$(exec_fsl fslval ${img[sub]} pixdim4)
    exec_xcp addTR.py -i ${denoised[cxt]} -o ${denoised[cxt]} -t ${trep} 
 else
@@ -448,68 +448,39 @@ smooth_spatial                --SIGNPOST=${signpost}              \
                               --USAN=${regress_usan[cxt]}         \
                               --USPACE=${regress_usan_space[cxt]}
 
-strucn="${img1[sub]%/*/*}";
-strucfile=$(ls -f ${strucn}/anat/*h5 2>/dev/null)
-strucfile1=$(echo $strucfile | cut --delimiter " " --fields 1) 
 
-if [[ -f ${strucfile1}  ]]; then  
-   strucn=${strucn}
-else
-   anatdir=$strucn/../
-   strucn=${anatdir}
+# do the surface processing 
+imgname=$(basename ${img1[sub]})
+                              
+if [[ "$imgname" == *_res-* ]]; then
+   imgprt=${img1[sub]%_*_*_*_*}
+   else
+   imgprt=${img1[sub]%_*_*_*}
 fi
+ 
+ciftifile=$(ls -f ${imgprt}*bold.dtseries.nii)
+giftifile=$(ls -f ${imgprt}*fsnative_hemi-L_bold.func.gii)
 
-b1=${img1[sub]##*space-}; 
-template_label=${b1%%_*}
+if [[ -f ${ciftifile} ]]; then 
+ mdkir -p ${out[sub]}/figures/ 2>/dev/null
+  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
+  -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
+fi 
 
-surf=$( ls -f $strucn/anat/*hemi-L_inflated.surf.gii 2>/dev/null )
-   if [[ -f ${surf} ]] # this  check if freesurfer exist 
-   then 
-      struct2=$(find $strucn/anat/ -type f -name "*desc-preproc_T1w.nii.gz" -not -path  "*MNI*" -not -path "*space*" )
-      
-      temptot1w1=$(find $strucn/anat/ -type f -name "*${template_label1}*to-T1w_mode-image_xfm.h5")
-      t1wtotemp1=$(find $strucn/anat/ -type f -name "*from-T1w_to*${template_label1}*_mode-image_xfm.h5")
+if [[ -f ${giftifile} ]]; then
 
-      temptot1w2=$(echo $temptot1w1 | cut --delimiter " " --fields 1) 
-      t1wtotemp2=$(echo $t1wtotemp1 | cut --delimiter " " --fields 1) 
-      
-      ref=${XCPEDIR}/space/MNI/MNI-2x2x2.nii.gz
-                  
-       if [[ ${template_label} == 'T1w' ]]
-           then  # reample bold to T1 dimension before freesurfer 
+ giftifiles=$(ls -f ${imgprt}*fsnative_hemi-*_bold.func.gii)
+ mdkir -p ${out[sub]}/figures/ 2>/dev/null
+ for i in ${giftifiles}; do 
+ python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+  -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
+  -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
+ done 
 
-           exec_ants antsApplyTransforms -d 3 -e 3 -i ${denoised[cxt]} -r ${ref} -t ${1wtotemp2} \
-           -o ${outdir}/boldtoMNI.nii.gz  -n LanczosWindowedSinc
+fi 
+  
 
-      else # reamsple template to T1 assuming the bold in MNI space
-
-        
-        exec_ants antsApplyTransforms -d 3 -e 3 -i -i ${denoised[cxt]} -r ${ref} -t ${XCPEDIR}/utils/oneratiotransform.txt  \
-        -o ${outdir}/boldtoMNI.nii.gz  -n LanczosWindowedSinc
-
-      fi 
-        source $FREESURFER_HOME/SetUpFreeSurfer.sh
-        exec_sys export  SUBJECTS_DIR=${strucn}/../../freesurfer # freesurfer directory
-        xx=$( basename ${img1[sub]})
-        subjectid=$( echo ${xx}  | head -n1 | cut -d "_" -f1 ) #get subjectid 
-        
-        surftemdir=${XCPEDIR}/thirdparty/standard_mesh_atlases/
-        #exec_fsl fslmaths ${outdir}/boldresampletoT1.nii.gz -Tmean ${outdir}/reference.nii.gz 
-
-        # ${FREESURFER_HOME}/bin/bbregister  --s ${subjectid} --mov ${outdir}/reference.nii.gz  --reg ${outdir}/regis.dat --init-fsl --bold
-        #now do the surface 
-        for hem in lh rh
-          do
-           ${FREESURFER_HOME}/bin/mri_vol2surf --mov ${outdir}/boldtoMNI.nii.gz  --regheader fsaverage --hemi ${hem} \
-               --o ${outdir}/${hem}_surface.nii.gz --projfrac-avg 0 1 0.1 --surf white
-           ${FREESURFER_HOME}/bin/mris_convert -f ${outdir}/${hem}_surface.nii.gz  ${SUBJECTS_DIR}/fsaverage/surf/${hem}.sphere  ${outdir}/${prefix}_residual_${hem}.func.gii
-
-      done
-      exec_sys  wb_command -cifti-create-dense-scalar ${outdir}/${prefix}_residual.dscalar.nii  \
-               -left-metric ${outdir}/${prefix}_residual_lh.func.gii  -right-metric ${outdir}/${prefix}_residual_rh.func.gii 
-
-      exec_sys rm -rf ${outdir}/boldtoMNI.nii.gz  ${outdir}/*surface.nii.gz  ${outdir}/regis*  ${outdir}/*surface2fsav.nii.gz 
-   fi
 
 
 routine_end
