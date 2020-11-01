@@ -462,6 +462,7 @@ ciftifile=$(ls -f ${imgprt}*bold.dtseries.nii)
 giftifile=$(ls -f ${imgprt}*fsnative_hemi-L_bold.func.gii)
 
 if [[ -f ${ciftifile} ]]; then 
+ mdkir -p ${out[sub]}/figures/ 2>/dev/null
   python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
   -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
@@ -470,7 +471,7 @@ fi
 if [[ -f ${giftifile} ]]; then
 
  giftifiles=$(ls -f ${imgprt}*fsnative_hemi-*_bold.func.gii)
-
+ mdkir -p ${out[sub]}/figures/ 2>/dev/null
  for i in ${giftifiles}; do 
  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
@@ -479,7 +480,7 @@ if [[ -f ${giftifile} ]]; then
 
 fi 
   
-exec_sys mv  $(ls -f ${out[sub]}/regress/*svg) ${out[sub]}/figures/ 2>/dev/null
+exec_sys mv  $(ls -f ${out[sub]}/regress/*svg)  2>/dev/null
 
 
 routine_end

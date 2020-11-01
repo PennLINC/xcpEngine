@@ -837,6 +837,34 @@ for i in modules1:
          html_report = html_report+' <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+qcfcfig + '">filename:'+qcfcfig+' " alt="Segmentation" width="1000"height="800"</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+qcfcfig+'" target="_blank">' + qcfcfig + '</a> </div> '
 
+         if os.path.isfile(outdir+'/figures/'+ prefix +'_prestats_dtseries.svg'):
+             precifti=outdir+'/figures/'+ prefix +'_prestats_dtseries.svg'
+             postcifti=outdir+'/figures/'+ prefix +'_residualized_dtseries.svg'
+             html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of CIFTI Files residual. \
+                </h2><p class="elem-desc"> \
+                  The first panel shows the spike plot consisting of dvars (DVARS), and framewise displacement (FD). \
+                     The mid carpet plot is raw CIFTI data, while the bottom carpet plot is residualized CIFTI data\
+                A carpet plot shows the time series for all CIFTI grayordinates. <p><br />  \
+                  <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+precifti+ '">filename:'+precifti + '" alt="Segmentation" width="1000"height="800" </object> \
+                      </div> <div class="elem-filename"> Get figure file: <a href="'+precifti + '" target="_blank">' + precifti + '</a> </div> '
+
+             html_report = html_report+' <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+postcifti + '">filename:'+postcifti+' " alt="Segmentation" width="1000"height="800"</object> \
+                      </div> <div class="elem-filename"> Get figure file: <a href="'+postcifti+'" target="_blank">' + postcifti + '</a> </div> '
+
+         if os.path.isfile(outdir+'/figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'):
+             pregifti=outdir+'/figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'
+             postgifti=outdir+'/figures/'+ prefix +'_residualized_hemi-R_bold.func.svg'
+             html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of GIFTI Files residual. \
+                </h2><p class="elem-desc"> \
+                  The first panel shows the spike plot consisting of dvars (DVARS), and framewise displacement (FD). \
+                     The mid carpet plot is raw GIFTI data (FreeSurface native space), while the bottom carpet plot is residualized GIFTI data\
+                A carpet plot shows the time series for all GIFTI veritices. <p><br />  \
+                  <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+pregifti+ '">filename:'+pregifti + '" alt="Segmentation" width="1000"height="800" </object> \
+                      </div> <div class="elem-filename"> Get figure file: <a href="'+pregifti + '" target="_blank">' + pregifti + '</a> </div> '
+            html_report = html_report+' <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+postgifti + '">filename:'+postgifti+' " alt="Segmentation" width="1000"height="800"</object> \
+                      </div> <div class="elem-filename"> Get figure file: <a href="'+postgifti+'" target="_blank">' + postgifti + '</a> </div> '
+
+
          #html_report=html_report + '<h1> qcfc module </h1>  <h3> <p>  The spike plot consists of dvars (DV), relative motion (RMS) and framewise displacement (FD),  \
          #The middle carpet plot is the raw BOLD data and bottom carpet plot is residualized BOLD data </p>  <p> Check motionDVCorrInit (correlation of DV and RMS before regression) and motionDVCorrFinal \
          #(correlation of DV and RMS after regression) in the QC table above  </p> </h3>  <object type="image/svg+xml" data="'+ prestatsfig + '" alt="Segmentation" width="2000"height="1500"></object>'
