@@ -840,7 +840,7 @@ for i in modules1:
          if os.path.isfile(outdir+'/figures/'+ prefix +'_prestats_dtseries.svg'):
              precifti='figures/'+ prefix +'_prestats_dtseries.svg'
              postcifti='figures/'+ prefix +'_residualized_dtseries.svg'
-             html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of CIFTI Files residual. \
+             html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of CIFTI Files residual. \
                 </h2><p class="elem-desc"> \
                   The first panel shows the spike plot consisting of dvars (DVARS), and framewise displacement (FD). \
                      The mid carpet plot is raw CIFTI data, while the bottom carpet plot is residualized CIFTI data\
@@ -854,7 +854,7 @@ for i in modules1:
          if os.path.isfile(outdir+'/figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'):
              pregifti='figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'
              postgifti='figures/'+ prefix +'_residualized_hemi-R_bold.func.svg'
-             html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of GIFTI Files residual. \
+             html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of GIFTI Files residual  . \
                 </h2><p class="elem-desc"> \
                   The first panel shows the spike plot consisting of dvars (DVARS), and framewise displacement (FD). \
                      The mid carpet plot is raw GIFTI data (FreeSurface native space), while the bottom carpet plot is residualized GIFTI data\
