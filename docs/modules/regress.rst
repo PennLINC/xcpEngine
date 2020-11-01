@@ -45,6 +45,14 @@ For scrubbing, the threshold will be ``fds:0.167`` which implies that the actual
 Scrubbing also includes masking out the non-contiguous segments of data between outliers. The number of contiguous volumes required to survive masking is set flexibly by ``censor_contig[cst]=x``, where ``x`` is the minimum number of contiguous threshold-surviving time points required for those time points to survive masking. The default found in non-scrubbing design files is zero. This can be configured by setting::
     *confound2_censor_contig[cxt]=5
 
+Surface processing 
+^^^^^^^^^^^^^^^^^^^
+THe xcpEngine also regresses out the confound regressors from the gifti and cifti files if they are available in the
+fmriprep output. The esidualised files are as follows:
+
+      * prefix_residualized.dtseries   # residualised cifti files
+      * prefix_residualized_hemi-R_bold.func.gii # residualized gifti files 
+      
 
 ``regress_process``
 ^^^^^^^^^^^^^^^^^^^^

@@ -861,7 +861,7 @@ for i in modules1:
                 A carpet plot shows the time series for all GIFTI veritices. <p><br />  \
                   <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+pregifti+ '">filename:'+pregifti + '" alt="Segmentation" width="1000"height="800" </object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+pregifti + '" target="_blank">' + pregifti + '</a> </div> '
-            html_report = html_report+' <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+postgifti + '">filename:'+postgifti+' " alt="Segmentation" width="1000"height="800"</object> \
+             html_report = html_report+' <div class="elem-image"> <object class="svg-reportlet" type="image/svg+xml" data="'+postgifti + '">filename:'+postgifti+' " alt="Segmentation" width="1000"height="800"</object> \
                       </div> <div class="elem-filename"> Get figure file: <a href="'+postgifti+'" target="_blank">' + postgifti + '</a> </div> '
 
 
