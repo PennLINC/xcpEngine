@@ -838,8 +838,8 @@ for i in modules1:
                       </div> <div class="elem-filename"> Get figure file: <a href="'+qcfcfig+'" target="_blank">' + qcfcfig + '</a> </div> '
 
          if os.path.isfile(outdir+'/figures/'+ prefix +'_prestats_dtseries.svg'):
-             precifti=outdir+'/figures/'+ prefix +'_prestats_dtseries.svg'
-             postcifti=outdir+'/figures/'+ prefix +'_residualized_dtseries.svg'
+             precifti='figures/'+ prefix +'_prestats_dtseries.svg'
+             postcifti='figures/'+ prefix +'_residualized_dtseries.svg'
              html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of CIFTI Files residual. \
                 </h2><p class="elem-desc"> \
                   The first panel shows the spike plot consisting of dvars (DVARS), and framewise displacement (FD). \
@@ -852,8 +852,8 @@ for i in modules1:
                       </div> <div class="elem-filename"> Get figure file: <a href="'+postcifti+'" target="_blank">' + postcifti + '</a> </div> '
 
          if os.path.isfile(outdir+'/figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'):
-             pregifti=outdir+'/figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'
-             postgifti=outdir+'/figures/'+ prefix +'_residualized_hemi-R_bold.func.svg'
+             pregifti='figures/'+ prefix +'_prestats_hemi-R_bold.func.svg'
+             postgifti='figures/'+ prefix +'_residualized_hemi-R_bold.func.svg'
              html_report = html_report+'<div id="qcfc"> </div>  </ul><h2 class="elem-title"> Assessment of quality of GIFTI Files residual. \
                 </h2><p class="elem-desc"> \
                   The first panel shows the spike plot consisting of dvars (DVARS), and framewise displacement (FD). \
