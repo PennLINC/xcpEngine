@@ -48,7 +48,7 @@ Scrubbing also includes masking out the non-contiguous segments of data between 
 Surface processing 
 ^^^^^^^^^^^^^^^^^^^
 THe xcpEngine also regresses out the confound regressors from the gifti and cifti files if they are available in the
-fmriprep output. The esidualised files are as follows:
+fmriprep output. The residualised files are as follows:
 
       * prefix_residualized.dtseries   # residualised cifti files
       * prefix_residualized_hemi-R_bold.func.gii # residualized gifti files 
