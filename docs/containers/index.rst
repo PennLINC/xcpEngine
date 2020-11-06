@@ -13,11 +13,11 @@ They are here in case you need to run them manually**
 .. _singularity:
 
 
-Using xcpEngine with Singularity_
+Using xcpEngine with Singularity
 ---------------------------------
 
 The easiest way to get started with xcpEngine on a HPC system is
-to build a Singularity_ image from the xcpEngine released on
+to build a Singularity image from the xcpEngine released on
 dockerhub.::
 
   $ singularity build xcpEngine.simg docker://pennbbl/xcpengine:latest
@@ -60,7 +60,7 @@ you run the container.::
 Where the paths in ``my_cohort_host_paths.csv`` all start with
 ``/data``.
 
-**NOTE:** Singularity_ typically mounts the host's ``/tmp`` as
+**NOTE:** Singularity typically mounts the host's ``/tmp`` as
 ``/tmp`` in the container. This is useful in the case where you
 are running xcpEngine using a queueing system and want to write
 intermediate files to the locally-mounted scratch space provided
@@ -68,10 +68,10 @@ in a ``$TMPDIR`` variable specific to the job. If you want to use
 a different temporary directory, be sure that it's accessible from
 inside the container and provide the container-bound path to it.
 
-Using xcpEngine with Docker_
+Using xcpEngine with Docker
 -----------------------------
 
-Using Docker_ is almost identical to Singularity_, with the ``-B`` arguments
+Using Docker is almost identical to Singularity, with the ``-B`` arguments
 substituted for ``-v``. Here is an example:::
 
   $ docker --rm -it \
@@ -83,7 +83,7 @@ substituted for ``-v``. Here is an example:::
       -o /data/study/output \
       -i $TMPDIR
 
-Mounting directories in Docker_ is easier than with Singularity_.
+Mounting directories in Docker is easier than with Singularity.
 
 
 Using SGE to parallelize across subjects
