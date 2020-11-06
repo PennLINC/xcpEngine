@@ -68,6 +68,8 @@ in a ``$TMPDIR`` variable specific to the job. If you want to use
 a different temporary directory, be sure that it's accessible from
 inside the container and provide the container-bound path to it.
 
+.. _Docker:
+
 Using xcpEngine with Docker_
 -----------------------------
 
