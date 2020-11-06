@@ -13,7 +13,7 @@ They are here in case you need to run them manually**
 .. _singularity:
 
 
-Using xcpEngine with Singularity
+Using xcpEngine with Singularity_
 ---------------------------------
 
 The easiest way to get started with xcpEngine on a HPC system is
@@ -60,7 +60,7 @@ you run the container.::
 Where the paths in ``my_cohort_host_paths.csv`` all start with
 ``/data``.
 
-**NOTE:** Singularity typically mounts the host's ``/tmp`` as
+**NOTE:** Singularity_ typically mounts the host's ``/tmp`` as
 ``/tmp`` in the container. This is useful in the case where you
 are running xcpEngine using a queueing system and want to write
 intermediate files to the locally-mounted scratch space provided
@@ -68,10 +68,10 @@ in a ``$TMPDIR`` variable specific to the job. If you want to use
 a different temporary directory, be sure that it's accessible from
 inside the container and provide the container-bound path to it.
 
-Using xcpEngine with Docker
+Using xcpEngine with Docker_
 -----------------------------
 
-Using Docker is almost identical to Singularity, with the ``-B`` arguments
+Using Docker_ is almost identical to Singularity_, with the ``-B`` arguments
 substituted for ``-v``. Here is an example:::
 
   $ docker --rm -it \
