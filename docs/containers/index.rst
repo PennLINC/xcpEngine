@@ -138,6 +138,7 @@ You will need to collate group-level outputs after batching subjects with the sc
 
 Using SLURM to parallelize across subjects
 ----------------------------------------
+::
 
 #!/bin/bash
 # Adjust these so they work on your system
