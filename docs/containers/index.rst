@@ -140,47 +140,47 @@ Using SLURM to parallelize across subjects
 ----------------------------------------
 ::
 
-#!/bin/bash
-# Adjust these so they work on your system
-FULL_COHORT=/data/study/my_cohort_rel_container.csv
-NJOBS=`wc -l < ${FULL_COHORT}`
-HEADER="$(head -n 1 $FULL_COHORT)"
-SIMG=/data/containers/xcpEngine.simg
-# memory, CPU and time depend on the designfile and your dataset. Adjust values correspondingly
-XCP_MEM=0G
-XCP_C=0
-XCP_TIME=0:0:0
+  #!/bin/bash
+  # Adjust these so they work on your system
+  FULL_COHORT=/data/study/my_cohort_rel_container.csv
+  NJOBS=`wc -l < ${FULL_COHORT}`
+  HEADER="$(head -n 1 $FULL_COHORT)"
+  SIMG=/data/containers/xcpEngine.simg
+  # memory, CPU and time depend on the designfile and your dataset. Adjust values correspondingly
+  XCP_MEM=0G
+  XCP_C=0
+  XCP_TIME=0:0:0
 
-if [[ ${NJOBS} == 0 ]]; then
-    exit 0
-fi
+  if [[ ${NJOBS} == 0 ]]; then
+      exit 0
+  fi
 
-cat << EOF > xcpParallel.sh
-#!/bin/bash -l
-#SBATCH --array 1-${NJOBS}
-#SBATCH --job-name xcp_engine
-#SBATCH --mem $XCP_MEM
-#SBATCH -c $XCP_C
-#SBATCH --time $XCP_TIME
-#SBATCH --workdir /my_working_directory
-#SBATCH --output /my_working_directory/logs/slurm-%A_%a.out
+  cat << EOF > xcpParallel.sh
+  #!/bin/bash -l
+  #SBATCH --array 1-${NJOBS}
+  #SBATCH --job-name xcp_engine
+  #SBATCH --mem $XCP_MEM
+  #SBATCH -c $XCP_C
+  #SBATCH --time $XCP_TIME
+  #SBATCH --workdir /my_working_directory
+  #SBATCH --output /my_working_directory/logs/slurm-%A_%a.out
 
 
-LINE_NUM=\$( expr \$SLURM_ARRAY_TASK_ID + 1 )
-LINE=\$(awk "NR==\$LINE_NUM" $FULL_COHORT)
-TEMP_COHORT=${FULL_COHORT}.\${SLURM_ARRAY_TASK_ID}.csv
-echo $HEADER > \$TEMP_COHORT
-echo \$LINE >> \$TEMP_COHORT 
+  LINE_NUM=\$( expr \$SLURM_ARRAY_TASK_ID + 1 )
+  LINE=\$(awk "NR==\$LINE_NUM" $FULL_COHORT)
+  TEMP_COHORT=${FULL_COHORT}.\${SLURM_ARRAY_TASK_ID}.csv
+  echo $HEADER > \$TEMP_COHORT
+  echo \$LINE >> \$TEMP_COHORT 
 
-singularity run -B /home/user/data:/data $SIMG \\
-  -d /home/user/data/study/my_design.dsn \\
-  -c /home/user\${TEMP_COHORT} \\
-  -o /home/user/data/study/output \\
-  -r /data \\
-  -i \$TMPDIR
+  singularity run -B /home/user/data:/data $SIMG \\
+    -d /home/user/data/study/my_design.dsn \\
+    -c /home/user\${TEMP_COHORT} \\
+    -o /home/user/data/study/output \\
+    -r /data \\
+    -i \$TMPDIR
 
-EOF
-sbatch xcpParallel.sh
+  EOF
+  sbatch xcpParallel.sh
 
 
 Using the bundled software
