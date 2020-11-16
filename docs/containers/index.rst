@@ -93,10 +93,10 @@ Using SGE to parallelize across subjects
 
 By running xcpEngine from a container, you lose the ability to submit jobs
 to the cluster directly from xcpEngine. Here is a way to split your cohort
-file and submit a qsub job for each line. *Note that we are using
+file and submit a qsub job for each line. Note that we are using
 ``my_cohort_rel_container.csv``, which means we don't need to specify
 an ``-r`` flag. If your cohort file uses paths relative to the host's
-file system you will need to specify ``-r``*::
+file system you will need to specify ``-r``::
 
   #!/bin/bash
   FULL_COHORT=/data/study/my_cohort_rel_container.csv
@@ -138,7 +138,7 @@ You will need to collate group-level outputs after batching subjects with the sc
 
 Using SLURM to parallelize across subjects
 ----------------------------------------
-By running xcpEngine from a container, you lose the ability to submit jobs to the cluster directly from xcpEngine. Here is a way to split your cohort file and submit an sbatch job for each line. *Note that we are using ``my_cohort_rel_host.csv``, which means we need to specify an ``-r`` flag. If your cohort file uses paths relative to the container you dont need to specify ``-r``*.::
+By running xcpEngine from a container, you lose the ability to submit jobs to the cluster directly from xcpEngine. Here is a way to split your cohort file and submit an sbatch job for each line. Note that we are using ``my_cohort_rel_host.csv``, which means we need to specify an ``-r`` flag. If your cohort file uses paths relative to the container you dont need to specify ``-r``.::
 
   #!/bin/bash
   # Adjust these so they work on your system
