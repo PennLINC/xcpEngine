@@ -183,6 +183,7 @@ By running xcpEngine from a container, you lose the ability to submit jobs to th
   EOF
   sbatch xcpParallel.sh
 
+Keep in mind that - next to the directories and settings you need to adjust as mentioned above - the ``logs`` directory needs to exist in your working-directory ( ``/my_working_directory/logs`` ) and you need to define the ``$TMPDIR``. 
 
 Using the bundled software
 ----------------------------
