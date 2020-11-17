@@ -173,9 +173,9 @@ By running xcpEngine from a container, you lose the ability to submit jobs to th
   echo \$LINE >> \$TEMP_COHORT 
 
   singularity run -B /home/user/data:/data $SIMG \\
-    -d /home/user/data/study/my_design.dsn \\
+    -d /data/study/my_design.dsn \\
     -c /home/user\${TEMP_COHORT} \\
-    -o /home/user/data/study/output \\
+    -o /data/study/output \\
     -r /data \\
     -i \$TMPDIR
 
