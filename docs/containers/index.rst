@@ -138,7 +138,8 @@ You will need to collate group-level outputs after batching subjects with the sc
 
 Using SLURM to parallelize across subjects
 ----------------------------------------
-By running xcpEngine from a container, you lose the ability to submit jobs to the cluster directly from xcpEngine. Here is a way to split your cohort file and submit an sbatch job for each line. Note that we are using ``my_cohort_rel_host.csv``, which means we need to specify an ``-r`` flag. If your cohort file uses paths relative to the container you dont need to specify ``-r``.::
+By running xcpEngine from a container, you lose the ability to submit jobs to the cluster directly from xcpEngine. Here is a way to split your cohort file and submit an sbatch job for each line. Note that we are using ``my_cohort_rel_host.csv``, which means we need to specify an ``-r`` flag. If your cohort file uses paths relative to the container you dont need to specify ``-r``.
+::
 
   #!/bin/bash
   # Adjust these so they work on your system
@@ -173,15 +174,18 @@ By running xcpEngine from a container, you lose the ability to submit jobs to th
   echo \$LINE >> \$TEMP_COHORT 
 
   singularity run -B /home/user/data:/data $SIMG \\
-    -d /home/user/data/study/my_design.dsn \\
-    -c /home/user\${TEMP_COHORT} \\
-    -o /home/user/data/study/output \\
+    -d /data/study/my_design.dsn \\
+    -c \${TEMP_COHORT} \\
+    -o /data/study/output \\
     -r /data \\
     -i \$TMPDIR
 
   EOF
   sbatch xcpParallel.sh
 
+Keep in mind that - next to the directories and settings you need to adjust as mentioned in the script above - the ``logs`` directory needs to exist in your working-directory (see ``/my_working_directory/logs`` ) and you need to define the ``TMPDIR`` variable (see ``$TMPDIR``). 
+You will need to collate group-level outputs after batching subjects with the script ``${XCPEDIR}/utils/combineOutput`` script, provided in ``utils``.
+ 
 
 Using the bundled software
 ----------------------------
