@@ -125,8 +125,8 @@ file system you will need to specify ``-r``::
 
   \$SNGL run -B /data:/home/user/data \$SIMG \\
     -c /home/user\${TEMP_COHORT} \\
-    -d /data/study/my_design.dsn \\
-    -o /data/study/output \\
+    -d /home/user/data/study/my_design.dsn \\
+    -o /home/user/data/study/output \\
     -i \$TMPDIR
 
   EOF
