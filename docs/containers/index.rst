@@ -125,8 +125,8 @@ file system you will need to specify ``-r``::
 
   \$SNGL run -B /data:/home/user/data \$SIMG \\
     -c \${TEMP_COHORT} \\
-    -d /home/user/data/study/my_design.dsn \\
-    -o /home/user/data/study/output \\
+    -d /data/study/my_design.dsn \\
+    -o /data/study/output \\
     -i \$TMPDIR
 
   EOF
@@ -175,7 +175,7 @@ By running xcpEngine from a container, you lose the ability to submit jobs to th
 
   singularity run -B /home/user/data:/data $SIMG \\
     -d /data/study/my_design.dsn \\
-    -c /home/user\${TEMP_COHORT} \\
+    -c \${TEMP_COHORT} \\
     -o /data/study/output \\
     -r /data \\
     -i \$TMPDIR
