@@ -184,6 +184,8 @@ By running xcpEngine from a container, you lose the ability to submit jobs to th
   sbatch xcpParallel.sh
 
 Keep in mind that - next to the directories and settings you need to adjust as mentioned in the script above - the ``logs`` directory needs to exist in your working-directory (see ``/my_working_directory/logs`` ) and you need to define the ``TMPDIR`` variable (see ``$TMPDIR``). 
+You will need to collate group-level outputs after batching subjects with the script ``${XCPEDIR}/utils/combineOutput`` script, provided in utils``.
+ 
 
 Using the bundled software
 ----------------------------
