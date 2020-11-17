@@ -124,7 +124,7 @@ file system you will need to specify ``-r``::
   echo \$LINE >> \$TEMP_COHORT
 
   \$SNGL run -B /data:/home/user/data \$SIMG \\
-    -c /home/user\${TEMP_COHORT} \\
+    -c \${TEMP_COHORT} \\
     -d /home/user/data/study/my_design.dsn \\
     -o /home/user/data/study/output \\
     -i \$TMPDIR
