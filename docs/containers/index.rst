@@ -89,7 +89,7 @@ Mounting directories in Docker is easier than with Singularity.
 
 
 Parallelize across subjects
-----------------------------------------
+=================================
 
 By running xcpEngine from a container, you lose the ability to submit jobs
 to the cluster directly from xcpEngine. We provide two examplary ways to split your cohort
@@ -104,7 +104,7 @@ with the ``${XCPEDIR}/utils/combineOutput`` script, provided in ``utils``.
 .. _SGE:
 
 Using SGE_ to parallelize across subjects
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -148,7 +148,7 @@ Using SGE_ to parallelize across subjects
 .. _SLURM:
 
 Using SLURM_ to parallelize across subjects
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
