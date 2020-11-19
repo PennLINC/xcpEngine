@@ -87,14 +87,15 @@ substituted for ``-v``. Here is an example:::
 
 Mounting directories in Docker is easier than with Singularity.
 
+
 Parallelize across subjects
 ----------------------------------------
 
 By running xcpEngine from a container, you lose the ability to submit jobs
 to the cluster directly from xcpEngine. We provide two examplary ways to split your cohort
 file and submit either a ``qsub`` or an ``sbatch`` job for each line. 
-For illustrating reasons the SGE script uses a ``my_cohort_rel_container.csv`` -cohortfile 
-where as the SLURM script uses a ``host.csv`` -cohortfile. 
+For illustrating reasons the SGE_ script uses a ``my_cohort_rel_container.csv`` -cohortfile 
+where as the SLURM_ script uses a ``my_cohort_rel_host.csv`` -cohortfile. 
 
 .. _SGE:
 
