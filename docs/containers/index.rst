@@ -95,8 +95,8 @@ By running xcpEngine from a container, you lose the ability to submit jobs
 to the cluster directly from xcpEngine. We provide two examplary ways to split your cohort
 file and submit either a ``qsub`` (SGE_) or an ``sbatch`` (SLURM_)  -job for each line. 
 For illustrating reasons the two different scripts refer to different cohort files: The SGE 
-script uses a ``my_cohort_rel_container.csv`` -cohortfile, which means we **don't need** to 
-specify an ``-r`` flag. The SLURM script uses a ``my_cohort_rel_host.csv`` -cohortfile, which 
+script uses a ``my_cohort_rel_container.csv`` cohortfile, which means we **don't need** to 
+specify an ``-r`` flag. The SLURM script uses a ``my_cohort_rel_host.csv`` cohortfile, which 
 means we **need** to specify an ``-r`` flag.
 Note for both scripts: You will need to collate group-level outputs after batching subjects
 with the ``${XCPEDIR}/utils/combineOutput`` script, provided in ``utils``.
@@ -147,7 +147,7 @@ Using SGE_ to parallelize across subjects
 
 .. _SLURM:
 
-Using SLURM to parallelize across subjects
+Using SLURM_ to parallelize across subjects
 ----------------------------------------
 
 ::
