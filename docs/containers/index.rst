@@ -93,18 +93,19 @@ Parallelize across subjects
 
 By running xcpEngine from a container, you lose the ability to submit jobs
 to the cluster directly from xcpEngine. We provide two examplary ways to split your cohort
-file and submit either a ``qsub`` or an ``sbatch`` job for each line. 
-For illustrating reasons the SGE_ script uses a ``my_cohort_rel_container.csv`` -cohortfile 
-where as the SLURM_ script uses a ``my_cohort_rel_host.csv`` -cohortfile. 
+file and submit either a ``qsub`` (SGE_) or an ``sbatch`` (SLURM_) job for each line. 
+For illustrating reasons the two different scripts refer to different cohort files: The SGE 
+script uses a ``my_cohort_rel_container.csv`` -cohortfile, which means we **don't need** to 
+specify an ``-r`` flag. The SLURM script uses a ``my_cohort_rel_host.csv`` -cohortfile, which 
+means we **need** to specify an ``-r`` flag.
+Note for both scripts: You will need to collate group-level outputs after batching subjects
+with the ``${XCPEDIR}/utils/combineOutput`` script, provided in ``utils``.
 
 .. _SGE:
 
 Using SGE_ to parallelize across subjects
 ----------------------------------------
 
-Note that we are using ``my_cohort_rel_container.csv``, which means we don't
-need to specify an ``-r`` flag. If your cohort file uses paths relative to 
-the host's file system you will need to specify ``-r`` (see SLURM_).
 ::
 
   #!/bin/bash
@@ -142,15 +143,13 @@ the host's file system you will need to specify ``-r`` (see SLURM_).
   qsub xcpParallel.sh
 
 
-You will need to collate group-level outputs after batching subjects with the script ``${XCPEDIR}/utils/combineOutput`` script, provided in ``utils``.
+
 
 .. _SLURM:
 
 Using SLURM to parallelize across subjects
 ----------------------------------------
-Note that we are using ``my_cohort_rel_host.csv``, which means we need to specify
-an ``-r`` flag. If your cohort file uses paths relative to the container you dont
-need to specify ``-r`` (see SGE_).
+
 ::
 
   #!/bin/bash
@@ -196,7 +195,7 @@ need to specify ``-r`` (see SGE_).
   sbatch xcpParallel.sh
 
 Keep in mind that - next to the directories and settings you need to adjust as mentioned in the script above - the ``logs`` directory needs to exist in your working-directory (see ``/my_working_directory/logs`` ) and you need to define the ``TMPDIR`` variable (see ``$TMPDIR``). 
-You will need to collate group-level outputs after batching subjects with the script ``${XCPEDIR}/utils/combineOutput`` script, provided in ``utils``.
+
  
 
 Using the bundled software
