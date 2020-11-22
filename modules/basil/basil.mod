@@ -9,7 +9,7 @@
 # This module produce basil cbf
 ###################################################################
 mod_name_short=basil
-mod_name='BASIL CBF'
+mod_name='BASIL   CBF'
 mod_head=${XCPEDIR}/core/CONSOLE_MODULE_RC
 
 ###################################################################
