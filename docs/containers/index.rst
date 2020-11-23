@@ -201,9 +201,7 @@ Using SLURM_ to parallelize across subjects
 
 NOTE
 
-Depending on your design-file some modules refer by default to ``qsub`` (SGE_) which doenst exist in your container once you use ``SBATCH`` (SLURM_). The ``jfl`` module used for example in the 
- [anat-antsct.dsn](xcpEngine/designs/anat-antsct.dsn)  
-has this setting ``jlf_parallel[3]=1``. The ``1`` refers to ``qsub`` here. Using ``SBATCH`` you have to change that setting. ``jlf_parallel[3]=0`` will solve the problem but will increase processing time significantly (you dont process parallel anymore but serial then). 
+Depending on your design-file some modules refer by default to ``qsub`` (SGE_) which doenst exist in your container once you use ``SBATCH`` (SLURM_). The ``jfl`` module used for example in the [anat-antsct.dsn](xcpEngine/designs/anat-antsct.dsn) has this setting ``jlf_parallel[3]=1``. The ``1`` refers to ``qsub`` here. Using ``SBATCH`` you have to change that setting. ``jlf_parallel[3]=0`` will solve the problem but will increase processing time significantly (you dont process parallel anymore but serial then). 
 by default (built into the container?) antsJointLabelFusion.sh is trying to use SGE qsub -c 1 Option and that fails because there is no qsub in the container 
 
 
