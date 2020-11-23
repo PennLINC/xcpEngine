@@ -197,7 +197,7 @@ Using SLURM_ to parallelize across subjects
   EOF
   sbatch xcpParallel.sh
 
-Keep in mind that - next to the directories and settings you need to adjust in the beginning of the script as mentioned above - the ``path/to/your/working_directory`` needs to be defined and the ``logs`` directory needs to exist in your working-directory (see ``--workdir /path/to/your/working_directory`` and ``--output /path/to/your/working_directory/logs/slurm-%A_%a.out`` ). Furthermore ``/home/user/data`` needs to be adjusted to your system (see ``-B /home/user/data:/data``).
+Keep in mind that - next to the directories and settings you need to adjust in the beginning of the script as mentioned above - the ``/path/to/your/working_directory`` needs to be defined and the ``logs`` directory needs to exist in your working-directory (see ``--workdir /path/to/your/working_directory`` and ``--output /path/to/your/working_directory/logs/slurm-%A_%a.out`` ). Furthermore ``/home/user/data`` needs to be adjusted to your system (see ``-B /home/user/data:/data``).
 
 NOTE
 
