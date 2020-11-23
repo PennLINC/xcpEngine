@@ -162,6 +162,7 @@ Using SLURM_ to parallelize across subjects
   XCP_MEM=0G
   XCP_C=0
   XCP_TIME=0:0:0
+  TMPDIR=/path/to/your/tmp-directory
 
   if [[ ${NJOBS} == 0 ]]; then
       exit 0
@@ -174,8 +175,8 @@ Using SLURM_ to parallelize across subjects
   #SBATCH --mem $XCP_MEM
   #SBATCH -c $XCP_C
   #SBATCH --time $XCP_TIME
-  #SBATCH --workdir /my_working_directory
-  #SBATCH --output /my_working_directory/logs/slurm-%A_%a.out
+  #SBATCH --workdir /path/to/your/working_directory
+  #SBATCH --output /path/to/your/working_directory/logs/slurm-%A_%a.out
 
 
   LINE_NUM=\$( expr \$SLURM_ARRAY_TASK_ID + 1 )
@@ -184,17 +185,22 @@ Using SLURM_ to parallelize across subjects
   echo $HEADER > \$TEMP_COHORT
   echo \$LINE >> \$TEMP_COHORT 
 
-  singularity run -B /home/user/data:/data $SIMG \\
+  singularity run -B /home/user/data:/data \\
+    -B $TMPDIR:/tmp $SIMG \\
     -d /data/study/my_design.dsn \\
     -c \${TEMP_COHORT} \\
     -o /data/study/output \\
     -r /data \\
-    -i \$TMPDIR
+    -i /tmp
 
   EOF
   sbatch xcpParallel.sh
 
-Keep in mind that - next to the directories and settings you need to adjust as mentioned in the script above - the ``logs`` directory needs to exist in your working-directory (see ``/my_working_directory/logs`` ) and you need to define the ``TMPDIR`` variable (see ``$TMPDIR``). 
+Keep in mind that - next to the directories and settings you need to adjust in the beginning of the script as mentioned above - the path/to/your/working_directory needs to be defined and the ``logs`` directory needs to exist in your working-directory (see ``/path/to/your/working_directory/logs`` ). Furthermore the ``/home/user/data`` needs to be adjustet to your setting (see ``-B /home/user/data:/data``).
+
+NOTE
+
+
 
  
 
