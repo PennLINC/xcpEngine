@@ -158,11 +158,12 @@ Using SLURM_ to parallelize across subjects
   NJOBS=`wc -l < ${FULL_COHORT}`
   HEADER="$(head -n 1 $FULL_COHORT)"
   SIMG=/data/containers/xcpEngine.simg
+  TMPDIR=/path/to/your/tmp-directory
   # memory, CPU and time depend on the designfile and your dataset. Adjust values correspondingly
   XCP_MEM=0G
   XCP_C=0
   XCP_TIME=0:0:0
-  TMPDIR=/path/to/your/tmp-directory
+ 
 
   if [[ ${NJOBS} == 0 ]]; then
       exit 0
@@ -196,7 +197,7 @@ Using SLURM_ to parallelize across subjects
   EOF
   sbatch xcpParallel.sh
 
-Keep in mind that - next to the directories and settings you need to adjust in the beginning of the script as mentioned above - the path/to/your/working_directory needs to be defined and the ``logs`` directory needs to exist in your working-directory (see ``/path/to/your/working_directory/logs`` ). Furthermore the ``/home/user/data`` needs to be adjustet to your setting (see ``-B /home/user/data:/data``).
+Keep in mind that - next to the directories and settings you need to adjust in the beginning of the script as mentioned above - the path/to/your/working_directory needs to be defined and the ``logs`` directory needs to exist in your working-directory (see ``--workdir /path/to/your/working_directory`` and ``--output /path/to/your/working_directory/logs`` ). Furthermore ``/home/user/data`` needs to be adjusted to your system (see ``-B /home/user/data:/data``).
 
 NOTE
 
