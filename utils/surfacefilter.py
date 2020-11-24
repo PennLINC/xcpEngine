@@ -103,8 +103,8 @@ def butter_bandpass(data,fs,lowpass,highpass,order=2):
         y[i,:] = filtfilt(b, a, data[i,:])
     #add mean back 
     mean_datag=np.outer(mean_data, np.ones(data.shape[1]))
-    return y 
-
+    return y + mean_datag
+    
 def linear_regression(data,confound):
     
     '''
