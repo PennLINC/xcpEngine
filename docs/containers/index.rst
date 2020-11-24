@@ -201,7 +201,7 @@ Using SLURM_ to parallelize across subjects
 
 NOTE
 
-Depending on your design-file some modules refer by default to ``qsub`` (SGE_) which doenst exist in your container once you use ``SBATCH`` (SLURM_). The `_jfl <https://xcpengine.readthedocs.io/modules/jlf.html#jlf>`_ module used for example in the `anat-antsct <https://github.com/PennBBL/xcpEngine/blob/master/designs/anat-antsct.dsn>`_ has this setting ``jlf_parallel[3]=1``. The ``1`` refers to ``qsub`` here. Using ``SBATCH`` you have to change that setting: ``jlf_parallel[3]=0`` will solve the problem but will increase processing time significantly (you dont process parallel anymore but serial then). 
+Depending on your design-file some modules refer by default to ``qsub`` (SGE_) which doenst exist in your container once you use ``SBATCH`` (SLURM_). The `jfl <https://xcpengine.readthedocs.io/modules/jlf.html#jlf>`_ module used for example in the `anat-antsct <https://github.com/PennBBL/xcpEngine/blob/master/designs/anat-antsct.dsn>`_ has this setting ``jlf_parallel[3]=1``. The ``1`` refers to ``qsub`` here. Using ``SBATCH`` you have to change that setting: ``jlf_parallel[3]=0`` will solve the problem but will increase processing time significantly (you dont process parallel anymore but serial then). 
 
 
 
