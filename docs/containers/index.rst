@@ -153,18 +153,19 @@ Using SLURM_ to parallelize across subjects
 ::
 
   #!/bin/bash
+  
   # Adjust these so they work on your system
   FULL_COHORT=/data/study/my_cohort_rel_host.csv
-  NJOBS=`wc -l < ${FULL_COHORT}`
-  HEADER="$(head -n 1 $FULL_COHORT)"
   SIMG=/data/containers/xcpEngine.simg
   TMPDIR=/path/to/your/tmp-directory
   # memory, CPU and time depend on the designfile and your dataset. Adjust values correspondingly
   XCP_MEM=0G
   XCP_C=0
   XCP_TIME=0:0:0
+  
+  NJOBS=`wc -l < ${FULL_COHORT}`
+  HEADER="$(head -n 1 $FULL_COHORT)"
  
-
   if [[ ${NJOBS} == 0 ]]; then
       exit 0
   fi
