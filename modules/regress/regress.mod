@@ -457,13 +457,14 @@ if [[ "$imgname" == *_res-* ]]; then
    else
    imgprt=${img1[sub]%_*_*_*}
 fi
- 
+
 ciftifile=$(ls -f ${imgprt}*bold.dtseries.nii)
 giftifile=$(ls -f ${imgprt}*fsnative_hemi-L_bold.func.gii)
+exec_sys echo ${ciftifile}
 
 if [[ -f ${ciftifile} ]]; then 
- mdkir -p ${out[sub]}/figures/ 2>/dev/null
-  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+exec_sys mkdir -p ${out[sub]}/figures/ 2>/dev/null
+exec_sys  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
   -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
 fi 
@@ -471,9 +472,9 @@ fi
 if [[ -f ${giftifile} ]]; then
 
  giftifiles=$(ls -f ${imgprt}*fsnative_hemi-*_bold.func.gii)
- mdkir -p ${out[sub]}/figures/ 2>/dev/null
+ exec_sys mkdir -p ${out[sub]}/figures/ 2>/dev/null
  for i in ${giftifiles}; do 
- python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
+ exec_sys python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
   -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
  done 
