@@ -41,7 +41,7 @@ args=`echo $@`
  As a courtesy, we ask that you include the following citations
  in publications that make use of this program:
 
- , Rastko Ciric, Adon F. G. Rosen, Guray Erus, Matthew Cieslak, Azeez Adebimpe, 
+ Rastko Ciric, Adon F. G. Rosen, Guray Erus, Matthew Cieslak, Azeez Adebimpe, 
  Philip A. Cook, Danielle S. Bassett, Christos Davatzikos, Daniel H. Wolf, 
  Theodore D. Satterthwaite Mitigating head motion artifact in functional 
  connectivity MRI,Nature Protocol 
