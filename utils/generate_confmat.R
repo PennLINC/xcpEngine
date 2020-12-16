@@ -81,8 +81,7 @@ b=colnames(mat1)
      outmat = mat1[ , grepl( 'cosine', names(mat1))]
      outmat[is.na(outmat)]=0
      } else if ( in2 == 'rps' ) {
-     mm=50*cbind(mat1$rot_x,mat1$rot_y,mat1$rot_z)
-     outmat=cbind(mm,mat1$trans_x,mat1$trans_y,mat1$trans_z)
+     outmat=cbind(mat1$rot_x,mat1$rot_y,mat1$rot_z,mat1$trans_x,mat1$trans_y,mat1$trans_z)
      outmat[is.na(outmat)]=0
      } else if (in2 == 'stdVARS') { 
       outmat=mat1$std_dvars
