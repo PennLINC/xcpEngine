@@ -459,27 +459,34 @@ if [[ "$imgname" == *_res-* ]]; then
 fi
 
 ciftifile=$(ls -f ${imgprt}*bold.dtseries.nii)
-giftifile=$(ls -f ${imgprt}*fsnative_hemi-L_bold.func.gii)
+giftifile=$(ls -f ${imgprt}*hemi-L_bold.func.gii)
 exec_sys echo ${ciftifile}
 
-if [[ -f ${ciftifile} ]]; then 
-exec_sys mkdir -p ${out[sub]}/figures/ 2>/dev/null
+#if [[ -f ${ciftifile} ]]; then 
+exec_sys mkdir -p ${out[sub]}/figures/ 
+ciftifiles=$(ls -f ${imgprt}*bold.dtseries.nii) 2>/dev/null
+for i in ${ciftifiles}; do  2>/dev/null
+ln=${i##*space} 2>/dev/null
 exec_sys  python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
-  -g ${ciftifile} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
-fi 
+  -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]} 2>/dev/null
+  exec_sys mv ${out[sub]}/regress/${prefix}_residualized.dtseries.nii ${out[sub]}/regress/${prefix}_residualised_space${ln} 2>/dev/null
+done 2>/dev/null
+#fi 
 
-if [[ -f ${giftifile} ]]; then
+#if [[ -f ${giftifile} ]]; then
 
- giftifiles=$(ls -f ${imgprt}*fsnative_hemi-*_bold.func.gii)
+ giftifiles=$(ls -f ${imgprt}*_hemi-*_bold.func.gii) 2>/dev/null
  exec_sys mkdir -p ${out[sub]}/figures/ 2>/dev/null
- for i in ${giftifiles}; do 
+ for i in ${giftifiles}; do  2>/dev/null
+ ln=${i##*space} 2>/dev/null
  exec_sys python ${XCPEDIR}/utils/surfaceprocessing.py  -p ${prefix} -o ${out[sub]}/regress -f ${out[sub]}/confound2/mc/${prefix}_fd.1D  \
   -d ${out[sub]}/confound2/mc/${prefix}_dvars-std.1D -t ${trep}  -c ${out[sub]}/confound2/${prefix}_confmat.1D  \
-  -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]}
- done 
+  -g ${i} -r ${regress_process[cxt]}  -l ${regress_lopass[cxt]} -s ${regress_hipass[cxt]} 2>/dev/null
+  exec_sys mv ${out[sub]}/regress/${prefix}*residualized_hemi-*_bold.func.gii ${out[sub]}/regress/${prefix}_residualised_space${ln}  2>/dev/null
+ done  2>/dev/null
 
-fi 
+#fi 
   
 
 
