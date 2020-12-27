@@ -226,11 +226,12 @@ RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
 
 ADD . /xcpEngine
 
+# add spaces 
 RUN bash -c \
     'cd  /xcpEngine \
-    && wget -nv  https://upenn.box.com/shared/static/nu10liz56x60iryu4kxdlsqe4igqx8ob.xz \
-    && tar xvfJm nu10liz56x60iryu4kxdlsqe4igqx8ob.xz \
-    && rm nu10liz56x60iryu4kxdlsqe4igqx8ob.xz'
+    && wget -nv  https://upenn.box.com/shared/static/x95ygarwv14sv608muz06tfrmlmo222z.xz \
+    && tar xvfJmx95ygarwv14sv608muz06tfrmlmo222z.xz \
+    && rm x95ygarwv14sv608muz06tfrmlmo222z.xz'
     
 
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
