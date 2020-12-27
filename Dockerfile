@@ -226,11 +226,12 @@ RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
 
 ADD . /xcpEngine
 
-# add spaces 
+# template 
+
 RUN bash -c \
     'cd  /xcpEngine \
     && wget -nv  https://upenn.box.com/shared/static/x95ygarwv14sv608muz06tfrmlmo222z.xz \
-    && tar x95ygarwv14sv608muz06tfrmlmo222z.xz \
+    && tar -xf x95ygarwv14sv608muz06tfrmlmo222z.xz \
     && rm x95ygarwv14sv608muz06tfrmlmo222z.xz'
     
 
