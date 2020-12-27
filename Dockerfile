@@ -230,7 +230,7 @@ ADD . /xcpEngine
 RUN bash -c \
     'cd  /xcpEngine \
     && wget -nv  https://upenn.box.com/shared/static/x95ygarwv14sv608muz06tfrmlmo222z.xz \
-    && tar xvfJmx95ygarwv14sv608muz06tfrmlmo222z.xz \
+    && tar x95ygarwv14sv608muz06tfrmlmo222z.xz \
     && rm x95ygarwv14sv608muz06tfrmlmo222z.xz'
     
 
