@@ -43,13 +43,13 @@ Motion/spikes summary.::
          - nspikesDV - number of spikes per DV 
          - pctSpikesDV - percentage of spikes per DV 
          - pctSpikesFD - percentage of spikes per FD 
-         - meanDV - mead DVARS 
+         - meanDV - mean DVARS 
 
 regression summary.:: 
-         - motionDVCorrInit - correlation of  mean RMS and DVARS before regresion 
-         - motionDVCorrFinal - correlation of  mean RMS and DVARS after  regresion 
-         - nNuisanceParameters - total number of nuisance nNuisanceParameters in addition with custom regressors
-         - nVolCensored - total number of volume censored 
+         - motionDVCorrInit - correlation of  RMS and DVARS before regresion 
+         - motionDVCorrFinal - correlation of  RMS and DVARS after  regresion 
+         - nNuisanceParameters - total number of nuisance Parameters in addition to custom regressors
+         - nVolCensored - total number of volume(s) censored 
          - estimatedLostTemporalDOF - total degree of freedom lost 
 
 CBF quality evaluation index.::
