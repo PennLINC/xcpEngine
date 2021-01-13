@@ -459,7 +459,7 @@ if [[ "$imgname" == *_res-* ]]; then
 fi
 
 ciftifile=$(ls -f ${imgprt}*bold.dtseries.nii)
-giftifile=$(ls -f ${imgprt}*hemi-L_bold.func.gii)
+giftifile=$(ls -f ${imgprt}*hemi-L*.func.gii)
 exec_sys echo ${ciftifile}
 
 #if [[ -f ${ciftifile} ]]; then 
@@ -476,7 +476,7 @@ done 2>/dev/null
 
 #if [[ -f ${giftifile} ]]; then
 
- giftifiles=$(ls -f ${imgprt}*_hemi-*_bold.func.gii) 2>/dev/null
+ giftifiles=$(ls -f ${imgprt}*_hemi-*.gii) 2>/dev/null
  exec_sys mkdir -p ${out[sub]}/figures/ 2>/dev/null
  for i in ${giftifiles}; do  2>/dev/null
  ln=${i##*space} 2>/dev/null
