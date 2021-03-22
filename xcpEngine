@@ -401,7 +401,7 @@ echo "generating report"
 for sub in ${!cohort[@]}
    do
    mkdir -p ${out[sub]}/figures
-   mv  $(ls -f ${out[sub]}/regress/*svg)  ${out[sub]}/figures/  2>/dev/null
+   #mv  $(ls -f ${out[sub]}/regress/*svg)  ${out[sub]}/figures/  2>/dev/null
    echo $standard >> ${out[sub]}/template.txt
    ##########################################################
    # remove previous html 

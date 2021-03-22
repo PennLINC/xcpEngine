@@ -302,8 +302,12 @@ for i in modules1:
          seg_data=load_img(segm).get_data()
          resid=outdir+'regress/'+prefix+'_residualised.nii.gz'
          tr=nib.load(resid).header['pixdim'][4]
-         plot_carpet(img=resid,atlaslabels=seg_data,tr=tr,output_file=outdir+'/regress/'+prefix+'_residualized.svg')
+
+         plot_carpet(img=resid,atlaslabels=seg_data,tr=tr,
+                        output_file=outdir+'/regress/'+prefix+'_residualized.svg')
+                    
          residplot='regress/'+prefix+'_residualized.svg'
+         
          html_report=html_report + '<h1> regress module </h1> <h3> Residualized BOLD data </h3> <object type="image/svg+xml" data="'+ residplot +'" alt="Segmentation" width="1000"height="800"></object>'
     elif i == 'fcon':
          filejson = outdir+'/'+prefix+'_atlas/'+prefix+'_atlas.json'
