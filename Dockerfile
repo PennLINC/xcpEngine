@@ -60,8 +60,8 @@ RUN conda install -y python=3.7.1 \
     conda build purge-all; sync && \
     conda clean -tipsy && sync
 
+RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn==0.6.0 matplotlib 
 RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
-RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn matplotlib 
 RUN  rm -rf ~/.cache/pip/* && sync
 RUN  apt-get update
 
