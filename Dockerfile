@@ -60,10 +60,7 @@ RUN conda install -y python=3.7.1 \
     conda build purge-all; sync && \
     conda clean -tipsy && sync
 
-RUN  pip install --no-cache-dir nipype nibabel niworkflows nilearn==0.6.0 matplotlib 
-RUN  pip install --no-cache-dir numpy pandas traits scikit-learn 
-RUN  rm -rf ~/.cache/pip/* && sync
-RUN  apt-get update
+
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
     PATH="/opt/fsl-5.0.10/bin:$PATH"
@@ -224,6 +221,11 @@ RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
 RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
 
+RUN  pip install --no-cache-dir nipype nibabel niworkflows==1.1.10 nilearn==0.6.0 matplotlib 
+RUN  pip install --no-cache-dir numpy pandas traits scikit-learn svgutils==0.3.1
+RUN  rm -rf ~/.cache/pip/* && sync
+RUN  apt-get update
+
 ADD . /xcpEngine
 
 # template 
@@ -264,7 +266,6 @@ RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer/'
 
 RUN bash -c '/xcpEngine/xcpReset'
-
 
 
 ENTRYPOINT ["/xcpEngine/xcpEngine"]
