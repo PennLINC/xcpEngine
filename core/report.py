@@ -15,6 +15,7 @@ import matplotlib as mp
 from matplotlib import gridspec
 import pandas as pd
 import numpy as np
+import os.path as Path 
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -318,8 +319,10 @@ for i in modules1:
          atlaslist = []
          for k in objatlas .keys():
              atlaslist.append(k)
-         atlaslist.remove('global')
-         atlaslist.remove('segmentation')
+         if 'global' in atlaslist:
+             atlaslist.remove('global')
+         if 'segmentation' in atlaslist:
+             atlaslist.remove('segmentation')
          font = {
              'weight': 'normal',
              'size': 10}
@@ -328,17 +331,18 @@ for i in modules1:
               plt.cla()
               fig, ax1 = plt.subplots(1, 1)
               #fig.set_size_inches(500,500)
-              tms = np.loadtxt(
-                  outdir+'/fcon/'+atlaslist[-1]+'/'+prefix+'_'+atlaslist[-1]+'_ts.1D')
-              cormatrix = np.nan_to_num(np.corrcoef(tms.T))
-              ax1.set_title(atlaslist[-1], fontdict=font)
-              plot_matrix(mat=cormatrix, colorbar=False,
+              dtx = outdir+'/fcon/'+atlaslist[-1]+'/'+prefix+'_'+atlaslist[-1]+'_ts.1D'
+              if Path.exists(dtx):
+                  tms = np.loadtxt(dtx)
+                  cormatrix = np.nan_to_num(np.corrcoef(tms.T))
+                  ax1.set_title(atlaslist[-1], fontdict=font)
+                  plot_matrix(mat=cormatrix, colorbar=False,
                           vmax=1, vmin=-1, axes=ax1)
-              fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',
+                  fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',
                           bbox_inches="tight", pad_inches=None)
-              corrplot = 'figures/'+prefix+'_corrplot.svg'
-              html_report = html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="' + \
-                  corrplot + '" alt="Segmentation" width="500"height="500"></object>'
+                  corrplot = 'figures/'+prefix+'_corrplot.svg'
+                  html_report = html_report + '<h1> fcon module </h1> <h3> Functional connectivity matrices  </h3> <object type="image/svg+xml" data="' + \
+                      corrplot + '" alt="Segmentation" width="500"height="500"></object>'
          else:
               ng = 0
               np1 = len(atlaslist)
@@ -351,14 +355,15 @@ for i in modules1:
                   'weight': 'normal',
                   'size': 20}
               for ii in atlaslist:
-                  tms = np.loadtxt(outdir+'/fcon/'+ii+'/' +
-                                   prefix+'_'+ii+'_ts.1D')
-                  cormatrix = np.nan_to_num(np.corrcoef(tms.T))
-                  axs = ax1[ng]
-                  axs.set_title(ii, fontdict=font)
-                  plot_matrix(mat=cormatrix, colorbar=False,
+                  dtx = outdir+'/fcon/'+ii+'/' + prefix +'_'+ii+'_ts.1D'
+                  if Path.exists(dtx):
+                      tms = np.loadtxt(dtx)
+                      cormatrix = np.nan_to_num(np.corrcoef(tms.T))
+                      axs = ax1[ng]
+                      axs.set_title(ii, fontdict=font)
+                      plot_matrix(mat=cormatrix, colorbar=False,
                               vmax=1, vmin=-1, axes=axs)
-                  ng += 1
+                      ng += 1
 
               fig.savefig(outdir+'/figures/'+prefix+'_corrplot.svg',
                           bbox_inches="tight", pad_inches=None)
