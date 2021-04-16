@@ -221,7 +221,7 @@ RUN sed -i '$iexport PATH=$PATH:$XCPEDIR' $ND_ENTRYPOINT
 
 RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
 
-RUN  pip install --no-cache-dir nipype nibabel niworkflows==1.1.10 nilearn==0.6.0 matplotlib 
+RUN  pip install --no-cache-dir nipype nibabel niworkflows==1.1.10 nilearn==0.6.0 matplotlib==2.0.1 
 RUN  pip install --no-cache-dir numpy pandas traits scikit-learn svgutils==0.3.1
 RUN  rm -rf ~/.cache/pip/* && sync
 RUN  apt-get update
