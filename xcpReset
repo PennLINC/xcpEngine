@@ -154,4 +154,5 @@ export NUMOUT=0
 ###################################################################
 " >> ${XCPEDIR}/core/global
 
+
 chmod 755 ${XCPEDIR}/core/global
