@@ -228,6 +228,8 @@ while (( ${#rem} > 0 ))
       # the confound matrix.
       #############################################################
       routine                 @2    Temporally filtering image and confounds
+      trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+      exec_xcp addTR.py -i ${intermediate}.nii.gz  -o ${intermediate}.nii.gz -t ${trep} 
       filter_temporal         --SIGNPOST=${signpost}              \
                               --FILTER=${regress_tmpf[cxt]}       \
                               --INPUT=${intermediate}.nii.gz             \
@@ -312,7 +314,10 @@ while (( ${#rem} > 0 ))
                then
                locals="${locals}-dsort       ${d[Map]} "
             fi
-         done
+         done 
+
+         trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+         exec_xcp addTR.py -i ${intermediate}.nii.gz  -o ${intermediate}.nii.gz -t ${trep} 
          subroutine           @4.6  [Executing detrend]
          proc_afni   ${intermediate}_${cur}.nii.gz \
          3dTproject                         \
