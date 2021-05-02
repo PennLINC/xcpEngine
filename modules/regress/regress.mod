@@ -204,7 +204,7 @@ while (( ${#rem} > 0 ))
       routine                 @7    Demeaning and detrending BOLD timeseries
       demean_detrend       --SIGNPOST=${signpost}           \
                            --ORDER=${regress_dmdt[cxt]}     \
-                           --INPUT=${img}          \
+                           --INPUT=${intermediate}.nii.gz          \
                            --OUTPUT=${intermediate}_${cur}  \
                            --1DDT=${regress_1ddt[cxt]}      \
                            --CONFIN=${confproc[cxt]}        \
