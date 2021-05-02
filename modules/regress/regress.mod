@@ -172,6 +172,8 @@ while (( ${#rem} > 0 ))
       #  * Local regressors
       #  * Global regressors
       #############################################################
+      trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+      exec_xcp addTR.py -i ${intermediate}.nii.gz  -o ${intermediate}.nii.gz -t ${trep} 
       routine                 @1    Despiking BOLD timeseries
       remove_outliers         --SIGNPOST=${signpost}              \
                               --INPUT=${intermediate}             \
@@ -201,6 +203,8 @@ while (( ${#rem} > 0 ))
       # polynomials as predictor variables, then retains the
       # residuals of the model as the processed timeseries.
       #############################################################
+      trep=$(exec_fsl fslval ${img[sub]} pixdim4)
+      exec_xcp addTR.py -i ${intermediate}.nii.gz  -o ${intermediate}.nii.gz -t ${trep} 
       routine                 @7    Demeaning and detrending BOLD timeseries
       demean_detrend       --SIGNPOST=${signpost}           \
                            --ORDER=${regress_dmdt[cxt]}     \
