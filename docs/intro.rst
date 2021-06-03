@@ -3,7 +3,7 @@ XCP Imaging Pipeline
 ====================
 
 .. warning::
-    xcpEngine only support fmriprep outputs with `MNI152NLin2009cAsym`
+    xcpEngine only support fmriprep outputs with `MNI152NLin2009cAsym` template
     
 
 The XCP imaging pipeline (XCP system) is a free, open-source software package for processing of
