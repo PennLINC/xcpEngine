@@ -2,6 +2,10 @@
 XCP Imaging Pipeline
 ====================
 
+.. warning::
+    xcpEngine only support fmriprep outputs with `MNI152NLin2009cAsym`
+    
+
 The XCP imaging pipeline (XCP system) is a free, open-source software package for processing of
 multimodal neuroimages. The XCP system uses a modular design to deploy analytic routines from
 leading MRI analysis platforms, including FSL, AFNI, and ANTs.
