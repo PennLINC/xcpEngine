@@ -170,7 +170,6 @@ jobs:
             mkdir -p /tmp/t1fc36p/work
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/t1fc36p/work && \
                 sudo setfacl -m group:$(id -gn):rwx /tmp/t1fc36p/work
-
             docker run --rm -it \
                 -v /tmp/data:/data \
                 -v /tmp/t1fc36p/:/out \
