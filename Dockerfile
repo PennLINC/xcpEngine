@@ -250,6 +250,10 @@ ENV workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64" \
 ENV FREESURFER_HOME="/opt/freesurfer" \
     PATH="/opt/freesurfer:$PATH"
 
+RUN  R -e "install.packages(c('optparse', 'pracma', 'RNifti', \
+               'svglite','signal','reshape2','ggplot2','lme4'), \ 
+                dependencies=TRUE,repos='http://cran.rstudio.com/')"
+
 ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
     FREESURFER_HOME="/opt/freesurfer" \
