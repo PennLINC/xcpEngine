@@ -269,6 +269,11 @@ RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 
 RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer/'
 
+RUN bash -c 'export PATH=/opt/afni-latest:$PATH && rPkgsInstall -pkgs ALL && rPkgsInstall -pkgs optparse,pracma,RNifti,svglite,signal,reshape2,ggplot2,lme4'
+RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
+          && echo R_PROFILE_USER\="" >> /usr/lib/R/etc/Renviron \
+          && chmod a+rx /xcpEngine/xcpEngine'
+
 RUN bash -c '/xcpEngine/xcpReset'
 
 
