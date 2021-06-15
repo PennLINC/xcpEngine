@@ -270,6 +270,7 @@ RUN mkdir /run/uuidd
 RUN apt-get install -y -q --no-install-recommends uuid-runtime
 
 RUN apt-get install libgsl0-dev
+RUN ln /usr/lib/libgsl.so /usr/lib/libgsl.so.0
 
 RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 
