@@ -1,7 +1,9 @@
 FROM neurodebian:stretch
 
-ARG DEBIAN_FRONTEND="noninteractive"
 
+FROM rocker/rstudio:3.6.3
+
+ARG DEBIAN_FRONTEND="noninteractive"
 
 ENV LANG="en_US.UTF-8" \
     LC_ALL="en_US.UTF-8" \
@@ -61,7 +63,6 @@ RUN conda install -y python=3.7.1 \
     conda clean -tipsy && sync
 
 
-
 ENV FSLDIR="/opt/fsl-5.0.10" \
     PATH="/opt/fsl-5.0.10/bin:$PATH"
 RUN apt-get update -qq \
@@ -104,7 +105,6 @@ RUN echo "Downloading Convert3D ..." \
     && mkdir -p /opt/convert3d-1.0.0 \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/1.0.0/c3d-1.0.0-Linux-x86_64.tar.gz/download \
     | tar -xz -C /opt/convert3d-1.0.0 --strip-components 1
-
 
 ENV PATH="/opt/afni-latest:$PATH" \
     AFNI_PLUGINPATH="/opt/afni-latest"
@@ -269,10 +269,6 @@ RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 
 RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer/'
 
-RUN bash -c 'export PATH=/opt/afni-latest:$PATH && rPkgsInstall -pkgs ALL && rPkgsInstall -pkgs optparse,pracma,RNifti,svglite,signal,reshape2,ggplot2,lme4'
-RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
-          && echo R_PROFILE_USER\="" >> /usr/lib/R/etc/Renviron \
-          && chmod a+rx /xcpEngine/xcpEngine'
 
 RUN bash -c '/xcpEngine/xcpReset'
 
