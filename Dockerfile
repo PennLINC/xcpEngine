@@ -65,6 +65,8 @@ RUN conda install -y python=3.7.1 \
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
     PATH="/opt/fsl-5.0.10/bin:$PATH"
+
+
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
            bc \
@@ -101,6 +103,7 @@ RUN apt-get update -qq \
 
 ENV C3DPATH="/opt/convert3d-1.0.0" \
     PATH="/opt/convert3d-1.0.0/bin:$PATH"
+
 RUN echo "Downloading Convert3D ..." \
     && mkdir -p /opt/convert3d-1.0.0 \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/1.0.0/c3d-1.0.0-Linux-x86_64.tar.gz/download \
@@ -260,10 +263,13 @@ ENV XCPEDIR="/xcpEngine" \
     workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64"  \
     C3D_PATH="/opt/convert3d-nightly/bin/" \
     PATH="$PATH:/xcpEngine" 
+
 RUN mkdir /data /out /work /design /cohort
    
 RUN mkdir /run/uuidd
-RUN apt-get install -y -q --no-install-recommends uuid-runtime 
+RUN apt-get install -y -q --no-install-recommends uuid-runtime
+
+RUN apt-get install libgsl0-dev
 
 RUN pip install --no-cache-dir flywheel-sdk numpy pandas scipy sentry_sdk psutil
 
