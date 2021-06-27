@@ -227,8 +227,12 @@ RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xc
 
 RUN bash -c 'chmod a+rx /xcpEngine/xcpEngine'
 
+
 ENV workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64" \
     PATH="/xcpEngine/thirdparty/workbench/bin_rh_linux64:$PATH"
+
+ENV  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$gsl2_path \
+     PATH=$LD_LIBRARY_PATH:PATH
 
 ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
