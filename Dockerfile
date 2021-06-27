@@ -225,9 +225,7 @@ RUN bash -c \
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
     && BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine /xcpEngine/utils/repairMetadata'
 
-RUN bash -c 'echo R_ENVIRON_USER\="" >> /usr/lib/R/etc/Renviron \
-          && echo R_PROFILE_USER\="" >> /usr/lib/R/etc/Renviron \
-          && chmod a+rx /xcpEngine/xcpEngine'
+RUN bash -c 'chmod a+rx /xcpEngine/xcpEngine'
 
 ENV workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64" \
     PATH="/xcpEngine/thirdparty/workbench/bin_rh_linux64:$PATH"
