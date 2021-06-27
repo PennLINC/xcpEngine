@@ -231,6 +231,8 @@ RUN bash -c 'chmod a+rx /xcpEngine/xcpEngine'
 ENV workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64" \
     PATH="/xcpEngine/thirdparty/workbench/bin_rh_linux64:$PATH"
 
+RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer-6.0.0/'
+
 ENV  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$gsl2_path \
      PATH=$LD_LIBRARY_PATH:PATH
 
@@ -241,7 +243,7 @@ ENV XCPEDIR="/xcpEngine" \
     C3D_PATH="/opt/convert3d-1.0.0/bin/" \
     PATH="$PATH:/xcpEngine"
 
-RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer-6.0.0/'
+#RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer-6.0.0/'
 
 RUN bash -c '/xcpEngine/xcpReset'
 
