@@ -67,7 +67,7 @@ RUN apt-get update -qq \
     && apt-get install -f \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && gsl2_path="$(find / -name 'libgsl.so.19' || printf '')" \
+    && gsl2_path="$(find / -name 'libgsl.so.23' || printf '')" \
     && if [ -n "$gsl2_path" ]; then \
          ln -sfv "$gsl2_path" "$(dirname $gsl2_path)/libgsl.so.0"; \
     fi \
@@ -245,6 +245,6 @@ ENV XCPEDIR="/xcpEngine" \
 
 RUN bash -c '/xcpEngine/xcpReset'
 
-ENV PATH=$gsl2_path:PATH
+ENV PATH=$gsl2_path:$PATH
 
 ENTRYPOINT ["/xcpEngine/xcpEngine"]
