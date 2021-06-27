@@ -114,8 +114,8 @@ RUN apt-get update -qq \
          --exclude='freesurfer/subjects/fsaverage_sym' \
          --exclude='freesurfer/trctrain' \
     && sed -i '$isource "/opt/freesurfer-6.0.0/SetUpFreeSurfer.sh"' "$ND_ENTRYPOINT"
-
-COPY ["license.txt", "/opt/freesurfer-6.0.0/"]
+    
+RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer/
 
 ENV FSLDIR="/opt/fsl-5.0.10" \
     PATH="/opt/fsl-5.0.10/bin:$PATH" \
