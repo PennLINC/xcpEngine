@@ -159,39 +159,36 @@ RUN apt-get update -qq \
     && echo "Installing FSL conda environment ..." \
     && bash /opt/fsl-5.0.10/etc/fslconf/fslpython_install.sh -f /opt/fsl-5.0.10
 
-ENV CONDA_DIR="/opt/miniconda-latest" \
-    PATH="/opt/miniconda-latest/bin:$PATH"
-RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
-    && echo "Downloading Miniconda installer ..." \
-    && conda_installer="/tmp/miniconda.sh" \
-    && curl -fsSL --retry 5 -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && bash "$conda_installer" -b -p /opt/miniconda-latest \
-    && rm -f "$conda_installer" \
-    && conda update -yq -nbase conda \
-    && conda config --system --prepend channels conda-forge \
-    && conda config --system --set auto_update_conda false \
-    && conda config --system --set show_channel_urls true \
-    && sync && conda clean -y --all && sync \
-    && conda create -y -q --name neuro \
-    && conda install -y -q --name neuro \
-           "python=3.7" \
-           "numpy" \
-           "pandas" \
-           "traits" \
-           "pip=20.1.1" \
-           "mkl=2018.0.3" \
-           "mkl-service" \
-           "numpy=1.18.5" \
-           "scipy=1.5.0" \
-           "scikit-learn=0.23.1" \
-           "pandas=1.0.5" \
-           "libxml2=2.9.8" \
-           "libxslt=1.1.32" \
-           "pandoc" \
-           "matplotlib" \
-           "graphviz=2.40.1" \
-           "traits=4.6.0" \
-    && sync && conda clean -y --all && sync
+
+RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh && \
+    bash Miniconda3-4.5.11-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+    rm Miniconda3-4.5.11-Linux-x86_64.sh
+
+ENV PATH="/usr/local/miniconda/bin:$PATH" \
+    CPATH="/usr/local/miniconda/include/:$CPATH" \
+    LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8" \
+    PYTHONNOUSERSITE=1
+
+RUN conda install -y python=3.7.1 \
+                     mkl=2018.0.3 \
+                     mkl-service \
+                     numpy\
+                     pandas \
+                     numpy=1.18.5 \
+                     scipy=1.5.0 \
+                     scikit-learn=0.23.1 \
+                     pandoc  \
+                     matplotlib \
+                     graphviz=2.40.1 \
+                     traits=4.6.0 \
+                     libxml2=2.9.8 \
+                     libxslt=1.1.32 \
+                     zlib; sync && \
+    chmod -R a+rX /usr/local/miniconda; sync && \
+    chmod +x /usr/local/miniconda/bin/*; sync && \
+    conda build purge-all; sync && \
+    conda clean -tipsy && sync
 
 RUN echo 'export USER="${USER:=`whoami`}"' >> "$ND_ENTRYPOINT"
 
@@ -242,7 +239,7 @@ ENV XCPEDIR="/xcpEngine" \
     C3D_PATH="/opt/convert3d-1.0.0/bin/" \
     PATH="$PATH:/xcpEngine"
 
-RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer/'
+RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer-6.0.0/'
 
 RUN bash -c '/xcpEngine/xcpReset'
 
