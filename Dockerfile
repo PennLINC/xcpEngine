@@ -42,40 +42,18 @@ RUN echo "Downloading Convert3D ..." \
 
 ENV PATH="/opt/afni-latest:$PATH" \
     AFNI_PLUGINPATH="/opt/afni-latest"
-RUN apt-get update -qq \
-    && apt-get install -y -q --no-install-recommends \
-           ed \
-           gsl-bin \
-           libglib2.0-0 \
-           libglu1-mesa-dev \
-           libglw1-mesa \
-           libgomp1 \
-           libjpeg62 \
-           libxm4 \
-           netpbm \
-           tcsh \
-           xfonts-base \
-           xvfb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL --retry 5 -o /tmp/toinstall.deb http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
-    && dpkg -i /tmp/toinstall.deb \
-    && rm /tmp/toinstall.deb \
-    && curl -sSL --retry 5 -o /tmp/toinstall.deb http://snapshot.debian.org/archive/debian-security/20160113T213056Z/pool/updates/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb \
-    && dpkg -i /tmp/toinstall.deb \
-    && rm /tmp/toinstall.deb \
-    && apt-get install -f \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && gsl2_path="$(find / -name 'libgsl.so.19' || printf '')" \
-    && if [ -n "$gsl2_path" ]; then \
-         ln -sfv "$gsl2_path" "$(dirname $gsl2_path)/libgsl.so.0"; \
-    fi \
-    && ldconfig \
-    && echo "Downloading AFNI ..." \
-    && mkdir -p /opt/afni-latest \
-    && curl -fsSL --retry 5 https://afni.nimh.nih.gov/pub/dist/tgz/linux_openmp_64.tgz \
-    | tar -xz -C /opt/afni-latest --strip-components 1
+
+ENV AFNI_MODELPATH="/usr/lib/afni/models" \
+    AFNI_IMSAVE_WARNINGS="NO" \
+    AFNI_TTATLAS_DATASET="/usr/share/afni/atlases" \
+    AFNI_PLUGINPATH="/usr/lib/afni/plugins"
+
+ENV PATH="/usr/lib/afni/bin:$PATH"
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+                    afni=16.2.07~dfsg.1-5~nd16.04+1 \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV ANTSPATH="/opt/ants-2.2.0" \
     PATH="/opt/ants-2.2.0:$PATH"
@@ -237,7 +215,7 @@ RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer-6.0.0/'
      #PATH=$LD_LIBRARY_PATH:PATH
 
 ENV XCPEDIR="/xcpEngine" \
-    AFNI_PATH="/opt/afni-latest/" \
+    AFNI_PATH="/usr/lib/afni/" \
     FREESURFER_HOME="/opt/freesurfer-6.0.0/" \
     workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64"  \
     C3D_PATH="/opt/convert3d-1.0.0/bin/" \
