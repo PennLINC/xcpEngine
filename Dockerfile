@@ -245,6 +245,4 @@ ENV XCPEDIR="/xcpEngine" \
 
 RUN bash -c '/xcpEngine/xcpReset'
 
-ENV PATH=$gsl2_path:$PATH
-
 ENTRYPOINT ["/xcpEngine/xcpEngine"]
