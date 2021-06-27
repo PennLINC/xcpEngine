@@ -223,7 +223,7 @@ RUN bash -c \
     
 
 RUN bash -c 'BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine FSLDIR=/opt/fsl-5.0.10 AFNI_PATH=/opt/afni-latest C3D_PATH=/opt/convert3d-nightly/bin ANTSPATH=/opt/ants-latest/bin /xcpEngine/xcpReset \
-    && BRAINATLAS=/xcpEngine/atlas BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine /xcpEngine/utils/repairMetadata'
+    && BRAINATLAS=/xcpEngine/atlas LD_LIBRARY_PATH=$gsl2_path BRAINSPACE=/xcpEngine/space XCPEDIR=/xcpEngine /xcpEngine/utils/repairMetadata'
 
 RUN bash -c 'chmod a+rx /xcpEngine/xcpEngine'
 
@@ -233,8 +233,8 @@ ENV workbench="/xcpEngine/thirdparty/workbench/bin_rh_linux64" \
 
 RUN bash -c 'cp /xcpEngine/utils/license.txt /opt/freesurfer-6.0.0/'
 
-ENV  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$gsl2_path \
-     PATH=$LD_LIBRARY_PATH:PATH
+#ENV  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$gsl2_path \
+     #PATH=$LD_LIBRARY_PATH:PATH
 
 ENV XCPEDIR="/xcpEngine" \
     AFNI_PATH="/opt/afni-latest/" \
