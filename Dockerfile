@@ -77,12 +77,39 @@ RUN apt-get update -qq \
     && curl -fsSL --retry 5 https://afni.nimh.nih.gov/pub/dist/tgz/linux_openmp_64.tgz \
     | tar -xz -C /opt/afni-latest --strip-components 1
 
-ENV ANTSPATH="/opt/ants-2.2.0" \
-    PATH="/opt/ants-2.2.0:$PATH"
-RUN echo "Downloading ANTs ..." \
-    && mkdir -p /opt/ants-2.2.0 \
-    && curl -fsSL --retry 5 https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz \
-    | tar -xz -C /opt/ants-2.2.0 --strip-components 1
+# Installing ANTs latest from source
+ARG ANTS_SHA=51855944553a73960662d3e4f7c1326e584b23b2
+ADD https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh /cmake-3.11.4-Linux-x86_64.sh
+ENV ANTSPATH="/opt/ants-latest/bin" \
+    PATH="/opt/ants-latest/bin:$PATH" \
+    LD_LIBRARY_PATH="/opt/ants-latest/lib:$LD_LIBRARY_PATH"
+RUN mkdir /opt/cmake \
+    && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
+    && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
+    && apt-get update -qq \
+    && apt-get install -y -q --no-install-recommends \
+    g++ \
+    gcc \
+    make \
+    zlib1g-dev \
+    imagemagick \
+    && mkdir /tmp/ants \
+    && cd /tmp \
+    && curl -sSLO https://github.com/ANTsX/ANTs/archive/${ANTS_SHA}.zip \
+    && unzip ${ANTS_SHA}.zip \
+    && mv ANTs-${ANTS_SHA} /tmp/ants/source \
+    && rm ${ANTS_SHA}.zip \
+    && mkdir -p /tmp/ants/build \
+    && cd /tmp/ants/build \
+    && git config --global url."https://".insteadOf git:// \
+    && cmake -DBUILD_SHARED_LIBS=ON /tmp/ants/source \
+    && make -j1 \
+    && mkdir -p /opt/ants-latest \
+    && mv bin lib /opt/ants-latest/ \
+    && mv /tmp/ants/source/Scripts/* /opt/ants-latest/bin \
+    && rm -rf /tmp/ants \
+    && rm -rf /opt/cmake /usr/local/bin/cmake
+
 
 ENV FREESURFER_HOME="/opt/freesurfer-6.0.0" \
     PATH="/opt/freesurfer-6.0.0/bin:$PATH"
