@@ -44,6 +44,9 @@ sub-1/fcon/HarvardOxford
 sub-1/fcon/HarvardOxford/sub-1_HarvardOxford.net
 sub-1/fcon/HarvardOxford/sub-1_HarvardOxford_network.txt
 sub-1/fcon/HarvardOxford/sub-1_HarvardOxford_ts.1D
+sub-1/fcon/RitcheyMTL
+sub-1/fcon/RitcheyMTL/sub-1_RitcheyMTL_network.txt
+sub-1/fcon/RitcheyMTL/sub-1_RitcheyMTL_ts.1D
 sub-1/fcon/power264
 sub-1/fcon/power264/sub-1_power264_missing.txt
 sub-1/fcon/power264/sub-1_power264.net
@@ -152,6 +155,11 @@ sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_alff.csv
 sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_alffZ.csv
 sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_reho.csv
 sub-1/roiquant/HarvardOxford/sub-1_HarvardOxford_mean_rehoZ.csv
+sub-1/roiquant/RitcheyMTL
+sub-1/roiquant/RitcheyMTL/sub-1_RitcheyMTL_mean_alff.csv
+sub-1/roiquant/RitcheyMTL/sub-1_RitcheyMTL_mean_alffZ.csv
+sub-1/roiquant/RitcheyMTL/sub-1_RitcheyMTL_mean_reho.csv
+sub-1/roiquant/RitcheyMTL/sub-1_RitcheyMTL_mean_rehoZ.csv
 sub-1/roiquant/power264
 sub-1/roiquant/power264/sub-1_power264_mean_alff.csv
 sub-1/roiquant/power264/sub-1_power264_mean_alffZ.csv
@@ -199,6 +207,7 @@ sub-1/sub-1_atlas/sub-1_glasser360.nii.gz
 sub-1/sub-1_atlas/sub-1_global.nii.gz
 sub-1/sub-1_atlas/sub-1_gordon333.nii.gz
 sub-1/sub-1_atlas/sub-1_HarvardOxford.nii.gz
+sub-1/sub-1_atlas/sub-1_RitcheyMTL.nii.gz
 sub-1/sub-1_atlas/sub-1_power264.nii.gz
 sub-1/sub-1_atlas/sub-1_schaefer100x17.nii.gz
 sub-1/sub-1_atlas/sub-1_schaefer100x7.nii.gz
