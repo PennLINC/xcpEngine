@@ -170,5 +170,13 @@
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
+  },
+  "RitcheyMTL": {
+    "Map": "${BRAINATLAS}/RitcheyMTL/RitcheyMTLMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/RitcheyMTL/RitcheyMTLNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/RitcheyMTL/RitcheyMTLNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
   }
 }
