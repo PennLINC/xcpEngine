@@ -7,6 +7,14 @@
     "SpaceNative": "MNI",
     "Type": "Map"
   },
+  "HarvardOxford": {
+    "Map": "${BRAINATLAS}/SUITfnirt/SUITfnirtMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
   "aal116": {
     "Citation": "${BRAINATLAS}/aal116/aal116Reference.bib",
     "Map": "${BRAINATLAS}/aal116/aal116MNI.nii.gz",
