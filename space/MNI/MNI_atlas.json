@@ -7,14 +7,6 @@
     "SpaceNative": "MNI",
     "Type": "Map"
   },
-  "HarvardOxford": {
-    "Map": "${BRAINATLAS}/SUITfnirt/SUITfnirtMNI.nii.gz",
-    "NodeIndex": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeIndex.1D",
-    "NodeNames": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeNames.txt",
-    "Space": "MNI",
-    "SpaceNative": "MNI",
-    "Type": "Map"
-  },
   "aal116": {
     "Citation": "${BRAINATLAS}/aal116/aal116Reference.bib",
     "Map": "${BRAINATLAS}/aal116/aal116MNI.nii.gz",
@@ -175,6 +167,14 @@
     "Map": "${BRAINATLAS}/schaefer400x7/schaefer400x7MNI.nii.gz",
     "NodeIndex": "${BRAINATLAS}/schaefer400x7/schaefer400x7NodeIndex.1D",
     "NodeNames": "${BRAINATLAS}/schaefer400x7/schaefer400x7NodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "SUITfnirt": {
+    "Map": "${BRAINATLAS}/SUITfnirt/SUITfnirtMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeNames.txt",
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
