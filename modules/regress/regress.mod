@@ -156,6 +156,7 @@ while (( ${#rem} > 0 ))
    # * This three-letter code determines what routine is run next.
    # * Remove the code from the remaining control sequence.
    ################################################################
+   
    cur=${rem:0:3}
    rem=${rem:4:${#rem}}
    buffer=${buffer}_${cur}
