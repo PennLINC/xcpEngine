@@ -19,6 +19,10 @@ sub-1/confound2/sub-1_confmat.1D
 sub-1/confound2/sub-1_gsr.1D
 sub-1/confound2/sub-1_modelParameterCount.txt
 sub-1/fcon
+sub-1/fcon/500aparc
+sub-1/fcon/500aparc/sub-1_500aparc.net
+sub-1/fcon/500aparc/sub-1_500aparc_network.txt
+sub-1/fcon/500aparc/sub-1_500aparc_ts.1D
 sub-1/fcon/aal116
 sub-1/fcon/aal116/sub-1_aal116.net
 sub-1/fcon/aal116/sub-1_aal116_network.txt
@@ -124,6 +128,11 @@ sub-1/reho
 sub-1/reho/sub-1_reho.nii.gz
 sub-1/reho/sub-1_rehoZ.nii.gz
 sub-1/roiquant
+sub-1/roiquant/500aparc
+sub-1/roiquant/500aparc/sub-1_500aparc_mean_alff.csv
+sub-1/roiquant/500aparc/sub-1_500aparc_mean_alffZ.csv
+sub-1/roiquant/500aparc/sub-1_500aparc_mean_reho.csv
+sub-1/roiquant/500aparc/sub-1_500aparc_mean_rehoZ.csv
 sub-1/roiquant/aal116
 sub-1/roiquant/aal116/sub-1_aal116_mean_alff.csv
 sub-1/roiquant/aal116/sub-1_aal116_mean_alffZ.csv
@@ -200,6 +209,7 @@ sub-1/roiquant/segmentation/sub-1_segmentation_mean_alffZ.csv
 sub-1/roiquant/segmentation/sub-1_segmentation_mean_reho.csv
 sub-1/roiquant/segmentation/sub-1_segmentation_mean_rehoZ.csv
 sub-1/sub-1_atlas
+sub-1/sub-1_atlas/sub-1_500aparc.nii.gz
 sub-1/sub-1_atlas/sub-1_aal116.nii.gz
 sub-1/sub-1_atlas/sub-1_desikanKilliany.nii.gz
 sub-1/sub-1_atlas/sub-1_glasser360.nii.gz
