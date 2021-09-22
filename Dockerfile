@@ -84,6 +84,7 @@ ADD https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh /cmake-3.11.4-Lin
 ENV ANTSPATH="/opt/ants-latest/bin" \
     PATH="/opt/ants-latest/bin:$PATH" \
     LD_LIBRARY_PATH="/opt/ants-latest/lib:$LD_LIBRARY_PATH"
+RUN bash -c  "ZLIB_LIBRARY=/usr/local/zlib/lib && ZLIB_INCLUDE_DIR=/urs/local/zlib/include"
 RUN mkdir /opt/cmake \
   && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
   && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
