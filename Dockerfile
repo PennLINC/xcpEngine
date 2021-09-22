@@ -103,7 +103,9 @@ RUN mkdir /opt/cmake \
     && cd ANTS-build \
     && make install \
     && rm -rf /tmp/ants \
-    && apt-get clean  
+    && rm -rf /opt/cmake /usr/local/bin/cmake /cmake-3.11.4-Linux-x86_64.sh
+
+
 ENV FREESURFER_HOME="/opt/freesurfer-6.0.0" \
     PATH="/opt/freesurfer-6.0.0/bin:$PATH"
 RUN apt-get update -qq \
