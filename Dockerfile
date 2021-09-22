@@ -78,39 +78,32 @@ RUN apt-get update -qq \
     | tar -xz -C /opt/afni-latest --strip-components 1
 
 # Installing ANTs latest from source
-ARG ANTS_SHA=51855944553a73960662d3e4f7c1326e584b23b2
+# Installing ANTs latest from source
+ARG ANTS_SHA=e00e8164d7a92f048e5d06e388a15c1ee8e889c4
 ADD https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh /cmake-3.11.4-Linux-x86_64.sh
 ENV ANTSPATH="/opt/ants-latest/bin" \
     PATH="/opt/ants-latest/bin:$PATH" \
     LD_LIBRARY_PATH="/opt/ants-latest/lib:$LD_LIBRARY_PATH"
 RUN mkdir /opt/cmake \
-    && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
-    && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
-    && apt-get update -qq \
-    && apt-get install -y -q --no-install-recommends \
-    g++ \
-    gcc \
-    make \
-    zlib1g-dev \
-    imagemagick \
+  && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
+  && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
+  && apt-get update -qq \
     && mkdir /tmp/ants \
     && cd /tmp \
-    && curl -sSLO https://github.com/ANTsX/ANTs/archive/${ANTS_SHA}.zip \
-    && unzip ${ANTS_SHA}.zip \
-    && mv ANTs-${ANTS_SHA} /tmp/ants/source \
-    && rm ${ANTS_SHA}.zip \
+    && git clone https://github.com/ANTsX/ANTs.git \
+    && mv ANTs /tmp/ants/source \
+    && cd /tmp/ants/source \
+    && git checkout ${ANTS_SHA} \
     && mkdir -p /tmp/ants/build \
     && cd /tmp/ants/build \
-    && git config --global url."https://".insteadOf git:// \
-    && cmake -DBUILD_SHARED_LIBS=ON /tmp/ants/source \
-    && make -j1 \
     && mkdir -p /opt/ants-latest \
-    && mv bin lib /opt/ants-latest/ \
-    && mv /tmp/ants/source/Scripts/* /opt/ants-latest/bin \
+    && git config --global url."https://".insteadOf git:// \
+    && cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/ants-latest /tmp/ants/source \
+    && make -j2 \
+    && cd ANTS-build \
+    && make install \
     && rm -rf /tmp/ants \
-    && rm -rf /opt/cmake /usr/local/bin/cmake
-
-
+    && apt-get clean  
 ENV FREESURFER_HOME="/opt/freesurfer-6.0.0" \
     PATH="/opt/freesurfer-6.0.0/bin:$PATH"
 RUN apt-get update -qq \
