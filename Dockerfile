@@ -79,32 +79,17 @@ RUN apt-get update -qq \
 
 # Installing ANTs latest from source
 # Installing ANTs latest from source
-ARG ANTS_SHA=e00e8164d7a92f048e5d06e388a15c1ee8e889c4
-ADD https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh /cmake-3.11.4-Linux-x86_64.sh
-ENV ANTSPATH="/opt/ants-latest/bin" \
-    PATH="/opt/ants-latest/bin:$PATH" \
-    LD_LIBRARY_PATH="/opt/ants-latest/lib:$LD_LIBRARY_PATH"
-RUN bash -c  "ZLIB_LIBRARY=/usr/local/zlib/lib && ZLIB_INCLUDE_DIR=/urs/local/zlib/include"
-RUN mkdir /opt/cmake \
-  && sh /cmake-3.11.4-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
-  && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
-  && apt-get update -qq \
-    && mkdir /tmp/ants \
-    && cd /tmp \
-    && git clone https://github.com/ANTsX/ANTs.git \
-    && mv ANTs /tmp/ants/source \
-    && cd /tmp/ants/source \
-    && git checkout ${ANTS_SHA} \
-    && mkdir -p /tmp/ants/build \
-    && cd /tmp/ants/build \
-    && mkdir -p /opt/ants-latest \
-    && git config --global url."https://".insteadOf git:// \
-    && cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/ants-latest /tmp/ants/source \
-    && make -j2 \
-    && cd ANTS-build \
-    && make install \
-    && rm -rf /tmp/ants \
-    && rm -rf /opt/cmake /usr/local/bin/cmake /cmake-3.11.4-Linux-x86_64.sh
+#ARG ANTS_SHA=e00e8164d7a92f048e5d06e388a15c1ee8e889c4
+#ADD https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh /cmake-3.11.4-Linux-x86_64.sh
+#ENV ANTSPATH="/opt/ants-latest/bin" \
+    #PATH="/opt/ants-latest/bin:$PATH" \
+    #LD_LIBRARY_PATH="/opt/ants-latest/lib:$LD_LIBRARY_PATH"
+
+ENV ANTSPATH="/usr/lib/ants" \
+    PATH="/usr/lib/ants:$PATH"
+WORKDIR $ANTSPATH
+RUN curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" \
+    | tar -xzC $ANTSPATH --strip-components 1
 
 
 ENV FREESURFER_HOME="/opt/freesurfer-6.0.0" \
