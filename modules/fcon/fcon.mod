@@ -268,10 +268,7 @@ for net in ${atlas_names[@]}
 
       exec_xcp ts2adjmat.R -t ${ts[cxt]} >> ${adjacency[cxt]}
 
-      exec_xcp adjmat2pajek.R    \
-         -a    ${adjacency[cxt]} \
-         -t    ${fcon_thr[cxt]}  \
-         >>    ${pajek[cxt]}
+      exec_xcp adjmat2pajek.R  -a    ${adjacency[cxt]} -t  ${fcon_thr[cxt]} >>    ${pajek[cxt]}
       ################################################################
       # Flag nodes that fail to capture any signal variance.
       ################################################################
