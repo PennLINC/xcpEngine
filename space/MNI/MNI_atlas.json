@@ -186,5 +186,13 @@
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
+  },
+  "TianSubcortexS2x3T": {
+    "Map": "${BRAINATLAS}/TianSubcortexS2x3T/TianSubcortexS2x3TMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/TianSubcortexS2x3T/TianSubcortexS2x3TNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/TianSubcortexS2x3T/TianSubcortexS2x3TNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
   }
 }
