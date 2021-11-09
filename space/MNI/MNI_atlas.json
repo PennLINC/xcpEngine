@@ -170,5 +170,29 @@
     "Space": "MNI",
     "SpaceNative": "MNI",
     "Type": "Map"
+  },
+
+  "SUITfnirt": {
+    "Map": "${BRAINATLAS}/SUITfnirt/SUITfnirtMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/SUITfnirt/SUITfnirtNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map" },
+  "RitcheyMTL": {
+    "Map": "${BRAINATLAS}/RitcheyMTL/RitcheyMTLMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/RitcheyMTL/RitcheyMTLNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/RitcheyMTL/RitcheyMTLNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
+  },
+  "TianSubcortexS2x3T": {
+    "Map": "${BRAINATLAS}/TianSubcortexS2x3T/TianSubcortexS2x3TMNI.nii.gz",
+    "NodeIndex": "${BRAINATLAS}/TianSubcortexS2x3T/TianSubcortexS2x3TNodeIndex.1D",
+    "NodeNames": "${BRAINATLAS}/TianSubcortexS2x3T/TianSubcortexS2x3TNodeNames.txt",
+    "Space": "MNI",
+    "SpaceNative": "MNI",
+    "Type": "Map"
   }
 }
