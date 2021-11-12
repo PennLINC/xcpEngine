@@ -86,6 +86,10 @@ sub-1/fcon/SUITfnirt/sub-1_SUITfnirt_missing.txt
 sub-1/fcon/SUITfnirt/sub-1_SUITfnirt.net
 sub-1/fcon/SUITfnirt/sub-1_SUITfnirt_network.txt
 sub-1/fcon/SUITfnirt/sub-1_SUITfnirt_ts.1D
+sub-1/fcon/TianSubcortexS2x3T
+sub-1/fcon/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T.net
+sub-1/fcon/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T_network.txt
+sub-1/fcon/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T_ts.1D
 sub-1/figures
 sub-1/figures/sub-1_alff.svg
 sub-1/figures/sub-1_corrplot.svg
@@ -228,6 +232,11 @@ sub-1/roiquant/SUITfnirt/sub-1_SUITfnirt_mean_alff.csv
 sub-1/roiquant/SUITfnirt/sub-1_SUITfnirt_mean_alffZ.csv
 sub-1/roiquant/SUITfnirt/sub-1_SUITfnirt_mean_reho.csv
 sub-1/roiquant/SUITfnirt/sub-1_SUITfnirt_mean_rehoZ.csv
+sub-1/roiquant/TianSubcortexS2x3T
+sub-1/roiquant/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T_mean_alff.csv
+sub-1/roiquant/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T_mean_alffZ.csv
+sub-1/roiquant/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T_mean_reho.csv
+sub-1/roiquant/TianSubcortexS2x3T/sub-1_TianSubcortexS2x3T_mean_rehoZ.csv
 sub-1/sub-1_atlas
 sub-1/sub-1_atlas/sub-1_500aparc.nii.gz
 sub-1/sub-1_atlas/sub-1_aal116.nii.gz
@@ -246,6 +255,7 @@ sub-1/sub-1_atlas/sub-1_schaefer400x17.nii.gz
 sub-1/sub-1_atlas/sub-1_schaefer400x7.nii.gz
 sub-1/sub-1_atlas/sub-1_segmentation.nii.gz
 sub-1/sub-1_atlas/sub-1_SUITfnirt.nii.gz
+sub-1/sub-1_atlas/sub-1_TianSubcortexS2x3T.nii.gz
 sub-1/sub-1.dsn
 sub-1/sub-1_logs
 sub-1/sub-1_logs/sub-1_audit.csv
