@@ -35,7 +35,7 @@ with open(opts.confjson) as f:
 WM=[]
 CSF=[]
 for key, value in data.items():
-    if 'a_comp_cor' in key:
+    if 'comp_cor' in key and 't' not in key:
         if value['Mask']=='WM' and value['Retained']==True:
             WM.append([key,value['VarianceExplained']])
         if value['Mask']=='CSF' and value['Retained']==True:
