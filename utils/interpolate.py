@@ -31,9 +31,9 @@ def get_parser():
         '-t', '--tmask', action='store', required=True,
         help='[required]'
              '\nTemporal mask indicating whether each volume is seen or '
-             '\nunseen. For instance, 1 could indicate that a volume '
-             '\nshould be retained, while 0 would indicate that the '
-             '\nvolume should be censored.')
+             '\nunseen. For instance, 1 (or >1) indicates that a volume '
+             '\nshould be scrubbed, while 0 would indicate that the '
+             '\nvolume should be retained.')
     parser.add_argument(
         '-m', '--mask', action='store',
         help='\nSpatial mask indicating the voxels of the input image '
@@ -83,7 +83,6 @@ tmask  = np.loadtxt(opts.tmask)
 indices = tmask.shape[-1]
 t_obs=np.array(np.where(tmask != 0))
 
-tmask2=np.where(tmask != 0)
     ##########################################################################
     # Total timespan of seen observations, in seconds
     ##########################################################################
@@ -98,8 +97,10 @@ if timespan == 0:
      raise ValueError('Only one volume is flagged.')
 
 n_samples_seen          =   seen_samples.shape[-1]
-if n_samples_seen == nvol:
+if n_samples_seen == 0:
      raise ValueError('No interpolation is necessary for this dataset.')
+if n_samples_seen / nvol > 0.7:
+     raise ValueError('More than 70% of the timepoints are to be interpolated.')
     ##########################################################################
     # Temoral indices of all observations, seen and unseen
     ##########################################################################
