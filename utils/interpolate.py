@@ -101,7 +101,7 @@ if n_samples_seen == 0:
      raise ValueError('No interpolation is necessary for this dataset.')
 if n_samples_seen / nvol > 0.7:
      raise ValueError('More than 70% ({}%) of the timepoints are to be interpolated.'.format(
-        n_samples_seen / nvol))
+        100.0 * n_samples_seen / nvol))
     ##########################################################################
     # Temoral indices of all observations, seen and unseen
     ##########################################################################
