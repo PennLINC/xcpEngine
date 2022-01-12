@@ -187,8 +187,7 @@ USAGE
       -s    ${q_mask_sum}              \
       -t    0.5                        \
       -o    ${tmask[cxt]}              \
-      -m    ${censor_contig[cxt]}      \
-      -i    TRUE
+      -m    ${censor_contig[cxt]}
    configure               censored    1
    ################################################################
    # Determine the number of volumes that fail the motion criterion

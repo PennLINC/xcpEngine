@@ -142,7 +142,7 @@ order=1
 pass=2
 rpass=1
 rstop=1
-tmask=zeros
+tmask=ones
 unset tslist
 ###################################################################
 # Parse arguments
@@ -237,7 +237,7 @@ done
 # the same number of volumes as the primary BOLD timeseries
 ###################################################################
 nvol=$(exec_fsl fslnvols ${image})
-if [[ ${tmask} != zeros ]]
+if [[ ${tmask} != ones ]]
    then
    cvol=$(wc -l < ${tmask})
 else
@@ -275,7 +275,7 @@ t_rep=$(exec_fsl fslval ${image} pixdim4)
 # 1. Interpolate over masked-out epochs, if a temporal mask has
 #    been provided.
 ###################################################################
-if [[ ${tmask} != zeros ]]
+if [[ ${tmask} != ones ]]
    then
    subroutine     @u.1a Interpolating over masked-out epochs...
    subroutine     @u.1b This will be slow

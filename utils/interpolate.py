@@ -31,9 +31,9 @@ def get_parser():
         '-t', '--tmask', action='store', required=True,
         help='[required]'
              '\nTemporal mask indicating whether each volume is seen or '
-             '\nunseen. For instance, 1 (or >1) indicates that a volume '
-             '\nshould be scrubbed, while 0 would indicate that the '
-             '\nvolume should be retained.')
+             '\nunseen. For instance, 0 indicates that a volume '
+             '\nshould be retained, while 1 would indicate that the '
+             '\nvolume should be fixed.')
     parser.add_argument(
         '-m', '--mask', action='store',
         help='\nSpatial mask indicating the voxels of the input image '
@@ -81,7 +81,7 @@ nvol                =   img_data.shape[1]
 
 tmask  = np.loadtxt(opts.tmask) 
 indices = tmask.shape[-1]
-t_obs=np.array(np.where(tmask != 0))
+t_obs=np.array(np.where(tmask == 0))
 
     ##########################################################################
     # Total timespan of seen observations, in seconds
