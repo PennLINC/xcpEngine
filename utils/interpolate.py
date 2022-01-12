@@ -31,8 +31,8 @@ def get_parser():
         '-t', '--tmask', action='store', required=True,
         help='[required]'
              '\nTemporal mask indicating whether each volume is seen or '
-             '\nunseen. For instance, 0 indicates that a volume '
-             '\nshould be retained, while 1 would indicate that the '
+             '\nunseen. For instance, 1 indicates that a volume '
+             '\nshould be retained, while 0 would indicate that the '
              '\nvolume should be fixed.')
     parser.add_argument(
         '-m', '--mask', action='store',
