@@ -97,10 +97,10 @@ if timespan == 0:
      raise ValueError('Only one volume is flagged.')
 
 n_samples_seen          =   seen_samples.shape[-1]
-if n_samples_seen == 0:
+if n_samples_seen == nvol:
      raise ValueError('No interpolation is necessary for this dataset.')
-if n_samples_seen / nvol > 0.7:
-     raise ValueError('More than 70% of the timepoints are to be interpolated.')
+#if n_samples_seen / nvol > 0.7:
+     #raise ValueError('More than 70% of the timepoints are to be interpolated.')
     ##########################################################################
     # Temoral indices of all observations, seen and unseen
     ##########################################################################
