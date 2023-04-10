@@ -1,7 +1,18 @@
 # The BBL image processing umbrella
 
-[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://xcpengine.readthedocs.io/?badge=latest)[![PyPI download total](https://img.shields.io/pypi/v/xcpengine-container.svg)](https://pypi.org/project/xcpengine-container/) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3840960.svg)](https://doi.org/10.5281/zenodo.3840960)
+[![CircleCI](https://circleci.com/gh/PennBBL/xcpEngine/tree/master.svg?style=svg)](https://circleci.com/gh/PennBBL/xcpEngine/tree/master)
+[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://xcpengine.readthedocs.io/?badge=latest)
+[![PyPI download total](https://img.shields.io/pypi/v/xcpengine-container.svg)](https://pypi.org/project/xcpengine-container/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3840960.svg)](https://doi.org/10.5281/zenodo.3840960)
 
+## Deprecation Notice
+
+xcpEngine is no longer supported.
+xcpEngine is essentially completely configurable -- including configurations that don't make sense and would not pass peer review.
+Instead of maintaining this complex and potentially dangerous configurability,
+the most widely-used fMRI postprocessing workflows from xcpEngine are available (including for surface data) and rigorously tested/supported in XCP-D.
+
+For ASL preprocessing, we recommend switching to ASLPrep.
 
 ## Overview
 
